@@ -1,83 +1,171 @@
-# Coreum Blockchain
+# crust
+`crust` helps you build and run all the applications needed for development and testing.
 
-Coreum addresses the existing limitations of the current blockchains and empowers a solid foundation for future decentralized projects.
-Coreum’s unique approach is to provide built-in, on-chain solutions to process transactions in a deterministic way to ensure fast, secure, cheap and a green network for a variety of use-cases.
+## Prerequisites
+To use `crust` you need:
+- `go 1.16` or newer
+- `tmux`
+- `docker`
 
-The chain is designed to solve real-world problems at scale by providing native token management systems, Decentralized Exchange (DEX), while being fully decentralized. In addition to the built-on-chain solutions, Coreum uses WebAssembly (WASM) to process smart contracts, and utilizes the Tendermint Byzantine Fault Tolerance (BFT) consensus mechanism and Cosmos SDK’s proven Bonded Proof of Stake (BPoS).    
+Install them manually before continuing.
 
-Read more on [our website](https://www.coreum.com).
+## Building
 
-## Build and Play
-
-Coreum blockchain is under development and all the features are going to be added progressively over time.
-No official devnet exists at the moment but everyone is encouraged to run a chain locally for development and testing purposes.
-
-Entire process of running local chain is automated by our tooling. The only prerequisites are:
-- `docker` and `tmux` installed from your favorite package manager
-- `go 1.16` or newer installed and available in your `PATH`
-
-### Build binaries
-
-Steps to build required binaries:
-1. Clone our [crust repository](https://github.com/CoreumFoundation/crust) to your `$HOME` directory:
-```
-$ cd $HOME
-$ git clone https://github.com/CoreumFoundation/crust
-```
-2. Not required but recommended: Add `$HOME/crust/bin` to your `PATH` environment variable:
-```
-$ export PATH="$HOME/crust/bin:$PATH"
-```
-3. Compile all the required binaries:
-```
-$ $HOME/crust/bin/crust build
-```
-
-After the command completes you may find executable `$HOME/crust/bin/cored`, being both blockchain node and client.
-
-### Start local chain
-
-To start local Coreum blockchain execute:
+Build all the required binaries by running:
 
 ```
-$ $HOME/crust/bin/crust znet
+$ crust build
+```
+
+## Executing `znet`
+
+`znet` is the tool used to spin up development environment running the same components which are used in production.
+
+`znet` may be executed using two methods.
+First is direct where you execute command directly:
+
+```
+$ crust znet <command> [flags]
+```
+
+Second one is by entering the znet-environment:
+
+```
+$ crust znet [flags]
+(<environment-name>) [znet] $ <command> 
+```
+
+The second method saves some typing.
+
+## Flags
+
+All the flags are optional. Execute
+
+```
+$ crust znet <command> --help
+```
+
+to see what the default values are.
+
+### --env
+
+Defines name of the environment, it is visible in brackets on the left.
+Each environment is independent, you may create many of them and work with them in parallel.
+
+### --mode
+
+Defines the list of applications to run. You may see their definitions in [crust/pkg/znet/mode.go](crust/pkg/znet/mode.go).
+
+## Commands
+
+In the environment some wrapper scripts for `znet` are generated automatically to make your life easier.
+Each such `<command>` calls `crust znet <command>`.
+
+Available commands are:
+- `start` - starts applications
+- `stop` - stops applications
+- `remove` - stops applications and removes all the resources used by the environment
+- `spec` - prints specification of the environment
+- `tests` - run integration tests
+- `console` - starts `tmux` session containing logs of all the running applications
+- `ping-pong` - sends transactions to generate traffic on blockchain
+- `stress` - tests the benchmarking logic of `zstress`
+
+## Example
+
+Basic workflow may look like this:
+
+```
+# Enter the environment:
+$ crust znet
+(znet) [znet] $
+
+# Start applications
+(znet) [znet] $ start
+
+# Print spec
+(znet) [znet] $ spec
+
+# Stop applications
+(znet) [znet] $ stop
+
+# Start applications again
+(znet) [znet] $ start
+
+# Stop everything and clean resources
+(znet) [znet] $ remove
+$
+```
+
+## Logs
+
+After entering and starting environment:
+
+```
+$ crust znet
 (znet) [znet] $ start
 ```
 
-After a while applications will be deployed to your docker:
-- `coredev-00`: single `cored` validator
-- `explorer-postgres`, `explorer-hasura` and `explorer-bdjuno`: components of the block explorer (work in progress)
-
-To stop and purge the testing environment run:
+it is possible to use `logs` wrapper to tail logs from an application:
 
 ```
-$ $HOME/crust/bin/crust znet remove
+(znet) [znet] $ logs coredev-00
 ```
 
-To get all the details on how `znet` tool might be used, go to the [crust repository](https://github.com/CoreumFoundation/crust).
+## Playing with the blockchain manually
 
-### Interact with the chain
+For each `cored` instance started by `znet` wrapper script named after the name of the node is created, so you may call the client manually.
+There are also three standard keys: `alice`, `bob` and `charlie` added to the keystore of each instance.
 
-After entering `znet` console by executing:
+If you start `znet` using `--mode=dev` there is one `cored` application called `coredev-00`.
+To use the client you may use `coredev-00` wrapper:
 
-```
-$ $HOME/crust/bin/crust znet
-(znet) [znet] $ start
-```
-you may use client to interact with the chain:
-1. List pregenerated wallets:
 ```
 (znet) [znet] $ coredev-00 keys list
+(znet) [znet] $ coredev-00 query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f4
+(znet) [znet] $ coredev-00 tx bank send bob cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f4 10core
+(znet) [znet] $ coredev-00 query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f
 ```
-You may use those wallets to issue transactions and queries
 
-2. Query balances:
-```
-(znet) [znet] $ coredev-00 q bank balances core1x645ym2yz4gckqjtpwr8yddqzkkzdpkt4dfrcc
-```
-Remember to replace address with the one existing in your keystore.
+## Integration tests
 
-3. Send tokens from one account to another:
+Tests are defined in [crust/tests/index.go](crust/tests/index.go)
+
+You may run tests directly:
+
 ```
-(znet) [znet] $ coredev-00 tx bank send alice core1cjs7qela0trw2qyyfxw5e5e7cvwzprkj0643h8 10core
+$crust znet test
 ```
+
+Tests run on top `--mode=test`.
+
+It's also possible to enter the environment first, and run tests from there:
+
+```
+$ crust znet --mode=test
+(znet) [znet] $ tests
+
+# Remember to clean everything
+(crustznet) [logs] $ remove
+```
+
+After tests complete environment is still running so if something went wrong you may inspect it manually.
+
+## Ping-pong
+
+There is `ping-pong` command available in `znet` sending transactions to generate some traffic on blockchain.
+To start it run these commands:
+
+```
+$ crust znet
+(znet) [znet] $ start
+(znet) [znet] $ ping-pong
+```
+
+You will see logs reporting that tokens are constantly transferred.
+
+## Hard reset
+
+If you want to manually remove all the data created by `znet` do this:
+- use `docker ps -a`, `docker stop <container-id>` and `docker rm <container-id>` to delete related running containers
+- run `rm -rf ~/.cache/crust/znet` to remove all the files created by `znet`
