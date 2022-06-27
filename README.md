@@ -1,8 +1,9 @@
-# znet
-`znet` helps you run all the applications needed for development and testing.
+# crust
+`crust` helps you build and run all the applications needed for development and testing.
 
 ## Prerequisites
-To use `znet` you need:
+To use `crust` you need:
+- `go 1.16` or newer
 - `tmux`
 - `docker`
 
@@ -10,13 +11,15 @@ Install them manually before continuing.
 
 ## Building
 
-To use `znet`, `cored` binary is required. If you haven't built it earlier do it by running:
+Build all the required binaries by running:
 
 ```
-$ crust build/cored
+$ crust build
 ```
 
 ## Executing `znet`
+
+`znet` is the tool used to spin up development environment running the same components which are used in production.
 
 `znet` may be executed using two methods.
 First is direct where you execute command directly:
@@ -25,11 +28,11 @@ First is direct where you execute command directly:
 $ crust znet <command> [flags]
 ```
 
-Second one is by entering the `environment`:
+Second one is by entering the znet-environment:
 
 ```
 $ crust znet [flags]
-(<environment name>) [znet] $ <command> 
+(<environment-name>) [znet] $ <command> 
 ```
 
 The second method saves some typing.
@@ -44,13 +47,6 @@ $ crust znet <command> --help
 
 to see what the default values are.
 
-You may enter the environment like this:
-
-```
-$ crust znet --env=znet --mode=dev
-(znet) [znet] $
-```
-
 ### --env
 
 Defines name of the environment, it is visible in brackets on the left.
@@ -58,22 +54,7 @@ Each environment is independent, you may create many of them and work with them 
 
 ### --mode
 
-Defines the list of applications to run. You may see their definitions in [pkg/znet/mode.go](../../pkg/znet/mode.go).
-
-## Logs
-
-After entering and starting environment:
-
-```
-$ crust znet --env=znet --mode=dev
-(znet) [znet] $ start
-```
-
-it is possible to use `logs` wrapper to tail logs from an application:
-
-```
-(znet) [znet] $ logs coredev-00
-```
+Defines the list of applications to run. You may see their definitions in [crust/pkg/znet/mode.go](crust/pkg/znet/mode.go).
 
 ## Commands
 
@@ -85,6 +66,7 @@ Available commands are:
 - `stop` - stops applications
 - `remove` - stops applications and removes all the resources used by the environment
 - `spec` - prints specification of the environment
+- `tests` - run integration tests
 - `console` - starts `tmux` session containing logs of all the running applications
 - `ping-pong` - sends transactions to generate traffic on blockchain
 - `stress` - tests the benchmarking logic of `zstress`
@@ -95,7 +77,7 @@ Basic workflow may look like this:
 
 ```
 # Enter the environment:
-$ crust znet --env=znet --mode=dev
+$ crust znet
 (znet) [znet] $
 
 # Start applications
@@ -115,6 +97,21 @@ $ crust znet --env=znet --mode=dev
 $
 ```
 
+## Logs
+
+After entering and starting environment:
+
+```
+$ crust znet
+(znet) [znet] $ start
+```
+
+it is possible to use `logs` wrapper to tail logs from an application:
+
+```
+(znet) [znet] $ logs coredev-00
+```
+
 ## Playing with the blockchain manually
 
 For each `cored` instance started by `znet` wrapper script named after the name of the node is created, so you may call the client manually.
@@ -130,11 +127,9 @@ To use the client you may use `coredev-00` wrapper:
 (znet) [znet] $ coredev-00 query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f
 ```
 
-Different `cored` instances might available in another `--mode`. Run `spec` command to list them.
-
 ## Integration tests
 
-Tests are defined in [tests/index.go](../../tests/index.go)
+Tests are defined in [crust/tests/index.go](crust/tests/index.go)
 
 You may run tests directly:
 
@@ -147,7 +142,7 @@ Tests run on top `--mode=test`.
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ crust znet --env=znet --mode=test
+$ crust znet --mode=test
 (znet) [znet] $ tests
 
 # Remember to clean everything
@@ -159,7 +154,7 @@ After tests complete environment is still running so if something went wrong you
 ## Ping-pong
 
 There is `ping-pong` command available in `znet` sending transactions to generate some traffic on blockchain.
-To start it runs these commands:
+To start it run these commands:
 
 ```
 $ crust znet
