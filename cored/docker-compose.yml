@@ -1,0 +1,9 @@
+version: '3'
+services:
+  cored:
+    build:
+      context: docker
+    volumes:
+      - ./:/home/app
+    working_dir: /home/app
+
