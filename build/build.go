@@ -72,9 +72,14 @@ func buildNativeAndDocker(ctx context.Context, pkg, out string) error {
 	if err := os.Link(outPath, out); err != nil {
 		return errors.WithStack(err)
 	}
-	if runtime.GOOS != dockerGOOS {
-		// required to build docker images
-		return goBuildPkg(ctx, pkg, dockerGOOS, dir+"/"+dockerGOOS+"/"+binName)
-	}
+
+	// TODO(xlab): crosscompilation requires a standalone pipeline
+	// In fact, docker image can have build phase that build the correct version for itself.
+	//
+	// if runtime.GOOS != dockerGOOS {
+	// 	// required to build docker images
+	// 	return goBuildPkg(ctx, pkg, dockerGOOS, dir+"/"+dockerGOOS+"/"+binName)
+	// }
+
 	return nil
 }

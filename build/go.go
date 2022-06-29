@@ -34,7 +34,7 @@ func goBuildPkg(ctx context.Context, pkg, targetOS, out string) error {
 	logger.Get(ctx).Info("Building go package", zap.String("package", pkg), zap.String("binary", out), zap.String("targetOS", targetOS))
 	cmd := exec.Command(toolBin("go"), "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
 	cmd.Dir = pkg
-	cmd.Env = append([]string{"CGO_ENABLED=0", "GOOS=" + targetOS}, os.Environ()...)
+	cmd.Env = append([]string{"CGO_ENABLED=1", "GOOS=" + targetOS}, os.Environ()...)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", pkg)
 	}
