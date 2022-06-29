@@ -26,11 +26,11 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
+func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
 	genesis := cored.NewGenesis(name)
-	nodes := make(infra.Mode, 0, numOfNodes)
+	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
 	var node0 *cored.Cored
-	for i := 0; i < numOfNodes; i++ {
+	for i := 0; i < cap(nodes); i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
 		node := cored.New(name, f.config, genesis, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
@@ -40,7 +40,7 @@ func (f *Factory) CoredNetwork(name string, numOfNodes int) infra.Mode {
 			GRPCWeb:    cored.DefaultPorts.GRPCWeb + portDelta,
 			PProf:      cored.DefaultPorts.PProf + portDelta,
 			Prometheus: cored.DefaultPorts.Prometheus + portDelta,
-		}, node0)
+		}, i < numOfValidators, node0)
 		if node0 == nil {
 			node0 = &node
 		}
