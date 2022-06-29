@@ -16,7 +16,7 @@ Moreover, we are much better go developers than bash ones.
 So here is the simple tool written in go which helps us in our daily work.
 
 ## Shell configuration
-It is assumed here that cloned `coreum` repository exists in `$HOME/coreum`.
+It is assumed here that cloned `crust` repository exists in `$HOME/crust`.
 If you store it elsewhere, adjust paths accordingly.
 
 Configuration for two shells is provided: `bash` and `zsh`.
@@ -27,13 +27,13 @@ Once configuration is done log out from your session and log in again to apply c
 Add this line at the end of `~/.bash_profile` file:
 
 ```
-PATH="$HOME/coreum/bin:$PATH"
+PATH="$HOME/crust/bin:$PATH"
 ```
 
-If you want to use autocompletion feature of `core` add this line at the end of `~/.bashrc` file:
+If you want to use autocompletion feature of `crust` add this line at the end of `~/.bashrc` file:
 
 ```
-complete -o nospace -C core core 
+complete -o nospace -C crust crust 
 ```
 
 ### ZSH
@@ -41,7 +41,7 @@ complete -o nospace -C core core
 Add this line at the end of `~/.zprofile` file:
 
 ```
-PATH="$HOME/coreum/bin:$PATH"
+PATH="$HOME/crust/bin:$PATH"
 ```
 
 
@@ -50,7 +50,7 @@ PATH="$HOME/coreum/bin:$PATH"
 Run
 
 ```
-$ core setup
+$ crust setup
 ```
 
 to install all the tools we use.
@@ -58,11 +58,11 @@ to install all the tools we use.
 Whenever tool downloads or builds binaries it puts them inside [bin](../bin) directory so they are
 easily callable from console.
 
-## `core` command
+## `crust` command
 
-`core` command is used to execute operations. you may pass one or more operations to it:
+`crust` command is used to execute operations. you may pass one or more operations to it:
 
-`core <op-1> <op-2> ... <op-n>`
+`crust <op-1> <op-2> ... <op-n>`
 
 Here is the list of operations supported at the moment:
 
@@ -70,25 +70,25 @@ Here is the list of operations supported at the moment:
 - `lint` - runs code linter
 - `tidy` - executes `go mod tidy`
 - `test` - runs unit tests
-- `build` - builds `cored`
+- `build` - builds all the binaries, including `cored`
 
 If you want to inspect source code of operations, go to [build/index.go](index.go). 
 
 You may run operations one by one:
 
 ```
-$ core lint
-$ core test
+$ crust lint
+$ crust test
 ```
 
 or together:
 
 ```
-$ core lint test
+$ crust lint test
 ```
 
 Running operations together is better because if they internally have common dependencies, each of them will
-be executed once. Moreover, each execution of `core` may compile code. By running more operations at once
+be executed once. Moreover, each execution of `crust` may compile code. By running more operations at once
 you just save your time. In all the cases operations are executed sequentially.
 
 ## Common environment
