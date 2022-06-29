@@ -26,16 +26,29 @@ import (
 const AppType infra.AppType = "cored"
 
 // New creates new cored app
-func New(name string, config infra.Config, genesis *Genesis, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
+func New(name string, config infra.Config, genesis *Genesis, appInfo *infra.AppInfo, ports Ports, validator bool, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
-	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
-	must.OK(err)
 
-	stakerPubKey, stakerPrivKey := GenerateSecp256k1Key()
+	walletKeys := map[string]Secp256k1PrivateKey{
+		"alice":   AlicePrivKey,
+		"bob":     BobPrivKey,
+		"charlie": CharliePrivKey,
+	}
 
-	genesis.AddWallet(stakerPubKey, "100000000000000000000000core")
-	genesis.AddValidator(validatorPublicKey, stakerPrivKey, "100000000core")
+	var validatorPrivateKey ed25519.PrivateKey
+	if validator {
+		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+		must.OK(err)
+
+		stakerPubKey, stakerPrivKey := GenerateSecp256k1Key()
+
+		validatorPrivateKey = valPrivateKey
+		walletKeys["staker"] = stakerPrivKey
+
+		genesis.AddWallet(stakerPubKey, "100000000000000000000000core")
+		genesis.AddValidator(valPublicKey, stakerPrivKey, "100000000core")
+	}
 
 	return Cored{
 		name:                name,
@@ -49,12 +62,7 @@ func New(name string, config infra.Config, genesis *Genesis, appInfo *infra.AppI
 		ports:               ports,
 		rootNode:            rootNode,
 		mu:                  &sync.RWMutex{},
-		walletKeys: map[string]Secp256k1PrivateKey{
-			"staker":  stakerPrivKey,
-			"alice":   AlicePrivKey,
-			"bob":     BobPrivKey,
-			"charlie": CharliePrivKey,
-		},
+		walletKeys:          walletKeys,
 	}
 }
 
