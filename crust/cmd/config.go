@@ -1,15 +1,12 @@
-package cored
+package cmd
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
-func init() {
-	setAccountPrefixes("core")
-}
-
+// SetAccountPrefixes configures account prefixes for cosmos-sdk
 // this function was copied from "github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 // package, since directly referencing that function would introduce hundreds of
 // lines of dependency to go.sum
-func setAccountPrefixes(accountAddressPrefix string) {
+func SetAccountPrefixes(accountAddressPrefix string) {
 	// Set prefixes
 	accountPubKeyPrefix := accountAddressPrefix + "pub"
 	validatorAddressPrefix := accountAddressPrefix + "valoper"

@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum/crust/cmd"
 	"github.com/CoreumFoundation/coreum/crust/pkg/zstress"
 )
 
@@ -23,6 +24,7 @@ const (
 )
 
 func main() {
+	cmd.SetAccountPrefixes("core")
 	run.Tool("zstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
 		var accountFile string
