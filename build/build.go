@@ -12,7 +12,6 @@ import (
 
 const dockerGOOS = "linux"
 
-// FIXME (wojciech): This assumes that repositories are public which is not true at the moment but will be soon
 const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
 
 func buildAll(deps build.DepsFunc) {
