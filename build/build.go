@@ -59,7 +59,9 @@ func ensureCoreumRepo(ctx context.Context) error {
 }
 
 func buildNativeAndDocker(ctx context.Context, pkg, out string) error {
-	outPath := filepath.Dir(out) + "/" + runtime.GOOS + "/" + filepath.Base(out)
+	dir := filepath.Dir(out)
+	binName := filepath.Base(out)
+	outPath := dir + "/" + runtime.GOOS + "/" + binName
 
 	if err := os.Remove(out); err != nil && !os.IsNotExist(err) {
 		return errors.WithStack(err)
@@ -72,7 +74,7 @@ func buildNativeAndDocker(ctx context.Context, pkg, out string) error {
 	}
 	if runtime.GOOS != dockerGOOS {
 		// required to build docker images
-		return goBuildPkg(ctx, pkg, dockerGOOS, "bin/"+dockerGOOS+"/"+out)
+		return goBuildPkg(ctx, pkg, dockerGOOS, dir+"/"+dockerGOOS+"/"+binName)
 	}
 	return nil
 }
