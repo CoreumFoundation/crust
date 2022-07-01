@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/pkg/retry"
 )
 
@@ -74,7 +75,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Coin, error) {
+func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map[string]types.Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -84,9 +85,9 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]Coin{}
+	balances := map[string]types.Coin{}
 	for _, b := range resp.Balances {
-		balances[b.Denom] = Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
+		balances[b.Denom] = types.Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
 	}
 	return balances, nil
 }
@@ -116,6 +117,10 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 type BroadcastResult struct {
 	TxHash  string
 	GasUsed int64
+}
+
+func (c Client) ClientCtx() client.Context {
+	return c.clientCtx
 }
 
 // Broadcast broadcasts encoded transaction and returns tx hash
@@ -190,17 +195,17 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 
 // BaseInput holds input data common to every transaction
 type BaseInput struct {
-	Signer   Wallet
+	Signer   types.Wallet
 	GasLimit uint64
-	GasPrice Coin
+	GasPrice types.Coin
 	Memo     string
 }
 
 // TxBankSendInput holds input data for PrepareTxBankSend
 type TxBankSendInput struct {
-	Sender   Wallet
-	Receiver Wallet
-	Amount   Coin
+	Sender   types.Wallet
+	Receiver types.Wallet
+	Amount   types.Coin
 
 	Base BaseInput
 }

@@ -3,12 +3,15 @@ package apps
 import (
 	"fmt"
 
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // NewFactory creates new app factory
@@ -29,7 +32,9 @@ type Factory struct {
 func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
 	const initialBalance = "1000000000000000core"
 
-	genesis := cored.NewGenesis(name)
+	network, _ := config.NetworkByChainID(config.Devnet)
+	genesis, err := network.Genesis()
+	must.OK(err)
 
 	genesis.AddWallet(cored.AlicePrivKey.PubKey(), initialBalance)
 	genesis.AddWallet(cored.BobPrivKey.PubKey(), initialBalance)
@@ -51,7 +56,7 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 			GRPCWeb:    cored.DefaultPorts.GRPCWeb + portDelta,
 			PProf:      cored.DefaultPorts.PProf + portDelta,
 			Prometheus: cored.DefaultPorts.Prometheus + portDelta,
-		}, i < numOfValidators, node0)
+		}, node0)
 		if node0 == nil {
 			node0 = &node
 		}
