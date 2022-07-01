@@ -85,7 +85,7 @@ sysctl -w net.core.rmem_max=16384
 sysctl -w net.core.wmem_max=16384
 ```
 
-For clients only, and in case `corezstress` connects to a remote RPC host:
+For clients only, and in case `zstress` connects to a remote RPC host:
 
 ```bash
 # enabled tcp_tw_reuse on remote connections
