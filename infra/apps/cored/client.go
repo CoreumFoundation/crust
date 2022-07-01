@@ -2,6 +2,7 @@ package cored
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/hex"
 	"regexp"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/cosmos/cosmos-sdk/client"
+	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -16,11 +18,14 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/pkg/retry"
 )
 
@@ -74,7 +79,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Coin, error) {
+func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map[string]types.Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -84,9 +89,9 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]Coin{}
+	balances := map[string]types.Coin{}
 	for _, b := range resp.Balances {
-		balances[b.Denom] = Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
+		balances[b.Denom] = types.Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
 	}
 	return balances, nil
 }
@@ -116,6 +121,10 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 type BroadcastResult struct {
 	TxHash  string
 	GasUsed int64
+}
+
+func (c Client) ClientCtx() client.Context {
+	return c.clientCtx
 }
 
 // Broadcast broadcasts encoded transaction and returns tx hash
@@ -198,17 +207,17 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 
 // BaseInput holds input data common to every transaction
 type BaseInput struct {
-	Signer   Wallet
+	Signer   types.Wallet
 	GasLimit uint64
-	GasPrice Coin
+	GasPrice types.Coin
 	Memo     string
 }
 
 // TxBankSendInput holds input data for PrepareTxBankSend
 type TxBankSendInput struct {
-	Sender   Wallet
-	Receiver Wallet
-	Amount   Coin
+	Sender   types.Wallet
+	Receiver types.Wallet
+	Amount   types.Coin
 
 	Base BaseInput
 }
@@ -235,6 +244,33 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	}
 
 	return c.Encode(signedTx), nil
+}
+
+func AddValidatorToGenesis(
+	g *config.Genesis,
+	clientCtx client.Context,
+	validatorPublicKey ed25519.PublicKey,
+	stakerPrivateKey types.Secp256k1PrivateKey,
+	stakedBalance string,
+) {
+	amount, err := sdk.ParseCoinNormalized(stakedBalance)
+	must.OK(err)
+
+	commission := stakingtypes.CommissionRates{
+		Rate:          sdk.MustNewDecFromStr("0.1"),
+		MaxRate:       sdk.MustNewDecFromStr("0.2"),
+		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+	}
+
+	valPubKey := &cosmosed25519.PubKey{Key: validatorPublicKey}
+	stakerPrivKey := &cosmossecp256k1.PrivKey{Key: stakerPrivateKey}
+	stakerAddress := sdk.AccAddress(stakerPrivKey.PubKey().Address())
+
+	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
+	must.OK(err)
+
+	tx := must.Bytes(clientCtx.TxConfig.TxJSONEncoder()(signTx(clientCtx, stakerPrivateKey, 0, 0, msg)))
+	g.AddGenesisTx(tx)
 }
 
 func isTxInMempool(errRes *sdk.TxResponse) bool {
@@ -314,11 +350,11 @@ func checkSequence(codespace string, code uint32, log string) error {
 	}
 	matches := expectedSequenceRegExp.FindStringSubmatch(log)
 	if len(matches) != 2 {
-		return errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
+		return errors.Errorf("cosmos sdk hasn't returned expected sequence number, log message received: %s", log)
 	}
 	expectedSequence, err := strconv.ParseUint(matches[1], 10, 64)
 	if err != nil {
-		return errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
+		return errors.Wrapf(err, "can't parse expected sequence number, log message received: %s", log)
 	}
 	return errors.WithStack(sequenceError{message: log, expectedSequence: expectedSequence})
 }

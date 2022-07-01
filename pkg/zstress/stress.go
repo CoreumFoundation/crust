@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/pkg/retry"
 )
@@ -28,7 +29,7 @@ type StressConfig struct {
 	NodeAddress string
 
 	// Accounts is the list of private keys used to send transactions during benchmark
-	Accounts []cored.Secp256k1PrivateKey
+	Accounts []types.Secp256k1PrivateKey
 
 	// NumOfTransactions to send from each account
 	NumOfTransactions int
@@ -37,8 +38,8 @@ type StressConfig struct {
 type tx struct {
 	AccountIndex int
 	TxIndex      int
-	From         cored.Wallet
-	To           cored.Wallet
+	From         types.Wallet
+	To           types.Wallet
 	TxBytes      []byte
 }
 
@@ -161,7 +162,7 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 							},
 							Sender:   tx.From,
 							Receiver: tx.To,
-							Amount:   cored.Coin{Amount: big.NewInt(1), Denom: "core"},
+							Amount:   types.Coin{Amount: big.NewInt(1), Denom: "core"},
 						}))
 						select {
 						case <-ctx.Done():
@@ -191,8 +192,8 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 
 				tx := tx{
 					AccountIndex: i,
-					From:         cored.Wallet{Name: "sender", Key: fromPrivateKey, AccountNumber: accNum, AccountSequence: accSeq},
-					To:           cored.Wallet{Name: "receiver", Key: toPrivateKey},
+					From:         types.Wallet{Name: "sender", Key: fromPrivateKey, AccountNumber: accNum, AccountSequence: accSeq},
+					To:           types.Wallet{Name: "receiver", Key: toPrivateKey},
 				}
 
 				for j := 0; j < config.NumOfTransactions; j++ {

@@ -10,13 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 )
 
 // TestInitialBalance checks that initial balance is set by genesis block
 func TestInitialBalance(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
-	var wallet cored.Wallet
+	var wallet types.Wallet
 
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
@@ -44,7 +45,7 @@ func TestInitialBalance(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc
 
 // TestCoreTransfer checks that core is transferred correctly between wallets
 func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
-	var sender, receiver cored.Wallet
+	var sender, receiver types.Wallet
 
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
@@ -69,11 +70,11 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 					// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
 					GasLimit: 120000,
 					// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-					GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
+					GasPrice: types.Coin{Amount: big.NewInt(1500), Denom: "core"},
 				},
 				Sender:   sender,
 				Receiver: receiver,
-				Amount:   cored.Coin{Denom: "core", Amount: big.NewInt(10)},
+				Amount:   types.Coin{Denom: "core", Amount: big.NewInt(10)},
 			})
 			require.NoError(t, err)
 			result, err := client.Broadcast(ctx, txBytes)

@@ -11,11 +11,14 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 
+	cfg "github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/CoreumFoundation/crust/pkg/retry"
@@ -26,35 +29,23 @@ import (
 const AppType infra.AppType = "cored"
 
 // New creates new cored app
-func New(name string, config infra.Config, genesis *Genesis, appInfo *infra.AppInfo, ports Ports, validator bool, rootNode *Cored) Cored {
+func New(name string, config infra.Config, genesis *cfg.Genesis, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
+	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+	must.OK(err)
 
-	walletKeys := map[string]Secp256k1PrivateKey{
-		"alice":   AlicePrivKey,
-		"bob":     BobPrivKey,
-		"charlie": CharliePrivKey,
-	}
+	stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
 
-	var validatorPrivateKey ed25519.PrivateKey
-	if validator {
-		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
-		must.OK(err)
+	genesis.FundAccount(stakerPubKey, "100000000000000000000000core")
+	clientCtx := NewContext(genesis.ChainID(), nil)
+	AddValidatorToGenesis(genesis, clientCtx, validatorPublicKey, stakerPrivKey, "100000000core")
 
-		stakerPubKey, stakerPrivKey := GenerateSecp256k1Key()
-
-		validatorPrivateKey = valPrivateKey
-		walletKeys["staker"] = stakerPrivKey
-
-		genesis.AddWallet(stakerPubKey, "100000000000000000000000core")
-		genesis.AddValidator(valPublicKey, stakerPrivKey, "100000000core")
-	}
-
-	return Cored{
+	cored := Cored{
 		name:                name,
 		homeDir:             config.AppDir + "/" + name,
 		config:              config,
-		nodeID:              NodeID(nodePublicKey),
+		nodeID:              cfg.NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
 		genesis:             genesis,
@@ -62,8 +53,14 @@ func New(name string, config infra.Config, genesis *Genesis, appInfo *infra.AppI
 		ports:               ports,
 		rootNode:            rootNode,
 		mu:                  &sync.RWMutex{},
-		walletKeys:          walletKeys,
+		walletKeys: map[string]types.Secp256k1PrivateKey{
+			"staker":  stakerPrivKey,
+			"alice":   AlicePrivKey,
+			"bob":     BobPrivKey,
+			"charlie": CharliePrivKey,
+		},
 	}
+	return cored
 }
 
 // Cored represents cored
@@ -74,13 +71,13 @@ type Cored struct {
 	nodeID              string
 	nodePrivateKey      ed25519.PrivateKey
 	validatorPrivateKey ed25519.PrivateKey
-	genesis             *Genesis
+	genesis             *cfg.Genesis
 	appInfo             *infra.AppInfo
 	ports               Ports
 	rootNode            *Cored
 
 	mu         *sync.RWMutex
-	walletKeys map[string]Secp256k1PrivateKey
+	walletKeys map[string]types.Secp256k1PrivateKey
 }
 
 // Type returns type of application
@@ -114,9 +111,9 @@ func (c Cored) Info() infra.DeploymentInfo {
 }
 
 // AddWallet adds wallet to genesis block and local keystore
-func (c Cored) AddWallet(balances string) Wallet {
-	pubKey, privKey := GenerateSecp256k1Key()
-	c.genesis.AddWallet(pubKey, balances)
+func (c Cored) AddWallet(balances string) types.Wallet {
+	pubKey, privKey := types.GenerateSecp256k1Key()
+	c.genesis.FundAccount(pubKey, balances)
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -130,7 +127,7 @@ func (c Cored) AddWallet(balances string) Wallet {
 	}
 
 	c.walletKeys[name] = privKey
-	return Wallet{Name: name, Key: privKey}
+	return types.Wallet{Name: name, Key: privKey}
 }
 
 // Client creates new client for cored blockchain
@@ -213,7 +210,7 @@ func (c Cored) Deployment() infra.Deployment {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				NodeConfig{
+				cfg.NodeConfig{
 					Name:           c.name,
 					PrometheusPort: c.ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,

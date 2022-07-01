@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -224,9 +225,9 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 	client := coredNode.Client()
 
-	alice := cored.Wallet{Name: "alice", Key: cored.AlicePrivKey}
-	bob := cored.Wallet{Name: "bob", Key: cored.BobPrivKey}
-	charlie := cored.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
+	alice := types.Wallet{Name: "alice", Key: cored.AlicePrivKey}
+	bob := types.Wallet{Name: "bob", Key: cored.BobPrivKey}
+	charlie := types.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
 
 	for {
 		if err := sendTokens(ctx, client, alice, bob); err != nil {
@@ -277,10 +278,10 @@ func coredNode(mode infra.Mode) (cored.Cored, error) {
 	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
-func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {
+func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet) error {
 	log := logger.Get(ctx)
 
-	amount := cored.Coin{Amount: big.NewInt(1), Denom: "core"}
+	amount := types.Coin{Amount: big.NewInt(1), Denom: "core"}
 	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
 		Base: cored.BaseInput{
 			Signer: from,
