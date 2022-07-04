@@ -1,13 +1,22 @@
 package build
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/build/exec"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 const dockerGOOS = "linux"
@@ -61,7 +70,7 @@ func ensureCoreumRepo(ctx context.Context) error {
 func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool) error {
 	dir := filepath.Dir(out)
 	binName := filepath.Base(out)
-	outPath := dir + "/" + runtime.GOOS + "/" + binName
+	outPath := filepath.Join(dir, runtime.GOOS, binName)
 
 	if err := os.Remove(out); err != nil && !os.IsNotExist(err) {
 		return errors.WithStack(err)
@@ -73,13 +82,62 @@ func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool)
 		return errors.WithStack(err)
 	}
 
-	// TODO(xlab): crosscompilation requires a standalone pipeline
-	// In fact, docker image can have build phase that build the correct version for itself.
-	//
-	// if runtime.GOOS != dockerGOOS {
-	// 	// required to build docker images
-	// 	return goBuildPkg(ctx, pkg, dockerGOOS, dir+"/"+dockerGOOS+"/"+binName)
-	// }
+	if !cgoEnabled && runtime.GOOS != dockerGOOS {
+		return goBuildPkg(ctx, pkg, dockerGOOS, filepath.Join(dir, dockerGOOS, binName), false)
+	} else if cgoEnabled {
+		// docker-targeted binary must be built from within Docker environment
+		return goBuildWithDocker(ctx, pkg, filepath.Join(dir, dockerGOOS), binName)
+	}
+
+	return nil
+}
+
+//go:embed docker/Dockerfile.cgo
+var cgoDockerfile []byte
+
+func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) error {
+	tmpDir := filepath.Join(os.TempDir(), "crust")
+	must.OK(os.MkdirAll(tmpDir, 0o700))
+
+	dockerfilePath := filepath.Join(tmpDir, "Dockerfile.cgo")
+	must.OK(ioutil.WriteFile(dockerfilePath, cgoDockerfile, 0o600))
+
+	absPkgPath, err := filepath.Abs(pkgPath)
+	must.OK(err)
+
+	// buildContext should be the module root containing go.sum and go.mod
+	// with the actualy bin package located under ./cmd/{binName}
+	buildContext := filepath.Base(filepath.Base(absPkgPath))
+
+	log := logger.Get(ctx)
+	log.With(zap.String("build_ctx", buildContext)).Info("Building CGO-enabled bin inside Docker")
+
+	if out, err := exec.Docker(
+		"build",
+		"--build-arg", "BIN_NAME="+binName,
+		"--tag", binName+"-cgo-build",
+		"-f", dockerfilePath,
+		buildContext,
+	).CombinedOutput(); err != nil {
+		_, _ = io.Copy(os.Stderr, bytes.NewReader(out))
+		err = errors.Wrapf(err, "failed to build %s inside Docker", binName)
+		return err
+	}
+
+	absOutPath, err := filepath.Abs(outPath)
+	must.OK(err)
+
+	if out, err := exec.Docker(
+		"run",
+		"--rm",
+		"-v", fmt.Sprintf("%s:%s", absOutPath, "/mnt"),
+		"--env", "BIN_NAME="+binName,
+		binName+"-cgo-build",
+	).CombinedOutput(); err != nil {
+		_, _ = io.Copy(os.Stderr, bytes.NewReader(out))
+		err = errors.Wrapf(err, "failed to copy %s outside of builder image", binName)
+		return err
+	}
 
 	return nil
 }

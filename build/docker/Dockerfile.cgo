@@ -1,0 +1,30 @@
+# prepare the building environment
+
+FROM golang:1.18.3-alpine as builder
+
+RUN apk add --no-cache git gcc make libc-dev linux-headers
+RUN set -eux; apk add --no-cache ca-certificates build-base
+
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
+RUN sha256sum /lib/libwasmvm_muslc.a | grep f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479
+
+WORKDIR /src
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+COPY . .
+
+ARG BIN_NAME
+RUN CGO_ENABLED=1 LEDGER_ENABLED=false BUILD_TAGS=muslc go build -trimpath -ldflags="-w -s" -o /out/${BIN_NAME} ./cmd/${BIN_NAME}
+
+# prepare image that exports the bin
+
+FROM alpine:latest
+
+VOLUME /mnt
+
+ARG BIN_NAME
+COPY --from=builder /out/${BIN_NAME} /bin/${BIN_NAME}
+
+ENV BIN_NAME ""
+CMD cp /bin/${BIN_NAME} /mnt/${BIN_NAME}
