@@ -3,9 +3,10 @@ package zstress
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/big"
 	"runtime"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -136,15 +137,29 @@ func Stress(ctx context.Context, config StressConfig) error {
 	log.Info("Broadcasting transactions...")
 	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		const period = 10
+
+		var mu sync.Mutex
 		var txNum uint32
-		spawn("monitoring", parallel.Fail, func(ctx context.Context) error {
+		var minGasUsed int64 = math.MaxInt64
+		var maxGasUsed int64
+		spawn("stats", parallel.Fail, func(ctx context.Context) error {
 			log := logger.Get(ctx)
 			for {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
 				case <-time.After(period * time.Second):
-					log.Info("Transaction rate [txs/s]", zap.Float32("rate", float32(atomic.SwapUint32(&txNum, 0))/period))
+					mu.Lock()
+					txNumLocal := txNum
+					txNum = 0
+					minGasUsedLocal := minGasUsed
+					maxGasUsedLocal := maxGasUsed
+					mu.Unlock()
+
+					log.Info("Stress stats",
+						zap.Float32("txRate", float32(txNumLocal)/period),
+						zap.Int64("minGasUsed", minGasUsedLocal),
+						zap.Int64("maxGasUsed", maxGasUsedLocal))
 				}
 			}
 		})
@@ -174,7 +189,15 @@ func Stress(ctx context.Context, config StressConfig) error {
 								zap.Int64("gasUsed", result.GasUsed))
 							txIndex++
 
-							atomic.AddUint32(&txNum, 1)
+							mu.Lock()
+							txNum++
+							if result.GasUsed < minGasUsed {
+								minGasUsed = result.GasUsed
+							}
+							if result.GasUsed > maxGasUsed {
+								maxGasUsed = result.GasUsed
+							}
+							mu.Unlock()
 						}
 						return nil
 					})
