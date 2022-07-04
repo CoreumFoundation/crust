@@ -1,22 +1,22 @@
 package build
 
 import (
-	"bytes"
 	"context"
-	_ "embed"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/build/exec"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+
+	_ "embed"
 )
 
 const dockerGOOS = "linux"
@@ -101,32 +101,43 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 	buildContext := filepath.Dir(filepath.Dir(absPkgPath))
 
 	log := logger.Get(ctx)
-	log.With(zap.String("build_ctx", buildContext)).Info("Building CGO-enabled bin inside Docker")
-
-	if out, err := exec.Docker(
-		"build",
-		"--build-arg", "BIN_NAME="+binName,
-		"--tag", binName+"-cgo-build",
-		"-f", dockerfilePath,
-		buildContext,
-	).CombinedOutput(); err != nil {
-		_, _ = io.Copy(os.Stderr, bytes.NewReader(out))
-		err = errors.Wrapf(err, "failed to build %s inside Docker", binName)
-		return err
-	}
+	log.With(zap.String("buildContext", buildContext)).Info("Building CGO-enabled bin inside Docker")
 
 	absOutPath, err := filepath.Abs(outPath)
 	must.OK(err)
 
-	if out, err := exec.Docker(
-		"run",
-		"--rm",
-		"-v", fmt.Sprintf("%s:%s", absOutPath, "/mnt"),
-		"--env", "BIN_NAME="+binName,
-		binName+"-cgo-build",
-	).CombinedOutput(); err != nil {
-		_, _ = io.Copy(os.Stderr, bytes.NewReader(out))
-		err = errors.Wrapf(err, "failed to copy %s outside of builder image", binName)
+	dockerCmd, err := exec.LookPath("docker")
+	if err != nil {
+		err = errors.Wrap(err, "docker command is not available in PATH")
+		return err
+	}
+
+	buildCmd := &exec.Cmd{
+		Path: dockerCmd,
+		Args: []string{
+			"docker", "build",
+			"--build-arg", "BIN_NAME=" + binName,
+			"--tag", binName + "-cgo-build",
+			"-f", dockerfilePath,
+			buildContext,
+		},
+	}
+	log.Debug(buildCmd.String())
+
+	runCmd := &exec.Cmd{
+		Path: dockerCmd,
+		Args: []string{
+			"docker", "run",
+			"--rm",
+			"-v", fmt.Sprintf("%s:%s", absOutPath, "/mnt"),
+			"--env", "BIN_NAME=" + binName,
+			binName + "-cgo-build",
+		},
+	}
+	log.Debug(runCmd.String())
+
+	if err := libexec.Exec(ctx, buildCmd, runCmd); err != nil {
+		err = errors.Wrapf(err, "failed to build %s inside Docker", binName)
 		return err
 	}
 
