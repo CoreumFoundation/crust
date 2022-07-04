@@ -43,92 +43,12 @@ type tx struct {
 }
 
 // Stress runs a benchmark test
-// nolint:funlen // TODO(wojtek/ysv) refactor this func into smaller parts
 func Stress(ctx context.Context, config StressConfig) error {
-	numOfAccounts := len(config.Accounts)
 	log := logger.Get(ctx)
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
 	log.Info("Preparing signed transactions...")
-	var signedTxs [][][]byte
-	var initialAccountSequences []uint64
-	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		queue := make(chan tx)
-		results := make(chan tx)
-		for i := 0; i < runtime.NumCPU(); i++ {
-			spawn(fmt.Sprintf("signer-%d", i), parallel.Continue, func(ctx context.Context) error {
-				for {
-					select {
-					case <-ctx.Done():
-						return ctx.Err()
-					case tx, ok := <-queue:
-						if !ok {
-							return nil
-						}
-						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
-						select {
-						case <-ctx.Done():
-							return ctx.Err()
-						case results <- tx:
-						}
-					}
-				}
-			})
-		}
-		spawn("enqueue", parallel.Continue, func(ctx context.Context) error {
-			initialAccountSequences = make([]uint64, 0, numOfAccounts)
-
-			for i := 0; i < numOfAccounts; i++ {
-				fromPrivateKey := config.Accounts[i]
-				toPrivateKeyIndex := i + 1
-				if toPrivateKeyIndex >= numOfAccounts {
-					toPrivateKeyIndex = 0
-				}
-				toPrivateKey := config.Accounts[toPrivateKeyIndex]
-
-				accNum, accSeq, err := getAccountNumberSequence(ctx, client, fromPrivateKey.Address())
-				if err != nil {
-					return errors.WithStack(fmt.Errorf("fetching account number and sequence failed: %w", err))
-				}
-				initialAccountSequences = append(initialAccountSequences, accSeq)
-
-				tx := tx{
-					AccountIndex: i,
-					From:         cored.Wallet{Name: "sender", Key: fromPrivateKey, AccountNumber: accNum, AccountSequence: accSeq},
-					To:           cored.Wallet{Name: "receiver", Key: toPrivateKey},
-				}
-
-				for j := 0; j < config.NumOfTransactions; j++ {
-					tx.TxIndex = j
-					select {
-					case <-ctx.Done():
-						return ctx.Err()
-					case queue <- tx:
-					}
-					tx.From.AccountSequence++
-				}
-			}
-			return nil
-		})
-		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
-			signedTxs = make([][][]byte, numOfAccounts)
-			for i := 0; i < numOfAccounts; i++ {
-				signedTxs[i] = make([][]byte, config.NumOfTransactions)
-			}
-			for i := 0; i < numOfAccounts; i++ {
-				for j := 0; j < config.NumOfTransactions; j++ {
-					select {
-					case <-ctx.Done():
-						return ctx.Err()
-					case result := <-results:
-						signedTxs[result.AccountIndex][result.TxIndex] = result.TxBytes
-					}
-				}
-			}
-			return nil
-		})
-		return nil
-	})
+	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, client)
 	if err != nil {
 		return err
 	}
@@ -212,6 +132,93 @@ func Stress(ctx context.Context, config StressConfig) error {
 	}
 	log.Info("Benchmark finished")
 	return nil
+}
+
+func prepareTransactions(ctx context.Context, config StressConfig, client cored.Client) ([][][]byte, []uint64, error) {
+	numOfAccounts := len(config.Accounts)
+	var signedTxs [][][]byte
+	var initialAccountSequences []uint64
+	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		queue := make(chan tx)
+		results := make(chan tx)
+		for i := 0; i < runtime.NumCPU(); i++ {
+			spawn(fmt.Sprintf("signer-%d", i), parallel.Continue, func(ctx context.Context) error {
+				for {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case tx, ok := <-queue:
+						if !ok {
+							return nil
+						}
+						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
+						select {
+						case <-ctx.Done():
+							return ctx.Err()
+						case results <- tx:
+						}
+					}
+				}
+			})
+		}
+		spawn("enqueue", parallel.Continue, func(ctx context.Context) error {
+			initialAccountSequences = make([]uint64, 0, numOfAccounts)
+
+			for i := 0; i < numOfAccounts; i++ {
+				fromPrivateKey := config.Accounts[i]
+				toPrivateKeyIndex := i + 1
+				if toPrivateKeyIndex >= numOfAccounts {
+					toPrivateKeyIndex = 0
+				}
+				toPrivateKey := config.Accounts[toPrivateKeyIndex]
+
+				accNum, accSeq, err := getAccountNumberSequence(ctx, client, fromPrivateKey.Address())
+				if err != nil {
+					return errors.WithStack(fmt.Errorf("fetching account number and sequence failed: %w", err))
+				}
+				initialAccountSequences = append(initialAccountSequences, accSeq)
+
+				tx := tx{
+					AccountIndex: i,
+					From:         cored.Wallet{Name: "sender", Key: fromPrivateKey, AccountNumber: accNum, AccountSequence: accSeq},
+					To:           cored.Wallet{Name: "receiver", Key: toPrivateKey},
+				}
+
+				for j := 0; j < config.NumOfTransactions; j++ {
+					tx.TxIndex = j
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case queue <- tx:
+					}
+					tx.From.AccountSequence++
+				}
+			}
+			return nil
+		})
+		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
+			signedTxs = make([][][]byte, numOfAccounts)
+			for i := 0; i < numOfAccounts; i++ {
+				signedTxs[i] = make([][]byte, config.NumOfTransactions)
+			}
+			for i := 0; i < numOfAccounts; i++ {
+				for j := 0; j < config.NumOfTransactions; j++ {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case result := <-results:
+						signedTxs[result.AccountIndex][result.TxIndex] = result.TxBytes
+					}
+				}
+			}
+			return nil
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return signedTxs, initialAccountSequences, nil
 }
 
 func getAccountNumberSequence(ctx context.Context, client cored.Client, accountAddress string) (uint64, uint64, error) {
