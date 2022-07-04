@@ -123,6 +123,7 @@ type BroadcastResult struct {
 	GasUsed int64
 }
 
+// ClientCtx returns client context
 func (c Client) ClientCtx() client.Context {
 	return c.clientCtx
 }
@@ -246,6 +247,7 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	return c.Encode(signedTx), nil
 }
 
+// AddValidatorToGenesis adds validator to the genesis
 func AddValidatorToGenesis(
 	g *config.Genesis,
 	clientCtx client.Context,
