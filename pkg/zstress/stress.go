@@ -156,7 +156,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 					spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
 						for txIndex := 0; txIndex < config.NumOfTransactions; {
 							tx := accountTxs[txIndex]
-							txHash, err := client.Broadcast(ctx, tx)
+							result, err := client.Broadcast(ctx, tx)
 							if err != nil {
 								if errors.Is(err, ctx.Err()) {
 									return err
@@ -170,7 +170,8 @@ func Stress(ctx context.Context, config StressConfig) error {
 								}
 								continue
 							}
-							log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
+							log.Debug("Transaction broadcasted", zap.String("txHash", result.TxHash),
+								zap.Int64("gasUsed", result.GasUsed))
 							txIndex++
 
 							atomic.AddUint32(&txNum, 1)

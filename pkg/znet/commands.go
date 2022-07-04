@@ -285,13 +285,14 @@ func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet)
 	if err != nil {
 		return err
 	}
-	txHash, err := client.Broadcast(ctx, txBytes)
+	result, err := client.Broadcast(ctx, txBytes)
 	if err != nil {
 		return err
 	}
 
 	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
-		zap.Stringer("amount", amount), zap.String("txHash", txHash))
+		zap.Stringer("amount", amount), zap.String("txHash", result.TxHash),
+		zap.Int64("gasUsed", result.GasUsed))
 
 	fromBalance, err := client.QueryBankBalances(ctx, from)
 	if err != nil {
