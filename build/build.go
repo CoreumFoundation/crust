@@ -98,7 +98,7 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 
 	// buildContext should be the module root containing go.sum and go.mod
 	// with the actualy bin package located under ./cmd/{binName}
-	buildContext := filepath.Base(filepath.Base(absPkgPath))
+	buildContext := filepath.Dir(filepath.Dir(absPkgPath))
 
 	log := logger.Get(ctx)
 	log.With(zap.String("build_ctx", buildContext)).Info("Building CGO-enabled bin inside Docker")
