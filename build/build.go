@@ -1,9 +1,9 @@
 package build
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -73,11 +73,11 @@ func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool)
 		return errors.WithStack(err)
 	}
 
-	if !cgoEnabled && runtime.GOOS != dockerGOOS {
-		return goBuildPkg(ctx, pkg, dockerGOOS, filepath.Join(dir, dockerGOOS, binName), false)
-	} else if cgoEnabled {
+	if cgoEnabled {
 		// docker-targeted binary must be built from within Docker environment
 		return goBuildWithDocker(ctx, pkg, filepath.Join(dir, dockerGOOS), binName)
+	} else if runtime.GOOS != dockerGOOS {
+		return goBuildPkg(ctx, pkg, dockerGOOS, filepath.Join(dir, dockerGOOS, binName), false)
 	}
 
 	return nil
@@ -87,12 +87,6 @@ func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool)
 var cgoDockerfile []byte
 
 func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) error {
-	tmpDir := filepath.Join(os.TempDir(), "crust")
-	must.OK(os.MkdirAll(tmpDir, 0o700))
-
-	dockerfilePath := filepath.Join(tmpDir, "Dockerfile.cgo")
-	must.OK(ioutil.WriteFile(dockerfilePath, cgoDockerfile, 0o600))
-
 	absPkgPath, err := filepath.Abs(pkgPath)
 	must.OK(err)
 
@@ -113,12 +107,13 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 	}
 
 	buildCmd := &exec.Cmd{
-		Path: dockerCmd,
+		Path:  dockerCmd,
+		Stdin: bytes.NewReader(cgoDockerfile),
 		Args: []string{
 			"docker", "build",
 			"--build-arg", "BIN_NAME=" + binName,
 			"--tag", binName + "-cgo-build",
-			"-f", dockerfilePath,
+			"-f", "-",
 			buildContext,
 		},
 	}
