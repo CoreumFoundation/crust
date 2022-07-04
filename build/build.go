@@ -21,7 +21,6 @@ import (
 
 const dockerGOOS = "linux"
 
-// FIXME (wojciech): This assumes that repositories are public which is not true at the moment but will be soon
 const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
 
 func buildAll(deps build.DepsFunc) {
@@ -31,17 +30,7 @@ func buildAll(deps build.DepsFunc) {
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo, ensureCoreumRepo)
 
-	pkg := "../coreum/cmd/cored"
-
-	// FIXME (wojciech): Remove this code once `cored` package is moved to root directory of the repository after migration
-	if _, err := os.Stat(pkg); err != nil {
-		if !os.IsNotExist(err) {
-			return errors.WithStack(err)
-		}
-		pkg = "../coreum/cored/cmd/cored"
-	}
-
-	return buildNativeAndDocker(ctx, pkg, "bin/cored", true)
+	return buildNativeAndDocker(ctx, "../coreum/cmd/cored", "bin/cored", true)
 }
 
 func buildCrust(ctx context.Context, deps build.DepsFunc) error {
@@ -51,12 +40,14 @@ func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "crust/cmd/znet", runtime.GOOS, "bin/.cache/znet", false)
+
+	return goBuildPkg(ctx, "cmd/znet", runtime.GOOS, "bin/.cache/znet", false)
 }
 
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return buildNativeAndDocker(ctx, "crust/cmd/zstress", "bin/.cache/zstress", false)
+
+	return buildNativeAndDocker(ctx, "cmd/zstress", "bin/.cache/zstress", false)
 }
 
 func ensureAllRepos(deps build.DepsFunc) {
