@@ -15,11 +15,13 @@ RUN go mod download
 COPY . .
 
 ARG BIN_NAME
-RUN CGO_ENABLED=1 LEDGER_ENABLED=false BUILD_TAGS=muslc go build -trimpath -ldflags="-w -s" -o /out/${BIN_NAME} ./cmd/${BIN_NAME}
+ARG BIN_PACKAGE
+
+RUN CGO_ENABLED=1 LEDGER_ENABLED=false BUILD_TAGS=muslc go build -trimpath -ldflags="-w -s" -o /out/${BIN_NAME} ${BIN_PACKAGE}
 
 # prepare image that exports the bin
 
-FROM alpine:latest
+FROM alpine:3.16.0
 
 VOLUME /mnt
 

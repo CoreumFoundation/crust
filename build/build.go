@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	gobuild "go/build"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -15,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/tools/go/packages"
 
 	_ "embed"
 )
@@ -29,7 +32,6 @@ func buildAll(deps build.DepsFunc) {
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo, ensureCoreumRepo)
-
 	return buildNativeAndDocker(ctx, "../coreum/cmd/cored", "bin/cored", true)
 }
 
@@ -40,13 +42,11 @@ func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-
 	return goBuildPkg(ctx, "cmd/znet", runtime.GOOS, "bin/.cache/znet", false)
 }
 
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-
 	return buildNativeAndDocker(ctx, "cmd/zstress", "bin/.cache/zstress", false)
 }
 
@@ -87,15 +87,13 @@ func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool)
 var cgoDockerfile []byte
 
 func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) error {
-	absPkgPath, err := filepath.Abs(pkgPath)
-	must.OK(err)
-
-	// buildContext should be the module root containing go.sum and go.mod
-	// with the actualy bin package located under ./cmd/{binName}
-	buildContext := filepath.Dir(filepath.Dir(absPkgPath))
+	modulePath, binPackage, err := moduleAndBinFromPkgDir(ctx, pkgPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	log := logger.Get(ctx)
-	log.With(zap.String("buildContext", buildContext)).Info("Building CGO-enabled bin inside Docker")
+	log.With(zap.String("buildContext", modulePath)).Info("Building CGO-enabled bin inside Docker")
 
 	absOutPath, err := filepath.Abs(outPath)
 	must.OK(err)
@@ -112,9 +110,10 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 		Args: []string{
 			"docker", "build",
 			"--build-arg", "BIN_NAME=" + binName,
-			"--tag", binName + "-cgo-build",
+			"--build-arg", "BIN_PACKAGE=" + binPackage,
+			"--tag", fmt.Sprintf("crust-%s-cgo-build", binName),
 			"-f", "-",
-			buildContext,
+			modulePath,
 		},
 	}
 	log.Debug(buildCmd.String())
@@ -137,4 +136,41 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 	}
 
 	return nil
+}
+
+// moduleAndBinFromPkgDir accepts package dir path, which might be relative,
+// and returns its absolute module path (for build context) and relative bin package within that module.
+func moduleAndBinFromPkgDir(ctx context.Context, dirPath string) (modulePath, binPackage string, err error) {
+	var pkg *gobuild.Package
+
+	pkg, err = gobuild.ImportDir(dirPath, 0)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to import specified bin package: %s", dirPath)
+		return
+	}
+
+	if !pkg.IsCommand() {
+		err = errors.Errorf("imported package is not a command (no main): %s", dirPath)
+		return
+	}
+
+	pkgLoadConfig := &packages.Config{
+		Context: ctx,
+		Logf:    logger.Get(ctx).Sugar().Debugf,
+		Dir:     dirPath,
+		Mode:    packages.NeedName | packages.NeedModule,
+	}
+
+	targetPackages, err := packages.Load(pkgLoadConfig, ".")
+	if err != nil {
+		err = errors.Wrapf(err, "failed to load packages from: %s", dirPath)
+		return
+	}
+
+	absPkgPath, err := filepath.Abs(dirPath)
+	must.OK(err)
+
+	modulePath = targetPackages[0].Module.Dir
+	binPackage = fmt.Sprintf("./%s", strings.TrimPrefix(absPkgPath, modulePath+"/"))
+	return
 }
