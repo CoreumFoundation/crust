@@ -70,21 +70,23 @@ func Generate(cfg GenerateConfig) error {
 	for i := 0; i < cfg.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
-		nodeIDs = append(nodeIDs, config.NodeID(nodePublicKey))
+		nodeIDs = append(nodeIDs, cored.NodeID(nodePublicKey))
 		validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 		stakerPublicKey, stakerPrivateKey := types.GenerateSecp256k1Key()
 
 		valDir := fmt.Sprintf("%s/validators/%d", outDir, i)
 
-		config.NodeConfig{
+		err = config.NodeConfig{
 			Name:           fmt.Sprintf("validator-%d", i),
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
 			ValidatorKey:   validatorPrivateKey,
 		}.Save(valDir)
+		must.OK(err)
 
-		genesis.FundAccount(stakerPublicKey, "100000000000000000000000core")
+		err = genesis.FundAccount(stakerPublicKey, "100000000000000000000000core")
+		must.OK(err)
 		cored.AddValidatorToGenesis(genesis, clientCtx, validatorPublicKey, stakerPrivateKey, "100000000core")
 	}
 	must.OK(ioutil.WriteFile(outDir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
@@ -94,7 +96,8 @@ func Generate(cfg GenerateConfig) error {
 		for j := 0; j < cfg.NumOfAccountsPerInstance; j++ {
 			accountPublicKey, accountPrivateKey := types.GenerateSecp256k1Key()
 			accounts = append(accounts, accountPrivateKey)
-			genesis.FundAccount(accountPublicKey, "10000000000000000000000000000core")
+			err = genesis.FundAccount(accountPublicKey, "10000000000000000000000000000core")
+			must.OK(err)
 		}
 
 		instanceDir := fmt.Sprintf("%s/instances/%d", outDir, i)
@@ -103,7 +106,8 @@ func Generate(cfg GenerateConfig) error {
 	}
 
 	for i := 0; i < cfg.NumOfValidators; i++ {
-		genesis.Save(fmt.Sprintf("%s/validators/%d", outDir, i))
+		err = genesis.Save(fmt.Sprintf("%s/validators/%d", outDir, i))
+		must.OK(err)
 	}
 
 	nodeIDs = make([]string, 0, cfg.NumOfSentryNodes)
@@ -114,13 +118,15 @@ func Generate(cfg GenerateConfig) error {
 
 		nodeDir := fmt.Sprintf("%s/sentry-nodes/%d", outDir, i)
 
-		config.NodeConfig{
+		err = config.NodeConfig{
 			Name:           fmt.Sprintf("sentry-node-%d", i),
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
 		}.Save(nodeDir)
+		must.OK(err)
 
-		genesis.Save(nodeDir)
+		err = genesis.Save(nodeDir)
+		must.OK(err)
 	}
 	must.OK(ioutil.WriteFile(outDir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 	return nil

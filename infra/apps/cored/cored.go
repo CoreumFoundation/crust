@@ -37,7 +37,8 @@ func New(name string, config infra.Config, genesis *cfg.Genesis, appInfo *infra.
 
 	stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
 
-	genesis.FundAccount(stakerPubKey, "100000000000000000000000core")
+	err = genesis.FundAccount(stakerPubKey, "100000000000000000000000core")
+	must.OK(err)
 	clientCtx := NewContext(genesis.ChainID(), nil)
 	AddValidatorToGenesis(genesis, clientCtx, validatorPublicKey, stakerPrivKey, "100000000core")
 
@@ -45,7 +46,7 @@ func New(name string, config infra.Config, genesis *cfg.Genesis, appInfo *infra.
 		name:                name,
 		homeDir:             config.AppDir + "/" + name,
 		config:              config,
-		nodeID:              cfg.NodeID(nodePublicKey),
+		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
 		genesis:             genesis,
@@ -113,7 +114,8 @@ func (c Cored) Info() infra.DeploymentInfo {
 // AddWallet adds wallet to genesis block and local keystore
 func (c Cored) AddWallet(balances string) types.Wallet {
 	pubKey, privKey := types.GenerateSecp256k1Key()
-	c.genesis.FundAccount(pubKey, balances)
+	err := c.genesis.FundAccount(pubKey, balances)
+	must.OK(err)
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -210,17 +212,17 @@ func (c Cored) Deployment() infra.Deployment {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				cfg.NodeConfig{
+				err := cfg.NodeConfig{
 					Name:           c.name,
 					PrometheusPort: c.ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,
 					ValidatorKey:   c.validatorPrivateKey,
 				}.Save(c.homeDir)
+				must.OK(err)
 
 				AddKeysToStore(c.homeDir, c.walletKeys)
 
-				c.genesis.Save(c.homeDir)
-				return nil
+				return c.genesis.Save(c.homeDir)
 			},
 			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 				return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)

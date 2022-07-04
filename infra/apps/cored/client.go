@@ -119,6 +119,7 @@ type BroadcastResult struct {
 	GasUsed int64
 }
 
+// ClientCtx returns client context
 func (c Client) ClientCtx() client.Context {
 	return c.clientCtx
 }
