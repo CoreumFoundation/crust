@@ -18,7 +18,7 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 	var sender types.Wallet
 
 	return func(ctx context.Context) error {
-			sender = chain.AddWallet("180000010core")
+			sender = chain.AddWallet("180000010" + chain.TokenSymbol())
 			return nil
 		},
 		func(ctx context.Context, t *testing.T) {

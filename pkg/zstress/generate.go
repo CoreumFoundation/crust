@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -65,7 +66,7 @@ func Generate(cfg GenerateConfig) error {
 	must.OK(err)
 	genesis, err := network.Genesis()
 	must.OK(err)
-	clientCtx := cored.NewContext(genesis.ChainID(), nil)
+	clientCtx := client.NewClientContext(client.WithChainID(genesis.ChainID()))
 	nodeIDs := make([]string, 0, cfg.NumOfValidators)
 	for i := 0; i < cfg.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -85,9 +86,11 @@ func Generate(cfg GenerateConfig) error {
 		}.Save(valDir)
 		must.OK(err)
 
-		err = genesis.FundAccount(stakerPublicKey, "100000000000000000000000core")
+		err = genesis.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
 		must.OK(err)
-		cored.AddValidatorToGenesis(genesis, clientCtx, validatorPublicKey, stakerPrivateKey, "100000000core")
+		tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
+		must.OK(err)
+		genesis.AddGenesisTx(tx)
 	}
 	must.OK(ioutil.WriteFile(outDir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 
@@ -96,7 +99,7 @@ func Generate(cfg GenerateConfig) error {
 		for j := 0; j < cfg.NumOfAccountsPerInstance; j++ {
 			accountPublicKey, accountPrivateKey := types.GenerateSecp256k1Key()
 			accounts = append(accounts, accountPrivateKey)
-			err = genesis.FundAccount(accountPublicKey, "10000000000000000000000000000core")
+			err = genesis.FundAccount(accountPublicKey, "10000000000000000000000000000"+network.TokenSymbol())
 			must.OK(err)
 		}
 
