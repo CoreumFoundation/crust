@@ -35,9 +35,12 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
-	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
+	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
-	clientCtx := NewContext(chainID, rpcClient)
+	clientCtx := client.NewClientContext(
+		client.WithChainID(chainID),
+		client.WithRPCClient(rpcClient),
+	)
 	return Client{
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
@@ -47,7 +50,7 @@ func NewClient(chainID string, addr string) Client {
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx       client.Context
+	clientCtx       cosmosclient.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
 }
@@ -120,7 +123,7 @@ type BroadcastResult struct {
 }
 
 // ClientCtx returns client context
-func (c Client) ClientCtx() client.Context {
+func (c Client) ClientCtx() cosmosclient.Context {
 	return c.clientCtx
 }
 
@@ -136,7 +139,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			return BroadcastResult{}, errors.WithStack(err)
 		}
 
-		errRes := client.CheckTendermintError(err, encodedTx)
+		errRes := cosmosclient.CheckTendermintError(err, encodedTx)
 		if !isTxInMempool(errRes) {
 			return BroadcastResult{}, errors.WithStack(err)
 		}
@@ -168,7 +171,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
 			}
-			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+			if errRes := cosmosclient.CheckTendermintError(err, encodedTx); errRes != nil {
 				if isTxInMempool(errRes) {
 					return retry.Retryable(errors.WithStack(err))
 				}

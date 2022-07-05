@@ -17,7 +17,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 
-	cfg "github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -29,7 +30,7 @@ import (
 const AppType infra.AppType = "cored"
 
 // New creates new cored app
-func New(name string, config infra.Config, genesis *cfg.Genesis, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
+func New(name string, cfg infra.Config, genesis *config.Genesis, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -37,15 +38,18 @@ func New(name string, config infra.Config, genesis *cfg.Genesis, appInfo *infra.
 
 	stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
 
-	err = genesis.FundAccount(stakerPubKey, "100000000000000000000000core")
+	err = genesis.FundAccount(stakerPubKey, "100000000000000000000000"+genesis.TokenSymbol())
 	must.OK(err)
-	clientCtx := NewContext(genesis.ChainID(), nil)
-	AddValidatorToGenesis(genesis, clientCtx, validatorPublicKey, stakerPrivKey, "100000000core")
+	clientCtx := client.NewClientContext(client.WithChainID(genesis.ChainID()))
+
+	tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+genesis.TokenSymbol())
+	must.OK(err)
+	genesis.AddGenesisTx(tx)
 
 	cored := Cored{
 		name:                name,
-		homeDir:             config.AppDir + "/" + name,
-		config:              config,
+		homeDir:             cfg.AppDir + "/" + name,
+		config:              cfg,
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
@@ -72,7 +76,7 @@ type Cored struct {
 	nodeID              string
 	nodePrivateKey      ed25519.PrivateKey
 	validatorPrivateKey ed25519.PrivateKey
-	genesis             *cfg.Genesis
+	genesis             *config.Genesis
 	appInfo             *infra.AppInfo
 	ports               Ports
 	rootNode            *Cored
@@ -99,6 +103,12 @@ func (c Cored) NodeID() string {
 // Ports returns ports used by the application
 func (c Cored) Ports() Ports {
 	return c.ports
+}
+
+// TokenSymbol returns the governance token symbol. This is different
+// for each network(i.e mainnet, testnet, etc)
+func (c Cored) TokenSymbol() string {
+	return c.genesis.TokenSymbol()
 }
 
 // ChainID returns ID of the chain
@@ -212,7 +222,7 @@ func (c Cored) Deployment() infra.Deployment {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				err := cfg.NodeConfig{
+				err := config.NodeConfig{
 					Name:           c.name,
 					PrometheusPort: c.ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,
