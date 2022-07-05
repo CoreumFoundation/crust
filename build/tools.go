@@ -320,13 +320,17 @@ func untar(reader io.Reader, path string) error {
 	}
 }
 
+func cacheDir() string {
+	return must.String(os.UserCacheDir()) + "/crust"
+}
+
 func toolDir(name string) string {
 	info, exists := tools[name]
 	if !exists {
 		panic(errors.Errorf("tool %s is not defined", name))
 	}
 
-	return must.String(os.UserCacheDir()) + "/coreum/" + name + "-" + info.Version
+	return cacheDir() + "/" + name + "-" + info.Version
 }
 
 func ensureDir(file string) error {

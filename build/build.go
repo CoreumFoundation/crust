@@ -1,25 +1,13 @@
 package build
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	gobuild "go/build"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
-	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
-	"golang.org/x/tools/go/packages"
-
-	_ "embed"
 )
 
 const dockerGOOS = "linux"
@@ -75,116 +63,10 @@ func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool)
 
 	if cgoEnabled {
 		// docker-targeted cgo-enabled binary must be built from within Docker environment
-		return goBuildWithDocker(ctx, pkg, filepath.Join(dir, "alpine-cgo"), binName)
+		return goBuildWithDocker(ctx, pkg, filepath.Join(dir, "alpine-cgo", binName))
 	} else if runtime.GOOS != dockerGOOS {
 		return goBuildPkg(ctx, pkg, dockerGOOS, filepath.Join(dir, dockerGOOS, binName), false)
 	}
 
 	return nil
-}
-
-//go:embed docker/Dockerfile.cgo
-var cgoDockerfile []byte
-
-func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) error {
-	modulePath, binPackage, err := moduleAndBinFromPkgDir(ctx, pkgPath)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	log := logger.Get(ctx)
-	log.With(zap.String("buildContext", modulePath)).Info("Building CGO-enabled bin inside Docker")
-
-	absOutPath, err := filepath.Abs(outPath)
-	must.OK(err)
-
-	dockerCmd, err := exec.LookPath("docker")
-	if err != nil {
-		err = errors.Wrap(err, "docker command is not available in PATH")
-		return err
-	}
-
-	var targetArch = "x86_64"
-	var targetPlatform = "linux/amd64"
-	if runtime.GOARCH == "arm64" {
-		targetArch = "aarch64"
-		targetPlatform = "linux/arm64"
-	}
-
-	buildCmd := &exec.Cmd{
-		Path:  dockerCmd,
-		Stdin: bytes.NewReader(cgoDockerfile),
-		Env: []string{
-			"DOCKER_BUILDKIT=1",
-			"BUILDKIT_INLINE_CACHE=1",
-		},
-		Args: []string{
-			"docker", "build",
-			"--platform", targetPlatform,
-			"--build-arg", "GO_VERSION=" + tools["go"].Version,
-			"--build-arg", "TARGET_ARCH=" + targetArch,
-			"--build-arg", "BIN_NAME=" + binName,
-			"--build-arg", "BIN_PACKAGE=" + binPackage,
-			"--tag", fmt.Sprintf("crust-%s-cgo-build", binName),
-			"-f", "-",
-			modulePath,
-		},
-	}
-
-	runCmd := &exec.Cmd{
-		Path: dockerCmd,
-		Args: []string{
-			"docker", "run",
-			"--rm",
-			"--platform", targetPlatform,
-			"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-			"-v", fmt.Sprintf("%s:%s", absOutPath, "/mnt"),
-			"--env", "BIN_NAME=" + binName,
-			fmt.Sprintf("crust-%s-cgo-build", binName),
-		},
-	}
-
-	if err := libexec.Exec(ctx, buildCmd, runCmd); err != nil {
-		err = errors.Wrapf(err, "failed to build %s inside Docker", binName)
-		return err
-	}
-
-	return nil
-}
-
-// moduleAndBinFromPkgDir accepts package dir path, which might be relative,
-// and returns its absolute module path (for build context) and relative bin package within that module.
-func moduleAndBinFromPkgDir(ctx context.Context, dirPath string) (modulePath, binPackage string, err error) {
-	var pkg *gobuild.Package
-
-	pkg, err = gobuild.ImportDir(dirPath, 0)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to import specified bin package: %s", dirPath)
-		return
-	}
-
-	if !pkg.IsCommand() {
-		err = errors.Errorf("imported package is not a command (no main): %s", dirPath)
-		return
-	}
-
-	pkgLoadConfig := &packages.Config{
-		Context: ctx,
-		Logf:    logger.Get(ctx).Sugar().Debugf,
-		Dir:     dirPath,
-		Mode:    packages.NeedName | packages.NeedModule,
-	}
-
-	targetPackages, err := packages.Load(pkgLoadConfig, ".")
-	if err != nil {
-		err = errors.Wrapf(err, "failed to load packages from: %s", dirPath)
-		return
-	}
-
-	absPkgPath, err := filepath.Abs(dirPath)
-	must.OK(err)
-
-	modulePath = targetPackages[0].Module.Dir
-	binPackage = fmt.Sprintf("./%s", strings.TrimPrefix(absPkgPath, modulePath+"/"))
-	return
 }
