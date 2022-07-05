@@ -74,8 +74,8 @@ func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool)
 	}
 
 	if cgoEnabled {
-		// docker-targeted binary must be built from within Docker environment
-		return goBuildWithDocker(ctx, pkg, filepath.Join(dir, dockerGOOS), binName)
+		// docker-targeted cgo-enabled binary must be built from within Docker environment
+		return goBuildWithDocker(ctx, pkg, filepath.Join(dir, "muslc"), binName)
 	} else if runtime.GOOS != dockerGOOS {
 		return goBuildPkg(ctx, pkg, dockerGOOS, filepath.Join(dir, dockerGOOS, binName), false)
 	}
