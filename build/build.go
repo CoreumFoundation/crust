@@ -121,19 +121,18 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 			modulePath,
 		},
 	}
-	log.Debug(buildCmd.String())
 
 	runCmd := &exec.Cmd{
 		Path: dockerCmd,
 		Args: []string{
 			"docker", "run",
 			"--rm",
+			"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 			"-v", fmt.Sprintf("%s:%s", absOutPath, "/mnt"),
 			"--env", "BIN_NAME=" + binName,
 			binName + "-cgo-build",
 		},
 	}
-	log.Debug(runCmd.String())
 
 	if err := libexec.Exec(ctx, buildCmd, runCmd); err != nil {
 		err = errors.Wrapf(err, "failed to build %s inside Docker", binName)
