@@ -3,9 +3,10 @@ package zstress
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/big"
 	"runtime"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -42,13 +43,99 @@ type tx struct {
 }
 
 // Stress runs a benchmark test
-// nolint:funlen // TODO(wojtek/ysv) refactor this func into smaller parts
 func Stress(ctx context.Context, config StressConfig) error {
-	numOfAccounts := len(config.Accounts)
 	log := logger.Get(ctx)
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
 	log.Info("Preparing signed transactions...")
+	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, client)
+	if err != nil {
+		return err
+	}
+	log.Info("Transactions prepared")
+
+	log.Info("Broadcasting transactions...")
+	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+		const period = 10
+
+		var mu sync.Mutex
+		var txNum uint32
+		var minGasUsed int64 = math.MaxInt64
+		var maxGasUsed int64
+		spawn("stats", parallel.Fail, func(ctx context.Context) error {
+			log := logger.Get(ctx)
+			for {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case <-time.After(period * time.Second):
+					mu.Lock()
+					txNumLocal := txNum
+					txNum = 0
+					minGasUsedLocal := minGasUsed
+					maxGasUsedLocal := maxGasUsed
+					mu.Unlock()
+
+					log.Info("Stress stats",
+						zap.Float32("txRate", float32(txNumLocal)/period),
+						zap.Int64("minGasUsed", minGasUsedLocal),
+						zap.Int64("maxGasUsed", maxGasUsedLocal))
+				}
+			}
+		})
+		spawn("accounts", parallel.Exit, func(ctx context.Context) error {
+			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
+				for i, accountTxs := range signedTxs {
+					accountTxs := accountTxs
+					initialSequence := initialAccountSequences[i]
+					spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
+						for txIndex := 0; txIndex < config.NumOfTransactions; {
+							tx := accountTxs[txIndex]
+							result, err := client.Broadcast(ctx, tx)
+							if err != nil {
+								if errors.Is(err, ctx.Err()) {
+									return err
+								}
+								if expectedAccSeq, ok := cored.FetchSequenceFromError(err); ok {
+									log.Warn("Broadcasting failed, retrying with fresh account sequence...", zap.Error(err),
+										zap.Uint64("accountSequence", expectedAccSeq))
+									txIndex = int(expectedAccSeq - initialSequence)
+								} else {
+									log.Warn("Broadcasting failed, retrying...", zap.Error(err))
+								}
+								continue
+							}
+							log.Debug("Transaction broadcasted", zap.String("txHash", result.TxHash),
+								zap.Int64("gasUsed", result.GasUsed))
+							txIndex++
+
+							mu.Lock()
+							txNum++
+							if result.GasUsed < minGasUsed {
+								minGasUsed = result.GasUsed
+							}
+							if result.GasUsed > maxGasUsed {
+								maxGasUsed = result.GasUsed
+							}
+							mu.Unlock()
+						}
+						return nil
+					})
+				}
+				return nil
+			})
+		})
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	log.Info("Benchmark finished")
+	return nil
+}
+
+func prepareTransactions(ctx context.Context, config StressConfig, client cored.Client) ([][][]byte, []uint64, error) {
+	numOfAccounts := len(config.Accounts)
 	var signedTxs [][][]byte
 	var initialAccountSequences []uint64
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
@@ -129,65 +216,9 @@ func Stress(ctx context.Context, config StressConfig) error {
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	log.Info("Transactions prepared")
-
-	log.Info("Broadcasting transactions...")
-	err = parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		const period = 10
-		var txNum uint32
-		spawn("monitoring", parallel.Fail, func(ctx context.Context) error {
-			log := logger.Get(ctx)
-			for {
-				select {
-				case <-ctx.Done():
-					return ctx.Err()
-				case <-time.After(period * time.Second):
-					log.Info("Transaction rate [txs/s]", zap.Float32("rate", float32(atomic.SwapUint32(&txNum, 0))/period))
-				}
-			}
-		})
-		spawn("accounts", parallel.Exit, func(ctx context.Context) error {
-			return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-				for i, accountTxs := range signedTxs {
-					accountTxs := accountTxs
-					initialSequence := initialAccountSequences[i]
-					spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
-						for txIndex := 0; txIndex < config.NumOfTransactions; {
-							tx := accountTxs[txIndex]
-							txHash, err := client.Broadcast(ctx, tx)
-							if err != nil {
-								if errors.Is(err, ctx.Err()) {
-									return err
-								}
-								if expectedAccSeq, ok := cored.FetchSequenceFromError(err); ok {
-									log.Warn("Broadcasting failed, retrying with fresh account sequence...", zap.Error(err),
-										zap.Uint64("accountSequence", expectedAccSeq))
-									txIndex = int(expectedAccSeq - initialSequence)
-								} else {
-									log.Warn("Broadcasting failed, retrying...", zap.Error(err))
-								}
-								continue
-							}
-							log.Debug("Transaction broadcasted", zap.String("txHash", txHash))
-							txIndex++
-
-							atomic.AddUint32(&txNum, 1)
-						}
-						return nil
-					})
-				}
-				return nil
-			})
-		})
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	log.Info("Benchmark finished")
-	return nil
+	return signedTxs, initialAccountSequences, nil
 }
 
 func getAccountNumberSequence(ctx context.Context, client cored.Client, accountAddress string) (uint64, uint64, error) {

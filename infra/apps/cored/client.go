@@ -17,6 +17,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -108,8 +109,14 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 	return must.Bytes(c.clientCtx.TxConfig.TxEncoder()(signedTx))
 }
 
+// BroadcastResult contains results of transaction broadcast
+type BroadcastResult struct {
+	TxHash  string
+	GasUsed int64
+}
+
 // Broadcast broadcasts encoded transaction and returns tx hash
-func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error) {
+func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResult, error) {
 	var txHash string
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
@@ -118,38 +125,40 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 	// nolint:nestif // This code is still easy to understand
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
-			return "", errors.WithStack(err)
+			return BroadcastResult{}, errors.WithStack(err)
 		}
 
 		errRes := client.CheckTendermintError(err, encodedTx)
 		if !isTxInMempool(errRes) {
-			return "", errors.WithStack(err)
+			return BroadcastResult{}, errors.WithStack(err)
 		}
 		txHash = errRes.TxHash
 	} else {
 		txHash = res.Hash.String()
 		if res.Code != 0 {
 			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
-				return "", err
+				return BroadcastResult{}, err
 			}
-			return "", errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
+			return BroadcastResult{}, errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
 				txHash, res.Code, res.Codespace, res.Log)
 		}
 	}
 
 	txHashBytes, err := hex.DecodeString(txHash)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return BroadcastResult{}, errors.WithStack(err)
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, txTimeout)
 	defer cancel()
 
+	var resultTx *coretypes.ResultTx
 	err = retry.Do(timeoutCtx, txStatusPollInterval, func() error {
 		requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 		defer cancel()
 
-		resultTx, err := c.clientCtx.Client.Tx(requestCtx, txHashBytes, false)
+		var err error
+		resultTx, err = c.clientCtx.Client.Tx(requestCtx, txHashBytes, false)
 		if err != nil {
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
@@ -176,9 +185,12 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (string, error)
 		return nil
 	})
 	if err != nil {
-		return "", err
+		return BroadcastResult{}, err
 	}
-	return txHash, nil
+	return BroadcastResult{
+		TxHash:  txHash,
+		GasUsed: resultTx.TxResult.GasUsed,
+	}, nil
 }
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
