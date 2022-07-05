@@ -151,7 +151,7 @@ func goBuildWithDocker(ctx context.Context, pkg, out string) error {
 		"--workdir", workDir,
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		image,
-		"build", "-trimpath", "-ldflags=-w -s", "-tags=muslc", "-o", "/src/crust/"+out, ".")
+		"build", "-trimpath", "-ldflags=-w -s -extldflags=-static", "-tags=muslc", "-o", "/src/crust/"+out, ".")
 
 	if err := libexec.Exec(ctx, runCmd); err != nil {
 		return errors.Wrapf(err, "building cgo package '%s' failed", pkg)
