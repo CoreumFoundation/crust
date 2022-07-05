@@ -104,6 +104,13 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 		return err
 	}
 
+	var targetArch = "x86_64"
+	var targetPlatform = "linux/amd64"
+	if runtime.GOARCH == "arm64" {
+		targetArch = "aarch64"
+		targetPlatform = "linux/arm64"
+	}
+
 	buildCmd := &exec.Cmd{
 		Path:  dockerCmd,
 		Stdin: bytes.NewReader(cgoDockerfile),
@@ -113,7 +120,9 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 		},
 		Args: []string{
 			"docker", "build",
+			"--platform", targetPlatform,
 			"--build-arg", "GO_VERSION=" + tools["go"].Version,
+			"--build-arg", "TARGET_ARCH=" + targetArch,
 			"--build-arg", "BIN_NAME=" + binName,
 			"--build-arg", "BIN_PACKAGE=" + binPackage,
 			"--tag", fmt.Sprintf("crust-%s-cgo-build", binName),
@@ -127,10 +136,11 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 		Args: []string{
 			"docker", "run",
 			"--rm",
+			"--platform", targetPlatform,
 			"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 			"-v", fmt.Sprintf("%s:%s", absOutPath, "/mnt"),
 			"--env", "BIN_NAME=" + binName,
-			binName + "-cgo-build",
+			fmt.Sprintf("crust-%s-cgo-build", binName),
 		},
 	}
 

@@ -3,13 +3,19 @@
 # prepare the building environment
 
 ARG GO_VERSION
-FROM golang:${GO_VERSION}-alpine as builder
+FROM golang:${GO_VERSION}-alpine3.16 as builder
 
 RUN apk add --no-cache git gcc make libc-dev linux-headers
 RUN set -eux; apk add --no-cache ca-certificates build-base
 
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
-RUN sha256sum /lib/libwasmvm_muslc.a | grep f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479
+# See https://github.com/CosmWasm/wasmvm/releases
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
+RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 7d2239e9f25e96d0d4daba982ce92367aacf0cbd95d2facb8442268f2b1cc1fc
+RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479
+
+ARG TARGET_ARCH
+RUN cp /lib/libwasmvm_muslc.${TARGET_ARCH}.a /lib/libwasmvm_muslc.a
 
 WORKDIR /src
 COPY go.mod .
@@ -20,11 +26,14 @@ COPY . .
 ARG BIN_NAME
 ARG BIN_PACKAGE
 
-RUN CGO_ENABLED=1 LEDGER_ENABLED=false BUILD_TAGS=muslc go build -trimpath -ldflags="-w -s" -o /out/${BIN_NAME} ${BIN_PACKAGE}
+RUN CGO_ENABLED=1 LEDGER_ENABLED=false go build -tags=muslc -ldflags="-extldflags=-static" -trimpath -o /out/${BIN_NAME} ${BIN_PACKAGE}
+
+RUN echo "Ensuring binary is statically linked ..." \
+  && (file /out/${BIN_NAME} | grep "statically linked")
 
 # prepare image that exports the bin
 
-FROM alpine:3.16.0
+FROM alpine:3.16
 
 VOLUME /mnt
 
