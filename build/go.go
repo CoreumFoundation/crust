@@ -3,6 +3,7 @@ package build
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
@@ -140,6 +141,8 @@ func goBuildWithDocker(ctx context.Context, pkg, out string) error {
 		return errors.WithStack(err)
 	}
 	workDir := filepath.Clean(filepath.Join("/src", "crust", pkg))
+	nameSuffix := make([]byte, 4)
+	must.Any(rand.Read(nameSuffix))
 	runCmd := exec.Command("docker", "run", "--rm",
 		"-v", srcDir+":/src",
 		"-v", goPath+":/go",
@@ -150,6 +153,7 @@ func goBuildWithDocker(ctx context.Context, pkg, out string) error {
 		"--env", "GOCACHE=/go-cache",
 		"--workdir", workDir,
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
+		"--name", "crust-build-"+filepath.Base(out)+"-"+hex.EncodeToString(nameSuffix),
 		image,
 		"build", "-trimpath", "-ldflags=-w -s -extldflags=-static", "-tags=muslc", "-o", "/src/crust/"+out, ".")
 
