@@ -22,7 +22,7 @@ func TestInitialBalance(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Create new random wallet with predefined balance added to genesis block
-			wallet = chain.AddWallet("100core")
+			wallet = chain.AddWallet("100" + chain.TokenSymbol())
 			return nil
 		},
 
@@ -39,7 +39,7 @@ func TestInitialBalance(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc
 			require.NoError(t, err)
 
 			// Test that wallet owns expected balance
-			assert.Equal(t, "100", balances["core"].Amount.String())
+			assert.Equal(t, "100", balances[chain.TokenSymbol()].Amount.String())
 		}
 }
 
@@ -50,8 +50,8 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Create two random wallets with predefined amounts of core
-			sender = chain.AddWallet("180000100core")
-			receiver = chain.AddWallet("10core")
+			sender = chain.AddWallet("180000100core" + chain.TokenSymbol())
+			receiver = chain.AddWallet("10" + chain.TokenSymbol())
 			return nil
 		},
 
@@ -92,9 +92,9 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 			// Test that tokens disappeared from sender's wallet
 			// - 10core were transferred to receiver
 			// - 180000000core were taken as fee
-			assert.Equal(t, "90", balancesSender["core"].Amount.String())
+			assert.Equal(t, "90", balancesSender[chain.TokenSymbol()].Amount.String())
 
 			// Test that tokens reached receiver's wallet
-			assert.Equal(t, "20", balancesReceiver["core"].Amount.String())
+			assert.Equal(t, "20", balancesReceiver[chain.TokenSymbol()].Amount.String())
 		}
 }

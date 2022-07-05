@@ -11,10 +11,10 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/crust/cmd"
 	"github.com/CoreumFoundation/crust/pkg/zstress"
 )
 
@@ -24,7 +24,9 @@ const (
 )
 
 func main() {
-	cmd.SetAccountPrefixes("core")
+	network, err := config.NetworkByChainID(config.Devnet)
+	must.OK(err)
+	network.SetupPrefixes()
 	run.Tool("zstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
 		var accountFile string
@@ -50,7 +52,7 @@ func main() {
 					return errors.New("number of accounts is greater than the number of provided private keys")
 				}
 				stressConfig.Accounts = stressConfig.Accounts[:numOfAccounts]
-				return zstress.Stress(ctx, stressConfig)
+				return zstress.Stress(ctx, stressConfig, network.TokenSymbol())
 			},
 		}
 		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())

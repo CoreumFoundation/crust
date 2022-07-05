@@ -2,15 +2,13 @@ package cored
 
 import (
 	"context"
-	"crypto/ed25519"
 	"encoding/hex"
 	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/cosmos/cosmos-sdk/client"
-	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -18,13 +16,12 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/pkg/retry"
 )
@@ -39,9 +36,12 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
-	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
+	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
-	clientCtx := NewContext(chainID, rpcClient)
+	clientCtx := client.NewClientContext(
+		client.WithChainID(chainID),
+		client.WithRPCClient(rpcClient),
+	)
 	return Client{
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
@@ -51,7 +51,7 @@ func NewClient(chainID string, addr string) Client {
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx       client.Context
+	clientCtx       cosmosclient.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
 }
@@ -124,7 +124,7 @@ type BroadcastResult struct {
 }
 
 // ClientCtx returns client context
-func (c Client) ClientCtx() client.Context {
+func (c Client) ClientCtx() cosmosclient.Context {
 	return c.clientCtx
 }
 
@@ -141,7 +141,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			return BroadcastResult{}, errors.WithStack(err)
 		}
 
-		errRes := client.CheckTendermintError(err, encodedTx)
+		errRes := cosmosclient.CheckTendermintError(err, encodedTx)
 		if !isTxInMempool(errRes) {
 			return BroadcastResult{}, errors.WithStack(err)
 		}
@@ -176,7 +176,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
 			}
-			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+			if errRes := cosmosclient.CheckTendermintError(err, encodedTx); errRes != nil {
 				if isTxInMempool(errRes) {
 					return retry.Retryable(errors.WithStack(err))
 				}
@@ -247,34 +247,6 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	return c.Encode(signedTx), nil
 }
 
-// AddValidatorToGenesis adds validator to the genesis
-func AddValidatorToGenesis(
-	g *config.Genesis,
-	clientCtx client.Context,
-	validatorPublicKey ed25519.PublicKey,
-	stakerPrivateKey types.Secp256k1PrivateKey,
-	stakedBalance string,
-) {
-	amount, err := sdk.ParseCoinNormalized(stakedBalance)
-	must.OK(err)
-
-	commission := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
-	}
-
-	valPubKey := &cosmosed25519.PubKey{Key: validatorPublicKey}
-	stakerPrivKey := &cosmossecp256k1.PrivKey{Key: stakerPrivateKey}
-	stakerAddress := sdk.AccAddress(stakerPrivKey.PubKey().Address())
-
-	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
-	must.OK(err)
-
-	tx := must.Bytes(clientCtx.TxConfig.TxJSONEncoder()(signTx(clientCtx, stakerPrivateKey, 0, 0, msg)))
-	g.AddGenesisTx(tx)
-}
-
 func isTxInMempool(errRes *sdk.TxResponse) bool {
 	if errRes == nil {
 		return false
@@ -287,7 +259,7 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+func signTx(clientCtx cosmosclient.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}

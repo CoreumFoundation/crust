@@ -44,7 +44,7 @@ type tx struct {
 }
 
 // Stress runs a benchmark test
-func Stress(ctx context.Context, config StressConfig) error {
+func Stress(ctx context.Context, config StressConfig, tokenSymbol string) error {
 	log := logger.Get(ctx)
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
@@ -158,7 +158,7 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 								// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
 								GasLimit: 120000,
 								// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-								GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
+								GasPrice: types.Coin{Amount: big.NewInt(1500), Denom: "core"},
 							},
 							Sender:   tx.From,
 							Receiver: tx.To,
