@@ -28,9 +28,6 @@ ARG BIN_PACKAGE
 
 RUN CGO_ENABLED=1 LEDGER_ENABLED=false go build -tags=muslc -ldflags="-extldflags=-static" -trimpath -o /out/${BIN_NAME} ${BIN_PACKAGE}
 
-RUN echo "Ensuring binary is statically linked ..." \
-  && (file /out/${BIN_NAME} | grep "statically linked")
-
 # prepare image that exports the bin
 
 FROM alpine:3.16
