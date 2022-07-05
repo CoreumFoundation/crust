@@ -148,7 +148,6 @@ func goBuildWithDocker(ctx context.Context, pkg, out string) error {
 		"-v", goPath+":/go",
 		"-v", goCache+":/go-cache",
 		"--env", "CGO_ENABLED=1",
-		"--env", "LEDGER_ENABLED=false",
 		"--env", "GOPATH=/go",
 		"--env", "GOCACHE=/go-cache",
 		"--workdir", workDir,
