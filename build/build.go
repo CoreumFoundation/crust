@@ -107,8 +107,13 @@ func goBuildWithDocker(ctx context.Context, pkgPath, outPath, binName string) er
 	buildCmd := &exec.Cmd{
 		Path:  dockerCmd,
 		Stdin: bytes.NewReader(cgoDockerfile),
+		Env: []string{
+			"DOCKER_BUILDKIT=1",
+			"BUILDKIT_INLINE_CACHE=1",
+		},
 		Args: []string{
 			"docker", "build",
+			"--build-arg", "GO_VERSION=" + tools["go"].Version,
 			"--build-arg", "BIN_NAME=" + binName,
 			"--build-arg", "BIN_PACKAGE=" + binPackage,
 			"--tag", fmt.Sprintf("crust-%s-cgo-build", binName),

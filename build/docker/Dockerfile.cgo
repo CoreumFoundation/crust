@@ -1,6 +1,9 @@
+# syntax=docker/dockerfile:1.4
+
 # prepare the building environment
 
-FROM golang:1.18.3-alpine as builder
+ARG GO_VERSION
+FROM golang:${GO_VERSION}-alpine as builder
 
 RUN apk add --no-cache git gcc make libc-dev linux-headers
 RUN set -eux; apk add --no-cache ca-certificates build-base
@@ -26,7 +29,7 @@ FROM alpine:3.16.0
 VOLUME /mnt
 
 ARG BIN_NAME
-COPY --from=builder /out/${BIN_NAME} /bin/${BIN_NAME}
+COPY --from=builder --link /out/${BIN_NAME} /bin/${BIN_NAME}
 
 ENV BIN_NAME ""
 CMD cp /bin/${BIN_NAME} /mnt/${BIN_NAME}
