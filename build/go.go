@@ -114,7 +114,7 @@ func ensureCGODockerImage(ctx context.Context) (string, error) {
 }
 
 func goBuildWithDocker(ctx context.Context, pkg, out string) error {
-	logger.Get(ctx).Info("Building CGO-enabled enabled go package for docker", zap.String("package", pkg), zap.String("binary", out))
+	logger.Get(ctx).Info("Building CGO-enabled go package for docker", zap.String("package", pkg), zap.String("binary", out))
 
 	_, err := exec.LookPath("docker")
 	if err != nil {
