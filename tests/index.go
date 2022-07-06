@@ -13,7 +13,7 @@ import (
 
 // Tests returns testing environment and tests
 func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
-	mode := appF.CoredNetwork("coretest", 3, 0)
+	mode := appF.CoredNetwork("coretest", 3, 0, appF.Network)
 	node := mode[0].(cored.Cored)
 	nodes := []cored.Cored{
 		node,

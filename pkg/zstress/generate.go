@@ -42,6 +42,9 @@ type GenerateConfig struct {
 
 	// OutDirectory is the path to the directory where generated files are stored
 	OutDirectory string
+
+	// Network is the cored network config
+	Network config.Network
 }
 
 func nodeIDFromPubKey(pubKey ed25519.PublicKey) string {
@@ -62,9 +65,7 @@ func Generate(cfg GenerateConfig) error {
 		return err
 	}
 
-	network, err := config.NetworkByChainID(config.ChainID(cfg.ChainID))
-	must.OK(err)
-	genesis, err := network.Genesis()
+	genesis, err := cfg.Network.Genesis()
 	must.OK(err)
 	clientCtx := client.NewDefaultClientContext().WithChainID(genesis.ChainID())
 	nodeIDs := make([]string, 0, cfg.NumOfValidators)
@@ -86,9 +87,9 @@ func Generate(cfg GenerateConfig) error {
 		}.Save(valDir)
 		must.OK(err)
 
-		err = genesis.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
+		err = genesis.FundAccount(stakerPublicKey, "100000000000000000000000"+genesis.TokenSymbol())
 		must.OK(err)
-		tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
+		tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+genesis.TokenSymbol())
 		must.OK(err)
 		genesis.AddGenesisTx(tx)
 	}
@@ -99,7 +100,7 @@ func Generate(cfg GenerateConfig) error {
 		for j := 0; j < cfg.NumOfAccountsPerInstance; j++ {
 			accountPublicKey, accountPrivateKey := types.GenerateSecp256k1Key()
 			accounts = append(accounts, accountPrivateKey)
-			err = genesis.FundAccount(accountPublicKey, "10000000000000000000000000000"+network.TokenSymbol())
+			err = genesis.FundAccount(accountPublicKey, "10000000000000000000000000000"+genesis.TokenSymbol())
 			must.OK(err)
 		}
 
