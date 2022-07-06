@@ -115,7 +115,7 @@ func ensureCGODockerImage(ctx context.Context) (string, error) {
 }
 
 func goBuildWithDocker(ctx context.Context, pkg, out string) error {
-	logger.Get(ctx).Info("Building CGO-enabled go package for alpine", zap.String("package", pkg), zap.String("binary", out))
+	logger.Get(ctx).Info("Building CGO-enabled go package for docker", zap.String("package", pkg), zap.String("binary", out))
 
 	_, err := exec.LookPath("docker")
 	if err != nil {
@@ -136,10 +136,7 @@ func goBuildWithDocker(ctx context.Context, pkg, out string) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	goCache := os.Getenv("GOCACHE")
-	if goCache == "" {
-		goCache = filepath.Join(must.String(os.UserCacheDir()), "go-build")
-	}
+	goCache := cacheDir() + "/alpine-cgo/go-build"
 	if err := os.MkdirAll(goCache, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
