@@ -40,7 +40,7 @@ func New(name string, cfg infra.Config, genesis *config.Genesis, appInfo *infra.
 
 	err = genesis.FundAccount(stakerPubKey, "100000000000000000000000"+genesis.TokenSymbol())
 	must.OK(err)
-	clientCtx := client.NewClientContext(client.WithChainID(genesis.ChainID()))
+	clientCtx := client.NewDefaultClientContext().WithChainID(genesis.ChainID())
 
 	tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+genesis.TokenSymbol())
 	must.OK(err)
