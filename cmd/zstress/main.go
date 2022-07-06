@@ -24,7 +24,7 @@ const (
 )
 
 func main() {
-	network, err := config.NetworkByChainID(config.Devnet)
+	network, err := config.NetworkByChainID(config.Mainnet)
 	must.OK(err)
 	network.SetupPrefixes()
 	run.Tool("zstress", nil, func(ctx context.Context) error {
@@ -63,6 +63,7 @@ func main() {
 		rootCmd.Flags().IntVar(&stressConfig.NumOfTransactions, "transactions", 1000, "Number of transactions to send from each account")
 
 		var generateConfig zstress.GenerateConfig
+		generateConfig.Network = network
 		generateCmd := &cobra.Command{
 			Use:   "generate",
 			Short: "Generates all the files required to deploy the blockchain used for benchmarking",

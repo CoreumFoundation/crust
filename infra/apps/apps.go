@@ -15,24 +15,25 @@ import (
 )
 
 // NewFactory creates new app factory
-func NewFactory(config infra.Config, spec *infra.Spec) *Factory {
+func NewFactory(config infra.Config, spec *infra.Spec, network *config.Network) *Factory {
 	return &Factory{
-		config: config,
-		spec:   spec,
+		config:  config,
+		spec:    spec,
+		Network: network,
 	}
 }
 
 // Factory produces apps from config
 type Factory struct {
-	config infra.Config
-	spec   *infra.Spec
+	config  infra.Config
+	spec    *infra.Spec
+	Network *config.Network
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
+func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int, network *config.Network) infra.Mode {
 	const initialBalance = "1000000000000000core"
 
-	network, _ := config.NetworkByChainID(config.Devnet)
 	genesis, err := network.Genesis()
 	must.OK(err)
 
