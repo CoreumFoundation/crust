@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -30,7 +31,10 @@ const (
 	txStatusPollInterval = 500 * time.Millisecond
 )
 
-var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
+var (
+	memo                   = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
+	expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
+)
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
@@ -101,7 +105,7 @@ func (c Client) Sign(ctx context.Context, signer Wallet, msg sdk.Msg) (authsigni
 		}
 	}
 
-	return signTx(c.clientCtx, signer.Key, signer.AccountNumber, signer.AccountSequence, msg), nil
+	return signTx(c.clientCtx, signer, msg, memo), nil
 }
 
 // Encode encodes transaction to be broadcasted
@@ -225,16 +229,17 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
-	privKey := &cosmossecp256k1.PrivKey{Key: signerKey}
+func signTx(clientCtx client.Context, signer Wallet, msg sdk.Msg, memo string) authsigning.Tx {
+	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(200000)
+	txBuilder.SetMemo(memo)
 	must.OK(txBuilder.SetMsgs(msg))
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
-		AccountNumber: accNum,
-		Sequence:      accSeq,
+		AccountNumber: signer.AccountNumber,
+		Sequence:      signer.AccountSequence,
 	}
 	sigData := &signing.SingleSignatureData{
 		SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
@@ -243,7 +248,7 @@ func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, acc
 	sig := signing.SignatureV2{
 		PubKey:   privKey.PubKey(),
 		Data:     sigData,
-		Sequence: accSeq,
+		Sequence: signer.AccountSequence,
 	}
 	must.OK(txBuilder.SetSignatures(sig))
 
