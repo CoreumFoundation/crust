@@ -37,10 +37,10 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 func NewClient(chainID string, addr string) Client {
 	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
-	clientCtx := client.NewClientContext(
-		client.WithChainID(chainID),
-		client.WithRPCClient(rpcClient),
-	)
+	clientCtx := client.
+		NewDefaultClientContext().
+		WithChainID(chainID).
+		WithClient(rpcClient)
 	return Client{
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),

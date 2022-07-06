@@ -66,7 +66,7 @@ func Generate(cfg GenerateConfig) error {
 	must.OK(err)
 	genesis, err := network.Genesis()
 	must.OK(err)
-	clientCtx := client.NewClientContext(client.WithChainID(genesis.ChainID()))
+	clientCtx := client.NewDefaultClientContext().WithChainID(genesis.ChainID())
 	nodeIDs := make([]string, 0, cfg.NumOfValidators)
 	for i := 0; i < cfg.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
