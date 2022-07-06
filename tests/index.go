@@ -23,16 +23,20 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 			testing.New(bank.TestInitialBalance(node0)),
 			testing.New(bank.TestCoreTransfer(node0)),
 
-			// Run the same test 9 times to reuse the parallelism implemented inside the testing framework to use CPUs fully.
-			// Later on we will have more tests utilizing CPUs so this won't be needed. For now we take the benefit of running tests faster.
-			testing.New(bank.TestTransferMaximumGas(node0)),
-			testing.New(bank.TestTransferMaximumGas(node1)),
-			testing.New(bank.TestTransferMaximumGas(node2)),
-			testing.New(bank.TestTransferMaximumGas(node0)),
-			testing.New(bank.TestTransferMaximumGas(node1)),
-			testing.New(bank.TestTransferMaximumGas(node2)),
-			testing.New(bank.TestTransferMaximumGas(node0)),
-			testing.New(bank.TestTransferMaximumGas(node1)),
-			testing.New(bank.TestTransferMaximumGas(node2)),
+			// The idea is to run 200 transfer transactions to be sure that none of them uses more gas than we assumed.
+			// To make each faster the same test is started 10 times, each broadcasting 20 transactions, to make use of parallelism
+			// implemented inside testing framework. Test itself is written serially to not fight for resources with other tests.
+			// In the future, once we have more tests running in parallel, we will replace 10 tests running 20 transactions each
+			// with a single one running 200 of them.
+			testing.New(bank.TestTransferMaximumGas(node0, 20)),
+			testing.New(bank.TestTransferMaximumGas(node1, 20)),
+			testing.New(bank.TestTransferMaximumGas(node2, 20)),
+			testing.New(bank.TestTransferMaximumGas(node0, 20)),
+			testing.New(bank.TestTransferMaximumGas(node1, 20)),
+			testing.New(bank.TestTransferMaximumGas(node2, 20)),
+			testing.New(bank.TestTransferMaximumGas(node0, 20)),
+			testing.New(bank.TestTransferMaximumGas(node1, 20)),
+			testing.New(bank.TestTransferMaximumGas(node2, 20)),
+			testing.New(bank.TestTransferMaximumGas(node2, 20)),
 		}
 }

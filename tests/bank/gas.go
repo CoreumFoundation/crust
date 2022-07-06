@@ -16,10 +16,10 @@ import (
 )
 
 // TestTransferMaximumGas checks that transfer does not take more gas than assumed
-func TestTransferMaximumGas(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
+func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.PrepareFunc, testing.RunFunc) {
 	const margin = 1.5
 	const maxGasAssumed = 100000 // set it to 50%+ higher than maximum observed value
-	const numOfTransactions = 20
+
 	amount, ok := big.NewInt(0).SetString("100000000000000000000", 10)
 	if !ok {
 		panic("invalid amount")
