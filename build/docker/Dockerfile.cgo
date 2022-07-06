@@ -20,13 +20,14 @@ RUN cp /lib/libwasmvm_muslc.${TARGET_ARCH}.a /lib/libwasmvm_muslc.a
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
 COPY . .
 
 ARG BIN_NAME
 ARG BIN_PACKAGE
 
-RUN CGO_ENABLED=1 LEDGER_ENABLED=false go build -tags=muslc -ldflags="-extldflags=-static" -trimpath -o /out/${BIN_NAME} ${BIN_PACKAGE}
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go build -tags=muslc -ldflags="-extldflags=-static" -trimpath -o /out/${BIN_NAME} ${BIN_PACKAGE}
 
 # prepare image that exports the bin
 
