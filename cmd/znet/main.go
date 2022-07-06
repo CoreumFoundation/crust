@@ -17,10 +17,13 @@ import (
 )
 
 func main() {
-	network, err := config.NetworkByChainID(config.Devnet)
+	network, err := config.NetworkByChainID(config.Mainnet)
 	must.OK(err)
 	network.SetupPrefixes()
 	run.Tool("znet", znet.IoC, func(c *ioc.Container, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) error {
+		c.Singleton(func() *config.Network {
+			return &network
+		})
 		rootCmd := &cobra.Command{
 			SilenceUsage:  true,
 			SilenceErrors: true,
