@@ -3,6 +3,7 @@ package apps
 import (
 	"fmt"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
@@ -10,8 +11,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
-
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // NewFactory creates new app factory
@@ -50,7 +49,7 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 	for i := 0; i < cap(nodes); i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
-		node := cored.New(name, f.config, genesis, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
+		node := cored.New(name, f.config, network, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
 			RPC:        cored.DefaultPorts.RPC + portDelta,
 			P2P:        cored.DefaultPorts.P2P + portDelta,
 			GRPC:       cored.DefaultPorts.GRPC + portDelta,

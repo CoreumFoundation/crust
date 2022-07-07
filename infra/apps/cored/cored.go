@@ -30,7 +30,7 @@ import (
 const AppType infra.AppType = "cored"
 
 // New creates new cored app
-func New(name string, cfg infra.Config, genesis *config.Genesis, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
+func New(name string, cfg infra.Config, network *config.Network, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -38,13 +38,13 @@ func New(name string, cfg infra.Config, genesis *config.Genesis, appInfo *infra.
 
 	stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
 
-	err = genesis.FundAccount(stakerPubKey, "100000000000000000000000"+genesis.TokenSymbol())
+	err = network.FundAccount(stakerPubKey, "100000000000000000000000"+network.TokenSymbol())
 	must.OK(err)
-	clientCtx := client.NewDefaultClientContext().WithChainID(genesis.ChainID())
+	clientCtx := client.NewDefaultClientContext().WithChainID(network.ChainID())
 
-	tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+genesis.TokenSymbol())
+	tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
 	must.OK(err)
-	genesis.AddGenesisTx(tx)
+	network.AddGenesisTx(tx)
 
 	cored := Cored{
 		name:                name,
@@ -53,7 +53,7 @@ func New(name string, cfg infra.Config, genesis *config.Genesis, appInfo *infra.
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
-		genesis:             genesis,
+		network:             network,
 		appInfo:             appInfo,
 		ports:               ports,
 		rootNode:            rootNode,
@@ -76,7 +76,7 @@ type Cored struct {
 	nodeID              string
 	nodePrivateKey      ed25519.PrivateKey
 	validatorPrivateKey ed25519.PrivateKey
-	genesis             *config.Genesis
+	network             *config.Network
 	appInfo             *infra.AppInfo
 	ports               Ports
 	rootNode            *Cored
@@ -108,12 +108,12 @@ func (c Cored) Ports() Ports {
 // TokenSymbol returns the governance token symbol. This is different
 // for each network(i.e mainnet, testnet, etc)
 func (c Cored) TokenSymbol() string {
-	return c.genesis.TokenSymbol()
+	return c.network.TokenSymbol()
 }
 
 // ChainID returns ID of the chain
 func (c Cored) ChainID() string {
-	return c.genesis.ChainID()
+	return c.network.ChainID()
 }
 
 // Info returns deployment info
@@ -124,7 +124,7 @@ func (c Cored) Info() infra.DeploymentInfo {
 // AddWallet adds wallet to genesis block and local keystore
 func (c Cored) AddWallet(balances string) types.Wallet {
 	pubKey, privKey := types.GenerateSecp256k1Key()
-	err := c.genesis.FundAccount(pubKey, balances)
+	err := c.network.FundAccount(pubKey, balances)
 	must.OK(err)
 
 	c.mu.Lock()
@@ -144,7 +144,7 @@ func (c Cored) AddWallet(balances string) types.Wallet {
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() Client {
-	return NewClient(c.genesis.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
+	return NewClient(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -232,7 +232,7 @@ func (c Cored) Deployment() infra.Deployment {
 
 				AddKeysToStore(c.homeDir, c.walletKeys)
 
-				return c.genesis.Save(c.homeDir)
+				return c.network.SaveGenesis(c.homeDir)
 			},
 			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 				return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
@@ -254,7 +254,7 @@ func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
 	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
-	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
+	OPTS="$OPTS --chain-id ""` + c.network.ChainID() + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
 fi
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
