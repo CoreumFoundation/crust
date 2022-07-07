@@ -65,9 +65,8 @@ func Generate(cfg GenerateConfig) error {
 		return err
 	}
 
-	genesis, err := cfg.Network.Genesis()
-	must.OK(err)
-	clientCtx := client.NewDefaultClientContext().WithChainID(genesis.ChainID())
+	network := cfg.Network
+	clientCtx := client.NewDefaultClientContext().WithChainID(network.ChainID())
 	nodeIDs := make([]string, 0, cfg.NumOfValidators)
 	for i := 0; i < cfg.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -87,11 +86,11 @@ func Generate(cfg GenerateConfig) error {
 		}.Save(valDir)
 		must.OK(err)
 
-		err = genesis.FundAccount(stakerPublicKey, "100000000000000000000000"+genesis.TokenSymbol())
+		err = network.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
 		must.OK(err)
-		tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+genesis.TokenSymbol())
+		tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
 		must.OK(err)
-		genesis.AddGenesisTx(tx)
+		network.AddGenesisTx(tx)
 	}
 	must.OK(ioutil.WriteFile(outDir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 
@@ -100,7 +99,7 @@ func Generate(cfg GenerateConfig) error {
 		for j := 0; j < cfg.NumOfAccountsPerInstance; j++ {
 			accountPublicKey, accountPrivateKey := types.GenerateSecp256k1Key()
 			accounts = append(accounts, accountPrivateKey)
-			err = genesis.FundAccount(accountPublicKey, "10000000000000000000000000000"+genesis.TokenSymbol())
+			err := network.FundAccount(accountPublicKey, "10000000000000000000000000000"+network.TokenSymbol())
 			must.OK(err)
 		}
 
@@ -110,7 +109,7 @@ func Generate(cfg GenerateConfig) error {
 	}
 
 	for i := 0; i < cfg.NumOfValidators; i++ {
-		err = genesis.Save(fmt.Sprintf("%s/validators/%d", outDir, i))
+		err := network.SaveGenesis(fmt.Sprintf("%s/validators/%d", outDir, i))
 		must.OK(err)
 	}
 
@@ -129,7 +128,7 @@ func Generate(cfg GenerateConfig) error {
 		}.Save(nodeDir)
 		must.OK(err)
 
-		err = genesis.Save(nodeDir)
+		err = network.SaveGenesis(nodeDir)
 		must.OK(err)
 	}
 	must.OK(ioutil.WriteFile(outDir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
