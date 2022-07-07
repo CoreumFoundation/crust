@@ -43,24 +43,39 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 			wallet2.AccountNumber, wallet2.AccountSequence, err = client.GetNumberSequence(ctx, wallet2.Key.Address())
 			require.NoError(t, err)
 
-			var maxGasUsed int64
+			var maxGasUsed int64 = 0
 			toSend := cored.Balance{Denom: "core", Amount: amount}
-			send := func(sender *cored.Wallet, receiver cored.Wallet) {
-				txBytes, err := client.PrepareTxBankSend(ctx, *sender, receiver, toSend)
-				require.NoError(t, err)
-				result, err := client.Broadcast(ctx, txBytes)
+			for i := numOfTransactions / 2; i >= 0; i-- {
+				gasUsed, err := sendAndReturnGasUsed(ctx, client, wallet1, wallet2, toSend)
 				require.NoError(t, err)
 
-				if result.GasUsed > maxGasUsed {
-					maxGasUsed = result.GasUsed
+				if gasUsed > maxGasUsed {
+					maxGasUsed = gasUsed
 				}
-				sender.AccountSequence++
-			}
-			for i := numOfTransactions / 2; i >= 0; i-- {
-				send(&wallet1, wallet2)
-				send(&wallet2, wallet1)
+
+				gasUsed, err = sendAndReturnGasUsed(ctx, client, wallet2, wallet1, toSend)
+				require.NoError(t, err)
+
+				if gasUsed > maxGasUsed {
+					maxGasUsed = gasUsed
+				}
+
+				wallet1.AccountSequence++
+				wallet2.AccountSequence++
 			}
 			assert.LessOrEqual(t, margin*float64(maxGasUsed), float64(maxGasAssumed))
 			logger.Get(ctx).Info("Maximum gas used", zap.Int64("maxGasUsed", maxGasUsed))
 		}
+}
+
+func sendAndReturnGasUsed(ctx context.Context, client cored.Client, sender, receiver cored.Wallet, toSend cored.Balance) (int64, error) {
+	txBytes, err := client.PrepareTxBankSend(ctx, sender, receiver, toSend)
+	if err != nil {
+		return 0, err
+	}
+	result, err := client.Broadcast(ctx, txBytes)
+	if err != nil {
+		return 0, err
+	}
+	return result.GasUsed, nil
 }
