@@ -14,7 +14,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
@@ -22,6 +21,7 @@ import (
 )
 
 var tools = map[string]tool{
+	// https://go.dev/dl/
 	"go": {
 		Version: "1.18.3",
 		Sources: sources{
@@ -43,6 +43,8 @@ var tools = map[string]tool{
 			"go/bin/gofmt",
 		},
 	},
+
+	// https://github.com/golangci/golangci-lint/releases/
 	"golangci": {
 		Version: "1.46.2",
 		Sources: sources{
@@ -69,6 +71,8 @@ var tools = map[string]tool{
 			},
 		},
 	},
+
+	// https://github.com/ignite/cli/releases/
 	"ignite": {
 		Version: "v0.22.2",
 		Sources: sources{
@@ -87,6 +91,28 @@ var tools = map[string]tool{
 		},
 		Binaries: []string{
 			"ignite",
+		},
+	},
+
+	// https://cloud.google.com/sdk/docs/install
+	"gcloud": {
+		Version: "v392.0.0",
+		Sources: sources{
+			linuxAMD64: {
+				URL:  "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-392.0.0-linux-x86_64.tar.gz",
+				Hash: "sha256:a7e88856a07ed75cf310ebe5415c922c9b516021a6c7e66b3eb8f2859b9351bc",
+			},
+			darwinAMD64: {
+				URL:  "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-392.0.0-darwin-x86_64.tar.gz",
+				Hash: "sha256:08917f5a269aad838615db8d873e1b2d828649d451753babcadaa8feccf8ebc9",
+			},
+			darwinARM64: {
+				URL:  "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-392.0.0-darwin-arm.tar.gz",
+				Hash: "4a975e2320b87de80b40854e012f61493252f8b9011f11347517cd07558d6328",
+			},
+		},
+		Binaries: []string{
+			"google-cloud-sdk/bin/gcloud",
 		},
 	},
 }
@@ -122,15 +148,13 @@ type source struct {
 
 type sources map[platform]source
 
-func installTools(deps build.DepsFunc) {
-	toolFns := make([]interface{}, 0, len(tools))
+func installTools(ctx context.Context) error {
 	for tool := range tools {
-		tool := tool
-		toolFns = append(toolFns, func(ctx context.Context) error {
-			return ensure(ctx, tool)
-		})
+		if err := ensure(ctx, tool); err != nil {
+			return err
+		}
 	}
-	deps(toolFns...)
+	return nil
 }
 
 func ensure(ctx context.Context, tool string) error {
