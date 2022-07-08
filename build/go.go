@@ -1,11 +1,19 @@
 package build
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	_ "embed"
+	"encoding/hex"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"text/template"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -15,7 +23,26 @@ import (
 	"go.uber.org/zap"
 )
 
+const goAlpineVersion = "3.16"
+
 var repositories = []string{"../crust", "../coreum"}
+
+type wasmMuslcSource struct {
+	URL  string
+	Hash string
+}
+
+// See https://github.com/CosmWasm/wasmvm/releases
+var wasmMuslc = map[string]wasmMuslcSource{
+	"amd64": {
+		URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a",
+		Hash: "f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479",
+	},
+	"arm64": {
+		URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.aarch64.a",
+		Hash: "7d2239e9f25e96d0d4daba982ce92367aacf0cbd95d2facb8442268f2b1cc1fc",
+	},
+}
 
 func ensureGo(ctx context.Context) error {
 	return ensure(ctx, "go")
@@ -27,13 +54,110 @@ func ensureGolangCI(ctx context.Context) error {
 
 // goBuildPkg builds go package
 // nolint:unparam // linter does not take into account that `targetOS` is different on every platform
-func goBuildPkg(ctx context.Context, pkg, targetOS, out string) error {
+func goBuildPkg(ctx context.Context, pkg, targetOS, out string, cgoEnabled bool) error {
 	logger.Get(ctx).Info("Building go package", zap.String("package", pkg), zap.String("binary", out), zap.String("targetOS", targetOS))
 	cmd := exec.Command(toolBin("go"), "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
 	cmd.Dir = pkg
-	cmd.Env = append([]string{"CGO_ENABLED=0", "GOOS=" + targetOS}, os.Environ()...)
+
+	cgoFlag := "CGO_ENABLED=0"
+	if cgoEnabled {
+		cgoFlag = "CGO_ENABLED=1"
+	}
+
+	cmd.Env = append([]string{cgoFlag, "GOOS=" + targetOS}, os.Environ()...)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", pkg)
+	}
+	return nil
+}
+
+//go:embed docker/Dockerfile.tmpl.cgo
+var cgoDockerfileTemplate string
+
+var cgoDockerfileTemplateParsed = template.Must(template.New("Dockerfile").Parse(cgoDockerfileTemplate))
+
+func ensureCGODockerImage(ctx context.Context) (string, error) {
+	dockerfileBuf := &bytes.Buffer{}
+	err := cgoDockerfileTemplateParsed.Execute(dockerfileBuf, struct {
+		GOVersion     string
+		AlpineVersion string
+		WASMMuslc     wasmMuslcSource
+	}{
+		GOVersion:     tools["go"].Version,
+		AlpineVersion: goAlpineVersion,
+		WASMMuslc:     wasmMuslc[runtime.GOARCH],
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "executing Dockerfile template failed")
+	}
+
+	dockerfileChecksum := sha256.Sum256(dockerfileBuf.Bytes())
+	image := "crust-cgo-build:" + hex.EncodeToString(dockerfileChecksum[:4])
+
+	imageBuf := &bytes.Buffer{}
+	imageCmd := exec.Command("docker", "images", "-q", image)
+	imageCmd.Stdout = imageBuf
+	if err := libexec.Exec(ctx, imageCmd); err != nil {
+		return "", errors.Wrapf(err, "failed to list image '%s'", image)
+	}
+	if imageBuf.Len() > 0 {
+		return image, nil
+	}
+
+	buildCmd := exec.Command("docker", "build",
+		"--tag", image, "-f", "-", "build/docker")
+	buildCmd.Stdin = dockerfileBuf
+
+	if err := libexec.Exec(ctx, buildCmd); err != nil {
+		return "", errors.Wrapf(err, "failed to build image '%s'", image)
+	}
+	return image, nil
+}
+
+func goBuildWithDocker(ctx context.Context, pkg, out string) error {
+	logger.Get(ctx).Info("Building CGO-enabled go package for docker", zap.String("package", pkg), zap.String("binary", out))
+
+	_, err := exec.LookPath("docker")
+	if err != nil {
+		err = errors.Wrap(err, "docker command is not available in PATH")
+		return err
+	}
+
+	image, err := ensureCGODockerImage(ctx)
+	if err != nil {
+		return err
+	}
+
+	srcDir := must.String(filepath.Abs(".."))
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
+	}
+	if err := os.MkdirAll(goPath, 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+	goCache := cacheDir() + "/alpine-cgo/go-build"
+	if err := os.MkdirAll(goCache, 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+	workDir := filepath.Clean(filepath.Join("/src", "crust", pkg))
+	nameSuffix := make([]byte, 4)
+	must.Any(rand.Read(nameSuffix))
+	runCmd := exec.Command("docker", "run", "--rm",
+		"-v", srcDir+":/src",
+		"-v", goPath+":/go",
+		"-v", goCache+":/go-cache",
+		"--env", "CGO_ENABLED=1",
+		"--env", "GOPATH=/go",
+		"--env", "GOCACHE=/go-cache",
+		"--workdir", workDir,
+		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
+		"--name", "crust-build-"+filepath.Base(out)+"-"+hex.EncodeToString(nameSuffix),
+		image,
+		"build", "-trimpath", "-ldflags=-w -s -extldflags=-static", "-tags=muslc", "-o", "/src/crust/"+out, ".")
+
+	if err := libexec.Exec(ctx, runCmd); err != nil {
+		return errors.Wrapf(err, "building cgo package '%s' failed", pkg)
 	}
 	return nil
 }
