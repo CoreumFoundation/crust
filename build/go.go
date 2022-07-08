@@ -88,7 +88,7 @@ func ensureCGODockerImage(ctx context.Context) (string, error) {
 		WASMMuslc:     wasmMuslc[runtime.GOARCH],
 	})
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", errors.Wrap(err, "executing Dockerfile template failed")
 	}
 
 	dockerfileChecksum := sha256.Sum256(dockerfileBuf.Bytes())
