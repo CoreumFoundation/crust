@@ -13,11 +13,12 @@ func buildAll(deps build.DepsFunc) {
 }
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureGo, ensureCoreumRepo)
+	deps(ensureGo, ensureLibWASMVMMuslC, ensureCoreumRepo)
 	return goBuild(ctx, goBuildConfig{
 		Package:        "../coreum/cmd/cored",
 		BinPath:        "bin/cored",
-		Tags:           []string{"muslc"},
+		DockerStatic:   true,
+		DockerTags:     []string{"muslc"},
 		CGOEnabled:     true,
 		BuildForHost:   true,
 		BuildForDocker: true,

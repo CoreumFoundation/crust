@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"text/template"
 
@@ -28,23 +27,6 @@ const goAlpineVersion = "3.16"
 
 var repositories = []string{"../crust", "../coreum"}
 
-type wasmMuslcSource struct {
-	URL  string
-	Hash string
-}
-
-// See https://github.com/CosmWasm/wasmvm/releases
-var wasmMuslc = map[string]wasmMuslcSource{
-	"amd64": {
-		URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a",
-		Hash: "f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479",
-	},
-	"arm64": {
-		URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.aarch64.a",
-		Hash: "7d2239e9f25e96d0d4daba982ce92367aacf0cbd95d2facb8442268f2b1cc1fc",
-	},
-}
-
 type goBuildConfig struct {
 	// Package is the path to package to build
 	Package string
@@ -52,8 +34,11 @@ type goBuildConfig struct {
 	// BinPath is the path for compiled binary file
 	BinPath string
 
-	// Tags is the list of additional tags to build
-	Tags []string
+	// DockerTags is the list of additional tags to build only in docker
+	DockerTags []string
+
+	// DockerStatic triggers static compilation inside docker
+	DockerStatic bool
 
 	// CGOEnabled builds cgo binary
 	CGOEnabled bool
@@ -66,23 +51,28 @@ type goBuildConfig struct {
 }
 
 func ensureGo(ctx context.Context) error {
-	return ensure(ctx, "go")
+	return ensureHost(ctx, "go")
 }
 
 func ensureGolangCI(ctx context.Context) error {
-	return ensure(ctx, "golangci")
+	return ensureHost(ctx, "golangci")
+}
+
+func ensureLibWASMVMMuslC(ctx context.Context) error {
+	return ensureDocker(ctx, "libwasmvm_muslc")
 }
 
 func goBuildOnHost(ctx context.Context, config goBuildConfig) error {
 	logger.Get(ctx).Info("Building go package on host", zap.String("package", config.Package), zap.String("binary", config.BinPath))
 
-	args, envs := goBuildArgsAndEnvs(config)
+	args, envs := goBuildArgsAndEnvs(config, filepath.Join(cacheDir(), "lib"), false)
 	args = append(args, "-o", must.String(filepath.Abs(config.BinPath)), ".")
+	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(toolBin("go"), args...)
 	cmd.Dir = config.Package
+	cmd.Env = envs
 
-	cmd.Env = append(envs, os.Environ()...)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", config.Package)
 	}
@@ -99,11 +89,9 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	err := cgoDockerfileTemplateParsed.Execute(dockerfileBuf, struct {
 		GOVersion     string
 		AlpineVersion string
-		WASMMuslc     wasmMuslcSource
 	}{
 		GOVersion:     tools["go"].Version,
 		AlpineVersion: goAlpineVersion,
-		WASMMuslc:     wasmMuslc[runtime.GOARCH],
 	})
 	if err != nil {
 		return "", errors.Wrap(err, "executing Dockerfile template failed")
@@ -166,10 +154,11 @@ func goBuildInDocker(ctx context.Context, config goBuildConfig) error {
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
-	args, envs := goBuildArgsAndEnvs(config)
-	runArgs := append([]string{
+	args, envs := goBuildArgsAndEnvs(config, "/crust-cache/lib", true)
+	runArgs := []string{
 		"run", "--rm",
 		"-v", srcDir + ":/src",
+		"-v", cacheDir() + ":/crust-cache",
 		"-v", goPath + ":/go",
 		"-v", goCache + ":/go-cache",
 		"--env", "GOPATH=/go",
@@ -177,7 +166,7 @@ func goBuildInDocker(ctx context.Context, config goBuildConfig) error {
 		"--workdir", workDir,
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		"--name", "crust-build-" + filepath.Base(out) + "-" + hex.EncodeToString(nameSuffix),
-	})
+	}
 	for _, env := range envs {
 		runArgs = append(runArgs, "--env", env)
 	}
@@ -204,17 +193,23 @@ func goBuild(ctx context.Context, config goBuildConfig) error {
 	return nil
 }
 
-func goBuildArgsAndEnvs(config goBuildConfig) (args []string, envs []string) {
+func goBuildArgsAndEnvs(config goBuildConfig, libDir string, docker bool) (args []string, envs []string) {
+	ldFlags := []string{"-w", "-s"}
+	if docker && config.DockerStatic {
+		ldFlags = append(ldFlags, "-extldflags=-static")
+	}
 	args = []string{
 		"build",
 		"-trimpath",
-		"-ldflags=-w -s -extldflags=-static",
+		"-ldflags=" + strings.Join(ldFlags, " "),
 	}
-	if len(config.Tags) > 0 {
-		args = append(args, "-tags="+strings.Join(config.Tags, ","))
+	if docker && len(config.DockerTags) > 0 {
+		args = append(args, "-tags="+strings.Join(config.DockerTags, ","))
 	}
 
-	envs = []string{}
+	envs = []string{
+		"LIBRARY_PATH=" + libDir,
+	}
 	if config.CGOEnabled {
 		envs = append(envs, "CGO_ENABLED=1")
 	}
