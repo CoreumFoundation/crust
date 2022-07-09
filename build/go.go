@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"text/template"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
@@ -44,6 +45,26 @@ var wasmMuslc = map[string]wasmMuslcSource{
 	},
 }
 
+type goBuildConfig struct {
+	// Package is the path to package to build
+	Package string
+
+	// BinPath is the path for compiled binary file
+	BinPath string
+
+	// Tags is the list of additional tags to build
+	Tags []string
+
+	// CGOEnabled builds cgo binary
+	CGOEnabled bool
+
+	// BuildForDocker cuases to docker-specific binary to be built inside docker container
+	BuildForDocker bool
+
+	// BuildForHost causes tp host-specific binary to be built on host
+	BuildForHost bool
+}
+
 func ensureGo(ctx context.Context) error {
 	return ensure(ctx, "go")
 }
@@ -52,14 +73,18 @@ func ensureGolangCI(ctx context.Context) error {
 	return ensure(ctx, "golangci")
 }
 
-func goBuildOnHost(ctx context.Context, pkg, out string, cgoEnabled bool) error {
-	logger.Get(ctx).Info("Building go package on host", zap.String("package", pkg), zap.String("binary", out))
-	cmd := exec.Command(toolBin("go"), "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
-	cmd.Dir = pkg
+func goBuildOnHost(ctx context.Context, config goBuildConfig) error {
+	logger.Get(ctx).Info("Building go package on host", zap.String("package", config.Package), zap.String("binary", config.BinPath))
 
-	cmd.Env = append([]string{cgoEnabledVar(cgoEnabled)}, os.Environ()...)
+	args, envs := goBuildArgsAndEnvs(config)
+	args = append(args, "-o", must.String(filepath.Abs(config.BinPath)), ".")
+
+	cmd := exec.Command(toolBin("go"), args...)
+	cmd.Dir = config.Package
+
+	cmd.Env = append(envs, os.Environ()...)
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return errors.Wrapf(err, "building go package '%s' failed", pkg)
+		return errors.Wrapf(err, "building go package '%s' failed", config.Package)
 	}
 	return nil
 }
@@ -107,8 +132,12 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	return image, nil
 }
 
-func goBuildInDocker(ctx context.Context, pkg, out string, cgoEnabled bool) error {
-	logger.Get(ctx).Info("Building go package in docker", zap.String("package", pkg), zap.String("binary", out))
+func goBuildInDocker(ctx context.Context, config goBuildConfig) error {
+	// FIXME (wojciech): use docker API instead of docker executable
+
+	out := filepath.Join("bin/.cache/docker", filepath.Base(config.BinPath))
+
+	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.Package), zap.String("binary", out))
 
 	_, err := exec.LookPath("docker")
 	if err != nil {
@@ -133,43 +162,63 @@ func goBuildInDocker(ctx context.Context, pkg, out string, cgoEnabled bool) erro
 	if err := os.MkdirAll(goCache, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	workDir := filepath.Clean(filepath.Join("/src", "crust", pkg))
+	workDir := filepath.Clean(filepath.Join("/src", "crust", config.Package))
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
-	runCmd := exec.Command("docker", "run", "--rm",
-		"-v", srcDir+":/src",
-		"-v", goPath+":/go",
-		"-v", goCache+":/go-cache",
-		"--env", cgoEnabledVar(cgoEnabled),
+	args, envs := goBuildArgsAndEnvs(config)
+	runArgs := append([]string{
+		"run", "--rm",
+		"-v", srcDir + ":/src",
+		"-v", goPath + ":/go",
+		"-v", goCache + ":/go-cache",
 		"--env", "GOPATH=/go",
 		"--env", "GOCACHE=/go-cache",
 		"--workdir", workDir,
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-		"--name", "crust-build-"+filepath.Base(out)+"-"+hex.EncodeToString(nameSuffix),
-		image,
-		"build", "-trimpath", "-ldflags=-w -s -extldflags=-static", "-tags=muslc", "-o", "/src/crust/"+out, ".")
-
-	if err := libexec.Exec(ctx, runCmd); err != nil {
-		return errors.Wrapf(err, "building cgo package '%s' failed", pkg)
+		"--name", "crust-build-" + filepath.Base(out) + "-" + hex.EncodeToString(nameSuffix),
+	})
+	for _, env := range envs {
+		runArgs = append(runArgs, "--env", env)
+	}
+	runArgs = append(runArgs, image)
+	runArgs = append(runArgs, args...)
+	runArgs = append(runArgs, "-o", "/src/crust/"+out, ".")
+	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
+		return errors.Wrapf(err, "building package '%s' failed", config.Package)
 	}
 	return nil
 }
 
-func goBuildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool) error {
-	binName := filepath.Base(out)
-	if err := goBuildInDocker(ctx, pkg, filepath.Join("bin/.cache/docker", binName), cgoEnabled); err != nil {
-		return err
+func goBuild(ctx context.Context, config goBuildConfig) error {
+	if config.BuildForDocker {
+		if err := goBuildInDocker(ctx, config); err != nil {
+			return err
+		}
 	}
-
-	return goBuildOnHost(ctx, pkg, out, cgoEnabled)
+	if config.BuildForHost {
+		if err := goBuildOnHost(ctx, config); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func cgoEnabledVar(cgoEnabled bool) string {
-	if cgoEnabled {
-		return "CGO_ENABLED=1"
+func goBuildArgsAndEnvs(config goBuildConfig) (args []string, envs []string) {
+	args = []string{
+		"build",
+		"-trimpath",
+		"-ldflags=-w -s -extldflags=-static",
 	}
-	return "CGO_ENABLED=0"
+	if len(config.Tags) > 0 {
+		args = append(args, "-tags="+strings.Join(config.Tags, ","))
+	}
+
+	envs = []string{}
+	if config.CGOEnabled {
+		envs = append(envs, "CGO_ENABLED=1")
+	}
+	return args, envs
 }
 
 // goLint runs golangci linter, runs go mod tidy and checks that git status is clean
