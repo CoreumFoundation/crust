@@ -52,19 +52,12 @@ func ensureGolangCI(ctx context.Context) error {
 	return ensure(ctx, "golangci")
 }
 
-// goBuildPkg builds go package
-// nolint:unparam // linter does not take into account that `targetOS` is different on every platform
-func goBuildPkg(ctx context.Context, pkg, targetOS, out string, cgoEnabled bool) error {
-	logger.Get(ctx).Info("Building go package", zap.String("package", pkg), zap.String("binary", out), zap.String("targetOS", targetOS))
+func goBuildOnHost(ctx context.Context, pkg, out string, cgoEnabled bool) error {
+	logger.Get(ctx).Info("Building go package on host", zap.String("package", pkg), zap.String("binary", out))
 	cmd := exec.Command(toolBin("go"), "build", "-trimpath", "-ldflags=-w -s", "-o", must.String(filepath.Abs(out)), ".")
 	cmd.Dir = pkg
 
-	cgoFlag := "CGO_ENABLED=0"
-	if cgoEnabled {
-		cgoFlag = "CGO_ENABLED=1"
-	}
-
-	cmd.Env = append([]string{cgoFlag, "GOOS=" + targetOS}, os.Environ()...)
+	cmd.Env = append([]string{cgoEnabledVar(cgoEnabled)}, os.Environ()...)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", pkg)
 	}
@@ -76,7 +69,7 @@ var cgoDockerfileTemplate string
 
 var cgoDockerfileTemplateParsed = template.Must(template.New("Dockerfile").Parse(cgoDockerfileTemplate))
 
-func ensureCGODockerImage(ctx context.Context) (string, error) {
+func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	dockerfileBuf := &bytes.Buffer{}
 	err := cgoDockerfileTemplateParsed.Execute(dockerfileBuf, struct {
 		GOVersion     string
@@ -114,8 +107,8 @@ func ensureCGODockerImage(ctx context.Context) (string, error) {
 	return image, nil
 }
 
-func goBuildWithDocker(ctx context.Context, pkg, out string) error {
-	logger.Get(ctx).Info("Building CGO-enabled go package for docker", zap.String("package", pkg), zap.String("binary", out))
+func goBuildInDocker(ctx context.Context, pkg, out string, cgoEnabled bool) error {
+	logger.Get(ctx).Info("Building go package in docker", zap.String("package", pkg), zap.String("binary", out))
 
 	_, err := exec.LookPath("docker")
 	if err != nil {
@@ -123,7 +116,7 @@ func goBuildWithDocker(ctx context.Context, pkg, out string) error {
 		return err
 	}
 
-	image, err := ensureCGODockerImage(ctx)
+	image, err := ensureBuildDockerImage(ctx)
 	if err != nil {
 		return err
 	}
@@ -136,18 +129,19 @@ func goBuildWithDocker(ctx context.Context, pkg, out string) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	goCache := cacheDir() + "/alpine-cgo/go-build"
+	goCache := cacheDir() + "/docker/go-build"
 	if err := os.MkdirAll(goCache, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
 	workDir := filepath.Clean(filepath.Join("/src", "crust", pkg))
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
+
 	runCmd := exec.Command("docker", "run", "--rm",
 		"-v", srcDir+":/src",
 		"-v", goPath+":/go",
 		"-v", goCache+":/go-cache",
-		"--env", "CGO_ENABLED=1",
+		"--env", cgoEnabledVar(cgoEnabled),
 		"--env", "GOPATH=/go",
 		"--env", "GOCACHE=/go-cache",
 		"--workdir", workDir,
@@ -160,6 +154,22 @@ func goBuildWithDocker(ctx context.Context, pkg, out string) error {
 		return errors.Wrapf(err, "building cgo package '%s' failed", pkg)
 	}
 	return nil
+}
+
+func goBuildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool) error {
+	binName := filepath.Base(out)
+	if err := goBuildInDocker(ctx, pkg, filepath.Join("bin/.cache/docker", binName), cgoEnabled); err != nil {
+		return err
+	}
+
+	return goBuildOnHost(ctx, pkg, out, cgoEnabled)
+}
+
+func cgoEnabledVar(cgoEnabled bool) string {
+	if cgoEnabled {
+		return "CGO_ENABLED=1"
+	}
+	return "CGO_ENABLED=0"
 }
 
 // goLint runs golangci linter, runs go mod tidy and checks that git status is clean
