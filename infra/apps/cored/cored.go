@@ -40,9 +40,9 @@ func New(name string, cfg infra.Config, network *config.Network, appInfo *infra.
 
 	err = network.FundAccount(stakerPubKey, "100000000000000000000000"+network.TokenSymbol())
 	must.OK(err)
-	clientCtx := client.NewDefaultClientContext().WithChainID(network.ChainID())
+	clientCtx := client.NewDefaultClientContext().WithChainID(string(network.ChainID()))
 
-	tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
+	tx, err := config.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
 	must.OK(err)
 	network.AddGenesisTx(tx)
 
@@ -113,7 +113,7 @@ func (c Cored) TokenSymbol() string {
 
 // ChainID returns ID of the chain
 func (c Cored) ChainID() string {
-	return c.network.ChainID()
+	return string(c.network.ChainID())
 }
 
 // Info returns deployment info
@@ -144,7 +144,7 @@ func (c Cored) AddWallet(balances string) types.Wallet {
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() Client {
-	return NewClient(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
+	return NewClient(string(c.network.ChainID()), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -254,7 +254,7 @@ func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
 	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
-	OPTS="$OPTS --chain-id ""` + c.network.ChainID() + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
+	OPTS="$OPTS --chain-id ""` + string(c.network.ChainID()) + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
 fi
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
