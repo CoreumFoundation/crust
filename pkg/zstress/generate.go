@@ -66,7 +66,7 @@ func Generate(cfg GenerateConfig) error {
 	}
 
 	network := cfg.Network
-	clientCtx := client.NewDefaultClientContext().WithChainID(network.ChainID())
+	clientCtx := client.NewDefaultClientContext().WithChainID(string(network.ChainID()))
 	nodeIDs := make([]string, 0, cfg.NumOfValidators)
 	for i := 0; i < cfg.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -88,7 +88,7 @@ func Generate(cfg GenerateConfig) error {
 
 		err = network.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
 		must.OK(err)
-		tx, err := config.GenerateAddValidatorTx(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
+		tx, err := config.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
 		must.OK(err)
 		network.AddGenesisTx(tx)
 	}
