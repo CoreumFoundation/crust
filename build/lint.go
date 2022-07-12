@@ -1,7 +1,6 @@
 package build
 
 import (
-	"context"
 	"io"
 	"io/fs"
 	"os"
@@ -13,7 +12,7 @@ import (
 )
 
 // lint runs linters and check that git status is clean
-func lint(ctx context.Context, deps build.DepsFunc) error {
+func lint(deps build.DepsFunc) error {
 	deps(ensureAllRepos, goLint, lintNewLines, goModTidy, gitStatusClean)
 	return nil
 }
