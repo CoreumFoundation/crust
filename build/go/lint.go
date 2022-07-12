@@ -1,4 +1,4 @@
-package build
+package _go
 
 import (
 	"io"
