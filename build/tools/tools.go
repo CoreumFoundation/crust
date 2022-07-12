@@ -151,6 +151,12 @@ var (
 	dockerARM64 = Platform{OS: dockerOS, Arch: "arm64"}
 )
 
+// DockerPlatform is the docker platform for current arch
+var DockerPlatform = Platform{
+	OS:   dockerOS,
+	Arch: runtime.GOARCH,
+}
+
 // Tool represents tool to be installed
 type Tool struct {
 	Version   string

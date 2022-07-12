@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"text/template"
 
@@ -107,7 +106,7 @@ func BuildInDocker(ctx context.Context, config BuildConfig) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	cacheDir := filepath.Join(tools.CacheDir(), "docker."+runtime.GOARCH)
+	cacheDir := filepath.Join(tools.CacheDir(), tools.DockerPlatform.String())
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
