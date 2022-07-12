@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 )
 
@@ -25,7 +26,7 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 
 func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "build/cmd", runtime.GOOS, "bin/.cache/crust", false)
+	return goBuildPkg(ctx, "build/cmd", runtime.GOOS, must.String(filepath.EvalSymlinks(must.String(os.Executable()))), false)
 }
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
