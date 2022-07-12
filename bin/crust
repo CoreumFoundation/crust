@@ -1,14 +1,11 @@
 #!/bin/bash
 
-# Increment VERSION if logic inside `./build` has changed. It guarantees that changes will be applied
-# automatically for all the developers once they are pulled from master.
-VERSION=1
-
 set -e
 
 # go to root dir of repository
 pushd "$(dirname "${BASH_SOURCE[0]}")/.." > /dev/null
 
+VERSION=$(git rev-parse --short HEAD)
 REPO=$(pwd)
 CRUST_BIN="$REPO/bin/.cache/crust-$VERSION"
 
