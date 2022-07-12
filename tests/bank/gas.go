@@ -48,23 +48,14 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 
 			var maxGasUsed int64
 			toSend := cored.Balance{Denom: "core", Amount: amount}
-			for i := numOfTransactions / 2; i >= 0; i-- {
-				gasUsed, err := sendAndReturnGasUsed(ctx, client, wallet1, wallet2, toSend)
+			for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
+				gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend)
 				require.NoError(t, err)
 
 				if gasUsed > maxGasUsed {
 					maxGasUsed = gasUsed
 				}
-
-				gasUsed, err = sendAndReturnGasUsed(ctx, client, wallet2, wallet1, toSend)
-				require.NoError(t, err)
-
-				if gasUsed > maxGasUsed {
-					maxGasUsed = gasUsed
-				}
-
-				wallet1.AccountSequence++
-				wallet2.AccountSequence++
+				sender.AccountSequence++
 			}
 			assert.LessOrEqual(t, margin*float64(maxGasUsed), float64(maxGasAssumed))
 			logger.Get(ctx).Info("Maximum gas used", zap.Int64("maxGasUsed", maxGasUsed))
