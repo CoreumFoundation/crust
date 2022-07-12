@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -63,7 +64,8 @@ func EnsureLibWASMVMMuslC(ctx context.Context) error {
 
 // BuildLocally builds binary locally
 func BuildLocally(ctx context.Context, config BuildConfig) error {
-	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath), zap.String("binary", config.BinOutputPath))
+	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
+		zap.String("binary", config.BinOutputPath))
 
 	args, envs := buildArgsAndEnvs(config, filepath.Join(tools.CacheDir(), "lib"))
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
@@ -83,9 +85,8 @@ func BuildLocally(ctx context.Context, config BuildConfig) error {
 func BuildInDocker(ctx context.Context, config BuildConfig) error {
 	// FIXME (wojciech): use docker API instead of docker executable
 
-	out := filepath.Join("bin/.cache/docker", filepath.Base(config.BinOutputPath))
-
-	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath), zap.String("binary", out))
+	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath),
+		zap.String("binary", config.BinOutputPath))
 
 	_, err := exec.LookPath("docker")
 	if err != nil {
@@ -106,8 +107,8 @@ func BuildInDocker(ctx context.Context, config BuildConfig) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	goCache := tools.CacheDir() + "/docker/go-build"
-	if err := os.MkdirAll(goCache, 0o700); err != nil {
+	cacheDir := filepath.Join(tools.CacheDir(), "docker."+runtime.GOARCH)
+	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
 	workDir := filepath.Clean(filepath.Join("/src", "crust", config.PackagePath))
@@ -118,21 +119,20 @@ func BuildInDocker(ctx context.Context, config BuildConfig) error {
 	runArgs := []string{
 		"run", "--rm",
 		"-v", srcDir + ":/src",
-		"-v", tools.CacheDir() + ":/crust-cache",
 		"-v", goPath + ":/go",
-		"-v", goCache + ":/go-cache",
+		"-v", cacheDir + ":/crust-cache",
 		"--env", "GOPATH=/go",
-		"--env", "GOCACHE=/go-cache",
+		"--env", "GOCACHE=/crust-cache/go-build",
 		"--workdir", workDir,
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-		"--name", "crust-build-" + filepath.Base(out) + "-" + hex.EncodeToString(nameSuffix),
+		"--name", "crust-build-" + filepath.Base(config.BinOutputPath) + "-" + hex.EncodeToString(nameSuffix),
 	}
 	for _, env := range envs {
 		runArgs = append(runArgs, "--env", env)
 	}
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
-	runArgs = append(runArgs, "-o", "/src/crust/"+out, ".")
+	runArgs = append(runArgs, "-o", "/src/crust/"+config.BinOutputPath, ".")
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}

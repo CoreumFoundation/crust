@@ -138,7 +138,7 @@ type Platform struct {
 }
 
 func (p Platform) String() string {
-	return p.OS + "/" + p.Arch
+	return p.OS + "." + p.Arch
 }
 
 const dockerOS = "docker"
@@ -208,7 +208,7 @@ func ensurePlatform(ctx context.Context, tool Name, platform Platform) error {
 		panic(errors.Errorf("tool %s is not configured for platform %s", tool, platform))
 	}
 
-	toolDir := toolDir(tool)
+	toolDir := toolDir(tool, platform)
 	for dst, src := range combine(info.Binaries, source.Binaries) {
 		srcPath, err := filepath.Abs(toolDir + "/" + src)
 		if err != nil {
@@ -217,7 +217,7 @@ func ensurePlatform(ctx context.Context, tool Name, platform Platform) error {
 
 		dstPlatform := dst
 		if platform.OS == dockerOS {
-			dstPlatform = filepath.Join(CacheDir(), dstPlatform)
+			dstPlatform = filepath.Join(CacheDir(), platform.String(), dstPlatform)
 		}
 		dstPath, err := filepath.Abs(dstPlatform)
 		if err != nil {
@@ -258,7 +258,7 @@ func install(ctx context.Context, name Name, info Tool, platform Platform) (retE
 
 	hasher, expectedChecksum := hasher(source.Hash)
 	reader := io.TeeReader(resp.Body, hasher)
-	toolDir := toolDir(name)
+	toolDir := toolDir(name, platform)
 	if err := os.RemoveAll(toolDir); err != nil && !os.IsNotExist(err) {
 		panic(err)
 	}
@@ -283,11 +283,10 @@ func install(ctx context.Context, name Name, info Tool, platform Platform) (retE
 
 	dstDir := "."
 	if platform.OS == dockerOS {
-		dstDir = filepath.Join(CacheDir(), dstDir)
+		dstDir = filepath.Join(CacheDir(), platform.String())
 	}
 	for dst, src := range combine(info.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
-		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), string(name)+"-"+info.Version, src)
 		dstPath := dstDir + "/" + dst
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
 			panic(err)
@@ -295,6 +294,7 @@ func install(ctx context.Context, name Name, info Tool, platform Platform) (retE
 		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
 		must.OK(os.Chmod(srcPath, 0o700))
 		if platform.OS == dockerOS {
+			srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), string(name)+"-"+info.Version, src)
 			must.OK(os.Symlink(srcLinkPath, dstPath))
 		} else {
 			must.OK(os.Symlink(srcPath, dstPath))
@@ -415,13 +415,13 @@ func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
 
-func toolDir(name Name) string {
+func toolDir(name Name, platform Platform) string {
 	info, exists := tools[name]
 	if !exists {
 		panic(errors.Errorf("tool %s is not defined", name))
 	}
 
-	return CacheDir() + "/" + string(name) + "-" + info.Version
+	return filepath.Join(CacheDir(), platform.String(), string(name)+"-"+info.Version)
 }
 
 func ensureDir(file string) error {
