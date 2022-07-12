@@ -31,8 +31,8 @@ type goBuildConfig struct {
 	// Package is the path to package to build
 	Package string
 
-	// BinPath is the path for compiled binary file
-	BinPath string
+	// BinOutputPath is the path for compiled binary file
+	BinOutputPath string
 
 	// DockerTags is the list of additional tags to build only in docker
 	DockerTags []string
@@ -63,10 +63,10 @@ func ensureLibWASMVMMuslC(ctx context.Context) error {
 }
 
 func goBuildOnHost(ctx context.Context, config goBuildConfig) error {
-	logger.Get(ctx).Info("Building go package on host", zap.String("package", config.Package), zap.String("binary", config.BinPath))
+	logger.Get(ctx).Info("Building go package on host", zap.String("package", config.Package), zap.String("binary", config.BinOutputPath))
 
 	args, envs := goBuildArgsAndEnvs(config, filepath.Join(cacheDir(), "lib"), false)
-	args = append(args, "-o", must.String(filepath.Abs(config.BinPath)), ".")
+	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(toolBin("go"), args...)
@@ -123,7 +123,7 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 func goBuildInDocker(ctx context.Context, config goBuildConfig) error {
 	// FIXME (wojciech): use docker API instead of docker executable
 
-	out := filepath.Join("bin/.cache/docker", filepath.Base(config.BinPath))
+	out := filepath.Join("bin/.cache/docker", filepath.Base(config.BinOutputPath))
 
 	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.Package), zap.String("binary", out))
 
