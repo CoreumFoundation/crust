@@ -2,10 +2,11 @@ package build
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-)
 
 	"github.com/CoreumFoundation/coreum/build/git"
 	"github.com/CoreumFoundation/coreum/build/golang"
