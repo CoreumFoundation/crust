@@ -20,22 +20,22 @@ func buildAll(deps build.DepsFunc) {
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo, ensureCoreumRepo)
-	return buildNativeAndDocker(ctx, "../coreum/cmd/cored", "bin/cored")
+	return buildNativeAndDocker(ctx, "../coreum/cmd/cored", "bin/cored", true)
 }
 
 func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "build/cmd", runtime.GOOS, "bin/.cache/crust")
+	return goBuildPkg(ctx, "build/cmd", runtime.GOOS, "bin/.cache/crust", false)
 }
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "cmd/znet", runtime.GOOS, "bin/.cache/znet")
+	return goBuildPkg(ctx, "cmd/znet", runtime.GOOS, "bin/.cache/znet", false)
 }
 
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return buildNativeAndDocker(ctx, "cmd/zstress", "bin/.cache/zstress")
+	return buildNativeAndDocker(ctx, "cmd/zstress", "bin/.cache/zstress", false)
 }
 
 func ensureAllRepos(deps build.DepsFunc) {
@@ -46,23 +46,27 @@ func ensureCoreumRepo(ctx context.Context) error {
 	return ensureRepo(ctx, coreumRepoURL)
 }
 
-func buildNativeAndDocker(ctx context.Context, pkg, out string) error {
+func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool) error {
 	dir := filepath.Dir(out)
 	binName := filepath.Base(out)
-	outPath := dir + "/" + runtime.GOOS + "/" + binName
+	outPath := filepath.Join(dir, runtime.GOOS, binName)
 
 	if err := os.Remove(out); err != nil && !os.IsNotExist(err) {
 		return errors.WithStack(err)
 	}
-	if err := goBuildPkg(ctx, pkg, runtime.GOOS, outPath); err != nil {
+	if err := goBuildPkg(ctx, pkg, runtime.GOOS, outPath, cgoEnabled); err != nil {
 		return err
 	}
 	if err := os.Link(outPath, out); err != nil {
 		return errors.WithStack(err)
 	}
-	if runtime.GOOS != dockerGOOS {
-		// required to build docker images
-		return goBuildPkg(ctx, pkg, dockerGOOS, dir+"/"+dockerGOOS+"/"+binName)
+
+	if cgoEnabled {
+		// docker-targeted cgo-enabled binary must be built from within Docker environment
+		return goBuildWithDocker(ctx, pkg, filepath.Join(dir, "alpine-cgo", binName))
+	} else if runtime.GOOS != dockerGOOS {
+		return goBuildPkg(ctx, pkg, dockerGOOS, filepath.Join(dir, dockerGOOS, binName), false)
 	}
+
 	return nil
 }
