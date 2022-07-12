@@ -48,17 +48,17 @@ type BuildConfig struct {
 
 // EnsureGo ensures that go is available
 func EnsureGo(ctx context.Context) error {
-	return tools.EnsureLocal(ctx, "go")
+	return tools.EnsureLocal(ctx, tools.Go)
 }
 
 // EnsureGolangCI ensures that go linter is available
 func EnsureGolangCI(ctx context.Context) error {
-	return tools.EnsureLocal(ctx, "golangci")
+	return tools.EnsureLocal(ctx, tools.GolangCI)
 }
 
 // EnsureLibWASMVMMuslC ensures that libwasmvm_muslc is installed
 func EnsureLibWASMVMMuslC(ctx context.Context) error {
-	return tools.EnsureDocker(ctx, "libwasmvm_muslc")
+	return tools.EnsureDocker(ctx, tools.LibWASMMuslC)
 }
 
 // BuildLocally builds binary locally
@@ -150,7 +150,7 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 		GOVersion     string
 		AlpineVersion string
 	}{
-		GOVersion:     tools.ByName("go").Version,
+		GOVersion:     tools.ByName(tools.Go).Version,
 		AlpineVersion: goAlpineVersion,
 	})
 	if err != nil {

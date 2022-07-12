@@ -20,8 +20,17 @@ import (
 	"go.uber.org/zap"
 )
 
-var tools = map[string]Tool{
-	"go": {
+// Tool names
+const (
+	Go           Name = "go"
+	GolangCI     Name = "golangci"
+	Ignite       Name = "ignite"
+	LibWASMMuslC Name = "libwasmvm_muslc"
+)
+
+var tools = map[Name]Tool{
+	// https://go.dev/dl/
+	Go: {
 		Version:  "1.18.3",
 		ForLocal: true,
 		Sources: Sources{
@@ -43,7 +52,9 @@ var tools = map[string]Tool{
 			"bin/gofmt": "go/bin/gofmt",
 		},
 	},
-	"golangci": {
+
+	// https://github.com/golangci/golangci-lint/releases/
+	GolangCI: {
 		Version:  "1.46.2",
 		ForLocal: true,
 		Sources: Sources{
@@ -70,7 +81,9 @@ var tools = map[string]Tool{
 			},
 		},
 	},
-	"ignite": {
+
+	// https://github.com/ignite/cli/releases/
+	Ignite: {
 		Version:  "v0.22.2",
 		ForLocal: true,
 		Sources: Sources{
@@ -93,7 +106,7 @@ var tools = map[string]Tool{
 	},
 
 	// https://github.com/CosmWasm/wasmvm/releases
-	"libwasmvm_muslc": {
+	LibWASMMuslC: {
 		Version:   "v1.0.0",
 		ForDocker: true,
 		Sources: Sources{
@@ -115,23 +128,27 @@ var tools = map[string]Tool{
 	},
 }
 
-type platform struct {
+// Name is the type used for defining tool names
+type Name string
+
+// Platform defines platform to install tool on
+type Platform struct {
 	OS   string
 	Arch string
 }
 
-func (p platform) String() string {
+func (p Platform) String() string {
 	return p.OS + "/" + p.Arch
 }
 
 const dockerOS = "docker"
 
 var (
-	linuxAMD64  = platform{OS: "linux", Arch: "amd64"}
-	darwinAMD64 = platform{OS: "darwin", Arch: "amd64"}
-	darwinARM64 = platform{OS: "darwin", Arch: "arm64"}
-	dockerAMD64 = platform{OS: dockerOS, Arch: "amd64"}
-	dockerARM64 = platform{OS: dockerOS, Arch: "arm64"}
+	linuxAMD64  = Platform{OS: "linux", Arch: "amd64"}
+	darwinAMD64 = Platform{OS: "darwin", Arch: "amd64"}
+	darwinARM64 = Platform{OS: "darwin", Arch: "arm64"}
+	dockerAMD64 = Platform{OS: dockerOS, Arch: "amd64"}
+	dockerARM64 = Platform{OS: dockerOS, Arch: "arm64"}
 )
 
 // Tool represents tool to be installed
@@ -151,7 +168,7 @@ type Source struct {
 }
 
 // Sources is the map of sources
-type Sources map[platform]Source
+type Sources map[Platform]Source
 
 // InstallAll installs all the tools
 func InstallAll(ctx context.Context) error {
@@ -171,16 +188,16 @@ func InstallAll(ctx context.Context) error {
 }
 
 // EnsureLocal ensures that tool is installed locally
-func EnsureLocal(ctx context.Context, tool string) error {
-	return ensurePlatform(ctx, tool, platform{OS: runtime.GOOS, Arch: runtime.GOARCH})
+func EnsureLocal(ctx context.Context, tool Name) error {
+	return ensurePlatform(ctx, tool, Platform{OS: runtime.GOOS, Arch: runtime.GOARCH})
 }
 
 // EnsureDocker ensures that tool is installed for docker
-func EnsureDocker(ctx context.Context, tool string) error {
-	return ensurePlatform(ctx, tool, platform{OS: dockerOS, Arch: runtime.GOARCH})
+func EnsureDocker(ctx context.Context, tool Name) error {
+	return ensurePlatform(ctx, tool, Platform{OS: dockerOS, Arch: runtime.GOARCH})
 }
 
-func ensurePlatform(ctx context.Context, tool string, platform platform) error {
+func ensurePlatform(ctx context.Context, tool Name, platform Platform) error {
 	info, exists := tools[tool]
 	if !exists {
 		return errors.Errorf("tool %s is not defined", tool)
@@ -223,12 +240,12 @@ func ensurePlatform(ctx context.Context, tool string, platform platform) error {
 	return nil
 }
 
-func install(ctx context.Context, name string, info Tool, platform platform) (retErr error) {
+func install(ctx context.Context, name Name, info Tool, platform Platform) (retErr error) {
 	source, exists := info.Sources[platform]
 	if !exists {
 		panic(errors.Errorf("tool %s is not configured for platform %s", name, platform))
 	}
-	ctx = logger.With(ctx, zap.String("name", name), zap.String("version", info.Version),
+	ctx = logger.With(ctx, zap.String("name", string(name)), zap.String("version", info.Version),
 		zap.String("url", source.URL))
 	log := logger.Get(ctx)
 	log.Info("Installing tool")
@@ -270,7 +287,7 @@ func install(ctx context.Context, name string, info Tool, platform platform) (re
 	}
 	for dst, src := range combine(info.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
-		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), name+"-"+info.Version, src)
+		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), string(name)+"-"+info.Version, src)
 		dstPath := dstDir + "/" + dst
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
 			panic(err)
@@ -398,13 +415,13 @@ func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
 
-func toolDir(name string) string {
+func toolDir(name Name) string {
 	info, exists := tools[name]
 	if !exists {
 		panic(errors.Errorf("tool %s is not defined", name))
 	}
 
-	return CacheDir() + "/" + name + "-" + info.Version
+	return CacheDir() + "/" + string(name) + "-" + info.Version
 }
 
 func ensureDir(file string) error {
@@ -426,7 +443,7 @@ func combine(m1 map[string]string, m2 map[string]string) map[string]string {
 }
 
 // ByName returns tool definition by its name
-func ByName(name string) Tool {
+func ByName(name Name) Tool {
 	return tools[name]
 }
 
