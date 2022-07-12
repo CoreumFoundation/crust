@@ -14,6 +14,10 @@ const dockerGOOS = "linux"
 
 const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
 
+func getCurrentOS() string {
+	return runtime.GOOS
+}
+
 func buildAll(deps build.DepsFunc) {
 	deps(buildCored, buildZNet, buildZStress)
 }
@@ -25,12 +29,12 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 
 func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "build/cmd", runtime.GOOS, "bin/.cache/crust", false)
+	return goBuildPkg(ctx, "build/cmd", getCurrentOS(), "bin/.cache/crust", false)
 }
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
-	return goBuildPkg(ctx, "cmd/znet", runtime.GOOS, "bin/.cache/znet", false)
+	return goBuildPkg(ctx, "cmd/znet", getCurrentOS(), "bin/.cache/znet", false)
 }
 
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
@@ -49,12 +53,12 @@ func ensureCoreumRepo(ctx context.Context) error {
 func buildNativeAndDocker(ctx context.Context, pkg, out string, cgoEnabled bool) error {
 	dir := filepath.Dir(out)
 	binName := filepath.Base(out)
-	outPath := filepath.Join(dir, runtime.GOOS, binName)
+	outPath := filepath.Join(dir, getCurrentOS(), binName)
 
 	if err := os.Remove(out); err != nil && !os.IsNotExist(err) {
 		return errors.WithStack(err)
 	}
-	if err := goBuildPkg(ctx, pkg, runtime.GOOS, outPath, cgoEnabled); err != nil {
+	if err := goBuildPkg(ctx, pkg, getCurrentOS(), outPath, cgoEnabled); err != nil {
 		return err
 	}
 	if err := os.Link(outPath, out); err != nil {
