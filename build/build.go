@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+)
 
 	"github.com/CoreumFoundation/coreum/build/git"
 	"github.com/CoreumFoundation/coreum/build/golang"
@@ -37,7 +39,7 @@ func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
 	return golang.BuildLocally(ctx, golang.BuildConfig{
 		PackagePath:   "build/cmd",
-		BinOutputPath: "bin/.cache/crust",
+		BinOutputPath: must.String(filepath.EvalSymlinks(must.String(os.Executable()))),
 	})
 }
 
