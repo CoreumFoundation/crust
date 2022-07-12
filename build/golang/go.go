@@ -36,20 +36,14 @@ type BuildConfig struct {
 	// BinOutputPath is the path for compiled binary file
 	BinOutputPath string
 
-	// DockerTags is the list of additional tags to build only in docker
-	DockerTags []string
+	// Tags is the list of additional tags to build
+	Tags []string
 
-	// DockerStatic triggers static compilation inside docker
-	DockerStatic bool
+	// LinkStatically triggers static compilation
+	LinkStatically bool
 
 	// CGOEnabled builds cgo binary
 	CGOEnabled bool
-
-	// BuildForDocker cuases a docker-specific binary to be built inside docker container
-	BuildForDocker bool
-
-	// BuildForLocal causes a local-specific binary to be built locally
-	BuildForLocal bool
 }
 
 // EnsureGo ensures that go is available
@@ -67,10 +61,11 @@ func EnsureLibWASMVMMuslC(ctx context.Context) error {
 	return tools.EnsureDocker(ctx, "libwasmvm_muslc")
 }
 
-func buildLocally(ctx context.Context, config BuildConfig) error {
+// BuildLocally builds binary locally
+func BuildLocally(ctx context.Context, config BuildConfig) error {
 	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath), zap.String("binary", config.BinOutputPath))
 
-	args, envs := buildArgsAndEnvs(config, filepath.Join(tools.CacheDir(), "lib"), false)
+	args, envs := buildArgsAndEnvs(config, filepath.Join(tools.CacheDir(), "lib"))
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
@@ -80,6 +75,66 @@ func buildLocally(ctx context.Context, config BuildConfig) error {
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", config.PackagePath)
+	}
+	return nil
+}
+
+// BuildInDocker builds binary inside docker container
+func BuildInDocker(ctx context.Context, config BuildConfig) error {
+	// FIXME (wojciech): use docker API instead of docker executable
+
+	out := filepath.Join("bin/.cache/docker", filepath.Base(config.BinOutputPath))
+
+	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath), zap.String("binary", out))
+
+	_, err := exec.LookPath("docker")
+	if err != nil {
+		err = errors.Wrap(err, "docker command is not available in PATH")
+		return err
+	}
+
+	image, err := ensureBuildDockerImage(ctx)
+	if err != nil {
+		return err
+	}
+
+	srcDir := must.String(filepath.Abs(".."))
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
+	}
+	if err := os.MkdirAll(goPath, 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+	goCache := tools.CacheDir() + "/docker/go-build"
+	if err := os.MkdirAll(goCache, 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+	workDir := filepath.Clean(filepath.Join("/src", "crust", config.PackagePath))
+	nameSuffix := make([]byte, 4)
+	must.Any(rand.Read(nameSuffix))
+
+	args, envs := buildArgsAndEnvs(config, "/crust-cache/lib")
+	runArgs := []string{
+		"run", "--rm",
+		"-v", srcDir + ":/src",
+		"-v", tools.CacheDir() + ":/crust-cache",
+		"-v", goPath + ":/go",
+		"-v", goCache + ":/go-cache",
+		"--env", "GOPATH=/go",
+		"--env", "GOCACHE=/go-cache",
+		"--workdir", workDir,
+		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
+		"--name", "crust-build-" + filepath.Base(out) + "-" + hex.EncodeToString(nameSuffix),
+	}
+	for _, env := range envs {
+		runArgs = append(runArgs, "--env", env)
+	}
+	runArgs = append(runArgs, image)
+	runArgs = append(runArgs, args...)
+	runArgs = append(runArgs, "-o", "/src/crust/"+out, ".")
+	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
+		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
 	return nil
 }
@@ -125,83 +180,9 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	return image, nil
 }
 
-func buildInDocker(ctx context.Context, config BuildConfig) error {
-	// FIXME (wojciech): use docker API instead of docker executable
-
-	out := filepath.Join("bin/.cache/docker", filepath.Base(config.BinOutputPath))
-
-	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath), zap.String("binary", out))
-
-	_, err := exec.LookPath("docker")
-	if err != nil {
-		err = errors.Wrap(err, "docker command is not available in PATH")
-		return err
-	}
-
-	image, err := ensureBuildDockerImage(ctx)
-	if err != nil {
-		return err
-	}
-
-	srcDir := must.String(filepath.Abs(".."))
-	goPath := os.Getenv("GOPATH")
-	if goPath == "" {
-		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
-	}
-	if err := os.MkdirAll(goPath, 0o700); err != nil {
-		return errors.WithStack(err)
-	}
-	goCache := tools.CacheDir() + "/docker/go-build"
-	if err := os.MkdirAll(goCache, 0o700); err != nil {
-		return errors.WithStack(err)
-	}
-	workDir := filepath.Clean(filepath.Join("/src", "crust", config.PackagePath))
-	nameSuffix := make([]byte, 4)
-	must.Any(rand.Read(nameSuffix))
-
-	args, envs := buildArgsAndEnvs(config, "/crust-cache/lib", true)
-	runArgs := []string{
-		"run", "--rm",
-		"-v", srcDir + ":/src",
-		"-v", tools.CacheDir() + ":/crust-cache",
-		"-v", goPath + ":/go",
-		"-v", goCache + ":/go-cache",
-		"--env", "GOPATH=/go",
-		"--env", "GOCACHE=/go-cache",
-		"--workdir", workDir,
-		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-		"--name", "crust-build-" + filepath.Base(out) + "-" + hex.EncodeToString(nameSuffix),
-	}
-	for _, env := range envs {
-		runArgs = append(runArgs, "--env", env)
-	}
-	runArgs = append(runArgs, image)
-	runArgs = append(runArgs, args...)
-	runArgs = append(runArgs, "-o", "/src/crust/"+out, ".")
-	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
-		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
-	}
-	return nil
-}
-
-// Build runs go build locally and/or inside docker
-func Build(ctx context.Context, config BuildConfig) error {
-	if config.BuildForDocker {
-		if err := buildInDocker(ctx, config); err != nil {
-			return err
-		}
-	}
-	if config.BuildForLocal {
-		if err := buildLocally(ctx, config); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func buildArgsAndEnvs(config BuildConfig, libDir string, docker bool) (args []string, envs []string) {
+func buildArgsAndEnvs(config BuildConfig, libDir string) (args []string, envs []string) {
 	ldFlags := []string{"-w", "-s"}
-	if docker && config.DockerStatic {
+	if config.LinkStatically {
 		ldFlags = append(ldFlags, "-extldflags=-static")
 	}
 	args = []string{
@@ -209,8 +190,8 @@ func buildArgsAndEnvs(config BuildConfig, libDir string, docker bool) (args []st
 		"-trimpath",
 		"-ldflags=" + strings.Join(ldFlags, " "),
 	}
-	if docker && len(config.DockerTags) > 0 {
-		args = append(args, "-tags="+strings.Join(config.DockerTags, ","))
+	if len(config.Tags) > 0 {
+		args = append(args, "-tags="+strings.Join(config.Tags, ","))
 	}
 
 	envs = []string{

@@ -15,41 +15,51 @@ func buildAll(deps build.DepsFunc) {
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, git.EnsureCoreumRepo)
-	return golang.Build(ctx, golang.BuildConfig{
+
+	if err := golang.BuildLocally(ctx, golang.BuildConfig{
+		PackagePath:   "../coreum/cmd/cored",
+		BinOutputPath: "bin/cored",
+		CGOEnabled:    true,
+	}); err != nil {
+		return err
+	}
+
+	return golang.BuildInDocker(ctx, golang.BuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
-		BinOutputPath:  "bin/cored",
-		DockerStatic:   true,
-		DockerTags:     []string{"muslc"},
+		BinOutputPath:  "bin/.cache/docker/cored",
 		CGOEnabled:     true,
-		BuildForLocal:  true,
-		BuildForDocker: true,
+		Tags:           []string{"muslc"},
+		LinkStatically: true,
 	})
 }
 
 func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
-	return golang.Build(ctx, golang.BuildConfig{
+	return golang.BuildLocally(ctx, golang.BuildConfig{
 		PackagePath:   "build/cmd",
 		BinOutputPath: "bin/.cache/crust",
-		BuildForLocal: true,
 	})
 }
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
-	return golang.Build(ctx, golang.BuildConfig{
+	return golang.BuildLocally(ctx, golang.BuildConfig{
 		PackagePath:   "cmd/znet",
 		BinOutputPath: "bin/.cache/znet",
-		BuildForLocal: true,
 	})
 }
 
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
-	return golang.Build(ctx, golang.BuildConfig{
-		PackagePath:    "cmd/zstress",
-		BinOutputPath:  "bin/.cache/zstress",
-		BuildForLocal:  true,
-		BuildForDocker: true,
+	if err := golang.BuildLocally(ctx, golang.BuildConfig{
+		PackagePath:   "cmd/zstress",
+		BinOutputPath: "bin/.cache/zstress",
+	}); err != nil {
+		return err
+	}
+
+	return golang.BuildInDocker(ctx, golang.BuildConfig{
+		PackagePath:   "cmd/zstress",
+		BinOutputPath: "bin/.cache/zstress",
 	})
 }
