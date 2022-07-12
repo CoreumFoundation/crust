@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -31,10 +30,7 @@ const (
 	txStatusPollInterval = 500 * time.Millisecond
 )
 
-var (
-	memo                   = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
-	expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
-)
+var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
@@ -96,7 +92,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, signer Wallet, memo string, msg sdk.Msg) (authsigning.Tx, error) {
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
@@ -197,17 +193,25 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
+// TxBankSendData holds input data for PrepareTxBankSend
+type TxBankSendData struct {
+	Sender   Wallet
+	Receiver Wallet
+	Balance  Balance
+	Memo     string
+}
+
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) PrepareTxBankSend(ctx context.Context, sender, receiver Wallet, balance Balance) ([]byte, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
+func (c Client) PrepareTxBankSend(ctx context.Context, data TxBankSendData) ([]byte, error) {
+	fromAddress, err := sdk.AccAddressFromBech32(data.Sender.Key.Address())
 	must.OK(err)
-	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
+	toAddress, err := sdk.AccAddressFromBech32(data.Receiver.Key.Address())
 	must.OK(err)
 
-	signedTx, err := c.Sign(ctx, sender, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	signedTx, err := c.Sign(ctx, data.Sender, data.Memo, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
-			Denom:  balance.Denom,
-			Amount: sdk.NewIntFromBigInt(balance.Amount),
+			Denom:  data.Balance.Denom,
+			Amount: sdk.NewIntFromBigInt(data.Balance.Amount),
 		},
 	}))
 	if err != nil {

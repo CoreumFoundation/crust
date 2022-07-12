@@ -151,7 +151,11 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 						if !ok {
 							return nil
 						}
-						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, tx.From, tx.To, cored.Balance{Amount: big.NewInt(1), Denom: "core"}))
+						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, cored.TxBankSendData{
+							Sender:   tx.From,
+							Receiver: tx.To,
+							Balance:  cored.Balance{Amount: big.NewInt(1), Denom: "core"},
+						}))
 						select {
 						case <-ctx.Done():
 							return ctx.Err()

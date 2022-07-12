@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -14,6 +15,8 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 )
+
+var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
 // TestTransferMaximumGas checks that transfer does not take more gas than assumed
 func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.PrepareFunc, testing.RunFunc) {
@@ -69,7 +72,12 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 }
 
 func sendAndReturnGasUsed(ctx context.Context, client cored.Client, sender, receiver cored.Wallet, toSend cored.Balance) (int64, error) {
-	txBytes, err := client.PrepareTxBankSend(ctx, sender, receiver, toSend)
+	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendData{
+		Sender:   sender,
+		Receiver: receiver,
+		Balance:  toSend,
+		Memo:     maxMemo, // memo is set to max length here to charge as much gas as possible
+	})
 	if err != nil {
 		return 0, err
 	}
