@@ -15,12 +15,12 @@ func buildAll(deps build.DepsFunc) {
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo, ensureLibWASMVMMuslC, ensureCoreumRepo)
 	return goBuild(ctx, goBuildConfig{
-		Package:        "../coreum/cmd/cored",
+		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  "bin/cored",
 		DockerStatic:   true,
 		DockerTags:     []string{"muslc"},
 		CGOEnabled:     true,
-		BuildForHost:   true,
+		BuildForLocal:  true,
 		BuildForDocker: true,
 	})
 }
@@ -28,27 +28,27 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
 	return goBuild(ctx, goBuildConfig{
-		Package:       "build/cmd",
+		PackagePath:   "build/cmd",
 		BinOutputPath: "bin/.cache/crust",
-		BuildForHost:  true,
+		BuildForLocal: true,
 	})
 }
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
 	return goBuild(ctx, goBuildConfig{
-		Package:       "cmd/znet",
+		PackagePath:   "cmd/znet",
 		BinOutputPath: "bin/.cache/znet",
-		BuildForHost:  true,
+		BuildForLocal: true,
 	})
 }
 
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
 	return goBuild(ctx, goBuildConfig{
-		Package:        "cmd/zstress",
+		PackagePath:    "cmd/zstress",
 		BinOutputPath:  "bin/.cache/zstress",
-		BuildForHost:   true,
+		BuildForLocal:  true,
 		BuildForDocker: true,
 	})
 }

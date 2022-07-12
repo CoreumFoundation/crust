@@ -28,8 +28,8 @@ const goAlpineVersion = "3.16"
 var repositories = []string{"../crust", "../coreum"}
 
 type goBuildConfig struct {
-	// Package is the path to package to build
-	Package string
+	// PackagePath is the path to package to build
+	PackagePath string
 
 	// BinOutputPath is the path for compiled binary file
 	BinOutputPath string
@@ -43,38 +43,38 @@ type goBuildConfig struct {
 	// CGOEnabled builds cgo binary
 	CGOEnabled bool
 
-	// BuildForDocker cuases to docker-specific binary to be built inside docker container
+	// BuildForDocker cuases a docker-specific binary to be built inside docker container
 	BuildForDocker bool
 
-	// BuildForHost causes tp host-specific binary to be built on host
-	BuildForHost bool
+	// BuildForLocal causes a local-specific binary to be built locally
+	BuildForLocal bool
 }
 
 func ensureGo(ctx context.Context) error {
-	return ensureHost(ctx, "go")
+	return ensureLocal(ctx, "go")
 }
 
 func ensureGolangCI(ctx context.Context) error {
-	return ensureHost(ctx, "golangci")
+	return ensureLocal(ctx, "golangci")
 }
 
 func ensureLibWASMVMMuslC(ctx context.Context) error {
 	return ensureDocker(ctx, "libwasmvm_muslc")
 }
 
-func goBuildOnHost(ctx context.Context, config goBuildConfig) error {
-	logger.Get(ctx).Info("Building go package on host", zap.String("package", config.Package), zap.String("binary", config.BinOutputPath))
+func goBuildLocally(ctx context.Context, config goBuildConfig) error {
+	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath), zap.String("binary", config.BinOutputPath))
 
 	args, envs := goBuildArgsAndEnvs(config, filepath.Join(cacheDir(), "lib"), false)
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(toolBin("go"), args...)
-	cmd.Dir = config.Package
+	cmd.Dir = config.PackagePath
 	cmd.Env = envs
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return errors.Wrapf(err, "building go package '%s' failed", config.Package)
+		return errors.Wrapf(err, "building go package '%s' failed", config.PackagePath)
 	}
 	return nil
 }
@@ -125,7 +125,7 @@ func goBuildInDocker(ctx context.Context, config goBuildConfig) error {
 
 	out := filepath.Join("bin/.cache/docker", filepath.Base(config.BinOutputPath))
 
-	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.Package), zap.String("binary", out))
+	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath), zap.String("binary", out))
 
 	_, err := exec.LookPath("docker")
 	if err != nil {
@@ -150,7 +150,7 @@ func goBuildInDocker(ctx context.Context, config goBuildConfig) error {
 	if err := os.MkdirAll(goCache, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	workDir := filepath.Clean(filepath.Join("/src", "crust", config.Package))
+	workDir := filepath.Clean(filepath.Join("/src", "crust", config.PackagePath))
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
@@ -174,7 +174,7 @@ func goBuildInDocker(ctx context.Context, config goBuildConfig) error {
 	runArgs = append(runArgs, args...)
 	runArgs = append(runArgs, "-o", "/src/crust/"+out, ".")
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
-		return errors.Wrapf(err, "building package '%s' failed", config.Package)
+		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
 	return nil
 }
@@ -185,8 +185,8 @@ func goBuild(ctx context.Context, config goBuildConfig) error {
 			return err
 		}
 	}
-	if config.BuildForHost {
-		if err := goBuildOnHost(ctx, config); err != nil {
+	if config.BuildForLocal {
+		if err := goBuildLocally(ctx, config); err != nil {
 			return err
 		}
 	}

@@ -22,8 +22,8 @@ import (
 
 var tools = map[string]tool{
 	"go": {
-		Version: "1.18.3",
-		ForHost: true,
+		Version:  "1.18.3",
+		ForLocal: true,
 		Sources: sources{
 			linuxAMD64: {
 				URL:  "https://go.dev/dl/go1.18.3.linux-amd64.tar.gz",
@@ -44,8 +44,8 @@ var tools = map[string]tool{
 		},
 	},
 	"golangci": {
-		Version: "1.46.2",
-		ForHost: true,
+		Version:  "1.46.2",
+		ForLocal: true,
 		Sources: sources{
 			linuxAMD64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-linux-amd64.tar.gz",
@@ -71,8 +71,8 @@ var tools = map[string]tool{
 		},
 	},
 	"ignite": {
-		Version: "v0.22.2",
-		ForHost: true,
+		Version:  "v0.22.2",
+		ForLocal: true,
 		Sources: sources{
 			linuxAMD64: {
 				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_linux_amd64.tar.gz",
@@ -137,7 +137,7 @@ var (
 type tool struct {
 	Version   string
 	ForDocker bool
-	ForHost   bool
+	ForLocal  bool
 	Sources   sources
 	Binaries  map[string]string
 }
@@ -152,8 +152,8 @@ type sources map[platform]source
 
 func installTools(ctx context.Context) error {
 	for tool := range tools {
-		if tools[tool].ForHost {
-			if err := ensureHost(ctx, tool); err != nil {
+		if tools[tool].ForLocal {
+			if err := ensureLocal(ctx, tool); err != nil {
 				return err
 			}
 		}
@@ -166,7 +166,7 @@ func installTools(ctx context.Context) error {
 	return nil
 }
 
-func ensureHost(ctx context.Context, tool string) error {
+func ensureLocal(ctx context.Context, tool string) error {
 	return ensurePlatform(ctx, tool, platform{OS: runtime.GOOS, Arch: runtime.GOARCH})
 }
 
