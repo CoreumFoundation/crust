@@ -1,19 +1,27 @@
 #!/bin/bash
 
+# Increment VERSION if logic inside `./build` has changed. It guarantees that changes will be applied
+# automatically for all the developers once they are pulled from master.
+VERSION=1
+
 set -e
 
 # go to root dir of repository
 pushd "$(dirname "${BASH_SOURCE[0]}")/.." > /dev/null
-if [ ! -f ./bin/.cache/crust ]; then
-  pushd build > /dev/null
-  go build -trimpath -o ../bin/.cache/crust-tmp ./cmd
-  popd > /dev/null
-
-  ./bin/.cache/crust-tmp build/crust
-  rm -f ./bin/.cache/crust-tmp
-fi
 
 REPO=$(pwd)
+CRUST_BIN="$REPO/bin/.cache/crust-$VERSION"
+
+if [ ! -f "$CRUST_BIN" ]; then
+  rm -f ./bin/.cache/crust*
+
+  pushd build > /dev/null
+  go build -trimpath -o "$CRUST_BIN" ./cmd
+  popd > /dev/null
+
+  "$CRUST_BIN" build/crust
+fi
+
 popd > /dev/null
 
 case "$1" in
@@ -37,6 +45,6 @@ case "$1" in
      ;;
 
    *)
-     exec "$REPO/bin/.cache/crust" "$@"
+     exec "$CRUST_BIN" "$@"
      ;;
 esac
