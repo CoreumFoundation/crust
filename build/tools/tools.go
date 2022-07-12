@@ -20,11 +20,11 @@ import (
 	"go.uber.org/zap"
 )
 
-var tools = map[string]tool{
+var tools = map[string]Tool{
 	"go": {
 		Version:  "1.18.3",
 		ForLocal: true,
-		Sources: sources{
+		Sources: Sources{
 			linuxAMD64: {
 				URL:  "https://go.dev/dl/go1.18.3.linux-amd64.tar.gz",
 				Hash: "sha256:956f8507b302ab0bb747613695cdae10af99bbd39a90cae522b7c0302cc27245",
@@ -46,7 +46,7 @@ var tools = map[string]tool{
 	"golangci": {
 		Version:  "1.46.2",
 		ForLocal: true,
-		Sources: sources{
+		Sources: Sources{
 			linuxAMD64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-linux-amd64.tar.gz",
 				Hash: "sha256:242cd4f2d6ac0556e315192e8555784d13da5d1874e51304711570769c4f2b9b",
@@ -73,7 +73,7 @@ var tools = map[string]tool{
 	"ignite": {
 		Version:  "v0.22.2",
 		ForLocal: true,
-		Sources: sources{
+		Sources: Sources{
 			linuxAMD64: {
 				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_linux_amd64.tar.gz",
 				Hash: "sha256:c73654403ce7c27a8a8d2845a45beb284120c83d854c4312955658125764c296",
@@ -96,7 +96,7 @@ var tools = map[string]tool{
 	"libwasmvm_muslc": {
 		Version:   "v1.0.0",
 		ForDocker: true,
-		Sources: sources{
+		Sources: Sources{
 			dockerAMD64: {
 				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a",
 				Hash: "sha256:f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479",
@@ -134,31 +134,35 @@ var (
 	dockerARM64 = platform{OS: dockerOS, Arch: "arm64"}
 )
 
-type tool struct {
+// Tool represents tool to be installed
+type Tool struct {
 	Version   string
 	ForDocker bool
 	ForLocal  bool
-	Sources   sources
+	Sources   Sources
 	Binaries  map[string]string
 }
 
-type source struct {
+// Source represents source where tool is fetched from
+type Source struct {
 	URL      string
 	Hash     string
 	Binaries map[string]string
 }
 
-type sources map[platform]source
+// Sources is the map of sources
+type Sources map[platform]Source
 
-func installTools(ctx context.Context) error {
+// InstallAll installs all the tools
+func InstallAll(ctx context.Context) error {
 	for tool := range tools {
 		if tools[tool].ForLocal {
-			if err := ensureLocal(ctx, tool); err != nil {
+			if err := EnsureLocal(ctx, tool); err != nil {
 				return err
 			}
 		}
 		if tools[tool].ForDocker {
-			if err := ensureDocker(ctx, tool); err != nil {
+			if err := EnsureDocker(ctx, tool); err != nil {
 				return err
 			}
 		}
@@ -166,11 +170,13 @@ func installTools(ctx context.Context) error {
 	return nil
 }
 
-func ensureLocal(ctx context.Context, tool string) error {
+// EnsureLocal ensures that tool is installed locally
+func EnsureLocal(ctx context.Context, tool string) error {
 	return ensurePlatform(ctx, tool, platform{OS: runtime.GOOS, Arch: runtime.GOARCH})
 }
 
-func ensureDocker(ctx context.Context, tool string) error {
+// EnsureDocker ensures that tool is installed for docker
+func EnsureDocker(ctx context.Context, tool string) error {
 	return ensurePlatform(ctx, tool, platform{OS: dockerOS, Arch: runtime.GOARCH})
 }
 
@@ -194,7 +200,7 @@ func ensurePlatform(ctx context.Context, tool string, platform platform) error {
 
 		dstPlatform := dst
 		if platform.OS == dockerOS {
-			dstPlatform = filepath.Join(cacheDir(), dstPlatform)
+			dstPlatform = filepath.Join(CacheDir(), dstPlatform)
 		}
 		dstPath, err := filepath.Abs(dstPlatform)
 		if err != nil {
@@ -217,7 +223,7 @@ func ensurePlatform(ctx context.Context, tool string, platform platform) error {
 	return nil
 }
 
-func install(ctx context.Context, name string, info tool, platform platform) (retErr error) {
+func install(ctx context.Context, name string, info Tool, platform platform) (retErr error) {
 	source, exists := info.Sources[platform]
 	if !exists {
 		panic(errors.Errorf("tool %s is not configured for platform %s", name, platform))
@@ -260,7 +266,7 @@ func install(ctx context.Context, name string, info tool, platform platform) (re
 
 	dstDir := "."
 	if platform.OS == dockerOS {
-		dstDir = filepath.Join(cacheDir(), dstDir)
+		dstDir = filepath.Join(CacheDir(), dstDir)
 	}
 	for dst, src := range combine(info.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
@@ -387,7 +393,8 @@ func untar(reader io.Reader, path string) error {
 	}
 }
 
-func cacheDir() string {
+// CacheDir returns path to cache directory
+func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
 
@@ -397,7 +404,7 @@ func toolDir(name string) string {
 		panic(errors.Errorf("tool %s is not defined", name))
 	}
 
-	return cacheDir() + "/" + name + "-" + info.Version
+	return CacheDir() + "/" + name + "-" + info.Version
 }
 
 func ensureDir(file string) error {
@@ -418,6 +425,12 @@ func combine(m1 map[string]string, m2 map[string]string) map[string]string {
 	return m
 }
 
-func toolBin(tool string) string {
+// ByName returns tool definition by its name
+func ByName(name string) Tool {
+	return tools[name]
+}
+
+// Path returns path to installed tool
+func Path(tool string) string {
 	return must.String(filepath.Abs("bin/" + tool))
 }
