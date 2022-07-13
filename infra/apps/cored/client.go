@@ -92,7 +92,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, signer Wallet, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, signer Wallet, memo string, msg sdk.Msg) (authsigning.Tx, error) {
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
@@ -101,7 +101,7 @@ func (c Client) Sign(ctx context.Context, signer Wallet, msg sdk.Msg) (authsigni
 		}
 	}
 
-	return signTx(c.clientCtx, signer.Key, signer.AccountNumber, signer.AccountSequence, msg), nil
+	return signTx(c.clientCtx, signer, msg, memo), nil
 }
 
 // Encode encodes transaction to be broadcasted
@@ -193,17 +193,25 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
+// TxBankSendData holds input data for PrepareTxBankSend
+type TxBankSendData struct {
+	Sender   Wallet
+	Receiver Wallet
+	Balance  Balance
+	Memo     string
+}
+
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) PrepareTxBankSend(ctx context.Context, sender, receiver Wallet, balance Balance) ([]byte, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(sender.Key.Address())
+func (c Client) PrepareTxBankSend(ctx context.Context, data TxBankSendData) ([]byte, error) {
+	fromAddress, err := sdk.AccAddressFromBech32(data.Sender.Key.Address())
 	must.OK(err)
-	toAddress, err := sdk.AccAddressFromBech32(receiver.Key.Address())
+	toAddress, err := sdk.AccAddressFromBech32(data.Receiver.Key.Address())
 	must.OK(err)
 
-	signedTx, err := c.Sign(ctx, sender, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	signedTx, err := c.Sign(ctx, data.Sender, data.Memo, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
-			Denom:  balance.Denom,
-			Amount: sdk.NewIntFromBigInt(balance.Amount),
+			Denom:  data.Balance.Denom,
+			Amount: sdk.NewIntFromBigInt(data.Balance.Amount),
 		},
 	}))
 	if err != nil {
@@ -225,16 +233,17 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, accSeq uint64, msg sdk.Msg) authsigning.Tx {
-	privKey := &cosmossecp256k1.PrivKey{Key: signerKey}
+func signTx(clientCtx client.Context, signer Wallet, msg sdk.Msg, memo string) authsigning.Tx {
+	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(200000)
+	txBuilder.SetMemo(memo)
 	must.OK(txBuilder.SetMsgs(msg))
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
-		AccountNumber: accNum,
-		Sequence:      accSeq,
+		AccountNumber: signer.AccountNumber,
+		Sequence:      signer.AccountSequence,
 	}
 	sigData := &signing.SingleSignatureData{
 		SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
@@ -243,7 +252,7 @@ func signTx(clientCtx client.Context, signerKey Secp256k1PrivateKey, accNum, acc
 	sig := signing.SignatureV2{
 		PubKey:   privKey.PubKey(),
 		Data:     sigData,
-		Sequence: accSeq,
+		Sequence: signer.AccountSequence,
 	}
 	must.OK(txBuilder.SetSignatures(sig))
 

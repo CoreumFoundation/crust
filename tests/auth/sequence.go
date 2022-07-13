@@ -32,7 +32,11 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 			sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
 
 			// Broadcast a transaction using incorrect sequence number
-			txBytes, err := client.PrepareTxBankSend(ctx, sender, sender, cored.Balance{Denom: "core", Amount: big.NewInt(1)})
+			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendData{
+				Sender:   sender,
+				Receiver: sender,
+				Balance:  cored.Balance{Denom: "core", Amount: big.NewInt(1)},
+			})
 			require.NoError(t, err)
 			_, err = client.Broadcast(ctx, txBytes)
 			require.Error(t, err) // We expect error
