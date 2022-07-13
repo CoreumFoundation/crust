@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
@@ -14,7 +14,7 @@ import (
 )
 
 // NewFactory creates new app factory
-func NewFactory(config infra.Config, spec *infra.Spec, network *config.Network) *Factory {
+func NewFactory(config infra.Config, spec *infra.Spec, network *app.Network) *Factory {
 	return &Factory{
 		config:  config,
 		spec:    spec,
@@ -26,11 +26,11 @@ func NewFactory(config infra.Config, spec *infra.Spec, network *config.Network) 
 type Factory struct {
 	config  infra.Config
 	spec    *infra.Spec
-	Network *config.Network
+	Network *app.Network
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int, network *config.Network) infra.Mode {
+func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int, network *app.Network) infra.Mode {
 	const initialBalance = "1000000000000000core"
 
 	genesis, err := network.Genesis()

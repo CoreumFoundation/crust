@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/pkg/retry"
 )
@@ -38,7 +38,7 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 func NewClient(chainID string, addr string) Client {
 	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
-	clientCtx := client.
+	clientCtx := app.
 		NewDefaultClientContext().
 		WithChainID(chainID).
 		WithClient(rpcClient)

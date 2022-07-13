@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -24,7 +24,7 @@ const (
 )
 
 func main() {
-	network, err := config.NetworkByChainID(config.Mainnet)
+	network, err := app.NetworkByChainID(app.Mainnet)
 	must.OK(err)
 	network.SetupPrefixes()
 	run.Tool("zstress", nil, func(ctx context.Context) error {
