@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
@@ -44,7 +44,7 @@ type GenerateConfig struct {
 	OutDirectory string
 
 	// Network is the cored network config
-	Network config.Network
+	Network app.Network
 }
 
 func nodeIDFromPubKey(pubKey ed25519.PublicKey) string {
@@ -66,7 +66,7 @@ func Generate(cfg GenerateConfig) error {
 	}
 
 	network := cfg.Network
-	clientCtx := client.NewDefaultClientContext().WithChainID(string(network.ChainID()))
+	clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
 	nodeIDs := make([]string, 0, cfg.NumOfValidators)
 	for i := 0; i < cfg.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -78,7 +78,7 @@ func Generate(cfg GenerateConfig) error {
 
 		valDir := fmt.Sprintf("%s/validators/%d", outDir, i)
 
-		err = config.NodeConfig{
+		err = app.NodeConfig{
 			Name:           fmt.Sprintf("validator-%d", i),
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
@@ -88,7 +88,7 @@ func Generate(cfg GenerateConfig) error {
 
 		err = network.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
 		must.OK(err)
-		tx, err := config.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
+		tx, err := client.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
 		must.OK(err)
 		network.AddGenesisTx(tx)
 	}
@@ -121,7 +121,7 @@ func Generate(cfg GenerateConfig) error {
 
 		nodeDir := fmt.Sprintf("%s/sentry-nodes/%d", outDir, i)
 
-		err = config.NodeConfig{
+		err = app.NodeConfig{
 			Name:           fmt.Sprintf("sentry-node-%d", i),
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,

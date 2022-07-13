@@ -17,8 +17,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -30,7 +30,7 @@ import (
 const AppType infra.AppType = "cored"
 
 // New creates new cored app
-func New(name string, cfg infra.Config, network *config.Network, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
+func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
@@ -40,9 +40,9 @@ func New(name string, cfg infra.Config, network *config.Network, appInfo *infra.
 
 	err = network.FundAccount(stakerPubKey, "100000000000000000000000"+network.TokenSymbol())
 	must.OK(err)
-	clientCtx := client.NewDefaultClientContext().WithChainID(string(network.ChainID()))
+	clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
 
-	tx, err := config.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
+	tx, err := client.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
 	must.OK(err)
 	network.AddGenesisTx(tx)
 
@@ -76,7 +76,7 @@ type Cored struct {
 	nodeID              string
 	nodePrivateKey      ed25519.PrivateKey
 	validatorPrivateKey ed25519.PrivateKey
-	network             *config.Network
+	network             *app.Network
 	appInfo             *infra.AppInfo
 	ports               Ports
 	rootNode            *Cored
@@ -224,7 +224,7 @@ func (c Cored) Deployment() infra.Deployment {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				err := config.NodeConfig{
+				err := app.NodeConfig{
 					Name:           c.name,
 					PrometheusPort: c.ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,

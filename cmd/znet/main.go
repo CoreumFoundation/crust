@@ -9,7 +9,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/crust/infra"
@@ -17,11 +17,11 @@ import (
 )
 
 func main() {
-	network, err := config.NetworkByChainID(config.Mainnet)
+	network, err := app.NetworkByChainID(app.Mainnet)
 	must.OK(err)
 	network.SetupPrefixes()
 	run.Tool("znet", znet.IoC, func(c *ioc.Container, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) error {
-		c.Singleton(func() *config.Network {
+		c.Singleton(func() *app.Network {
 			return &network
 		})
 		rootCmd := &cobra.Command{
