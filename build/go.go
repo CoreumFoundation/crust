@@ -167,11 +167,7 @@ func goLint(ctx context.Context, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	config := must.String(filepath.Abs("build/.golangci.yaml"))
 	err := onModule(func(path string) error {
-		log.Info("Running linter", zap.String("path", path),
-			zap.String("goOS", runtime.GOOS),
-			zap.String("goArch", runtime.GOARCH),
-			zap.String("goVersion", runtime.Version()),
-		)
+		log.Info("Running linter", zap.String("path", path))
 		cmd := exec.Command(toolBin("golangci-lint"), "run", "--config", config)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
