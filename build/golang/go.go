@@ -87,10 +87,8 @@ func BuildInDocker(ctx context.Context, config BuildConfig) error {
 	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath),
 		zap.String("binary", config.BinOutputPath))
 
-	_, err := exec.LookPath("docker")
-	if err != nil {
-		err = errors.Wrap(err, "docker command is not available in PATH")
-		return err
+	if _, err := exec.LookPath("docker"); err != nil {
+		return errors.Wrap(err, "docker command is not available in PATH")
 	}
 
 	image, err := ensureBuildDockerImage(ctx)
@@ -138,14 +136,14 @@ func BuildInDocker(ctx context.Context, config BuildConfig) error {
 	return nil
 }
 
-//go:embed Dockerfile.tmpl.cgo
-var cgoDockerfileTemplate string
+//go:embed Dockerfile.tmpl
+var dockerfileTemplate string
 
-var cgoDockerfileTemplateParsed = template.Must(template.New("Dockerfile").Parse(cgoDockerfileTemplate))
+var dockerfileTemplateParsed = template.Must(template.New("Dockerfile").Parse(dockerfileTemplate))
 
 func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	dockerfileBuf := &bytes.Buffer{}
-	err := cgoDockerfileTemplateParsed.Execute(dockerfileBuf, struct {
+	err := dockerfileTemplateParsed.Execute(dockerfileBuf, struct {
 		GOVersion     string
 		AlpineVersion string
 	}{
