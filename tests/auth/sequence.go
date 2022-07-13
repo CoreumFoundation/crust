@@ -17,7 +17,7 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 	var sender cored.Wallet
 
 	return func(ctx context.Context) error {
-			sender = chain.AddWallet("10core")
+			sender = chain.AddWallet("180000010core")
 			return nil
 		},
 		func(ctx context.Context, t *testing.T) {
@@ -32,7 +32,14 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 			sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
 
 			// Broadcast a transaction using incorrect sequence number
-			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendData{
+			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
+				Signing: cored.SigningInput{
+					Signer: sender,
+					// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
+					GasLimit: 120000,
+					// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
+					GasPrice: big.NewInt(1500),
+				},
 				Sender:   sender,
 				Receiver: sender,
 				Balance:  cored.Balance{Denom: "core", Amount: big.NewInt(1)},

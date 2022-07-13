@@ -3,6 +3,7 @@ package cored
 import (
 	"context"
 	"encoding/hex"
+	"math/big"
 	"regexp"
 	"strconv"
 	"time"
@@ -41,6 +42,8 @@ func NewClient(chainID string, addr string) Client {
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
+		// FIXME (wojciech): Set to value taken from Network.TokenSymbol() once Milad integrates it into crust
+		feeTokenDenom: "core",
 	}
 }
 
@@ -49,6 +52,8 @@ type Client struct {
 	clientCtx       client.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
+
+	feeTokenDenom string
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
@@ -92,16 +97,19 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, signer Wallet, memo string, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, signingData SigningInput, msg sdk.Msg) (authsigning.Tx, error) {
+	signer := signingData.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
 		if err != nil {
 			return nil, err
 		}
+
+		signingData.Signer = signer
 	}
 
-	return signTx(c.clientCtx, signer, msg, memo), nil
+	return signTx(c.clientCtx, signingData, msg, c.feeTokenDenom), nil
 }
 
 // Encode encodes transaction to be broadcasted
@@ -193,25 +201,34 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
-// TxBankSendData holds input data for PrepareTxBankSend
-type TxBankSendData struct {
-	Sender   Wallet
-	Receiver Wallet
-	Balance  Balance
+// SigningInput holds input data for signing
+type SigningInput struct {
+	Signer   Wallet
+	GasLimit uint64
+	GasPrice *big.Int
 	Memo     string
 }
 
+// TxBankSendInput holds input data for PrepareTxBankSend
+type TxBankSendInput struct {
+	Sender   Wallet
+	Receiver Wallet
+	Balance  Balance
+
+	Signing SigningInput
+}
+
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) PrepareTxBankSend(ctx context.Context, data TxBankSendData) ([]byte, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(data.Sender.Key.Address())
+func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
+	fromAddress, err := sdk.AccAddressFromBech32(input.Sender.Key.Address())
 	must.OK(err)
-	toAddress, err := sdk.AccAddressFromBech32(data.Receiver.Key.Address())
+	toAddress, err := sdk.AccAddressFromBech32(input.Receiver.Key.Address())
 	must.OK(err)
 
-	signedTx, err := c.Sign(ctx, data.Sender, data.Memo, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	signedTx, err := c.Sign(ctx, input.Signing, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
-			Denom:  data.Balance.Denom,
-			Amount: sdk.NewIntFromBigInt(data.Balance.Amount),
+			Denom:  input.Balance.Denom,
+			Amount: sdk.NewIntFromBigInt(input.Balance.Amount),
 		},
 	}))
 	if err != nil {
@@ -233,12 +250,21 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, signer Wallet, msg sdk.Msg, memo string) authsigning.Tx {
+func signTx(clientCtx client.Context, input SigningInput, msg sdk.Msg, feeTokenDenom string) authsigning.Tx {
+	signer := input.Signer
+
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
-	txBuilder.SetGasLimit(200000)
-	txBuilder.SetMemo(memo)
 	must.OK(txBuilder.SetMsgs(msg))
+	txBuilder.SetGasLimit(input.GasLimit)
+	txBuilder.SetMemo(input.Memo)
+
+	if input.GasPrice != nil {
+		gasLimit := sdk.NewInt(int64(input.GasLimit))
+		gasPrice := sdk.NewIntFromBigInt(input.GasPrice)
+		fee := sdk.NewCoin(feeTokenDenom, gasLimit.Mul(gasPrice))
+		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
+	}
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,

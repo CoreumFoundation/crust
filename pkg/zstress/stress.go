@@ -151,7 +151,14 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 						if !ok {
 							return nil
 						}
-						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, cored.TxBankSendData{
+						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
+							Signing: cored.SigningInput{
+								Signer: tx.From,
+								// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
+								GasLimit: 120000,
+								// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
+								GasPrice: big.NewInt(1500),
+							},
 							Sender:   tx.From,
 							Receiver: tx.To,
 							Balance:  cored.Balance{Amount: big.NewInt(1), Denom: "core"},
