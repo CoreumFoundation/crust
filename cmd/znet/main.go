@@ -91,7 +91,7 @@ func main() {
 }
 
 func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUST_ZNET_BIN_DIR", filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable())))))), "Path to directory where executables exist")
+	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUST_ZNET_BIN_DIR", filepath.Join(filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))), ".cache/docker")), "Path to directory where executables exist")
 }
 
 func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *infra.ConfigFactory) {

@@ -1,4 +1,4 @@
-package build
+package git
 
 import (
 	"bytes"
@@ -9,15 +9,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-// gitStatusClean checks that there are no uncommitted files
-func gitStatusClean(ctx context.Context) error {
-	for _, repoPath := range repositories {
+const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
+
+// Repositories is the list of paths to repositories
+var Repositories = []string{"../crust", "../coreum"}
+
+// StatusClean checks that there are no uncommitted files
+func StatusClean(ctx context.Context) error {
+	for _, repoPath := range Repositories {
 		buf := &bytes.Buffer{}
 		cmd := exec.Command("git", "status", "-s")
 		cmd.Dir = repoPath
@@ -32,6 +38,16 @@ func gitStatusClean(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// EnsureAllRepos ensures that all repos are cloned
+func EnsureAllRepos(deps build.DepsFunc) {
+	deps(EnsureCoreumRepo)
+}
+
+// EnsureCoreumRepo ensures that coreum repo is cloned
+func EnsureCoreumRepo(ctx context.Context) error {
+	return ensureRepo(ctx, coreumRepoURL)
 }
 
 func ensureRepo(ctx context.Context, repoURL string) error {
