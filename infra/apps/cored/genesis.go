@@ -117,7 +117,7 @@ func (g *Genesis) AddValidator(validatorPublicKey ed25519.PublicKey, stakerPriva
 	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
 	must.OK(err)
 
-	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.clientCtx.TxConfig.TxJSONEncoder()(signTx(g.clientCtx, SigningInput{Signer: Wallet{Key: stakerPrivateKey}}, msg, ""))))
+	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.clientCtx.TxConfig.TxJSONEncoder()(signTx(g.clientCtx, SignInput{Signer: Wallet{Key: stakerPrivateKey}}, msg, ""))))
 }
 
 // Save saves genesis configuration

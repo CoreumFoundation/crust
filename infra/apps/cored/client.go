@@ -97,8 +97,8 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, signingData SigningInput, msg sdk.Msg) (authsigning.Tx, error) {
-	signer := signingData.Signer
+func (c Client) Sign(ctx context.Context, input SignInput, msg sdk.Msg) (authsigning.Tx, error) {
+	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
@@ -106,10 +106,10 @@ func (c Client) Sign(ctx context.Context, signingData SigningInput, msg sdk.Msg)
 			return nil, err
 		}
 
-		signingData.Signer = signer
+		input.Signer = signer
 	}
 
-	return signTx(c.clientCtx, signingData, msg, c.feeTokenDenom), nil
+	return signTx(c.clientCtx, input, msg, c.feeTokenDenom), nil
 }
 
 // Encode encodes transaction to be broadcasted
@@ -201,8 +201,8 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
-// SigningInput holds input data for signing
-type SigningInput struct {
+// SignInput holds input data for signing
+type SignInput struct {
 	Signer   Wallet
 	GasLimit uint64
 	GasPrice *big.Int
@@ -215,7 +215,7 @@ type TxBankSendInput struct {
 	Receiver Wallet
 	Balance  Balance
 
-	Signing SigningInput
+	Signing SignInput
 }
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
@@ -250,7 +250,7 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, input SigningInput, msg sdk.Msg, feeTokenDenom string) authsigning.Tx {
+func signTx(clientCtx client.Context, input SignInput, msg sdk.Msg, feeTokenDenom string) authsigning.Tx {
 	signer := input.Signer
 
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
