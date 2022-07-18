@@ -1,0 +1,5 @@
+FROM golang:{{ .GOVersion }}-alpine{{ .AlpineVersion }}
+
+RUN apk add --no-cache gcc libc-dev
+
+ENTRYPOINT ["go"]

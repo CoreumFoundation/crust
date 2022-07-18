@@ -46,10 +46,10 @@ func Generate(config GenerateConfig) error {
 		panic(err)
 	}
 
-	if err := generateDocker(outDir, config.BinDirectory+"/linux/cored"); err != nil {
+	if err := generateDocker(outDir, config.BinDirectory+"/cored"); err != nil {
 		return err
 	}
-	if err := generateDocker(outDir, config.BinDirectory+"/.cache/linux/zstress"); err != nil {
+	if err := generateDocker(outDir, config.BinDirectory+"/zstress"); err != nil {
 		return err
 	}
 
