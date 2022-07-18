@@ -18,11 +18,12 @@ import (
 
 var maxMemo = strings.Repeat("-", 256) // cosmos sdk is configured to accept maximum memo of 256 characters by default
 
+// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
+const maxGasAssumed = 120000 // set it to 50%+ higher than maximum observed value
+
 // TestTransferMaximumGas checks that transfer does not take more gas than assumed
 func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.PrepareFunc, testing.RunFunc) {
 	const margin = 1.5
-	// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
-	const maxGasAssumed = 120000 // set it to 50%+ higher than maximum observed value
 
 	amount, ok := big.NewInt(0).SetString("100000000000000000000000000000000000", 10)
 	if !ok {
@@ -69,6 +70,25 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 			}
 			assert.LessOrEqual(t, margin*float64(maxGasUsed), float64(maxGasAssumed))
 			logger.Get(ctx).Info("Maximum gas used", zap.Int64("maxGasUsed", maxGasUsed))
+		}
+}
+
+// TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
+func TestTransferFailsIfNotEnoughGasIsProvided(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
+	var sender cored.Wallet
+
+	return func(ctx context.Context) error {
+			sender = chain.AddWallet("180000010core")
+			return nil
+		},
+		func(ctx context.Context, t *testing.T) {
+			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
+
+			_, err := sendAndReturnGasUsed(ctx, chain.Client(), sender, sender,
+				cored.Coin{Amount: big.NewInt(1), Denom: "core"},
+				// declaring gas limit as maxGasAssumed-1 means that tx must fail
+				maxGasAssumed-1)
+			assert.Error(t, err)
 		}
 }
 

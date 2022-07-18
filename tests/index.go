@@ -25,6 +25,7 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 		testing.New(auth.TestUnexpectedSequenceNumber(node)),
 		testing.New(bank.TestInitialBalance(node)),
 		testing.New(bank.TestCoreTransfer(node)),
+		testing.New(bank.TestTransferFailsIfNotEnoughGasIsProvided(node)),
 	}
 
 	// The idea is to run 200 transfer transactions to be sure that none of them uses more gas than we assumed.
