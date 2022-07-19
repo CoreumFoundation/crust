@@ -280,18 +280,18 @@ func coredNode(mode infra.Mode) (cored.Cored, error) {
 func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {
 	log := logger.Get(ctx)
 
-	amount := cored.Balance{Amount: big.NewInt(1), Denom: "core"}
+	amount := cored.Coin{Amount: big.NewInt(1), Denom: "core"}
 	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
 		Signing: cored.SignInput{
 			Signer: from,
 			// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
 			GasLimit: 120000,
 			// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			GasPrice: big.NewInt(1500),
+			GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
 		},
 		Sender:   from,
 		Receiver: to,
-		Balance:  amount})
+		Amount:   amount})
 	if err != nil {
 		return err
 	}

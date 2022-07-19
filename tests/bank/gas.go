@@ -55,7 +55,7 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 			require.NoError(t, err)
 
 			var maxGasUsed int64
-			toSend := cored.Balance{Denom: "core", Amount: amount}
+			toSend := cored.Coin{Denom: "core", Amount: amount}
 			for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
 				gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed)
 				if !assert.NoError(t, err) {
@@ -72,18 +72,18 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 		}
 }
 
-func sendAndReturnGasUsed(ctx context.Context, client cored.Client, sender, receiver cored.Wallet, toSend cored.Balance, gasLimit uint64) (int64, error) {
+func sendAndReturnGasUsed(ctx context.Context, client cored.Client, sender, receiver cored.Wallet, toSend cored.Coin, gasLimit uint64) (int64, error) {
 	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
 		Signing: cored.SignInput{
 			Signer:   sender,
 			GasLimit: gasLimit,
 			// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			GasPrice: big.NewInt(1500),
+			GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
 			Memo:     maxMemo, // memo is set to max length here to charge as much gas as possible
 		},
 		Sender:   sender,
 		Receiver: receiver,
-		Balance:  toSend,
+		Amount:   toSend,
 	})
 	if err != nil {
 		return 0, err

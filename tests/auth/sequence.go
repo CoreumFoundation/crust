@@ -38,11 +38,11 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 					// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
 					GasLimit: 120000,
 					// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-					GasPrice: big.NewInt(1500),
+					GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Balance:  cored.Balance{Denom: "core", Amount: big.NewInt(1)},
+				Amount:   cored.Coin{Denom: "core", Amount: big.NewInt(1)},
 			})
 			require.NoError(t, err)
 			_, err = client.Broadcast(ctx, txBytes)

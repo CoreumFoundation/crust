@@ -157,11 +157,11 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 								// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
 								GasLimit: 120000,
 								// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-								GasPrice: big.NewInt(1500),
+								GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
 							},
 							Sender:   tx.From,
 							Receiver: tx.To,
-							Balance:  cored.Balance{Amount: big.NewInt(1), Denom: "core"},
+							Amount:   cored.Coin{Amount: big.NewInt(1), Denom: "core"},
 						}))
 						select {
 						case <-ctx.Done():

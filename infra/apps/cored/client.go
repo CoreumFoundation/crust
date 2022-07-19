@@ -3,7 +3,6 @@ package cored
 import (
 	"context"
 	"encoding/hex"
-	"math/big"
 	"regexp"
 	"strconv"
 	"time"
@@ -42,8 +41,6 @@ func NewClient(chainID string, addr string) Client {
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
-		// FIXME (wojciech): Set to value taken from Network.TokenSymbol() once Milad integrates it into crust
-		feeTokenDenom: "core",
 	}
 }
 
@@ -52,8 +49,6 @@ type Client struct {
 	clientCtx       client.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
-
-	feeTokenDenom string
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
@@ -79,7 +74,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
+func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -89,9 +84,9 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]Balance{}
+	balances := map[string]Coin{}
 	for _, b := range resp.Balances {
-		balances[b.Denom] = Balance{Amount: b.Amount.BigInt(), Denom: b.Denom}
+		balances[b.Denom] = Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
 	}
 	return balances, nil
 }
@@ -109,7 +104,7 @@ func (c Client) Sign(ctx context.Context, input SignInput, msg sdk.Msg) (authsig
 		input.Signer = signer
 	}
 
-	return signTx(c.clientCtx, input, msg, c.feeTokenDenom), nil
+	return signTx(c.clientCtx, input, msg)
 }
 
 // Encode encodes transaction to be broadcasted
@@ -205,7 +200,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 type SignInput struct {
 	Signer   Wallet
 	GasLimit uint64
-	GasPrice *big.Int
+	GasPrice Coin
 	Memo     string
 }
 
@@ -213,7 +208,7 @@ type SignInput struct {
 type TxBankSendInput struct {
 	Sender   Wallet
 	Receiver Wallet
-	Balance  Balance
+	Amount   Coin
 
 	Signing SignInput
 }
@@ -225,10 +220,14 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	toAddress, err := sdk.AccAddressFromBech32(input.Receiver.Key.Address())
 	must.OK(err)
 
+	if err := input.Amount.Validate(); err != nil {
+		return nil, errors.Wrap(err, "amount to send is invalid")
+	}
+
 	signedTx, err := c.Sign(ctx, input.Signing, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
-			Denom:  input.Balance.Denom,
-			Amount: sdk.NewIntFromBigInt(input.Balance.Amount),
+			Denom:  input.Amount.Denom,
+			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
 		},
 	}))
 	if err != nil {
@@ -250,7 +249,7 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, input SignInput, msg sdk.Msg, feeTokenDenom string) authsigning.Tx {
+func signTx(clientCtx client.Context, input SignInput, msg sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
@@ -259,10 +258,14 @@ func signTx(clientCtx client.Context, input SignInput, msg sdk.Msg, feeTokenDeno
 	txBuilder.SetGasLimit(input.GasLimit)
 	txBuilder.SetMemo(input.Memo)
 
-	if input.GasPrice != nil {
+	if input.GasPrice.Amount != nil {
+		if err := input.GasPrice.Validate(); err != nil {
+			return nil, errors.Wrap(err, "gas price is invalid")
+		}
+
 		gasLimit := sdk.NewInt(int64(input.GasLimit))
-		gasPrice := sdk.NewIntFromBigInt(input.GasPrice)
-		fee := sdk.NewCoin(feeTokenDenom, gasLimit.Mul(gasPrice))
+		gasPrice := sdk.NewIntFromBigInt(input.GasPrice.Amount)
+		fee := sdk.NewCoin(input.GasPrice.Denom, gasLimit.Mul(gasPrice))
 		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
 	}
 
@@ -290,7 +293,7 @@ func signTx(clientCtx client.Context, input SignInput, msg sdk.Msg, feeTokenDeno
 
 	must.OK(txBuilder.SetSignatures(sig))
 
-	return txBuilder.GetTx()
+	return txBuilder.GetTx(), nil
 }
 
 type sequenceError struct {
