@@ -16,7 +16,7 @@ const dockerGOOS = "linux"
 const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
 
 func buildAll(deps build.DepsFunc) {
-	deps(buildCored, buildZNet, buildZStress)
+	deps(buildCored, buildZNet, buildZStress, buildContracts)
 }
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
@@ -37,6 +37,11 @@ func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
 	return buildNativeAndDocker(ctx, "cmd/zstress", "bin/.cache/zstress", false)
+}
+
+func buildContracts(ctx context.Context, deps build.DepsFunc) error {
+	deps(ensureGo)
+	return buildNativeAndDocker(ctx, "cmd/contracts", "bin/.cache/contracts", false)
 }
 
 func ensureAllRepos(deps build.DepsFunc) {
