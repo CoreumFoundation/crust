@@ -224,8 +224,8 @@ func ensureCrateAndVersion(
 	} else if isLessVersion(crateVer, requiredVersion) {
 		log.Info("Crate is outdated and requires update",
 			zap.String("crate", crateName),
-			zap.String("oldVersion", crateVer),
-			zap.String("newVersion", requiredVersion),
+			zap.String("installedVersion", crateVer),
+			zap.String("requiredVersion", requiredVersion),
 		)
 
 		cmdArgs := append([]string{
