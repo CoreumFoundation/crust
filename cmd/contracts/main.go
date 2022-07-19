@@ -25,7 +25,6 @@ func main() {
 		rootCmd := &cobra.Command{
 			SilenceUsage:  true,
 			SilenceErrors: true,
-			Aliases:       []string{"c"},
 			Short:         "Tools for the WASM smart-contracts development on Coreum",
 			Args:          cobra.NoArgs,
 			CompletionOptions: cobra.CompletionOptions{
