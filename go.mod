@@ -19,6 +19,7 @@ require (
 	github.com/tendermint/tendermint v0.34.19
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
+	golang.org/x/mod v0.5.0
 	google.golang.org/grpc v1.45.0
 )
 
