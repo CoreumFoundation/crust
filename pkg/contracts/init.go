@@ -11,7 +11,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // InitConfig provides params for the init stage.
@@ -50,19 +49,8 @@ func Init(ctx context.Context, config InitConfig) error {
 		return err
 	}
 
-	if info, err := os.Stat(config.TargetDir); err != nil {
-		if os.IsNotExist(err) {
-			if err = os.MkdirAll(config.TargetDir, 0o700); err != nil {
-				err = errors.Wrap(err, "failed to create contract source dir")
-				return err
-			}
-
-			log.Info("Created a new source dir", zap.String("path", config.TargetDir))
-		} else {
-			must.OK(err)
-		}
-	} else if !info.IsDir() {
-		err = errors.Errorf("the path already exists and is not a dir: %s", config.TargetDir)
+	if err := os.MkdirAll(config.TargetDir, 0o700); err != nil {
+		err = errors.Wrap(err, "failed to create contract source dir")
 		return err
 	}
 
