@@ -125,7 +125,6 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	defer cancel()
 
 	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
-	// nolint:nestif // This code is still easy to understand
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return BroadcastResult{}, errors.WithStack(err)
