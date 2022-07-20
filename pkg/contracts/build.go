@@ -37,7 +37,7 @@ func Build(ctx context.Context, workspaceDir string, config BuildConfig) error {
 	crateLog := log.With(zap.String("name", crateName), zap.String("dir", workspaceDir))
 
 	crateLog.Info("Running cargo check on the workspace")
-	if err := runCargoCheckTests(ctx, workspaceDir); err != nil {
+	if err := runCargoCheck(ctx, workspaceDir); err != nil {
 		err = errors.Wrap(err, "problem with checking the target crate workspace")
 		return err
 	}
