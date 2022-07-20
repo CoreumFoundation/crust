@@ -138,7 +138,8 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	} else {
 		txHash = res.Hash.String()
 		if res.Code != 0 {
-			return BroadcastResult{}, cosmoserrors.New(res.Codespace, res.Code, res.Log)
+			return BroadcastResult{}, errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log),
+				"transaction '%s' failed", txHash)
 		}
 	}
 
@@ -171,7 +172,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		}
 		if resultTx.TxResult.Code != 0 {
 			res := resultTx.TxResult
-			return cosmoserrors.New(res.Codespace, res.Code, res.Log)
+			return errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
 		}
 		if resultTx.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))

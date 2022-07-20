@@ -43,6 +43,5 @@ func TestTooLowGasPrice(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc
 			// Broadcast should fail because gas price is too low for transaction to enter mempool
 			_, err = client.Broadcast(ctx, txBytes)
 			require.True(t, cored.IsInsufficientFeeError(err))
-
 		}
 }
