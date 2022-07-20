@@ -27,7 +27,18 @@ type Factory struct {
 
 // CoredNetwork creates new network of cored nodes
 func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
+	const initialBalance = "1000000000000000core"
+
 	genesis := cored.NewGenesis(name)
+
+	genesis.AddWallet(cored.AlicePrivKey.PubKey(), initialBalance)
+	genesis.AddWallet(cored.BobPrivKey.PubKey(), initialBalance)
+	genesis.AddWallet(cored.CharliePrivKey.PubKey(), initialBalance)
+
+	for _, key := range cored.RandomWallets {
+		genesis.AddWallet(key.PubKey(), initialBalance)
+	}
+
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
 	var node0 *cored.Cored
 	for i := 0; i < cap(nodes); i++ {
