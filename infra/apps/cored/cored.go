@@ -186,7 +186,7 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 // Deployment returns deployment of cored
 func (c Cored) Deployment() infra.Deployment {
 	deployment := infra.Binary{
-		BinPath: c.config.BinDir + "/cored",
+		BinPath: c.config.BinDir + "/.cache/docker/cored",
 		AppBase: infra.AppBase{
 			Name: c.Name(),
 			Info: c.appInfo,
