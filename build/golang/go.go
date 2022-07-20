@@ -193,9 +193,13 @@ func buildArgsAndEnvs(config BuildConfig, libDir string) (args []string, envs []
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
 	}
+
+	cgoEnabled := "0"
 	if config.CGOEnabled {
-		envs = append(envs, "CGO_ENABLED=1")
+		cgoEnabled = "1"
 	}
+	envs = append(envs, "CGO_ENABLED="+cgoEnabled)
+
 	return args, envs
 }
 
