@@ -49,7 +49,7 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 	// First function prepares initial well-known state
 	return func(ctx context.Context) error {
 			// Create two random wallets with predefined amounts of core
-			sender = chain.AddWallet("100core")
+			sender = chain.AddWallet("180000100core")
 			receiver = chain.AddWallet("10core")
 			return nil
 		},
@@ -63,10 +63,17 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 			client := chain.Client()
 
 			// Transfer 10 cores from sender to receiver
-			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendData{
+			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
+				Base: cored.BaseInput{
+					Signer: sender,
+					// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
+					GasLimit: 120000,
+					// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
+					GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
+				},
 				Sender:   sender,
 				Receiver: receiver,
-				Balance:  cored.Balance{Denom: "core", Amount: big.NewInt(10)},
+				Amount:   cored.Coin{Denom: "core", Amount: big.NewInt(10)},
 			})
 			require.NoError(t, err)
 			result, err := client.Broadcast(ctx, txBytes)
@@ -82,6 +89,8 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 			require.NoError(t, err)
 
 			// Test that tokens disappeared from sender's wallet
+			// - 10core were transferred to receiver
+			// - 180000000core were taken as fee
 			assert.Equal(t, "90", balancesSender["core"].Amount.String())
 
 			// Test that tokens reached receiver's wallet
