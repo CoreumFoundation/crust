@@ -282,7 +282,7 @@ func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet)
 
 	amount := cored.Coin{Amount: big.NewInt(1), Denom: "core"}
 	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
-		Signing: cored.SignInput{
+		Base: cored.BaseInput{
 			Signer: from,
 			// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
 			GasLimit: 120000,

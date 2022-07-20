@@ -33,7 +33,7 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 
 			// Broadcast a transaction using incorrect sequence number
 			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
-				Signing: cored.SignInput{
+				Base: cored.BaseInput{
 					Signer: sender,
 					// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
 					GasLimit: 120000,

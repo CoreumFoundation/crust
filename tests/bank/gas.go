@@ -74,7 +74,7 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 
 func sendAndReturnGasUsed(ctx context.Context, client cored.Client, sender, receiver cored.Wallet, toSend cored.Coin, gasLimit uint64) (int64, error) {
 	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
-		Signing: cored.SignInput{
+		Base: cored.BaseInput{
 			Signer:   sender,
 			GasLimit: gasLimit,
 			// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust

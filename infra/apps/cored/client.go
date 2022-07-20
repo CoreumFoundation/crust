@@ -92,7 +92,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, input SignInput, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
@@ -196,8 +196,8 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
-// SignInput holds input data for signing
-type SignInput struct {
+// BaseInput holds input data common to every transaction
+type BaseInput struct {
 	Signer   Wallet
 	GasLimit uint64
 	GasPrice Coin
@@ -210,7 +210,7 @@ type TxBankSendInput struct {
 	Receiver Wallet
 	Amount   Coin
 
-	Signing SignInput
+	Base BaseInput
 }
 
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
@@ -224,7 +224,7 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 		return nil, errors.Wrap(err, "amount to send is invalid")
 	}
 
-	signedTx, err := c.Sign(ctx, input.Signing, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	signedTx, err := c.Sign(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
 			Denom:  input.Amount.Denom,
 			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
@@ -249,7 +249,7 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, input SignInput, msg sdk.Msg) (authsigning.Tx, error) {
+func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
