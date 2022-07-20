@@ -36,9 +36,9 @@ Use " [command] --help" for more information about a command.
 
 `crust contracts init`
 
-Creating a WASM-ready contract is just a bit more involved procedure, as compared to Solidity contracts, when you can have a single file and be happy. WASM contracts require to have Cargo configuration for dependency and target management, simlar to NPM/YARN.
+Creating a WASM-ready contract is just a bit more involved procedure, as compared to Solidity contracts, when you can have a single file and be happy. WASM contracts require to have Cargo configuration for dependency and target management, similar to NPM/YARN.
 
-We are providing a template repo with bare minimum scaffolded code to help you be up and running with a new shiny contract. Crust provides an `conctracts init` subcommand that clones the template into any target dir. Don't forget to specify a name!
+We are providing a template repo with bare minimum scaffolded code to help you be up and running with a new shiny contract. Crust provides an `contracts init` subcommand that clones the template into any target dir. Don't forget to specify a name!
 
 ```bash
 > crust contracts init -h
@@ -77,10 +77,10 @@ Cargo.toml     Importing.md   NOTICE         README.md      rustfmt.toml   src/
 
 `crust contracts test`
 
-In CosmWasm there are 3 approaches to testing:
+In CosmWasm there are three approaches to testing:
 1) Unit tests
 2) Integration test
-3) Integraton tests that are loading .wasm artefact as a black box
+3) Integration tests that are loading .wasm artefact as a black box
 
 We decided to follow the same route and developed a crust subcommand that helps you to run all unit and integration tests in the project workspace:
 
@@ -143,7 +143,7 @@ Jul 19 17:57:00.735  INFO cargo_tarpaulin::report: Coverage Results:
 
 `crust contracts building`
 
-Now, when it comes to building a smart-contract, there are two options and two workflows that are implemented in crust. First option will use your Rust environment to build a Release version of the smart-contract targeting WASM32. This mode doesn't need Docker, but the resulting artefact will be large and the build is not determenistic.
+Now, when it comes to building a smart-contract, there are two options and two workflows that are implemented in crust. First option will use your Rust environment to build a Release version of the smart-contract targeting WASM32. This mode doesn't need Docker, but the resulting artefact will be large and the build is not deterministic.
 
 Second option is to have a deterministic and optimized build through a special Docker image. `rust-optimizer` produces reproducible builds of WASM smart contracts. This means third parties can verify that the contract is actually the claimed code.
 

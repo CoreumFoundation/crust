@@ -19,7 +19,7 @@ import (
 // TestConfig provides params for the testing stage.
 type TestConfig struct {
 	// NeedCoverageReport enables running additional code coverage collector tool 'tarpaulin',
-	// which is currently available for linux/amd64 only. Enabling this option on other OSes will trigger a warn.
+	// which is currently available for linux/amd64 only. Enabling this option on other OSes will trigger a warning.
 	NeedCoverageReport bool
 
 	// HasIntegrationTests triggers an additional stage where integration tests are run. This will rebuild
