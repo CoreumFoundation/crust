@@ -23,6 +23,7 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 
 	tests := []*testing.T{
 		testing.New(auth.TestUnexpectedSequenceNumber(node)),
+		testing.New(auth.TestTooLowGasPrice(node)),
 		testing.New(bank.TestInitialBalance(node)),
 		testing.New(bank.TestCoreTransfer(node)),
 	}

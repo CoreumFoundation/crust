@@ -314,3 +314,8 @@ func FetchSequenceFromError(err error) (uint64, bool, error) {
 	}
 	return expectedSequence, true, nil
 }
+
+// IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction
+func IsInsufficientFeeError(err error) bool {
+	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
+}
