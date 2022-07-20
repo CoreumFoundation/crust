@@ -63,6 +63,6 @@ func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 
 	return golang.BuildInDocker(ctx, golang.BuildConfig{
 		PackagePath:   "cmd/zstress",
-		BinOutputPath: "bin/.cache/zstress",
+		BinOutputPath: "bin/.cache/docker/zstress",
 	})
 }
