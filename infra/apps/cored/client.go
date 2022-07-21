@@ -17,11 +17,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
+	abci "github.com/tendermint/tendermint/abci/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/CoreumFoundation/crust/pkg/retry"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const (
@@ -41,6 +43,7 @@ func NewClient(chainID string, addr string) Client {
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
+		wasmQueryClient: wasmtypes.NewQueryClient(clientCtx),
 	}
 }
 
@@ -49,6 +52,7 @@ type Client struct {
 	clientCtx       client.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
+	wasmQueryClient wasmtypes.QueryClient
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
@@ -92,7 +96,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, signer Wallet, memo string, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, signer Wallet, memo string, msg ...sdk.Msg) (authsigning.Tx, error) {
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
@@ -101,7 +105,7 @@ func (c Client) Sign(ctx context.Context, signer Wallet, memo string, msg sdk.Ms
 		}
 	}
 
-	return signTx(c.clientCtx, signer, msg, memo), nil
+	return signTx(c.clientCtx, signer, memo, msg...), nil
 }
 
 // Encode encodes transaction to be broadcasted
@@ -111,8 +115,9 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 
 // BroadcastResult contains results of transaction broadcast
 type BroadcastResult struct {
-	TxHash  string
-	GasUsed int64
+	TxHash    string
+	GasUsed   int64
+	EventLogs []abci.Event
 }
 
 // Broadcast broadcasts encoded transaction and returns tx hash
@@ -188,8 +193,9 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		return BroadcastResult{}, err
 	}
 	return BroadcastResult{
-		TxHash:  txHash,
-		GasUsed: resultTx.TxResult.GasUsed,
+		TxHash:    txHash,
+		GasUsed:   resultTx.TxResult.GasUsed,
+		EventLogs: resultTx.TxResult.Events,
 	}, nil
 }
 
@@ -233,12 +239,12 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, signer Wallet, msg sdk.Msg, memo string) authsigning.Tx {
+func signTx(clientCtx client.Context, signer Wallet, memo string, msgs ...sdk.Msg) authsigning.Tx {
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
 	txBuilder.SetGasLimit(200000)
 	txBuilder.SetMemo(memo)
-	must.OK(txBuilder.SetMsgs(msg))
+	must.OK(txBuilder.SetMsgs(msgs...))
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
