@@ -123,7 +123,7 @@ func generateDocker(outDir, toolPath string) error {
 		return errors.Wrapf(err, `can't find %[1]s binary, run "crust build/%[1]s" to build it`, toolName)
 	}
 
-	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM scratch
+	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM alpine:3.16.0
 COPY . .
 ENTRYPOINT ["`+toolName+`"]
 `), 0o600))
