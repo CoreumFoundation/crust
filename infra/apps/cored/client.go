@@ -296,8 +296,8 @@ func asSDKError(err error, expectedSDKErr *cosmoserrors.Error) *cosmoserrors.Err
 	return sdkErr
 }
 
-// FetchSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
-func FetchSequenceFromError(err error) (uint64, bool, error) {
+// ExpectedSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
+func ExpectedSequenceFromError(err error) (uint64, bool, error) {
 	sdkErr := asSDKError(err, cosmoserrors.ErrWrongSequence)
 	if sdkErr == nil {
 		return 0, false, nil

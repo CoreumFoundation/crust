@@ -96,7 +96,7 @@ func Stress(ctx context.Context, config StressConfig) error {
 								if errors.Is(err, ctx.Err()) {
 									return err
 								}
-								expectedAccSeq, ok, err2 := cored.FetchSequenceFromError(err)
+								expectedAccSeq, ok, err2 := cored.ExpectedSequenceFromError(err)
 								if err2 != nil {
 									return err2
 								}
