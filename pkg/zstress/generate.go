@@ -46,10 +46,10 @@ func Generate(config GenerateConfig) error {
 		panic(err)
 	}
 
-	if err := generateDocker(outDir, config.BinDirectory+"/linux/cored"); err != nil {
+	if err := generateDocker(outDir, config.BinDirectory+"/cored"); err != nil {
 		return err
 	}
-	if err := generateDocker(outDir, config.BinDirectory+"/.cache/linux/zstress"); err != nil {
+	if err := generateDocker(outDir, config.BinDirectory+"/zstress"); err != nil {
 		return err
 	}
 
@@ -123,7 +123,7 @@ func generateDocker(outDir, toolPath string) error {
 		return errors.Wrapf(err, `can't find %[1]s binary, run "crust build/%[1]s" to build it`, toolName)
 	}
 
-	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM scratch
+	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM alpine:3.16.0
 COPY . .
 ENTRYPOINT ["`+toolName+`"]
 `), 0o600))

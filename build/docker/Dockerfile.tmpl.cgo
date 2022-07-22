@@ -1,8 +1,0 @@
-FROM golang:{{ .GOVersion }}-alpine{{ .AlpineVersion }}
-
-ADD {{ .WASMMuslc.URL }} /lib/libwasmvm_muslc.a
-RUN sha256sum /lib/libwasmvm_muslc.a | grep {{ .WASMMuslc.Hash }} && \
-  chmod 755 /lib/libwasmvm_muslc.a && \
-  apk add --no-cache gcc libc-dev
-
-ENTRYPOINT ["go"]

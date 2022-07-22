@@ -1,5 +1,10 @@
 package build
 
+import (
+	"github.com/CoreumFoundation/coreum/build/golang"
+	"github.com/CoreumFoundation/coreum/build/tools"
+)
+
 // Commands is a definition of commands available in build system
 var Commands = map[string]interface{}{
 	"build":           buildAll,
@@ -8,8 +13,8 @@ var Commands = map[string]interface{}{
 	"build/znet":      buildZNet,
 	"build/zstress":   buildZStress,
 	"build/contracts": buildContracts,
-	"lint":            lint,
-	"setup":           installTools,
-	"test":            goTest,
-	"tidy":            goModTidy,
+	"lint":            golang.Lint,
+	"setup":           tools.InstallAll,
+	"test":            golang.Test,
+	"tidy":            golang.Tidy,
 }

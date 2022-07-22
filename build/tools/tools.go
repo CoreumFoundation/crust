@@ -1,4 +1,4 @@
-package build
+package tools
 
 import (
 	"archive/tar"
@@ -14,17 +14,26 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-var tools = map[string]tool{
-	"go": {
-		Version: "1.18.3",
-		Sources: sources{
+// Tool names
+const (
+	Go           Name = "go"
+	GolangCI     Name = "golangci"
+	Ignite       Name = "ignite"
+	LibWASMMuslC Name = "libwasmvm_muslc"
+)
+
+var tools = map[Name]Tool{
+	// https://go.dev/dl/
+	Go: {
+		Version:  "1.18.3",
+		ForLocal: true,
+		Sources: Sources{
 			linuxAMD64: {
 				URL:  "https://go.dev/dl/go1.18.3.linux-amd64.tar.gz",
 				Hash: "sha256:956f8507b302ab0bb747613695cdae10af99bbd39a90cae522b7c0302cc27245",
@@ -38,40 +47,46 @@ var tools = map[string]tool{
 				Hash: "sha256:40ecd383c941cc9f0682e6a6f2a333539d58c7dea15c842434d03afafe2f7242",
 			},
 		},
-		Binaries: []string{
-			"go/bin/go",
-			"go/bin/gofmt",
+		Binaries: map[string]string{
+			"bin/go":    "go/bin/go",
+			"bin/gofmt": "go/bin/gofmt",
 		},
 	},
-	"golangci": {
-		Version: "1.46.2",
-		Sources: sources{
+
+	// https://github.com/golangci/golangci-lint/releases/
+	GolangCI: {
+		Version:  "1.46.2",
+		ForLocal: true,
+		Sources: Sources{
 			linuxAMD64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-linux-amd64.tar.gz",
 				Hash: "sha256:242cd4f2d6ac0556e315192e8555784d13da5d1874e51304711570769c4f2b9b",
-				Binaries: []string{
-					"golangci-lint-1.46.2-linux-amd64/golangci-lint",
+				Binaries: map[string]string{
+					"bin/golangci-lint": "golangci-lint-1.46.2-linux-amd64/golangci-lint",
 				},
 			},
 			darwinAMD64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-darwin-amd64.tar.gz",
 				Hash: "sha256:658078aaaf7608693f37c4cf1380b2af418ab8b2d23fdb33e7e2d4339328590e",
-				Binaries: []string{
-					"golangci-lint-1.46.2-darwin-amd64/golangci-lint",
+				Binaries: map[string]string{
+					"bin/golangci-lint": "golangci-lint-1.46.2-darwin-amd64/golangci-lint",
 				},
 			},
 			darwinARM64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-darwin-arm64.tar.gz",
 				Hash: "sha256:81f9b4afd62ec5e612ef8bc3b1d612a88b56ff289874831845cdad394427385f",
-				Binaries: []string{
-					"golangci-lint-1.46.2-darwin-arm64/golangci-lint",
+				Binaries: map[string]string{
+					"bin/golangci-lint": "golangci-lint-1.46.2-darwin-arm64/golangci-lint",
 				},
 			},
 		},
 	},
-	"ignite": {
-		Version: "v0.22.2",
-		Sources: sources{
+
+	// https://github.com/ignite/cli/releases/
+	Ignite: {
+		Version:  "v0.22.2",
+		ForLocal: true,
+		Sources: Sources{
 			linuxAMD64: {
 				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_linux_amd64.tar.gz",
 				Hash: "sha256:c73654403ce7c27a8a8d2845a45beb284120c83d854c4312955658125764c296",
@@ -85,94 +100,158 @@ var tools = map[string]tool{
 				Hash: "sha256:19757865d00e0d08c36a83a3cb9035a76ee0b542c20efed00f48a01eb12fb879",
 			},
 		},
-		Binaries: []string{
-			"ignite",
+		Binaries: map[string]string{
+			"bin/ignite": "ignite",
+		},
+	},
+
+	// https://github.com/CosmWasm/wasmvm/releases
+	LibWASMMuslC: {
+		Version:   "v1.0.0",
+		ForDocker: true,
+		Sources: Sources{
+			dockerAMD64: {
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479",
+				Binaries: map[string]string{
+					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
+				},
+			},
+			dockerARM64: {
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:7d2239e9f25e96d0d4daba982ce92367aacf0cbd95d2facb8442268f2b1cc1fc",
+				Binaries: map[string]string{
+					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
+				},
+			},
 		},
 	},
 }
 
-const binDir = "bin"
+// Name is the type used for defining tool names
+type Name string
 
-type platform struct {
+// Platform defines platform to install tool on
+type Platform struct {
 	OS   string
 	Arch string
 }
 
-func (p platform) String() string {
-	return p.OS + "/" + p.Arch
+func (p Platform) String() string {
+	return p.OS + "." + p.Arch
 }
+
+const dockerOS = "docker"
 
 var (
-	linuxAMD64  = platform{OS: "linux", Arch: "amd64"}
-	darwinAMD64 = platform{OS: "darwin", Arch: "amd64"}
-	darwinARM64 = platform{OS: "darwin", Arch: "arm64"}
+	linuxAMD64  = Platform{OS: "linux", Arch: "amd64"}
+	darwinAMD64 = Platform{OS: "darwin", Arch: "amd64"}
+	darwinARM64 = Platform{OS: "darwin", Arch: "arm64"}
+	dockerAMD64 = Platform{OS: dockerOS, Arch: "amd64"}
+	dockerARM64 = Platform{OS: dockerOS, Arch: "arm64"}
 )
 
-type tool struct {
-	Version  string
-	Sources  sources
-	Binaries []string
+// DockerPlatform is the docker platform for current arch
+var DockerPlatform = Platform{
+	OS:   dockerOS,
+	Arch: runtime.GOARCH,
 }
 
-type source struct {
+// Tool represents tool to be installed
+type Tool struct {
+	Version   string
+	ForDocker bool
+	ForLocal  bool
+	Sources   Sources
+	Binaries  map[string]string
+}
+
+// Source represents source where tool is fetched from
+type Source struct {
 	URL      string
 	Hash     string
-	Binaries []string
+	Binaries map[string]string
 }
 
-type sources map[platform]source
+// Sources is the map of sources
+type Sources map[Platform]Source
 
-func installTools(deps build.DepsFunc) {
-	toolFns := make([]interface{}, 0, len(tools))
+// InstallAll installs all the tools
+func InstallAll(ctx context.Context) error {
 	for tool := range tools {
-		tool := tool
-		toolFns = append(toolFns, func(ctx context.Context) error {
-			return ensure(ctx, tool)
-		})
-	}
-	deps(toolFns...)
-}
-
-func ensure(ctx context.Context, tool string) error {
-	info, exists := tools[tool]
-	if !exists {
-		return errors.Errorf("tool %s is not defined", tool)
-	}
-
-	platform := platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
-	source, exists := info.Sources[platform]
-	if !exists {
-		panic(errors.Errorf("tool %s is not configured for platform %s", tool, platform))
-	}
-
-	toolDir := toolDir(tool)
-	for _, bin := range combine(info.Binaries, source.Binaries) {
-		srcPath, err := filepath.Abs(toolDir + "/" + bin)
-		if err != nil {
-			return install(ctx, tool, info)
+		if tools[tool].ForLocal {
+			if err := EnsureLocal(ctx, tool); err != nil {
+				return err
+			}
 		}
-
-		binName := filepath.Base(bin)
-		dstPath, err := filepath.Abs(binDir + "/" + binName)
-		if err != nil {
-			return install(ctx, tool, info)
-		}
-
-		realPath, err := filepath.EvalSymlinks(dstPath)
-		if err != nil || realPath != srcPath {
-			return install(ctx, tool, info)
+		if tools[tool].ForDocker {
+			if err := EnsureDocker(ctx, tool); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func install(ctx context.Context, name string, info tool) (retErr error) {
-	platform := platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
+// EnsureLocal ensures that tool is installed locally
+func EnsureLocal(ctx context.Context, tool Name) error {
+	return ensurePlatform(ctx, tool, Platform{OS: runtime.GOOS, Arch: runtime.GOARCH})
+}
+
+// EnsureDocker ensures that tool is installed for docker
+func EnsureDocker(ctx context.Context, tool Name) error {
+	return ensurePlatform(ctx, tool, Platform{OS: dockerOS, Arch: runtime.GOARCH})
+}
+
+func ensurePlatform(ctx context.Context, tool Name, platform Platform) error {
+	info, exists := tools[tool]
+	if !exists {
+		return errors.Errorf("tool %s is not defined", tool)
+	}
+
+	source, exists := info.Sources[platform]
+	if !exists {
+		panic(errors.Errorf("tool %s is not configured for platform %s", tool, platform))
+	}
+
+	toolDir := toolDir(tool, platform)
+	for dst, src := range combine(info.Binaries, source.Binaries) {
+		srcPath, err := filepath.Abs(toolDir + "/" + src)
+		if err != nil {
+			return install(ctx, tool, info, platform)
+		}
+
+		dstPlatform := dst
+		if platform.OS == dockerOS {
+			dstPlatform = filepath.Join(CacheDir(), platform.String(), dstPlatform)
+		}
+		dstPath, err := filepath.Abs(dstPlatform)
+		if err != nil {
+			return install(ctx, tool, info, platform)
+		}
+
+		realPath, err := filepath.EvalSymlinks(dstPath)
+		if err != nil || realPath != srcPath {
+			return install(ctx, tool, info, platform)
+		}
+
+		fInfo, err := os.Stat(realPath)
+		if err != nil {
+			return install(ctx, tool, info, platform)
+		}
+		if fInfo.Mode()&0o700 == 0 {
+			return install(ctx, tool, info, platform)
+		}
+	}
+	return nil
+}
+
+func install(ctx context.Context, name Name, info Tool, platform Platform) (retErr error) {
 	source, exists := info.Sources[platform]
 	if !exists {
 		panic(errors.Errorf("tool %s is not configured for platform %s", name, platform))
 	}
-	ctx = logger.With(ctx, zap.String("name", name), zap.String("version", info.Version),
+	ctx = logger.With(ctx, zap.String("name", string(name)), zap.String("version", info.Version),
 		zap.String("url", source.URL))
 	log := logger.Get(ctx)
 	log.Info("Installing tool")
@@ -185,7 +264,7 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 
 	hasher, expectedChecksum := hasher(source.Hash)
 	reader := io.TeeReader(resp.Body, hasher)
-	toolDir := toolDir(name)
+	toolDir := toolDir(name, platform)
 	if err := os.RemoveAll(toolDir); err != nil && !os.IsNotExist(err) {
 		panic(err)
 	}
@@ -198,7 +277,7 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 		}
 	}()
 
-	if err := extract(source.URL, reader, toolDir); err != nil {
+	if err := save(source.URL, reader, toolDir); err != nil {
 		return err
 	}
 
@@ -208,13 +287,24 @@ func install(ctx context.Context, name string, info tool) (retErr error) {
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
-	for _, bin := range combine(info.Binaries, source.Binaries) {
-		srcPath := toolDir + "/" + bin
-		dstPath := binDir + "/" + filepath.Base(bin)
+	dstDir := "."
+	if platform.OS == dockerOS {
+		dstDir = filepath.Join(CacheDir(), platform.String())
+	}
+	for dst, src := range combine(info.Binaries, source.Binaries) {
+		srcPath := toolDir + "/" + src
+		dstPath := dstDir + "/" + dst
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
 			panic(err)
 		}
-		must.OK(os.Symlink(srcPath, dstPath))
+		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
+		must.OK(os.Chmod(srcPath, 0o700))
+		if platform.OS == dockerOS {
+			srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), string(name)+"-"+info.Version, src)
+			must.OK(os.Symlink(srcLinkPath, dstPath))
+		} else {
+			must.OK(os.Symlink(srcPath, dstPath))
+		}
 		must.Any(filepath.EvalSymlinks(dstPath))
 	}
 
@@ -241,7 +331,7 @@ func hasher(hashStr string) (hash.Hash, string) {
 	return hasher, strings.ToLower(checksum)
 }
 
-func extract(url string, reader io.Reader, path string) error {
+func save(url string, reader io.Reader, path string) error {
 	switch {
 	case strings.HasSuffix(url, ".tar.gz"):
 		var err error
@@ -251,7 +341,13 @@ func extract(url string, reader io.Reader, path string) error {
 		}
 		return untar(reader, path)
 	default:
-		panic(errors.Errorf("unsupported compression algorithm for url: %s", url))
+		f, err := os.OpenFile(filepath.Join(path, filepath.Base(url)), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer f.Close()
+		_, err = io.Copy(f, reader)
+		return errors.WithStack(err)
 	}
 }
 
@@ -320,17 +416,18 @@ func untar(reader io.Reader, path string) error {
 	}
 }
 
-func cacheDir() string {
+// CacheDir returns path to cache directory
+func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
 
-func toolDir(name string) string {
+func toolDir(name Name, platform Platform) string {
 	info, exists := tools[name]
 	if !exists {
 		panic(errors.Errorf("tool %s is not defined", name))
 	}
 
-	return cacheDir() + "/" + name + "-" + info.Version
+	return filepath.Join(CacheDir(), platform.String(), string(name)+"-"+info.Version)
 }
 
 func ensureDir(file string) error {
@@ -340,10 +437,24 @@ func ensureDir(file string) error {
 	return nil
 }
 
-func combine(a1 []string, a2 []string) []string {
-	return append(append([]string{}, a1...), a2...)
+// FIXME (wojciech): once build uses go 1.18 replace `combine` with https://github.com/samber/lo#assign
+func combine(m1 map[string]string, m2 map[string]string) map[string]string {
+	m := make(map[string]string, len(m1)+len(m2))
+	for k, v := range m1 {
+		m[k] = v
+	}
+	for k, v := range m2 {
+		m[k] = v
+	}
+	return m
 }
 
-func toolBin(tool string) string {
+// ByName returns tool definition by its name
+func ByName(name Name) Tool {
+	return tools[name]
+}
+
+// Path returns path to installed tool
+func Path(tool string) string {
 	return must.String(filepath.Abs("bin/" + tool))
 }
