@@ -74,7 +74,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
+func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -84,24 +84,27 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]Balance{}
+	balances := map[string]Coin{}
 	for _, b := range resp.Balances {
-		balances[b.Denom] = Balance{Amount: b.Amount.BigInt(), Denom: b.Denom}
+		balances[b.Denom] = Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
 	}
 	return balances, nil
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, signer Wallet, memo string, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
 		if err != nil {
 			return nil, err
 		}
+
+		input.Signer = signer
 	}
 
-	return signTx(c.clientCtx, signer, msg, memo), nil
+	return signTx(c.clientCtx, input, msg)
 }
 
 // Encode encodes transaction to be broadcasted
@@ -193,25 +196,38 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
-// TxBankSendData holds input data for PrepareTxBankSend
-type TxBankSendData struct {
-	Sender   Wallet
-	Receiver Wallet
-	Balance  Balance
+// BaseInput holds input data common to every transaction
+type BaseInput struct {
+	Signer   Wallet
+	GasLimit uint64
+	GasPrice Coin
 	Memo     string
 }
 
+// TxBankSendInput holds input data for PrepareTxBankSend
+type TxBankSendInput struct {
+	Sender   Wallet
+	Receiver Wallet
+	Amount   Coin
+
+	Base BaseInput
+}
+
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) PrepareTxBankSend(ctx context.Context, data TxBankSendData) ([]byte, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(data.Sender.Key.Address())
+func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
+	fromAddress, err := sdk.AccAddressFromBech32(input.Sender.Key.Address())
 	must.OK(err)
-	toAddress, err := sdk.AccAddressFromBech32(data.Receiver.Key.Address())
+	toAddress, err := sdk.AccAddressFromBech32(input.Receiver.Key.Address())
 	must.OK(err)
 
-	signedTx, err := c.Sign(ctx, data.Sender, data.Memo, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	if err := input.Amount.Validate(); err != nil {
+		return nil, errors.Wrap(err, "amount to send is invalid")
+	}
+
+	signedTx, err := c.Sign(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
-			Denom:  data.Balance.Denom,
-			Amount: sdk.NewIntFromBigInt(data.Balance.Amount),
+			Denom:  input.Amount.Denom,
+			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
 		},
 	}))
 	if err != nil {
@@ -233,12 +249,25 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, signer Wallet, msg sdk.Msg, memo string) authsigning.Tx {
+func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+	signer := input.Signer
+
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
-	txBuilder.SetGasLimit(200000)
-	txBuilder.SetMemo(memo)
 	must.OK(txBuilder.SetMsgs(msg))
+	txBuilder.SetGasLimit(input.GasLimit)
+	txBuilder.SetMemo(input.Memo)
+
+	if input.GasPrice.Amount != nil {
+		if err := input.GasPrice.Validate(); err != nil {
+			return nil, errors.Wrap(err, "gas price is invalid")
+		}
+
+		gasLimit := sdk.NewInt(int64(input.GasLimit))
+		gasPrice := sdk.NewIntFromBigInt(input.GasPrice.Amount)
+		fee := sdk.NewCoin(input.GasPrice.Denom, gasLimit.Mul(gasPrice))
+		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
+	}
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
@@ -264,7 +293,7 @@ func signTx(clientCtx client.Context, signer Wallet, msg sdk.Msg, memo string) a
 
 	must.OK(txBuilder.SetSignatures(sig))
 
-	return txBuilder.GetTx()
+	return txBuilder.GetTx(), nil
 }
 
 type sequenceError struct {
