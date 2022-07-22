@@ -69,9 +69,9 @@ func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 
 func buildContracts(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
-
 	return golang.BuildLocally(ctx, golang.BuildConfig{
 		PackagePath:   "cmd/contracts",
 		BinOutputPath: "bin/.cache/contracts",
+		CGOEnabled:    true,
 	})
 }
