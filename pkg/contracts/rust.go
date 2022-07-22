@@ -75,6 +75,11 @@ func ensureUnitTestTools(ctx context.Context) error {
 }
 
 func ensureBuildTools(ctx context.Context, needOptimized bool) error {
+	if err := ensureRustToolchain(ctx); err != nil {
+		err = errors.Wrap(err, "problem with checking the Rust toolchain")
+		return err
+	}
+
 	if needOptimized {
 		// optimized predictable builds require only Docker, an image will do the rest
 		_, err := exec.LookPath("docker")
@@ -84,11 +89,6 @@ func ensureBuildTools(ctx context.Context, needOptimized bool) error {
 		}
 
 		return nil
-	}
-
-	if err := ensureRustToolchain(ctx); err != nil {
-		err = errors.Wrap(err, "problem with checking the Rust toolchain")
-		return err
 	}
 
 	if err := ensureRustTarget(ctx, wasmTarget); err != nil {

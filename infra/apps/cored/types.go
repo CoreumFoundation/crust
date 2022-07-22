@@ -46,6 +46,11 @@ func (w Wallet) AddressString() string {
 	return w.Key.Address()
 }
 
+func (w Wallet) Address() sdk.AccAddress {
+	privKey := cosmossecp256k1.PrivKey{Key: w.Key}
+	return sdk.AccAddress(privKey.PubKey().Address())
+}
+
 // NewWalletFromKeyring allows to wrap an account key from keyring into an unsafe Wallet wrapper.
 func NewWalletFromKeyring(kb cosmkeyring.Keyring, accAddr sdk.AccAddress) (Wallet, error) {
 	keyInfo, err := kb.KeyByAddress(accAddr)

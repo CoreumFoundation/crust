@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
@@ -131,7 +133,8 @@ func buildRunE(ctx context.Context, buildConfig *contracts.BuildConfig) RunE {
 			targetDir = cwd
 		}
 
-		return contracts.Build(ctx, targetDir, *buildConfig)
+		_, err := contracts.Build(ctx, targetDir, *buildConfig)
+		return err
 	}
 }
 
@@ -226,7 +229,14 @@ func deployRunE(
 			return err
 		}
 
-		return contracts.Deploy(ctx, *deployConfig)
+		out, err := contracts.Deploy(ctx, *deployConfig)
+		if out != nil {
+			outMsg, err := json.Marshal(out)
+			must.OK(err)
+			fmt.Println(string(outMsg))
+		}
+
+		return err
 	}
 }
 
@@ -283,16 +293,58 @@ func addBuildFlags(buildCmd *cobra.Command, buildConfig *contracts.BuildConfig) 
 
 func addDeployFlags(deployCmd *cobra.Command, deployConfig *contracts.DeployConfig) {
 	deployCmd.Flags().BoolVar(
-		&deployConfig.NeedsRebuild,
+		&deployConfig.NeedRebuild,
 		"rebuild",
-		toBool("CRUST_CONTRACTS_DEPLOY_NEEDS_REBUILD", false),
+		toBool("CRUST_CONTRACTS_DEPLOY_NEED_REBUILD", false),
 		"Forces an optimized rebuild of the WASM artefact, even if it exists. Requires WorkspaceDir to be present and valid.",
 	)
 	deployCmd.Flags().BoolVar(
 		&deployConfig.InstantiationConfig.NeedInstantiation,
 		"init",
-		toBool("CRUST_CONTRACTS_DEPLOY_NEEDS_INSTANTIATION", true),
+		toBool("CRUST_CONTRACTS_DEPLOY_NEED_INSTANTIATION", true),
 		"Enables 2nd stage (contract instantiation) to be executed after code has been stored on chain.",
+	)
+	deployCmd.Flags().StringVar(
+		&deployConfig.InstantiationConfig.InstantiatePayload,
+		"init-payload",
+		defaultString("CRUST_CONTRACTS_DEPLOY_INIT_PAYLOAD", ""),
+		"Path to a file containing JSON-encoded contract instantiate args, or JSON-encoded body itself.",
+	)
+	deployCmd.Flags().StringVar(
+		&deployConfig.InstantiationConfig.AccessType,
+		"init-access-type",
+		defaultString("CRUST_CONTRACTS_DEPLOY_INIT_ACCESS_TYPE", string(contracts.AccessTypeUnspecified)),
+		`Sets the permission flag, affecting who can instantiate this contract. Expects "nobody", "address", "unrestricted".`,
+	)
+	deployCmd.Flags().StringVar(
+		&deployConfig.InstantiationConfig.AccessAddress,
+		"init-access-address",
+		defaultString("CRUST_CONTRACTS_DEPLOY_INIT_ACCESS_TYPE", ""),
+		`Sets the address when CRUST_CONTRACTS_DEPLOY_INIT_ACCESS_TYPE is "address".`,
+	)
+	deployCmd.Flags().BoolVar(
+		&deployConfig.InstantiationConfig.NeedAdmin,
+		"need-admin",
+		toBool("CRUST_CONTRACTS_DEPLOY_NEED_ADMIN", true),
+		"Set the admin address explicitly. If false, there will be no admin.",
+	)
+	deployCmd.Flags().StringVar(
+		&deployConfig.InstantiationConfig.AdminAddress,
+		"admin-address",
+		defaultString("CRUST_CONTRACTS_DEPLOY_ADMIN_ADDRESS", ""),
+		"Sets the address when CRUST_CONTRACTS_DEPLOY_NEED_ADMIN is true. If empty, sender will be set as an admin.",
+	)
+	deployCmd.Flags().StringVar(
+		&deployConfig.InstantiationConfig.Amount,
+		"amount",
+		defaultString("CRUST_CONTRACTS_DEPLOY_AMOUNT", ""),
+		"Specifies Coins to send to the contract during instantiation.",
+	)
+	deployCmd.Flags().StringVar(
+		&deployConfig.InstantiationConfig.Label,
+		"label",
+		defaultString("CRUST_CONTRACTS_DEPLOY_LABEL", ""),
+		"Sets the human-readable label for the contract instance during instantiation.",
 	)
 	deployCmd.Flags().StringVar(
 		&deployConfig.CodeID,
@@ -315,7 +367,7 @@ func addDeployFlags(deployCmd *cobra.Command, deployConfig *contracts.DeployConf
 	deployCmd.Flags().StringVar(
 		&deployConfig.Network.MinGasPrice,
 		"min-gas-price",
-		defaultString("CRUST_CONTRACTS_DEPLOY_CHAIN_MIN_GAS_PRICE", "1core"),
+		defaultString("CRUST_CONTRACTS_DEPLOY_CHAIN_MIN_GAS_PRICE", "1500core"),
 		"Sets the minimum gas price required to be paid to get the transaction included in a block.",
 	)
 }
@@ -335,7 +387,7 @@ func addDeployKeyringFlags(deployCmd *cobra.Command, keyringParams *KeyringParam
 		&keyringParams.KeyringDir,
 		"keyring-dir",
 		defaultString("CRUST_KEYRING_DIR", ""),
-		"Sets keyring path in the filesystem, useful when CRUST_KEYRING_BACKEND is \"file\".",
+		`Sets keyring path in the filesystem, useful when CRUST_KEYRING_BACKEND is "file".`,
 	)
 	deployCmd.Flags().StringVar(
 		&keyringParams.KeyringAppName,

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -21,7 +22,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -39,7 +39,15 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
-	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
+	switch {
+	case strings.HasPrefix(addr, "tcp://"),
+		strings.HasPrefix(addr, "http://"),
+		strings.HasPrefix(addr, "https://"):
+	default:
+		addr = "http://" + addr
+	}
+
+	rpcClient, err := client.NewClientFromNode(addr)
 	must.OK(err)
 	clientCtx := NewContext(chainID, rpcClient)
 	return Client{
@@ -159,7 +167,7 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 type BroadcastResult struct {
 	TxHash    string
 	GasUsed   int64
-	EventLogs []abci.Event
+	EventLogs sdk.StringEvents
 }
 
 // Broadcast broadcasts encoded transaction and returns tx hash
@@ -237,7 +245,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	return BroadcastResult{
 		TxHash:    txHash,
 		GasUsed:   resultTx.TxResult.GasUsed,
-		EventLogs: resultTx.TxResult.Events,
+		EventLogs: sdk.StringifyEvents(resultTx.TxResult.Events),
 	}, nil
 }
 
@@ -418,4 +426,10 @@ func buildSimTx(
 	}
 
 	return clientCtx.TxConfig.TxEncoder()(txb.GetTx())
+}
+
+// WASMQueryClient returns a WASM module querying client, initialized
+// using the internal clientCtx.
+func (c Client) WASMQueryClient() wasmtypes.QueryClient {
+	return c.wasmQueryClient
 }
