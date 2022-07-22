@@ -8,10 +8,14 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -23,7 +27,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/CoreumFoundation/crust/pkg/retry"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const (
@@ -78,7 +81,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Balance, error) {
+func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -88,24 +91,63 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]Balance{}
+	balances := map[string]Coin{}
 	for _, b := range resp.Balances {
-		balances[b.Denom] = Balance{Amount: b.Amount.BigInt(), Denom: b.Denom}
+		balances[b.Denom] = Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
 	}
 	return balances, nil
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, signer Wallet, memo string, msg ...sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
+	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
 		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
 		if err != nil {
 			return nil, err
 		}
+
+		input.Signer = signer
 	}
 
-	return signTx(c.clientCtx, signer, memo, msg...), nil
+	return signTx(c.clientCtx, input, msgs...)
+}
+
+// EstimateGas runs the transaction cost estimation and returns new suggested gas limit,
+// in contrast with the default Cosmos SDK gas estimation logic, this method returns unadjusted gas used.
+func (c Client) EstimateGas(ctx context.Context, input BaseInput, msgs ...sdk.Msg) (uint64, error) {
+	signer := input.Signer
+	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
+		var err error
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
+		if err != nil {
+			return 0, err
+		}
+
+		input.Signer = signer
+	}
+
+	simTxBytes, err := buildSimTx(c.clientCtx, input, msgs...)
+	if err != nil {
+		err = errors.Wrap(err, "failed to build sim tx bytes")
+		return 0, err
+	}
+
+	txSvcClient := txtypes.NewServiceClient(c.clientCtx)
+	simRes, err := txSvcClient.Simulate(context.Background(), &txtypes.SimulateRequest{
+		TxBytes: simTxBytes,
+	})
+	if err != nil {
+		err = errors.Wrap(err, "failed to simulate the transaction execution")
+		return 0, err
+	}
+
+	// usually gas has to be multiplied by some adjustment coeff: e.g. *1,5
+	// but in this case we return unadjusted, so every module can decide the adjustment value
+	unadjustedGas := simRes.GasInfo.GasUsed
+
+	return unadjustedGas, nil
 }
 
 // Encode encodes transaction to be broadcasted
@@ -199,25 +241,38 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	}, nil
 }
 
-// TxBankSendData holds input data for PrepareTxBankSend
-type TxBankSendData struct {
-	Sender   Wallet
-	Receiver Wallet
-	Balance  Balance
+// BaseInput holds input data common to every transaction
+type BaseInput struct {
+	Signer   Wallet
+	GasLimit uint64
+	GasPrice Coin
 	Memo     string
 }
 
+// TxBankSendInput holds input data for PrepareTxBankSend
+type TxBankSendInput struct {
+	Sender   Wallet
+	Receiver Wallet
+	Amount   Coin
+
+	Base BaseInput
+}
+
 // PrepareTxBankSend creates a transaction sending tokens from one wallet to another
-func (c Client) PrepareTxBankSend(ctx context.Context, data TxBankSendData) ([]byte, error) {
-	fromAddress, err := sdk.AccAddressFromBech32(data.Sender.Key.Address())
+func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([]byte, error) {
+	fromAddress, err := sdk.AccAddressFromBech32(input.Sender.Key.Address())
 	must.OK(err)
-	toAddress, err := sdk.AccAddressFromBech32(data.Receiver.Key.Address())
+	toAddress, err := sdk.AccAddressFromBech32(input.Receiver.Key.Address())
 	must.OK(err)
 
-	signedTx, err := c.Sign(ctx, data.Sender, data.Memo, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
+	if err := input.Amount.Validate(); err != nil {
+		return nil, errors.Wrap(err, "amount to send is invalid")
+	}
+
+	signedTx, err := c.Sign(ctx, input.Base, banktypes.NewMsgSend(fromAddress, toAddress, sdk.Coins{
 		{
-			Denom:  data.Balance.Denom,
-			Amount: sdk.NewIntFromBigInt(data.Balance.Amount),
+			Denom:  input.Amount.Denom,
+			Amount: sdk.NewIntFromBigInt(input.Amount.Amount),
 		},
 	}))
 	if err != nil {
@@ -239,12 +294,25 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, signer Wallet, memo string, msgs ...sdk.Msg) authsigning.Tx {
+func signTx(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
+	signer := input.Signer
+
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
-	txBuilder.SetGasLimit(200000)
-	txBuilder.SetMemo(memo)
 	must.OK(txBuilder.SetMsgs(msgs...))
+	txBuilder.SetGasLimit(input.GasLimit)
+	txBuilder.SetMemo(input.Memo)
+
+	if input.GasPrice.Amount != nil {
+		if err := input.GasPrice.Validate(); err != nil {
+			return nil, errors.Wrap(err, "gas price is invalid")
+		}
+
+		gasLimit := sdk.NewInt(int64(input.GasLimit))
+		gasPrice := sdk.NewIntFromBigInt(input.GasPrice.Amount)
+		fee := sdk.NewCoin(input.GasPrice.Denom, gasLimit.Mul(gasPrice))
+		txBuilder.SetFeeAmount(sdk.NewCoins(fee))
+	}
 
 	signerData := authsigning.SignerData{
 		ChainID:       clientCtx.ChainID,
@@ -270,7 +338,7 @@ func signTx(clientCtx client.Context, signer Wallet, memo string, msgs ...sdk.Ms
 
 	must.OK(txBuilder.SetSignatures(sig))
 
-	return txBuilder.GetTx()
+	return txBuilder.GetTx(), nil
 }
 
 type sequenceError struct {
@@ -307,4 +375,47 @@ func FetchSequenceFromError(err error) (uint64, bool) {
 		return seqErr.expectedSequence, true
 	}
 	return 0, false
+}
+
+// buildSimTx creates an unsigned tx with an empty single signature and returns
+// the encoded transaction or an error if the unsigned transaction cannot be
+// built.
+func buildSimTx(
+	clientCtx client.Context,
+	base BaseInput,
+	msgs ...sdk.Msg,
+) ([]byte, error) {
+	factory := new(tx.Factory).
+		WithTxConfig(clientCtx.TxConfig).
+		WithChainID(clientCtx.ChainID).
+		WithGasPrices(base.GasPrice.String()).
+		WithMemo(base.Memo).
+		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
+
+	txb, err := factory.BuildUnsignedTx(msgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: once keyring is introduced in the client, better to get the pubkey from keyring,
+	// not pass the private key around.
+	var pubKey cryptotypes.PubKey = &cosmossecp256k1.PubKey{
+		Key: base.Signer.Key.PubKey(),
+	}
+
+	// Create an empty signature literal as the ante handler will populate with a
+	// sentinel pubkey.
+	sig := signing.SignatureV2{
+		PubKey: pubKey,
+		Data: &signing.SingleSignatureData{
+			SignMode: factory.SignMode(),
+		},
+
+		Sequence: base.Signer.AccountSequence,
+	}
+	if err := txb.SetSignatures(sig); err != nil {
+		return nil, err
+	}
+
+	return clientCtx.TxConfig.TxEncoder()(txb.GetTx())
 }

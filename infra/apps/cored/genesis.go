@@ -22,8 +22,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-const initialBalance = "1000000000000000core"
-
 // NewGenesis creates new configuration for genesis block
 func NewGenesis(chainID string) *Genesis {
 	genesisDoc, err := tmtypes.GenesisDocFromJSON(genesis(chainID))
@@ -44,13 +42,6 @@ func NewGenesis(chainID string) *Genesis {
 		authState:    authState,
 		accountState: accountState,
 		bankState:    banktypes.GetGenesisStateFromAppState(clientCtx.Codec, appState),
-	}
-	g.AddWallet(AlicePrivKey.PubKey(), initialBalance)
-	g.AddWallet(BobPrivKey.PubKey(), initialBalance)
-	g.AddWallet(CharliePrivKey.PubKey(), initialBalance)
-
-	for _, key := range RandomWallets {
-		g.AddWallet(key.PubKey(), initialBalance)
 	}
 
 	return g
@@ -117,7 +108,9 @@ func (g *Genesis) AddValidator(validatorPublicKey ed25519.PublicKey, stakerPriva
 	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), valPubKey, amount, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
 	must.OK(err)
 
-	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.clientCtx.TxConfig.TxJSONEncoder()(signTx(g.clientCtx, Wallet{Key: stakerPrivateKey}, msg, ""))))
+	signedTx, err := signTx(g.clientCtx, BaseInput{Signer: Wallet{Key: stakerPrivateKey}}, msg)
+	must.OK(err)
+	g.genutilState.GenTxs = append(g.genutilState.GenTxs, must.Bytes(g.clientCtx.TxConfig.TxJSONEncoder()(signedTx)))
 }
 
 // Save saves genesis configuration

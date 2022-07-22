@@ -9,7 +9,7 @@ import (
 	cosmkeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/pkg/errors"
 )
 
 // Ports defines ports used by cored application
@@ -35,6 +35,11 @@ type Wallet struct {
 
 	// AccountSequence is the sequence of next transaction to sign
 	AccountSequence uint64
+}
+
+// String returns string representation of the wallet
+func (w Wallet) String() string {
+	return fmt.Sprintf("%s@%s", w.Name, w.Key.Address())
 }
 
 func (w Wallet) AddressString() string {
@@ -63,12 +68,8 @@ func NewWalletFromKeyring(kb cosmkeyring.Keyring, accAddr sdk.AccAddress) (Walle
 	}, nil
 }
 
-func (w Wallet) String() string {
-	return fmt.Sprintf("%s@%s", w.Name, w.Key.Address())
-}
-
-// Balance stores balance of denom
-type Balance struct {
+// Coin stores amount and denom of token
+type Coin struct {
 	// Amount is stored amount
 	Amount *big.Int `json:"amount"`
 
@@ -76,6 +77,21 @@ type Balance struct {
 	Denom string `json:"denom"`
 }
 
-func (b Balance) String() string {
-	return b.Amount.String() + b.Denom
+// String returns string representation of coin
+func (c Coin) String() string {
+	return c.Amount.String() + c.Denom
+}
+
+// Validate validates data inside coin
+func (c Coin) Validate() error {
+	if c.Denom == "" {
+		return errors.New("denom is empty")
+	}
+	if c.Amount == nil {
+		return errors.New("amount is nil")
+	}
+	if c.Amount.Cmp(big.NewInt(0)) == -1 {
+		return errors.New("amount is negative")
+	}
+	return nil
 }

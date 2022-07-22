@@ -34,14 +34,14 @@ func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	return goBuildPkg(ctx, "cmd/znet", runtime.GOOS, "bin/.cache/znet", false)
 }
 
+func buildContracts(ctx context.Context, deps build.DepsFunc) error {
+	deps(ensureGo)
+	return goBuildPkg(ctx, "cmd/contracts", runtime.GOOS, "bin/.cache/contracts", true)
+}
+
 func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureGo)
 	return buildNativeAndDocker(ctx, "cmd/zstress", "bin/.cache/zstress", false)
-}
-
-func buildContracts(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureGo)
-	return buildNativeAndDocker(ctx, "cmd/contracts", "bin/.cache/contracts", false)
 }
 
 func ensureAllRepos(deps build.DepsFunc) {
