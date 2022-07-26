@@ -78,12 +78,13 @@ func Generate(cfg GenerateConfig) error {
 
 		valDir := fmt.Sprintf("%s/validators/%d", outDir, i)
 
-		err = app.NodeConfig{
+		nodeConfig := app.NodeConfig{
 			Name:           fmt.Sprintf("validator-%d", i),
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
 			ValidatorKey:   validatorPrivateKey,
-		}.Save(valDir)
+		}
+		cored.SaveConfig(nodeConfig, valDir)
 		must.OK(err)
 
 		err = network.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
@@ -121,11 +122,12 @@ func Generate(cfg GenerateConfig) error {
 
 		nodeDir := fmt.Sprintf("%s/sentry-nodes/%d", outDir, i)
 
-		err = app.NodeConfig{
+		nodeConfig := app.NodeConfig{
 			Name:           fmt.Sprintf("sentry-node-%d", i),
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
-		}.Save(nodeDir)
+		}
+		cored.SaveConfig(nodeConfig, nodeDir)
 		must.OK(err)
 
 		err = network.SaveGenesis(nodeDir)

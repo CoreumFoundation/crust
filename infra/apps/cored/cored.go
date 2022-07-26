@@ -222,13 +222,13 @@ func (c Cored) Deployment() infra.Deployment {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				err := app.NodeConfig{
+				nodeConfig := app.NodeConfig{
 					Name:           c.name,
 					PrometheusPort: c.ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,
 					ValidatorKey:   c.validatorPrivateKey,
-				}.Save(c.homeDir)
-				must.OK(err)
+				}
+				SaveConfig(nodeConfig, c.homeDir)
 
 				AddKeysToStore(c.homeDir, c.walletKeys)
 
