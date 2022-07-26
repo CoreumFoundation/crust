@@ -3,14 +3,13 @@ module github.com/CoreumFoundation/crust
 go 1.18
 
 replace (
-	github.com/CoreumFoundation/coreum v0.0.0-20220629163141-706217b59a41 => /home/milad/Development/coreum
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220629163141-706217b59a41
+	github.com/CoreumFoundation/coreum v0.0.0-20220721112511-75ef647b9693
 	github.com/CoreumFoundation/coreum-tools v0.1.6
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/fsnotify/fsnotify v1.5.4
@@ -98,7 +97,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hdevalence/ed25519consensus v0.0.0-20210204194344-59a8610d2b87 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
-	github.com/ignite-hq/cli v0.22.0 // indirect
+	github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/improbable-eng/grpc-web v0.14.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -165,7 +164,7 @@ require (
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/fundraising v0.3.0 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/tendermint/spn v0.2.1-0.20220609194312-7833ecf4454a // indirect
+	github.com/tendermint/spn v0.2.1-0.20220610090138-44b136f042c4 // indirect
 	github.com/tendermint/tm-db v0.6.7 // indirect
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect

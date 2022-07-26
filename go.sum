@@ -107,6 +107,8 @@ github.com/BurntSushi/toml v1.1.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbi
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d h1:nalkkPQcITbvhmL4+C4cKA87NW0tfm3Kl9VXRoPywFg=
 github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d/go.mod h1:URdX5+vg25ts3aCh8H5IFZybJYKWhJHYMTnf+ULtoC4=
+github.com/CoreumFoundation/coreum v0.0.0-20220721112511-75ef647b9693 h1:gNZ1RTevOHhzhkC9iDJHYj63SBbFa0gem85Y4bsOhYY=
+github.com/CoreumFoundation/coreum v0.0.0-20220721112511-75ef647b9693/go.mod h1:VQdhkIUdbat95SxVcs1Zmnf4R6C4wSZrlN4pCd047jE=
 github.com/CoreumFoundation/coreum-tools v0.1.6 h1:PNWsnmU+IRB2zoGR3g/Ld71q9ISVxjjaJdviCkh5B7o=
 github.com/CoreumFoundation/coreum-tools v0.1.6/go.mod h1:3zOaSSZQHpOj4iBbNqH0auelYVMeGrnZ4yzhTLU5pUw=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
@@ -1019,8 +1021,9 @@ github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ignite-hq/cli v0.20.0/go.mod h1:kOs9GoMwvbIkbgIZP/LWE/qpw1eaqwPchWtNBIUSElY=
 github.com/ignite-hq/cli v0.21.0/go.mod h1:OpVQxPUuWyWN9OyEv3HlYU08uqp75RmceAlkN5uK0NI=
-github.com/ignite-hq/cli v0.22.0 h1:FNDjz9P+KPxZQ6ZbqaH9yuD92G3gsj1lkWkXmYrG/fk=
 github.com/ignite-hq/cli v0.22.0/go.mod h1:E2dM1v4Gy3tZv2X/iUQY/L7HBObBrC5rjajivIPhbWc=
+github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7 h1:2HUkG2SzDJ8K7//JNFwtx4D3V1HxGRtHaEku5gdstts=
+github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7/go.mod h1:KpUW5KOrkZpfYF/1wPC3wVAj1An1d2nX7SKbcEM/1ds=
 github.com/imdario/mergo v0.3.4/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/imdario/mergo v0.3.5/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
 github.com/imdario/mergo v0.3.8/go.mod h1:2EnlNZ0deacrJVfApfmtdGgDfMuh/nq6Ok1EcJh5FfA=
@@ -1752,8 +1755,9 @@ github.com/tendermint/spm v0.1.8/go.mod h1:iHgfQ5YOI6ONc9E7ugGQolVdfSMHpeXfZ/OpX
 github.com/tendermint/spn v0.1.1-0.20211210094128-4ca78a240c57/go.mod h1:p4BO8YC6kOKSKqMfySqaLHfwBmuPE/QcLwnnVhh7H9M=
 github.com/tendermint/spn v0.1.1-0.20220407154406-5cfd1bf28150/go.mod h1:B+KuhkB4Sms4yh0UN1HGsVbbMa3vCypai22QXLudQ3o=
 github.com/tendermint/spn v0.2.1-0.20220427143342-de7398284030/go.mod h1:9wXyogMDn9fK85s+bSADy+wvZ27DjLEByByMM+0O6NU=
-github.com/tendermint/spn v0.2.1-0.20220609194312-7833ecf4454a h1:+xo1H4r/dLkUcx89/jP88TbVQiA40Rcn7yQyPozIj5k=
 github.com/tendermint/spn v0.2.1-0.20220609194312-7833ecf4454a/go.mod h1:5w8qNkgtJM24CcMjqTsVOKnSbz+U2fke7bEGzRlcdHA=
+github.com/tendermint/spn v0.2.1-0.20220610090138-44b136f042c4 h1:ZHWBTbU6zpnw3Xf4zSv2ZqEPuT16SrE2se3A2Lomupw=
+github.com/tendermint/spn v0.2.1-0.20220610090138-44b136f042c4/go.mod h1:5Cq9m5DnF3UKtXltEagHom4bNMBByKSLhw5YcFN8cls=
 github.com/tendermint/starport v0.19.5/go.mod h1:XdbMpJ5R6QzP1+yrfsoCk44fnp9/52raponbkvjIMQA=
 github.com/tendermint/tendermint v0.34.0-rc4/go.mod h1:yotsojf2C1QBOw4dZrTcxbyxmPUrT4hNuOQWX9XUwB4=
 github.com/tendermint/tendermint v0.34.0-rc6/go.mod h1:ugzyZO5foutZImv0Iyx/gOFCX6mjJTgbLHTwi17VDVg=
