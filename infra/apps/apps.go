@@ -3,7 +3,6 @@ package apps
 import (
 	"fmt"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
@@ -33,15 +32,12 @@ type Factory struct {
 func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int, network *app.Network) infra.Mode {
 	const initialBalance = "1000000000000000core"
 
-	genesis, err := network.Genesis()
-	must.OK(err)
-
-	genesis.AddWallet(cored.AlicePrivKey.PubKey(), initialBalance)
-	genesis.AddWallet(cored.BobPrivKey.PubKey(), initialBalance)
-	genesis.AddWallet(cored.CharliePrivKey.PubKey(), initialBalance)
+	network.FundAccount(cored.AlicePrivKey.PubKey(), initialBalance)
+	network.FundAccount(cored.BobPrivKey.PubKey(), initialBalance)
+	network.FundAccount(cored.CharliePrivKey.PubKey(), initialBalance)
 
 	for _, key := range cored.RandomWallets {
-		genesis.AddWallet(key.PubKey(), initialBalance)
+		network.FundAccount(key.PubKey(), initialBalance)
 	}
 
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
