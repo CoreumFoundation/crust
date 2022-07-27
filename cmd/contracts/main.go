@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -84,8 +85,22 @@ func main() {
 			RunE:    deployRunE(ctx, &deployConfig, &keyringParams),
 		}
 		addDeployFlags(deployCmd, &deployConfig)
-		addDeployKeyringFlags(deployCmd, &keyringParams)
+		addNetworkFlags(deployCmd, &deployConfig.Network)
+		addTxKeyringFlags(deployCmd, &keyringParams)
 		rootCmd.AddCommand(deployCmd)
+
+		var execConfig contracts.ExecuteConfig
+		execCmd := &cobra.Command{
+			Use:     "exec [contract-address] [payload-json]",
+			Aliases: []string{"e", "call"},
+			Short:   "Executes a command on a WASM contract, with the payload provided.",
+			Args:    cobra.MaximumNArgs(2),
+			RunE:    executeRunE(ctx, &execConfig, &keyringParams),
+		}
+		addExecuteFlags(execCmd, &execConfig)
+		addNetworkFlags(execCmd, &execConfig.Network)
+		addTxKeyringFlags(execCmd, &keyringParams)
+		rootCmd.AddCommand(execCmd)
 
 		return rootCmd.Execute()
 	})
@@ -188,37 +203,7 @@ func deployRunE(
 			deployConfig.WorkspaceDir = cwd
 		}
 
-		opts := []keyring.ConfigOpt{}
-		if len(keyringParams.KeyringDir) > 0 {
-			opts = append(opts, keyring.WithKeyringDir(keyringParams.KeyringDir))
-		}
-		if len(keyringParams.KeyringAppName) > 0 {
-			opts = append(opts, keyring.WithKeyringAppName(keyringParams.KeyringAppName))
-		}
-		if len(keyringParams.KeyringBackend) > 0 {
-			keyringBackend := keyring.Backend(keyringParams.KeyringBackend)
-			switch keyringBackend {
-			case keyring.BackendFile, keyring.BackendOS, keyring.BackendTest:
-				opts = append(opts, keyring.WithKeyringBackend(keyringBackend))
-			default:
-				err := errors.Errorf("unsupported keyring backend provided: %s", keyringBackend)
-				return err
-			}
-		}
-		if len(keyringParams.KeyFrom) > 0 {
-			opts = append(opts, keyring.WithKeyFrom(keyringParams.KeyFrom))
-		}
-		if len(keyringParams.KeyPassphrase) > 0 {
-			opts = append(opts, keyring.WithKeyPassphrase(keyringParams.KeyPassphrase))
-		}
-		if len(keyringParams.PrivKeyHex) > 0 {
-			opts = append(opts, keyring.WithPrivKeyHex(keyringParams.PrivKeyHex))
-		}
-		if keyringParams.UseLedger {
-			opts = append(opts, keyring.WithUseLedger(keyringParams.UseLedger))
-		}
-
-		mainAcc, kb, err := keyring.NewCosmosKeyring(opts...)
+		mainAcc, kb, err := keyring.NewCosmosKeyring(keyringParams.Opts()...)
 		if err != nil {
 			err = errors.Wrap(err, "failed to initialize Cosmos keyring")
 			return err
@@ -230,6 +215,48 @@ func deployRunE(
 		}
 
 		out, err := contracts.Deploy(ctx, *deployConfig)
+		if out != nil {
+			outMsg, err := json.Marshal(out)
+			must.OK(err)
+			fmt.Println(string(outMsg))
+		}
+
+		return err
+	}
+}
+
+func executeRunE(
+	ctx context.Context,
+	execConfig *contracts.ExecuteConfig,
+	keyringParams *KeyringParams,
+) RunE {
+	return func(cmd *cobra.Command, args []string) error {
+		var contractAddress string
+
+		switch len(args) {
+		case 2:
+			contractAddress = args[0]
+			execConfig.ExecutePayload = args[1]
+		case 1:
+			contractAddress = args[0]
+			execConfig.ExecutePayload = "{}"
+		case 0:
+			err := errors.New("at least 1 argument with contract address must be provided")
+			return err
+		}
+
+		mainAcc, kb, err := keyring.NewCosmosKeyring(keyringParams.Opts()...)
+		if err != nil {
+			err = errors.Wrap(err, "failed to initialize Cosmos keyring")
+			return err
+		}
+		execConfig.From, err = cored.NewWalletFromKeyring(kb, mainAcc)
+		if err != nil {
+			err = errors.Wrap(err, "failed to initialize cored.Wallet from provided keyring")
+			return err
+		}
+
+		out, err := contracts.Execute(ctx, contractAddress, *execConfig)
 		if out != nil {
 			outMsg, err := json.Marshal(out)
 			must.OK(err)
@@ -291,6 +318,27 @@ func addBuildFlags(buildCmd *cobra.Command, buildConfig *contracts.BuildConfig) 
 	)
 }
 
+func addNetworkFlags(cmd *cobra.Command, networkConfig *contracts.ChainConfig) {
+	cmd.Flags().StringVar(
+		&networkConfig.ChainID,
+		"chain-id",
+		defaultString("CRUST_CONTRACTS_NETWORK_CHAIN_ID", "coredev"),
+		"ChainID used to sign transactions.",
+	)
+	cmd.Flags().StringVar(
+		&networkConfig.RPCEndpoint,
+		"rpc-endpoint",
+		defaultString("CRUST_CONTRACTS_NETWORK_RPC_ENDPOINT", "http://localhost:26657"),
+		"Specify the Tendermint RPC endpoint for the chain client",
+	)
+	cmd.Flags().StringVar(
+		&networkConfig.MinGasPrice,
+		"min-gas-price",
+		defaultString("CRUST_CONTRACTS_NETWORK_MIN_GAS_PRICE", "1500core"),
+		"Sets the minimum gas price required to be paid to get the transaction included in a block.",
+	)
+}
+
 func addDeployFlags(deployCmd *cobra.Command, deployConfig *contracts.DeployConfig) {
 	deployCmd.Flags().BoolVar(
 		&deployConfig.NeedRebuild,
@@ -346,29 +394,20 @@ func addDeployFlags(deployCmd *cobra.Command, deployConfig *contracts.DeployConf
 		defaultString("CRUST_CONTRACTS_DEPLOY_LABEL", ""),
 		"Sets the human-readable label for the contract instance during instantiation.",
 	)
-	deployCmd.Flags().StringVar(
+	deployCmd.Flags().Uint64Var(
 		&deployConfig.CodeID,
 		"code-id",
-		defaultString("CRUST_CONTRACTS_DEPLOY_CODE_ID", ""),
+		defaultUInt64("CRUST_CONTRACTS_DEPLOY_CODE_ID", 0),
 		"Specify existing program Code ID to skip the store stage.",
 	)
-	deployCmd.Flags().StringVar(
-		&deployConfig.Network.ChainID,
-		"chain-id",
-		defaultString("CRUST_CONTRACTS_DEPLOY_CHAIN_ID", "coredev"),
-		"ChainID used to sign transactions.",
-	)
-	deployCmd.Flags().StringVar(
-		&deployConfig.Network.RPCEndpoint,
-		"rpc-endpoint",
-		defaultString("CRUST_CONTRACTS_DEPLOY_RPC_ENDPOINT", "http://localhost:26657"),
-		"Specify the Tendermint RPC endpoint for the chain client",
-	)
-	deployCmd.Flags().StringVar(
-		&deployConfig.Network.MinGasPrice,
-		"min-gas-price",
-		defaultString("CRUST_CONTRACTS_DEPLOY_CHAIN_MIN_GAS_PRICE", "1500core"),
-		"Sets the minimum gas price required to be paid to get the transaction included in a block.",
+}
+
+func addExecuteFlags(execCmd *cobra.Command, execConfig *contracts.ExecuteConfig) {
+	execCmd.Flags().StringVar(
+		&execConfig.Amount,
+		"amount",
+		defaultString("CRUST_CONTRACTS_EXEC_AMOUNT", ""),
+		"Specifies Coins to send to the contract during execution.",
 	)
 }
 
@@ -382,49 +421,82 @@ type KeyringParams struct {
 	UseLedger      bool
 }
 
-func addDeployKeyringFlags(deployCmd *cobra.Command, keyringParams *KeyringParams) {
-	deployCmd.Flags().StringVar(
+func addTxKeyringFlags(txCmd *cobra.Command, keyringParams *KeyringParams) {
+	txCmd.Flags().StringVar(
 		&keyringParams.KeyringDir,
 		"keyring-dir",
 		defaultString("CRUST_KEYRING_DIR", ""),
 		`Sets keyring path in the filesystem, useful when CRUST_KEYRING_BACKEND is "file".`,
 	)
-	deployCmd.Flags().StringVar(
+	txCmd.Flags().StringVar(
 		&keyringParams.KeyringAppName,
 		"keyring-app-name",
 		defaultString("CRUST_KEYRING_APP_NAME", "cored"),
 		"Sets keyring application name (used by Cosmos to separate keyrings)",
 	)
-	deployCmd.Flags().StringVar(
+	txCmd.Flags().StringVar(
 		&keyringParams.KeyringBackend,
 		"keyring-backend",
 		defaultString("CRUST_KEYRING_BACKEND", "test"),
 		"Sets the keyring backend. Expected values: test, file, os.",
 	)
-	deployCmd.Flags().StringVar(
+	txCmd.Flags().StringVar(
 		&keyringParams.KeyFrom,
 		"key-from",
 		defaultString("CRUST_KEYRING_KEY_FROM", ""),
 		"Sets the key name to use for signing. Must exist in the provided keyring.",
 	)
-	deployCmd.Flags().StringVar(
+	txCmd.Flags().StringVar(
 		&keyringParams.KeyPassphrase,
 		"key-passphrase",
 		defaultString("CRUST_KEYRING_KEY_PASSPHRASE", ""),
 		"Sets the passphrase for keyring files. Insecure option, use for testing only. If not set, will read from stdin.",
 	)
-	deployCmd.Flags().StringVar(
+	txCmd.Flags().StringVar(
 		&keyringParams.PrivKeyHex,
 		"key-priv-hex",
 		defaultString("CRUST_KEYRING_PRIVKEY_HEX", ""),
 		"Specify a private key as plaintext hex. Insecure option, use for testing only.",
 	)
-	deployCmd.Flags().BoolVar(
+	txCmd.Flags().BoolVar(
 		&keyringParams.UseLedger,
 		"use-ledger",
 		toBool("CRUST_KEYRING_USE_LEDGER", false),
 		"Set the option to use hardware wallet, if available on the system.",
 	)
+}
+
+func (k *KeyringParams) Opts() (opts []keyring.ConfigOpt) {
+	if len(k.KeyringDir) > 0 {
+		opts = append(opts, keyring.WithKeyringDir(k.KeyringDir))
+	}
+	if len(k.KeyringAppName) > 0 {
+		opts = append(opts, keyring.WithKeyringAppName(k.KeyringAppName))
+	}
+	if len(k.KeyringBackend) > 0 {
+		keyringBackend := keyring.Backend(k.KeyringBackend)
+		switch keyringBackend {
+		case keyring.BackendFile, keyring.BackendOS, keyring.BackendTest:
+			opts = append(opts, keyring.WithKeyringBackend(keyringBackend))
+		default:
+			must.OK(errors.Errorf("unsupported keyring backend provided: %s", keyringBackend))
+			return nil
+		}
+	}
+	if len(k.KeyFrom) > 0 {
+		opts = append(opts, keyring.WithKeyFrom(k.KeyFrom))
+	}
+	if len(k.KeyPassphrase) > 0 {
+		opts = append(opts, keyring.WithKeyPassphrase(k.KeyPassphrase))
+	}
+	if len(k.PrivKeyHex) > 0 {
+		opts = append(opts, keyring.WithPrivKeyHex(k.PrivKeyHex))
+	}
+	if k.UseLedger {
+		opts = append(opts, keyring.WithUseLedger(k.UseLedger))
+	}
+
+	return opts
 }
 
 func defaultString(env, def string) string {
@@ -433,6 +505,18 @@ func defaultString(env, def string) string {
 		val = def
 	}
 	return val
+}
+
+func defaultUInt64(env string, def uint64) uint64 {
+	strVal := os.Getenv(env)
+	if strVal == "" {
+		return def
+	}
+
+	v, err := strconv.ParseUint(strVal, 10, 64)
+	must.OK(err)
+
+	return v
 }
 
 func toBool(env string, def bool) bool {

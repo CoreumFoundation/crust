@@ -2,7 +2,7 @@ package contracts
 
 import (
 	"context"
-	"encoding/hex"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,13 +13,14 @@ import (
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"go.uber.org/zap"
+
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
 const gasEstimationAdj = 1.5
@@ -41,7 +42,7 @@ type DeployConfig struct {
 
 	// CodeID allows to specify existing program code ID to skip the store stage. If CodeID has been provided
 	// and NeedInstantiation if false, the deployment just checks the program for existence on the chain.
-	CodeID string
+	CodeID uint64
 
 	// InstantiationConfig sets params specific to contract instantiation. If the instantiation phase is
 	// skipped, make sure to have correct access type setting for the code store.
@@ -90,7 +91,7 @@ type ContractInstanceConfig struct {
 	accessTypeParsed       wasmtypes.AccessType
 	accessAddressParsed    sdk.AccAddress
 	adminAddressParsed     sdk.AccAddress
-	amountParsed           sdk.Coin
+	amountParsed           sdk.Coins
 }
 
 // AccessType encodes possible values of the access type flag
@@ -180,14 +181,27 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 		return nil, err
 	}
 
+	var codeDataHash string
 	if ioutils.IsWasm(wasmData) {
+		codeDataHash = hashContractCode(wasmData)
 		wasmData, err = ioutils.GzipIt(wasmData)
 
 		if err != nil {
 			err = errors.Wrap(err, "failed to gzip the wasm data")
 			return nil, err
 		}
-	} else if !ioutils.IsGzip(wasmData) {
+	} else if ioutils.IsGzip(wasmData) {
+		srcWasmData, err := ioutils.Uncompress(wasmData, uint64(wasmtypes.MaxWasmSize))
+		if err != nil {
+			err = errors.Wrap(err, "failed to uncompress the gzip data")
+			return nil, err
+		} else if !ioutils.IsWasm(srcWasmData) {
+			err := errors.New("invalid input file. Use wasm binary or gzip of a wasm binary")
+			return nil, err
+		}
+
+		codeDataHash = hashContractCode(srcWasmData)
+	} else {
 		err := errors.New("invalid input file. Use wasm binary or gzip")
 		return nil, err
 	}
@@ -195,7 +209,7 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 	out := &DeployOutput{
 		CodeID: config.CodeID,
 	}
-	if len(config.CodeID) == 0 {
+	if config.CodeID == 0 {
 		deployLog.Sugar().
 			With(zap.String("from", config.From.AddressString())).
 			Infof("Deploying %s on chain", artefactBase)
@@ -208,7 +222,13 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 			}
 		}
 
-		codeID, storeTxHash, err := runContractStore(ctx, config.Network, config.From, wasmData, accessConfig)
+		codeID, storeTxHash, err := runContractStore(
+			ctx,
+			config.Network,
+			config.From,
+			wasmData,
+			accessConfig,
+		)
 		if err != nil {
 			err = errors.Wrap(err, "failed to run contract code store")
 			return nil, err
@@ -218,12 +238,24 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 		out.CodeID = codeID
 		out.StoreTxHash = storeTxHash
 		out.Creator = config.From.AddressString()
-		out.CodeDataHash = hashContractCode(wasmData)
+		out.CodeDataHash = codeDataHash
 	} else {
+		// codeID has been provided by the config, let's validate the code on chain
+
 		info, err := queryContractCodeInfo(ctx, config.Network, config.CodeID)
 		if err != nil {
 			err = errors.Wrap(err, "failed to check contract code on chain")
 			return nil, err
+		}
+
+		if config.CodeID == info.CodeID {
+			if codeDataHash != info.CodeDataHash {
+				err := errors.Errorf("code hash mismatch: expected %s, chain has %s",
+					codeDataHash, info.CodeDataHash,
+				)
+
+				return nil, err
+			}
 		}
 
 		out.Creator = info.Creator
@@ -235,15 +267,41 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 		return out, nil
 	}
 
-	// TODO: instantiate there
+	var adminAddress *sdk.AccAddress
+	if config.InstantiationConfig.NeedAdmin {
+		adminAddress = &config.InstantiationConfig.adminAddressParsed
+	}
+
+	if len(config.InstantiationConfig.Label) == 0 {
+		config.InstantiationConfig.Label = contractName
+	}
+
+	contractAddr, initTxHash, err := runContractInstantiate(
+		ctx,
+		config.Network,
+		config.From,
+		config.CodeID,
+		config.InstantiationConfig.instantiatePayloadBody,
+		config.InstantiationConfig.amountParsed,
+		config.InstantiationConfig.Label,
+		adminAddress,
+	)
+	if err != nil {
+		err = errors.Wrap(err, "failed to run contract instantiate")
+		return nil, err
+	}
+
+	out.ContractAddr = contractAddr
+	out.InitTxHash = initTxHash
 
 	return out, nil
 }
 
 type DeployOutput struct {
 	Creator      string `json:"creator"`
-	CodeID       string `json:"codeID"`
-	CodeDataHash string `json:"codeDataHash"`
+	CodeID       uint64 `json:"codeID"`
+	ContractAddr string `json:"contractAddr,omitempty"`
+	CodeDataHash string `json:"codeDataHash,omitempty"`
 	StoreTxHash  string `json:"storeTxHash,omitempty"`
 	InitTxHash   string `json:"initTxHash,omitempty"`
 }
@@ -276,9 +334,9 @@ func (c *DeployConfig) Validate() error {
 	}
 
 	if len(c.InstantiationConfig.Amount) > 0 {
-		amount, err := sdk.ParseCoinNormalized(c.InstantiationConfig.Amount)
+		amount, err := sdk.ParseCoinsNormalized(c.InstantiationConfig.Amount)
 		if err != nil {
-			err = errors.Wrapf(err, "failed to parse instantiation transfer amount as sdk.Coin: %s", c.InstantiationConfig.Amount)
+			err = errors.Wrapf(err, "failed to parse instantiation transfer amount as sdk.Coins: %s", c.InstantiationConfig.Amount)
 			return err
 		}
 
@@ -345,7 +403,7 @@ func runContractStore(
 	from cored.Wallet,
 	wasmData []byte,
 	accessConfig *wasmtypes.AccessConfig,
-) (codeID string, txHash string, err error) {
+) (codeID uint64, txHash string, err error) {
 	log := logger.Get(ctx)
 	chainClient := cored.NewClient(network.ChainID, network.RPCEndpoint)
 
@@ -363,7 +421,7 @@ func runContractStore(
 	gasLimit, err := chainClient.EstimateGas(ctx, input, msgStoreCode)
 	if err != nil {
 		err = errors.Wrap(err, "failed to estimate gas for MsgStoreCode")
-		return "", "", err
+		return 0, "", err
 	} else {
 		log.Info("Estimated gas limit",
 			zap.Int("bytecode_size", len(wasmData)),
@@ -374,6 +432,84 @@ func runContractStore(
 	}
 
 	signedTx, err := chainClient.Sign(ctx, input, msgStoreCode)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to sign transaction as %s", from.AddressString())
+		return 0, "", err
+	}
+
+	txBytes := chainClient.Encode(signedTx)
+	txHash = fmt.Sprintf("%X", tmtypes.Tx(txBytes).Hash())
+	res, err := chainClient.Broadcast(ctx, txBytes)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to broadcast Tx %s", txHash)
+		return 0, txHash, err
+	}
+
+	for _, ev := range res.EventLogs {
+		if ev.Type == wasmtypes.EventTypeStoreCode {
+			if value, ok := attrFromEvent(ev, wasmtypes.AttributeKeyCodeID); ok {
+				codeID, err = strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					err = errors.Wrapf(err, "failed to parse event attribute CodeID: %s as uint64", value)
+					return 0, txHash, err
+				}
+
+				break
+			}
+
+			log.With(
+				zap.String("txHash", txHash),
+			).Warn("contract code stored MsgStoreCode, but events don't have codeID")
+		}
+	}
+
+	return codeID, txHash, nil
+}
+
+func runContractInstantiate(
+	ctx context.Context,
+	network ChainConfig,
+	from cored.Wallet,
+	codeID uint64,
+	initMsg json.RawMessage,
+	amount sdk.Coins,
+	label string,
+	adminAcc *sdk.AccAddress,
+) (contractAddr, txHash string, err error) {
+	log := logger.Get(ctx)
+	chainClient := cored.NewClient(network.ChainID, network.RPCEndpoint)
+
+	input := cored.BaseInput{
+		Signer:   from,
+		GasPrice: network.minGasPriceParsed,
+	}
+
+	msgInstantiateContract := &wasmtypes.MsgInstantiateContract{
+		Sender: from.AddressString(),
+		CodeID: codeID,
+		Label:  label,
+		Msg:    wasmtypes.RawContractMessage(initMsg),
+		Funds:  amount,
+	}
+
+	if adminAcc != nil {
+		msgInstantiateContract.Admin = adminAcc.String()
+	}
+
+	gasLimit, err := chainClient.EstimateGas(ctx, input, msgInstantiateContract)
+	if err != nil {
+		err = errors.Wrap(err, "failed to estimate gas for MsgInstantiateContract")
+		return "", "", err
+	} else {
+		log.Info("Estimated gas limit",
+			zap.Int("contract_msg_size", len(initMsg)),
+			zap.Uint64("gas_limit", gasLimit),
+		)
+
+		input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
+	}
+
+	signedTx, err := chainClient.Sign(ctx, input, msgInstantiateContract)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to sign transaction as %s", from.AddressString())
 		return "", "", err
@@ -388,19 +524,19 @@ func runContractStore(
 	}
 
 	for _, ev := range res.EventLogs {
-		if ev.Type == wasmtypes.EventTypeStoreCode {
-			if value, ok := attrFromEvent(ev, wasmtypes.AttributeKeyCodeID); ok {
-				codeID = value
+		if ev.Type == wasmtypes.EventTypeInstantiate {
+			if value, ok := attrFromEvent(ev, wasmtypes.AttributeKeyContractAddr); ok {
+				contractAddr = value
 				break
 			}
 
 			log.With(
 				zap.String("txHash", txHash),
-			).Warn("contract code stored MsgStoreCode, but events don't have codeID")
+			).Warn("contract instantiated with MsgInstantiateContract, but events don't have _contract_address")
 		}
 	}
 
-	return codeID, txHash, nil
+	return contractAddr, txHash, nil
 }
 
 type ContractCodeInfo struct {
@@ -412,23 +548,17 @@ type ContractCodeInfo struct {
 func queryContractCodeInfo(
 	ctx context.Context,
 	network ChainConfig,
-	codeID string,
+	codeID uint64,
 ) (info *ContractCodeInfo, err error) {
 	chainClient := cored.NewClient(network.ChainID, network.RPCEndpoint)
 
-	codeInt, err := strconv.ParseUint(codeID, 10, 64)
-	if err != nil {
-		err = errors.Wrap(err, "failed to parse contract code ID as integer")
-		return nil, err
-	}
-
 	resp, err := chainClient.WASMQueryClient().Code(ctx, &wasmtypes.QueryCodeRequest{
-		CodeId: codeInt,
+		CodeId: codeID,
 	})
 	if err != nil {
 		// FIXME: proper error unwrapping (module > sdk > rpc > rpc client)
 		if strings.Contains(err.Error(), "code = InvalidArgument desc = not found") {
-			err = errors.Errorf("contract codeID=%d not found on chain %s", codeInt, network.ChainID)
+			err = errors.Errorf("contract codeID=%d not found on chain %s", codeID, network.ChainID)
 			return nil, err
 		}
 
@@ -466,6 +596,7 @@ func checkWasmFile(path string) bool {
 }
 
 func hashContractCode(wasmData []byte) string {
-	_ = wasmData
-	return hex.EncodeToString([]byte("not implemented"))
+
+	h := sha256.Sum256(wasmData)
+	return fmt.Sprintf("%X", h[:])
 }
