@@ -134,6 +134,19 @@
       },
       "last_total_power": "0"
     },
+    "wasm": {
+        "codes": [],
+        "contracts": [],
+        "gen_msgs": [],
+        "params": {
+            "code_upload_access": {
+                "address": "",
+                "permission": "Everybody"
+            },
+            "instantiate_default_permission": "Everybody"
+        },
+        "sequences": []
+    },
     "transfer": {
       "port_id": "transfer",
       "params": {
