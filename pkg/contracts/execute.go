@@ -129,10 +129,11 @@ func runContractExecution(
 		return "", txHash, err
 	}
 
-	for _, ev := range res.EventLogs {
-		vv, _ := json.Marshal(ev)
-		fmt.Println(string(vv))
+	if len(res.EventLogs) > 0 {
+		cored.LogEventLogsInfo(log, res.EventLogs)
+	}
 
+	for _, ev := range res.EventLogs {
 		if ev.Type == wasmtypes.WasmModuleEventType {
 			if value, ok := attrFromEvent(ev, "method"); ok {
 				methodName = value
@@ -145,25 +146,23 @@ func runContractExecution(
 }
 
 func (c *ExecuteConfig) Validate() error {
-	if len(c.ExecutePayload) > 0 {
-		if body := []byte(c.ExecutePayload); json.Valid(body) {
-			c.executePayloadBody = json.RawMessage(body)
-		} else {
-			payloadFilePath := c.ExecutePayload
+	if body := []byte(c.ExecutePayload); json.Valid(body) {
+		c.executePayloadBody = json.RawMessage(body)
+	} else {
+		payloadFilePath := c.ExecutePayload
 
-			body, err := ioutil.ReadFile(payloadFilePath)
-			if err != nil {
-				err = errors.Wrapf(err, "file specified for exec payload, but couldn't be read: %s", payloadFilePath)
-				return err
-			}
-
-			if !json.Valid(body) {
-				err = errors.Wrapf(err, "file specified for exec payload, but doesn't contain valid JSON: %s", payloadFilePath)
-				return err
-			}
-
-			c.executePayloadBody = json.RawMessage(body)
+		body, err := ioutil.ReadFile(payloadFilePath)
+		if err != nil {
+			err = errors.Wrapf(err, "file specified for exec payload, but couldn't be read: %s", payloadFilePath)
+			return err
 		}
+
+		if !json.Valid(body) {
+			err = errors.Wrapf(err, "file specified for exec payload, but doesn't contain valid JSON: %s", payloadFilePath)
+			return err
+		}
+
+		c.executePayloadBody = json.RawMessage(body)
 	}
 
 	if len(c.Amount) > 0 {

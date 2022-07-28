@@ -23,6 +23,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -143,7 +144,7 @@ func (c Client) EstimateGas(ctx context.Context, input BaseInput, msgs ...sdk.Ms
 	}
 
 	txSvcClient := txtypes.NewServiceClient(c.clientCtx)
-	simRes, err := txSvcClient.Simulate(context.Background(), &txtypes.SimulateRequest{
+	simRes, err := txSvcClient.Simulate(ctx, &txtypes.SimulateRequest{
 		TxBytes: simTxBytes,
 	})
 	if err != nil {
@@ -432,4 +433,16 @@ func buildSimTx(
 // using the internal clientCtx.
 func (c Client) WASMQueryClient() wasmtypes.QueryClient {
 	return c.wasmQueryClient
+}
+
+// LogEventLogsInfo sends all events logs as Info to the logger.
+func LogEventLogsInfo(l *zap.Logger, eventLogs sdk.StringEvents) {
+	for _, ev := range eventLogs {
+		fields := make([]zap.Field, 0, len(ev.Attributes))
+		for _, attr := range ev.Attributes {
+			fields = append(fields, zap.String(attr.Key, attr.Value))
+		}
+
+		l.With(fields...).Info(ev.Type)
+	}
 }

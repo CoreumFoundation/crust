@@ -152,7 +152,7 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 	if config.NeedRebuild {
 		if len(config.WorkspaceDir) == 0 {
 			// making the best guess, considering artefact is in ./artifacts
-			config.WorkspaceDir = filepath.Base(filepath.Dir(config.ArtefactPath))
+			config.WorkspaceDir = filepath.Dir(filepath.Dir(config.ArtefactPath))
 
 			log.With(
 				zap.String("artefactPath", config.ArtefactPath),
@@ -445,6 +445,10 @@ func runContractStore(
 		return 0, txHash, err
 	}
 
+	if len(res.EventLogs) > 0 {
+		cored.LogEventLogsInfo(log, res.EventLogs)
+	}
+
 	for _, ev := range res.EventLogs {
 		if ev.Type == wasmtypes.EventTypeStoreCode {
 			if value, ok := attrFromEvent(ev, wasmtypes.AttributeKeyCodeID); ok {
@@ -521,6 +525,10 @@ func runContractInstantiate(
 	if err != nil {
 		err = errors.Wrapf(err, "failed to broadcast Tx %s", txHash)
 		return "", txHash, err
+	}
+
+	if len(res.EventLogs) > 0 {
+		cored.LogEventLogsInfo(log, res.EventLogs)
 	}
 
 	for _, ev := range res.EventLogs {

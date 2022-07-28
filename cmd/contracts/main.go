@@ -92,7 +92,7 @@ func main() {
 		var execConfig contracts.ExecuteConfig
 		execCmd := &cobra.Command{
 			Use:     "exec [contract-address] [payload-json]",
-			Aliases: []string{"e", "call"},
+			Aliases: []string{"e", "transact", "tx"},
 			Short:   "Executes a command on a WASM contract, with the payload provided.",
 			Args:    cobra.MaximumNArgs(2),
 			RunE:    executeRunE(ctx, &execConfig, &keyringParams),
@@ -101,6 +101,17 @@ func main() {
 		addNetworkFlags(execCmd, &execConfig.Network)
 		addTxKeyringFlags(execCmd, &keyringParams)
 		rootCmd.AddCommand(execCmd)
+
+		var queryConfig contracts.QueryConfig
+		queryCmd := &cobra.Command{
+			Use:     "query [contract-address] [payload-json]",
+			Aliases: []string{"q", "call"},
+			Short:   "Calls contract with given address with query data and prints the returned result.",
+			Args:    cobra.MaximumNArgs(2),
+			RunE:    queryRunE(ctx, &queryConfig),
+		}
+		addNetworkFlags(queryCmd, &queryConfig.Network)
+		rootCmd.AddCommand(queryCmd)
 
 		return rootCmd.Execute()
 	})
@@ -257,6 +268,36 @@ func executeRunE(
 		}
 
 		out, err := contracts.Execute(ctx, contractAddress, *execConfig)
+		if out != nil {
+			outMsg, err := json.Marshal(out)
+			must.OK(err)
+			fmt.Println(string(outMsg))
+		}
+
+		return err
+	}
+}
+
+func queryRunE(
+	ctx context.Context,
+	queryConfig *contracts.QueryConfig,
+) RunE {
+	return func(cmd *cobra.Command, args []string) error {
+		var contractAddress string
+
+		switch len(args) {
+		case 2:
+			contractAddress = args[0]
+			queryConfig.QueryPayload = args[1]
+		case 1:
+			contractAddress = args[0]
+			queryConfig.QueryPayload = "{}"
+		case 0:
+			err := errors.New("at least 1 argument with contract address must be provided")
+			return err
+		}
+
+		out, err := contracts.Query(ctx, contractAddress, *queryConfig)
 		if out != nil {
 			outMsg, err := json.Marshal(out)
 			must.OK(err)
