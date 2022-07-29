@@ -13,7 +13,7 @@ import (
 )
 
 // NewFactory creates new app factory
-func NewFactory(config infra.Config, spec *infra.Spec, network *app.Network) *Factory {
+func NewFactory(config infra.Config, spec *infra.Spec, network app.Network) *Factory {
 	return &Factory{
 		config:  config,
 		spec:    spec,
@@ -25,12 +25,12 @@ func NewFactory(config infra.Config, spec *infra.Spec, network *app.Network) *Fa
 type Factory struct {
 	config  infra.Config
 	spec    *infra.Spec
-	Network *app.Network
+	Network app.Network
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int, network *app.Network) infra.Mode {
-	const initialBalance = "1000000000000000core"
+func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int, network app.Network) infra.Mode {
+	initialBalance := "1000000000000000" + network.TokenSymbol()
 
 	network.FundAccount(cored.AlicePrivKey.PubKey(), initialBalance)
 	network.FundAccount(cored.BobPrivKey.PubKey(), initialBalance)
@@ -39,13 +39,14 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 	for _, key := range cored.RandomWallets {
 		network.FundAccount(key.PubKey(), initialBalance)
 	}
+	network.ResetGenesisTxs()
 
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
 	var node0 *cored.Cored
 	for i := 0; i < cap(nodes); i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
-		node := cored.New(name, f.config, network, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
+		node := cored.New(name, f.config, &network, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
 			RPC:        cored.DefaultPorts.RPC + portDelta,
 			P2P:        cored.DefaultPorts.P2P + portDelta,
 			GRPC:       cored.DefaultPorts.GRPC + portDelta,

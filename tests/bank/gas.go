@@ -2,7 +2,6 @@ package bank
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"strings"
 	"time"
@@ -25,6 +24,7 @@ const maxGasAssumed = 120000 // set it to 50%+ higher than maximum observed valu
 // TestTransferMaximumGas checks that transfer does not take more gas than assumed
 func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.PrepareFunc, testing.RunFunc) {
 	const margin = 1.5
+	maxGasAssumed := chain.Network().DeterministicGas().BankSend // set it to 50%+ higher than maximum observed value
 
 	amount, ok := big.NewInt(0).SetString("100000000000000000000000000000000000", 10)
 	if !ok {
@@ -41,8 +41,8 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 	var wallet1, wallet2 types.Wallet
 
 	return func(ctx context.Context) error {
-			wallet1 = chain.AddWallet(fmt.Sprintf("%score", big.NewInt(0).Add(fees, amount)))
-			wallet2 = chain.AddWallet(fmt.Sprintf("%score", fees))
+			wallet1 = chain.AddWallet(big.NewInt(0).Add(fees, amount).String() + chain.Network().TokenSymbol())
+			wallet2 = chain.AddWallet(fees.String() + chain.Network().TokenSymbol())
 			return nil
 		},
 		func(ctx context.Context, t *testing.T) {
@@ -57,9 +57,9 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 			require.NoError(t, err)
 
 			var maxGasUsed int64
-			toSend := types.Coin{Denom: "core", Amount: amount}
+			toSend := types.Coin{Denom: chain.Network().TokenSymbol(), Amount: amount}
 			for i, sender, receiver := numOfTransactions, wallet1, wallet2; i >= 0; i, sender, receiver = i-1, receiver, sender {
-				gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed)
+				gasUsed, err := sendAndReturnGasUsed(ctx, client, sender, receiver, toSend, maxGasAssumed, chain.Network())
 				if !assert.NoError(t, err) {
 					break
 				}
@@ -98,8 +98,7 @@ func sendAndReturnGasUsed(ctx context.Context, client cored.Client, sender, rece
 		Base: cored.BaseInput{
 			Signer:   sender,
 			GasLimit: gasLimit,
-			// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			GasPrice: types.Coin{Amount: big.NewInt(1500), Denom: "core"},
+			GasPrice: types.Coin{Amount: network.InitialGasPrice(), Denom: network.TokenSymbol()},
 			Memo:     maxMemo, // memo is set to max length here to charge as much gas as possible
 		},
 		Sender:   sender,

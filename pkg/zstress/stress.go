@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/pkg/retry"
@@ -44,12 +45,12 @@ type tx struct {
 }
 
 // Stress runs a benchmark test
-func Stress(ctx context.Context, config StressConfig, tokenSymbol string) error {
+func Stress(ctx context.Context, config StressConfig, network *app.Network) error {
 	log := logger.Get(ctx)
 	client := cored.NewClient(config.ChainID, config.NodeAddress)
 
 	log.Info("Preparing signed transactions...")
-	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, client)
+	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, client, network)
 	if err != nil {
 		return err
 	}
@@ -139,7 +140,7 @@ func Stress(ctx context.Context, config StressConfig, tokenSymbol string) error 
 	return nil
 }
 
-func prepareTransactions(ctx context.Context, config StressConfig, client cored.Client) ([][][]byte, []uint64, error) {
+func prepareTransactions(ctx context.Context, config StressConfig, client cored.Client, network *app.Network) ([][][]byte, []uint64, error) {
 	numOfAccounts := len(config.Accounts)
 	var signedTxs [][][]byte
 	var initialAccountSequences []uint64
@@ -158,15 +159,13 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 						}
 						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
 							Base: cored.BaseInput{
-								Signer: tx.From,
-								// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
-								GasLimit: 120000,
-								// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-								GasPrice: types.Coin{Amount: big.NewInt(1500), Denom: "core"},
+								Signer:   tx.From,
+								GasLimit: network.DeterministicGas().BankSend,
+								GasPrice: types.Coin{Amount: network.InitialGasPrice(), Denom: network.TokenSymbol()},
 							},
 							Sender:   tx.From,
 							Receiver: tx.To,
-							Amount:   types.Coin{Amount: big.NewInt(1), Denom: "core"},
+							Amount:   types.Coin{Amount: big.NewInt(1), Denom: network.TokenSymbol()},
 						}))
 						select {
 						case <-ctx.Done():

@@ -91,7 +91,11 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map
 
 	balances := map[string]types.Coin{}
 	for _, b := range resp.Balances {
-		balances[b.Denom] = types.Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
+		coin, err := types.NewCoin(b.Amount.BigInt(), b.Denom)
+		if err != nil {
+			return nil, err
+		}
+		balances[b.Denom] = coin
 	}
 	return balances, nil
 }
