@@ -52,7 +52,7 @@ func main() {
 					return errors.New("number of accounts is greater than the number of provided private keys")
 				}
 				stressConfig.Accounts = stressConfig.Accounts[:numOfAccounts]
-				return zstress.Stress(ctx, stressConfig, network.TokenSymbol())
+				return zstress.Stress(ctx, stressConfig, &network)
 			},
 		}
 		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
