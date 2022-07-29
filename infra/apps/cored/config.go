@@ -1,6 +1,8 @@
 package cored
 
 import (
+	"path/filepath"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/app"
 )
@@ -22,5 +24,5 @@ func SaveConfig(nodeConfig app.NodeConfig, homeDir string) {
 	cfg.Mempool.Size = 50000
 	cfg.Mempool.MaxTxsBytes = 5368709120
 
-	app.WriteTendermintConfigToFile(app.DefaultNodeConfigPath, cfg)
+	must.OK(app.WriteTendermintConfigToFile(filepath.Join(homeDir, app.DefaultNodeConfigPath), cfg))
 }

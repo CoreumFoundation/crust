@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sync"
 
 	"time"
@@ -48,7 +49,7 @@ func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.App
 
 	cored := Cored{
 		name:                name,
-		homeDir:             cfg.AppDir + "/" + name,
+		homeDir:             filepath.Join(cfg.AppDir, name, string(network.ChainID())),
 		config:              cfg,
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
@@ -105,10 +106,9 @@ func (c Cored) Ports() Ports {
 	return c.ports
 }
 
-// TokenSymbol returns the governance token symbol. This is different
-// for each network(i.e mainnet, testnet, etc)
-func (c Cored) TokenSymbol() string {
-	return c.network.TokenSymbol()
+// Network returns the network config used in the chain
+func (c Cored) Network() *app.Network {
+	return c.network
 }
 
 // ChainID returns ID of the chain
@@ -208,6 +208,7 @@ func (c Cored) Deployment() infra.Deployment {
 					"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.GRPC),
 					"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.GRPCWeb),
 					"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.PProf),
+					"--chain-id", string(c.network.ChainID()),
 				}
 				if c.rootNode != nil {
 					args = append(args,

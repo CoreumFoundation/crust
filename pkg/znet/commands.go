@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
@@ -230,13 +231,13 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	charlie := types.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
 
 	for {
-		if err := sendTokens(ctx, client, alice, bob, coredNode.TokenSymbol()); err != nil {
+		if err := sendTokens(ctx, client, alice, bob, coredNode.Network()); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, bob, charlie, coredNode.TokenSymbol()); err != nil {
+		if err := sendTokens(ctx, client, bob, charlie, coredNode.Network()); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, charlie, alice, coredNode.TokenSymbol()); err != nil {
+		if err := sendTokens(ctx, client, charlie, alice, coredNode.Network()); err != nil {
 			return err
 		}
 
@@ -269,7 +270,7 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 			Accounts:          cored.RandomWallets[:10],
 			NumOfTransactions: 100,
 		},
-		coredNode.TokenSymbol(),
+		coredNode.Network(),
 	)
 }
 
@@ -282,17 +283,22 @@ func coredNode(mode infra.Mode) (cored.Cored, error) {
 	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
-func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet, tokenSymbol string) error {
+func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet, network *app.Network) error {
 	log := logger.Get(ctx)
 
-	amount := types.Coin{Amount: big.NewInt(1), Denom: "core"}
+	amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
+	if err != nil {
+		return err
+	}
+	gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
+	if err != nil {
+		return err
+	}
 	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
 		Base: cored.BaseInput{
-			Signer: from,
-			// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
-			GasLimit: 120000,
-			// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			GasPrice: types.Coin{Amount: big.NewInt(1500), Denom: "core"},
+			Signer:   from,
+			GasLimit: network.DeterministicGas().BankSend,
+			GasPrice: gasPrice,
 		},
 		Sender:   from,
 		Receiver: to,
@@ -318,8 +324,8 @@ func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet,
 		return err
 	}
 
-	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance[tokenSymbol]))
-	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance[tokenSymbol]))
+	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance[network.TokenSymbol()]))
+	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance[network.TokenSymbol()]))
 
 	return nil
 }
