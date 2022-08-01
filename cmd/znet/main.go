@@ -17,7 +17,10 @@ import (
 )
 
 func main() {
-	network, _ := app.NetworkByChainID(app.Devnet)
+	network, err := app.NetworkByChainID(app.Devnet)
+	if err != nil {
+		panic(err)
+	}
 	network.SetupPrefixes()
 	run.Tool("znet", znet.IoC, func(c *ioc.Container, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) error {
 		rootCmd := &cobra.Command{
