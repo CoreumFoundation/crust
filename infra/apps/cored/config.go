@@ -29,8 +29,8 @@ func SaveConfig(nodeConfig app.NodeConfig, homeDir string) {
 	must.OK(app.WriteTendermintConfigToFile(filepath.Join(homeDir, app.DefaultNodeConfigPath), cfg))
 }
 
-// CustomZNetNetwork is the network config used by znet
-var CustomZNetNetwork = app.NewNetwork(app.NetworkConfig{
+// CustomZNetNetworkConfig is the network config used by znet
+var CustomZNetNetworkConfig = app.NetworkConfig{
 	ChainID:       app.Devnet,
 	Enabled:       true,
 	GenesisTime:   time.Now(),
@@ -43,4 +43,4 @@ var CustomZNetNetwork = app.NewNetwork(app.NetworkConfig{
 			BankSend: 120000,
 		},
 	},
-})
+}

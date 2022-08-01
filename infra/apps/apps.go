@@ -14,24 +14,24 @@ import (
 )
 
 // NewFactory creates new app factory
-func NewFactory(config infra.Config, spec *infra.Spec, network app.Network) *Factory {
+func NewFactory(config infra.Config, spec *infra.Spec, network app.NetworkConfig) *Factory {
 	return &Factory{
-		config:  config,
-		spec:    spec,
-		network: network,
+		config:        config,
+		spec:          spec,
+		networkConfig: network,
 	}
 }
 
 // Factory produces apps from config
 type Factory struct {
-	config  infra.Config
-	spec    *infra.Spec
-	network app.Network
+	config        infra.Config
+	spec          *infra.Spec
+	networkConfig app.NetworkConfig
 }
 
 // CoredNetwork creates new network of cored nodes
 func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
-	network := f.network
+	network := app.NewNetwork(f.networkConfig)
 	initialBalance := "1000000000000000" + network.TokenSymbol()
 
 	must.OK(network.FundAccount(cored.AlicePrivKey.PubKey(), initialBalance))
@@ -41,7 +41,6 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 	for _, key := range cored.RandomWallets {
 		must.OK(network.FundAccount(key.PubKey(), initialBalance))
 	}
-	// network.ResetGenesisTxs()
 
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
 	var node0 *cored.Cored
