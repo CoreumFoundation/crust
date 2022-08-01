@@ -21,7 +21,11 @@ const (
 
 	cargoGenerateVersion  = "0.15.2"
 	cargoRunScriptVersion = "0.1.0"
-	cargoTarpaulinVersion = "0.20.1"
+
+	cargoTarpaulinVersion       = "0.20.1"
+	cargoTarpaulinRepo          = "https://github.com/xd009642/tarpaulin"
+	cargoTarpaulinMacFeature    = "feat/llvm-profparser-integration"
+	cargoTarpaulinMacFeatureRev = "f546e78c4c8c69f961afa4a8604aa088b50454ae"
 
 	optimizedBuildDockerImage = "cosmwasm/rust-optimizer:0.12.6"
 
@@ -238,6 +242,32 @@ func ensureCrateAndVersion(
 			err = errors.Wrap(err, "cmd exec failed")
 			return err
 		}
+	}
+
+	return nil
+}
+
+func ensureCrateFromGit(
+	ctx context.Context,
+	crateName, gitRepo string,
+	installArgs ...string,
+) error {
+	log := logger.Get(ctx)
+
+	log.Info("Ensuring that a crate from Git is up to update",
+		zap.String("crate", crateName),
+		zap.String("gitRepo", gitRepo),
+	)
+
+	cmdArgs := append([]string{
+		"install", crateName,
+		"--git", gitRepo,
+	}, installArgs...)
+
+	cmd := exec.Command("cargo", cmdArgs...)
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		err = errors.Wrap(err, "cmd exec failed")
+		return err
 	}
 
 	return nil

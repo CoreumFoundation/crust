@@ -95,7 +95,7 @@ Aliases:
   test, t, unit-test
 
 Flags:
-      --coverage      Enable code coverage report using tarpaulin - works only on Linux/amd64 targets.
+      --coverage      Enable code coverage report using tarpaulin (Linux x64 / MacOS x64 / M1).
   -h, --help          help for test
       --integration   Enables the integration tests stage.
 
@@ -121,7 +121,7 @@ test integration_tests::tests::count::count ... ok
 test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-If you are lucky to have a  **Linux x86_64** platform at hand, you can run the unit testing with reported coverage:
+If you are lucky to have **Linux x86_64** or **MacOS Intel x64 / M1** platforms at hand, you can run the unit testing with reported coverage:
 
 ```bash
 > crust contracts test --coverage ./test2

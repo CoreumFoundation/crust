@@ -340,7 +340,7 @@ func addTestFlags(testCmd *cobra.Command, testConfig *contracts.TestConfig) {
 		&testConfig.NeedCoverageReport,
 		"coverage",
 		toBool("CRUST_CONTRACTS_COVERAGE_REPORT", false),
-		"Enable code coverage report using tarpaulin - works only on Linux/amd64 targets.",
+		"Enable code coverage report using tarpaulin (Linux x64 / MacOS x64 / M1).",
 	)
 	testCmd.Flags().BoolVar(
 		&testConfig.HasIntegrationTests,

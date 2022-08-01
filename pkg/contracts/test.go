@@ -31,16 +31,6 @@ type TestConfig struct {
 func Test(ctx context.Context, workspaceDir string, config TestConfig) error {
 	log := logger.Get(ctx)
 
-	if config.NeedCoverageReport {
-		if runtime.GOOS != "linux" {
-			log.Warn("need code coverage flag provided, but current OS is not supported (expected linux)", zap.String("os", runtime.GOOS))
-			config.NeedCoverageReport = false
-		} else if runtime.GOARCH != "amd64" {
-			log.Warn("need code coverage flag provided, but current ARCH is not supported (expected amd64)", zap.String("arch", runtime.GOARCH))
-			config.NeedCoverageReport = false
-		}
-	}
-
 	if err := ensureUnitTestTools(ctx); err != nil {
 		err = errors.Wrap(err, "not all testing dependencies are installed")
 		return err
@@ -60,9 +50,22 @@ func Test(ctx context.Context, workspaceDir string, config TestConfig) error {
 	}
 
 	if config.NeedCoverageReport {
-		crateLog.Info("Running unit-tests suite with coverage enabled")
-		if err := runTestsWithCoverage(ctx, workspaceDir); err != nil {
-			err = errors.Wrap(err, "problem with tests")
+		if runtime.GOOS == "linux" {
+			crateLog.Info("Running unit-tests suite with coverage enabled (Ptrace)")
+
+			if err := runTestsWithCoverageLinux(ctx, workspaceDir); err != nil {
+				err = errors.Wrap(err, "problem with tests")
+				return err
+			}
+		} else if runtime.GOOS == "darwin" {
+			crateLog.Info("Running unit-tests suite with coverage enabled (LLVM)")
+
+			if err := runTestsWithCoverageMac(ctx, workspaceDir); err != nil {
+				err = errors.Wrap(err, "problem with tests")
+				return err
+			}
+		} else {
+			err = errors.Errorf("target OS doesn't support unit tests with coverage yet: %s", runtime.GOOS)
 			return err
 		}
 	} else {
@@ -142,14 +145,56 @@ func runIntegrationTests(ctx context.Context, workspaceDir string) error {
 	return nil
 }
 
-// runTestsWithCoverage runs the contact test-suite with code coverage enabled,
+// runTestsWithCoverageLinux runs the contact test-suite with code coverage enabled (Ptrace backend),
 // uses cargo-tarpaulin entrypoint, which will be ensured to present during first run.
-func runTestsWithCoverage(ctx context.Context, workspaceDir string) error {
+func runTestsWithCoverageLinux(ctx context.Context, workspaceDir string) error {
 	if err := ensureCrateAndVersion(ctx, "cargo-tarpaulin", cargoTarpaulinVersion); err != nil {
 		err = errors.Wrap(err, "failed to ensure cargo-tarpaulin dependency")
 	}
 	cmdArgs := []string{
 		"tarpaulin", "--out", "html", "--output-dir", "./coverage",
+	}
+	cmd := exec.Command("cargo", cmdArgs...)
+	cmd.Dir = workspaceDir
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "RUST_BACKTRACE=1")
+
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		err = errors.Wrap(err, "errors during cargo test run")
+		return err
+	}
+
+	log := logger.Get(ctx)
+
+	coveragePrefixAbs, err := filepath.Abs(filepath.Join(workspaceDir, "coverage"))
+	if err != nil {
+		log.With(zap.Error(err)).Warn("Ran tests with coverage enabled, but no coverage report could be located")
+	} else {
+		coverageReportPath := filepath.Join(coveragePrefixAbs, "tarpaulin-report.html")
+		log.Info("Code coverage report written", zap.String("path", coverageReportPath))
+	}
+
+	return nil
+}
+
+// runTestsWithCoverageMac runs the contact test-suite with code coverage enabled (LLVM backend),
+// uses cargo-tarpaulin entrypoint, which will be ensured to present during first run.
+func runTestsWithCoverageMac(ctx context.Context, workspaceDir string) error {
+	if err := ensureCrateFromGit(ctx,
+		"cargo-tarpaulin", cargoTarpaulinRepo,
+		"--branch", cargoTarpaulinMacFeature,
+		"--rev", cargoTarpaulinMacFeatureRev,
+	); err != nil {
+		err = errors.Wrap(err, "failed to ensure cargo-tarpaulin dependency")
+	}
+
+	cmdArgs := []string{
+		"tarpaulin",
+		"--engine", "Llvm",
+		"--out", "html",
+		"--output-dir", "./coverage",
+		"--",
+		"--test-threads", "1",
 	}
 	cmd := exec.Command("cargo", cmdArgs...)
 	cmd.Dir = workspaceDir
