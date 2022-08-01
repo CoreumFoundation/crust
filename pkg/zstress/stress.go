@@ -47,7 +47,7 @@ type tx struct {
 // Stress runs a benchmark test
 func Stress(ctx context.Context, config StressConfig, network *app.Network) error {
 	log := logger.Get(ctx)
-	client := cored.NewClient(config.ChainID, config.NodeAddress)
+	client := cored.NewClient(app.ChainID(config.ChainID), config.NodeAddress)
 
 	log.Info("Preparing signed transactions...")
 	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, client, network)

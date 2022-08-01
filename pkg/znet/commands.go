@@ -231,13 +231,13 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	charlie := types.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
 
 	for {
-		if err := sendTokens(ctx, client, alice, bob, coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client, alice, bob, *coredNode.Network()); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, bob, charlie, coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client, bob, charlie, *coredNode.Network()); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, charlie, alice, coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client, charlie, alice, *coredNode.Network()); err != nil {
 			return err
 		}
 
@@ -265,7 +265,7 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 	return zstress.Stress(
 		ctx,
 		zstress.StressConfig{
-			ChainID:           coredNode.ChainID(),
+			ChainID:           string(coredNode.Network().ChainID()),
 			NodeAddress:       infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
 			Accounts:          cored.RandomWallets[:10],
 			NumOfTransactions: 100,
@@ -283,7 +283,7 @@ func coredNode(mode infra.Mode) (cored.Cored, error) {
 	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
-func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet, network *app.Network) error {
+func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet, network app.Network) error {
 	log := logger.Get(ctx)
 
 	amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
