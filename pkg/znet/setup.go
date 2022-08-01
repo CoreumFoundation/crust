@@ -19,9 +19,9 @@ import (
 
 // IoC configures IoC container
 func IoC(c *ioc.Container) {
-	c.Singleton(func() app.Network {
-		cored.CustomZNetNetwork.SetupPrefixes()
-		return cored.CustomZNetNetwork
+	c.Singleton(func() app.NetworkConfig {
+		app.NewNetwork(cored.CustomZNetNetworkConfig).SetupPrefixes()
+		return cored.CustomZNetNetworkConfig
 	})
 	c.Singleton(NewCmdFactory)
 	c.Singleton(infra.NewConfigFactory)
