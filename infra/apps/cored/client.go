@@ -125,7 +125,6 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	defer cancel()
 
 	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
-	// nolint:nestif // This code is still easy to understand
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return BroadcastResult{}, errors.WithStack(err)
@@ -139,11 +138,8 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	} else {
 		txHash = res.Hash.String()
 		if res.Code != 0 {
-			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
-				return BroadcastResult{}, err
-			}
-			return BroadcastResult{}, errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
-				txHash, res.Code, res.Codespace, res.Log)
+			return BroadcastResult{}, errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log),
+				"transaction '%s' failed", txHash)
 		}
 	}
 
@@ -176,11 +172,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		}
 		if resultTx.TxResult.Code != 0 {
 			res := resultTx.TxResult
-			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
-				return err
-			}
-			return errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
-				txHash, res.Code, res.Codespace, res.Log)
+			return errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
 		}
 		if resultTx.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
@@ -237,18 +229,6 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	return c.Encode(signedTx), nil
 }
 
-func isTxInMempool(errRes *sdk.TxResponse) bool {
-	if errRes == nil {
-		return false
-	}
-	return isSDKErrorResult(errRes.Codespace, errRes.Code, cosmoserrors.ErrTxInMempoolCache)
-}
-
-func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error) bool {
-	return codespace == sdkErr.Codespace() &&
-		code == sdkErr.ABCICode()
-}
-
 func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
@@ -296,38 +276,46 @@ func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning
 	return txBuilder.GetTx(), nil
 }
 
-type sequenceError struct {
-	expectedSequence uint64
-	message          string
+func isTxInMempool(errRes *sdk.TxResponse) bool {
+	if errRes == nil {
+		return false
+	}
+	return isSDKErrorResult(errRes.Codespace, errRes.Code, cosmoserrors.ErrTxInMempoolCache)
 }
 
-func (e sequenceError) Error() string {
-	return e.message
+func isSDKErrorResult(codespace string, code uint32, expectedSDKError *cosmoserrors.Error) bool {
+	return codespace == expectedSDKError.Codespace() &&
+		code == expectedSDKError.ABCICode()
 }
 
-func checkSequence(codespace string, code uint32, log string) error {
-	// Cosmos SDK doesn't return expected sequence number as a parameter from RPC call,
-	// so we must parse the error message in a hacky way.
-
-	if !isSDKErrorResult(codespace, code, cosmoserrors.ErrWrongSequence) {
+func asSDKError(err error, expectedSDKErr *cosmoserrors.Error) *cosmoserrors.Error {
+	var sdkErr *cosmoserrors.Error
+	if !errors.As(err, &sdkErr) || !isSDKErrorResult(sdkErr.Codespace(), sdkErr.ABCICode(), expectedSDKErr) {
 		return nil
 	}
+	return sdkErr
+}
+
+// ExpectedSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
+func ExpectedSequenceFromError(err error) (uint64, bool, error) {
+	sdkErr := asSDKError(err, cosmoserrors.ErrWrongSequence)
+	if sdkErr == nil {
+		return 0, false, nil
+	}
+
+	log := sdkErr.Error()
 	matches := expectedSequenceRegExp.FindStringSubmatch(log)
 	if len(matches) != 2 {
-		return errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
+		return 0, false, errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
 	}
 	expectedSequence, err := strconv.ParseUint(matches[1], 10, 64)
 	if err != nil {
-		return errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
+		return 0, false, errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
 	}
-	return errors.WithStack(sequenceError{message: log, expectedSequence: expectedSequence})
+	return expectedSequence, true, nil
 }
 
-// FetchSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
-func FetchSequenceFromError(err error) (uint64, bool) {
-	var seqErr sequenceError
-	if errors.As(err, &seqErr) {
-		return seqErr.expectedSequence, true
-	}
-	return 0, false
+// IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction
+func IsInsufficientFeeError(err error) bool {
+	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
 }
