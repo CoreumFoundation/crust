@@ -21,25 +21,25 @@ type BuildConfig struct {
 }
 
 // Build implements logic for "contracts build" CLI command
-func Build(ctx context.Context, workspaceDir string, config BuildConfig) error {
+func Build(ctx context.Context, workspaceDir string, config BuildConfig) (string, error) {
 	log := logger.Get(ctx)
 
 	if err := ensureBuildTools(ctx, config.NeedOptimizedBuild); err != nil {
 		err = errors.Wrap(err, "not all build dependencies are installed")
-		return err
+		return "", err
 	}
 
 	crateName, err := readCrateMetadata(ctx, workspaceDir)
 	if err != nil {
 		err = errors.Wrap(err, "problem with ensuring the target crate workspace")
-		return err
+		return "", err
 	}
 	crateLog := log.With(zap.String("name", crateName), zap.String("dir", workspaceDir))
 
 	crateLog.Info("Running cargo check on the workspace")
 	if err := runCargoCheck(ctx, workspaceDir); err != nil {
 		err = errors.Wrap(err, "problem with checking the target crate workspace")
-		return err
+		return "", err
 	}
 
 	var outDir string
@@ -51,7 +51,7 @@ func Build(ctx context.Context, workspaceDir string, config BuildConfig) error {
 
 		if err := runReleaseOptimizedBuild(ctx, workspaceDir); err != nil {
 			err = errors.Wrap(err, "problem with docker run cargo build")
-			return err
+			return "", err
 		}
 	} else {
 		outDir = filepath.Join(workspaceDir, "target", wasmTarget, "release")
@@ -61,19 +61,20 @@ func Build(ctx context.Context, workspaceDir string, config BuildConfig) error {
 
 		if err := runReleaseBuild(ctx, workspaceDir); err != nil {
 			err = errors.Wrap(err, "problem with cargo build")
-			return err
+			return "", err
 		}
 	}
 
 	outDirAbs, err := filepath.Abs(outDir)
 	if err != nil {
 		crateLog.With(zap.Error(err)).Warn("Build completed, but no WASM artefact could be located")
-	} else {
-		artefactPath := filepath.Join(outDirAbs, fmt.Sprintf("%s.wasm", crateNameToArtefactName(crateName)))
-		crateLog.Info("Build artefact created", zap.String("path", artefactPath))
+		return "", nil
 	}
 
-	return nil
+	artefactPath := filepath.Join(outDirAbs, fmt.Sprintf("%s.wasm", crateNameToArtefactName(crateName)))
+	crateLog.Info("Build artefact created", zap.String("path", artefactPath))
+
+	return artefactPath, nil
 }
 
 // runCargoCheck checks workspace and all dependencies for errors

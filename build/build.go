@@ -49,6 +49,7 @@ func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	return golang.BuildLocally(ctx, golang.BuildConfig{
 		PackagePath:   "cmd/znet",
 		BinOutputPath: "bin/.cache/znet",
+		CGOEnabled:    true,
 	})
 }
 
@@ -57,21 +58,25 @@ func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	if err := golang.BuildLocally(ctx, golang.BuildConfig{
 		PackagePath:   "cmd/zstress",
 		BinOutputPath: "bin/.cache/zstress",
+		CGOEnabled:    true,
 	}); err != nil {
 		return err
 	}
 
 	return golang.BuildInDocker(ctx, golang.BuildConfig{
-		PackagePath:   "cmd/zstress",
-		BinOutputPath: "bin/.cache/docker/zstress",
+		PackagePath:    "cmd/zstress",
+		BinOutputPath:  "bin/.cache/docker/zstress",
+		CGOEnabled:     true,
+		Tags:           []string{"muslc"},
+		LinkStatically: true,
 	})
 }
 
 func buildContracts(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
-
 	return golang.BuildLocally(ctx, golang.BuildConfig{
 		PackagePath:   "cmd/contracts",
 		BinOutputPath: "bin/.cache/contracts",
+		CGOEnabled:    true,
 	})
 }

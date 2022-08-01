@@ -7,6 +7,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/tests/auth"
 	"github.com/CoreumFoundation/crust/tests/bank"
+	"github.com/CoreumFoundation/crust/tests/wasm"
 )
 
 // TODO (ysv): check if we can adapt our tests to run standard go testing framework
@@ -25,6 +26,7 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 		testing.New(auth.TestUnexpectedSequenceNumber(node)),
 		testing.New(bank.TestInitialBalance(node)),
 		testing.New(bank.TestCoreTransfer(node)),
+		testing.New(wasm.TestSimpleStateContract(node)),
 	}
 
 	// The idea is to run 200 transfer transactions to be sure that none of them uses more gas than we assumed.

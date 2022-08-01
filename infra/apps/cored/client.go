@@ -5,19 +5,25 @@ import (
 	"encoding/hex"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -34,13 +40,22 @@ var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expe
 
 // NewClient creates new client for cored
 func NewClient(chainID string, addr string) Client {
-	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
+	switch {
+	case strings.HasPrefix(addr, "tcp://"),
+		strings.HasPrefix(addr, "http://"),
+		strings.HasPrefix(addr, "https://"):
+	default:
+		addr = "http://" + addr
+	}
+
+	rpcClient, err := client.NewClientFromNode(addr)
 	must.OK(err)
 	clientCtx := NewContext(chainID, rpcClient)
 	return Client{
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
 		bankQueryClient: banktypes.NewQueryClient(clientCtx),
+		wasmQueryClient: wasmtypes.NewQueryClient(clientCtx),
 	}
 }
 
@@ -49,6 +64,7 @@ type Client struct {
 	clientCtx       client.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
+	wasmQueryClient wasmtypes.QueryClient
 }
 
 // GetNumberSequence returns account number and account sequence for provided address
@@ -92,7 +108,7 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 }
 
 // Sign takes message, creates transaction and signs it
-func (c Client) Sign(ctx context.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+func (c Client) Sign(ctx context.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
 		var err error
@@ -104,7 +120,43 @@ func (c Client) Sign(ctx context.Context, input BaseInput, msg sdk.Msg) (authsig
 		input.Signer = signer
 	}
 
-	return signTx(c.clientCtx, input, msg)
+	return signTx(c.clientCtx, input, msgs...)
+}
+
+// EstimateGas runs the transaction cost estimation and returns new suggested gas limit,
+// in contrast with the default Cosmos SDK gas estimation logic, this method returns unadjusted gas used.
+func (c Client) EstimateGas(ctx context.Context, input BaseInput, msgs ...sdk.Msg) (uint64, error) {
+	signer := input.Signer
+	if signer.AccountNumber == 0 && signer.AccountSequence == 0 {
+		var err error
+		signer.AccountNumber, signer.AccountSequence, err = c.GetNumberSequence(ctx, signer.Key.Address())
+		if err != nil {
+			return 0, err
+		}
+
+		input.Signer = signer
+	}
+
+	simTxBytes, err := buildSimTx(c.clientCtx, input, msgs...)
+	if err != nil {
+		err = errors.Wrap(err, "failed to build sim tx bytes")
+		return 0, err
+	}
+
+	txSvcClient := txtypes.NewServiceClient(c.clientCtx)
+	simRes, err := txSvcClient.Simulate(ctx, &txtypes.SimulateRequest{
+		TxBytes: simTxBytes,
+	})
+	if err != nil {
+		err = errors.Wrap(err, "failed to simulate the transaction execution")
+		return 0, err
+	}
+
+	// usually gas has to be multiplied by some adjustment coeff: e.g. *1,5
+	// but in this case we return unadjusted, so every module can decide the adjustment value
+	unadjustedGas := simRes.GasInfo.GasUsed
+
+	return unadjustedGas, nil
 }
 
 // Encode encodes transaction to be broadcasted
@@ -114,8 +166,9 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 
 // BroadcastResult contains results of transaction broadcast
 type BroadcastResult struct {
-	TxHash  string
-	GasUsed int64
+	TxHash    string
+	GasUsed   int64
+	EventLogs sdk.StringEvents
 }
 
 // Broadcast broadcasts encoded transaction and returns tx hash
@@ -191,8 +244,9 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		return BroadcastResult{}, err
 	}
 	return BroadcastResult{
-		TxHash:  txHash,
-		GasUsed: resultTx.TxResult.GasUsed,
+		TxHash:    txHash,
+		GasUsed:   resultTx.TxResult.GasUsed,
+		EventLogs: sdk.StringifyEvents(resultTx.TxResult.Events),
 	}, nil
 }
 
@@ -249,12 +303,12 @@ func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error)
 		code == sdkErr.ABCICode()
 }
 
-func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+func signTx(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
 	txBuilder := clientCtx.TxConfig.NewTxBuilder()
-	must.OK(txBuilder.SetMsgs(msg))
+	must.OK(txBuilder.SetMsgs(msgs...))
 	txBuilder.SetGasLimit(input.GasLimit)
 	txBuilder.SetMemo(input.Memo)
 
@@ -330,4 +384,65 @@ func FetchSequenceFromError(err error) (uint64, bool) {
 		return seqErr.expectedSequence, true
 	}
 	return 0, false
+}
+
+// buildSimTx creates an unsigned tx with an empty single signature and returns
+// the encoded transaction or an error if the unsigned transaction cannot be
+// built.
+func buildSimTx(
+	clientCtx client.Context,
+	base BaseInput,
+	msgs ...sdk.Msg,
+) ([]byte, error) {
+	factory := new(tx.Factory).
+		WithTxConfig(clientCtx.TxConfig).
+		WithChainID(clientCtx.ChainID).
+		WithGasPrices(base.GasPrice.String()).
+		WithMemo(base.Memo).
+		WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
+
+	txb, err := factory.BuildUnsignedTx(msgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: once keyring is introduced in the client, better to get the pubkey from keyring,
+	// not pass the private key around.
+	var pubKey cryptotypes.PubKey = &cosmossecp256k1.PubKey{
+		Key: base.Signer.Key.PubKey(),
+	}
+
+	// Create an empty signature literal as the ante handler will populate with a
+	// sentinel pubkey.
+	sig := signing.SignatureV2{
+		PubKey: pubKey,
+		Data: &signing.SingleSignatureData{
+			SignMode: factory.SignMode(),
+		},
+
+		Sequence: base.Signer.AccountSequence,
+	}
+	if err := txb.SetSignatures(sig); err != nil {
+		return nil, err
+	}
+
+	return clientCtx.TxConfig.TxEncoder()(txb.GetTx())
+}
+
+// WASMQueryClient returns a WASM module querying client, initialized
+// using the internal clientCtx.
+func (c Client) WASMQueryClient() wasmtypes.QueryClient {
+	return c.wasmQueryClient
+}
+
+// LogEventLogsInfo sends all events logs as Info to the logger.
+func LogEventLogsInfo(l *zap.Logger, eventLogs sdk.StringEvents) {
+	for _, ev := range eventLogs {
+		fields := make([]zap.Field, 0, len(ev.Attributes))
+		for _, attr := range ev.Attributes {
+			fields = append(fields, zap.String(attr.Key, attr.Value))
+		}
+
+		l.With(fields...).Info(ev.Type)
+	}
 }
