@@ -1,7 +1,9 @@
 package cored
 
 import (
+	"math/big"
 	"path/filepath"
+	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/app"
@@ -26,3 +28,19 @@ func SaveConfig(nodeConfig app.NodeConfig, homeDir string) {
 
 	must.OK(app.WriteTendermintConfigToFile(filepath.Join(homeDir, app.DefaultNodeConfigPath), cfg))
 }
+
+// CustomZNetNetwork is the network config used by znet
+var CustomZNetNetwork = app.NewNetwork(app.NetworkConfig{
+	ChainID:       app.Devnet,
+	Enabled:       true,
+	GenesisTime:   time.Now(),
+	AddressPrefix: "devcore",
+	TokenSymbol:   app.TokenSymbolDev,
+	Fee: app.FeeConfig{
+		InitialGasPrice:       big.NewInt(1500),
+		MinDiscountedGasPrice: big.NewInt(1000),
+		DeterministicGas: app.DeterministicGasConfig{
+			BankSend: 120000,
+		},
+	},
+})

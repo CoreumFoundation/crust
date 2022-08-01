@@ -8,8 +8,8 @@ import (
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 )
 
-// AddKeysToStore adds keys to local keystore
-func AddKeysToStore(homeDir string, keys map[string]types.Secp256k1PrivateKey) {
+// addKeysToStore adds keys to local keystore
+func addKeysToStore(homeDir string, keys map[string]types.Secp256k1PrivateKey) {
 	keyringDB, err := keyring.New("cored", "test", homeDir, nil)
 	must.OK(err)
 	signatureAlgos, _ := keyringDB.SupportedAlgorithms()

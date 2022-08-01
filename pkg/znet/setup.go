@@ -7,16 +7,22 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
 // IoC configures IoC container
 func IoC(c *ioc.Container) {
+	c.Singleton(func() app.Network {
+		cored.CustomZNetNetwork.SetupPrefixes()
+		return cored.CustomZNetNetwork
+	})
 	c.Singleton(NewCmdFactory)
 	c.Singleton(infra.NewConfigFactory)
 	c.Singleton(infra.NewSpec)

@@ -9,7 +9,7 @@ import (
 
 // DevMode is the environment for developer
 func DevMode(appF *apps.Factory) infra.Mode {
-	coredNodes := appF.CoredNetwork("coredev", 1, 0, appF.Network)
+	coredNodes := appF.CoredNetwork("coredev", 1, 0)
 	node := coredNodes[0].(cored.Cored)
 
 	var mode infra.Mode

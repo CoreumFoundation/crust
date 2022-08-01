@@ -3,7 +3,6 @@ package zstress
 import (
 	"crypto/ed25519"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
-	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
@@ -45,10 +43,6 @@ type GenerateConfig struct {
 
 	// Network is the cored network config
 	Network app.Network
-}
-
-func nodeIDFromPubKey(pubKey ed25519.PublicKey) string {
-	return hex.EncodeToString(tmed25519.PubKey(pubKey).Address())
 }
 
 // Generate generates all the files required to deploy blockchain used for benchmarking
@@ -85,7 +79,6 @@ func Generate(cfg GenerateConfig) error {
 			ValidatorKey:   validatorPrivateKey,
 		}
 		cored.SaveConfig(nodeConfig, valDir)
-		must.OK(err)
 
 		err = network.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
 		must.OK(err)
@@ -118,7 +111,7 @@ func Generate(cfg GenerateConfig) error {
 	for i := 0; i < cfg.NumOfSentryNodes; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
-		nodeIDs = append(nodeIDs, nodeIDFromPubKey(nodePublicKey))
+		nodeIDs = append(nodeIDs, cored.NodeID(nodePublicKey))
 
 		nodeDir := fmt.Sprintf("%s/sentry-nodes/%d", outDir, i)
 
@@ -128,7 +121,6 @@ func Generate(cfg GenerateConfig) error {
 			NodeKey:        nodePrivateKey,
 		}
 		cored.SaveConfig(nodeConfig, nodeDir)
-		must.OK(err)
 
 		err = network.SaveGenesis(nodeDir)
 		must.OK(err)

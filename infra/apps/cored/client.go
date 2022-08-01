@@ -35,12 +35,12 @@ const (
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
 // NewClient creates new client for cored
-func NewClient(chainID string, addr string) Client {
+func NewClient(chainID app.ChainID, addr string) Client {
 	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
 	clientCtx := app.
 		NewDefaultClientContext().
-		WithChainID(chainID).
+		WithChainID(string(chainID)).
 		WithClient(rpcClient)
 	return Client{
 		clientCtx:       clientCtx,
@@ -125,11 +125,6 @@ func (c Client) Encode(signedTx authsigning.Tx) []byte {
 type BroadcastResult struct {
 	TxHash  string
 	GasUsed int64
-}
-
-// ClientCtx returns client context
-func (c Client) ClientCtx() cosmosclient.Context {
-	return c.clientCtx
 }
 
 // Broadcast broadcasts encoded transaction and returns tx hash
