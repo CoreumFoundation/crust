@@ -55,6 +55,7 @@ func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.App
 
 		clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
 
+		// FIXME: make clientCtx as private field of the client type
 		tx, err := client.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
 		must.OK(err)
 		network.AddGenesisTx(tx)

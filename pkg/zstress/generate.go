@@ -60,6 +60,7 @@ func Generate(cfg GenerateConfig) error {
 	}
 
 	network := cfg.Network
+	// FIXME: make clientCtx as private field of the client type
 	clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
 	nodeIDs := make([]string, 0, cfg.NumOfValidators)
 	for i := 0; i < cfg.NumOfValidators; i++ {

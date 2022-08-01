@@ -11,6 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -24,7 +25,7 @@ const (
 )
 
 func main() {
-	network := cored.CustomZNetNetwork
+	network := app.NewNetwork(cored.CustomZNetNetworkConfig)
 	network.SetupPrefixes()
 	run.Tool("zstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
