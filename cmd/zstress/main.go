@@ -11,10 +11,10 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/pkg/zstress"
 )
 
@@ -24,8 +24,7 @@ const (
 )
 
 func main() {
-	network, err := app.NetworkByChainID(app.Mainnet)
-	must.OK(err)
+	network := cored.CustomZNetNetwork
 	network.SetupPrefixes()
 	run.Tool("zstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
@@ -62,8 +61,9 @@ func main() {
 		rootCmd.Flags().IntVar(&numOfAccounts, "accounts", defaultNumOfAccounts, "Number of accounts used to benchmark the node in parallel, must not be greater than the number of keys available in account file")
 		rootCmd.Flags().IntVar(&stressConfig.NumOfTransactions, "transactions", 1000, "Number of transactions to send from each account")
 
-		var generateConfig zstress.GenerateConfig
-		generateConfig.Network = network
+		generateConfig := zstress.GenerateConfig{
+			Network: network,
+		}
 		generateCmd := &cobra.Command{
 			Use:   "generate",
 			Short: "Generates all the files required to deploy the blockchain used for benchmarking",

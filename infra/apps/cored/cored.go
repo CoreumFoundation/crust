@@ -31,21 +31,34 @@ import (
 const AppType infra.AppType = "cored"
 
 // New creates new cored app
-func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.AppInfo, ports Ports, rootNode *Cored) Cored {
+func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.AppInfo, ports Ports, validator bool, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
-	validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
-	must.OK(err)
 
-	stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
+	walletKeys := map[string]types.Secp256k1PrivateKey{
+		"alice":   AlicePrivKey,
+		"bob":     BobPrivKey,
+		"charlie": CharliePrivKey,
+	}
 
-	err = network.FundAccount(stakerPubKey, "100000000000000000000000"+network.TokenSymbol())
-	must.OK(err)
-	clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
+	var validatorPrivateKey ed25519.PrivateKey
+	if validator {
+		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+		must.OK(err)
 
-	tx, err := client.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
-	must.OK(err)
-	network.AddGenesisTx(tx)
+		stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
+
+		validatorPrivateKey = valPrivateKey
+		walletKeys["staker"] = stakerPrivKey
+
+		must.OK(network.FundAccount(stakerPubKey, "100000000000000000000000"+network.TokenSymbol()))
+
+		clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
+
+		tx, err := client.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
+		must.OK(err)
+		network.AddGenesisTx(tx)
+	}
 
 	cored := Cored{
 		name:                name,
@@ -59,12 +72,7 @@ func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.App
 		ports:               ports,
 		rootNode:            rootNode,
 		mu:                  &sync.RWMutex{},
-		walletKeys: map[string]types.Secp256k1PrivateKey{
-			"staker":  stakerPrivKey,
-			"alice":   AlicePrivKey,
-			"bob":     BobPrivKey,
-			"charlie": CharliePrivKey,
-		},
+		walletKeys:          walletKeys,
 	}
 	return cored
 }
@@ -111,11 +119,6 @@ func (c Cored) Network() *app.Network {
 	return c.network
 }
 
-// ChainID returns ID of the chain
-func (c Cored) ChainID() string {
-	return string(c.network.ChainID())
-}
-
 // Info returns deployment info
 func (c Cored) Info() infra.DeploymentInfo {
 	return c.appInfo.Info()
@@ -144,7 +147,7 @@ func (c Cored) AddWallet(balances string) types.Wallet {
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() Client {
-	return NewClient(string(c.network.ChainID()), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
+	return NewClient(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -233,7 +236,7 @@ func (c Cored) Deployment() infra.Deployment {
 				}
 				SaveConfig(nodeConfig, c.homeDir)
 
-				AddKeysToStore(c.homeDir, c.walletKeys)
+				addKeysToStore(c.homeDir, c.walletKeys)
 
 				return c.network.SaveGenesis(c.homeDir)
 			},

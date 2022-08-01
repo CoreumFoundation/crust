@@ -3,6 +3,7 @@ package apps
 import (
 	"fmt"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
@@ -17,7 +18,7 @@ func NewFactory(config infra.Config, spec *infra.Spec, network app.Network) *Fac
 	return &Factory{
 		config:  config,
 		spec:    spec,
-		Network: network,
+		network: network,
 	}
 }
 
@@ -25,21 +26,22 @@ func NewFactory(config infra.Config, spec *infra.Spec, network app.Network) *Fac
 type Factory struct {
 	config  infra.Config
 	spec    *infra.Spec
-	Network app.Network
+	network app.Network
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int, network app.Network) infra.Mode {
+func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
+	network := f.network
 	initialBalance := "1000000000000000" + network.TokenSymbol()
 
-	network.FundAccount(cored.AlicePrivKey.PubKey(), initialBalance)
-	network.FundAccount(cored.BobPrivKey.PubKey(), initialBalance)
-	network.FundAccount(cored.CharliePrivKey.PubKey(), initialBalance)
+	must.OK(network.FundAccount(cored.AlicePrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(cored.BobPrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(cored.CharliePrivKey.PubKey(), initialBalance))
 
 	for _, key := range cored.RandomWallets {
-		network.FundAccount(key.PubKey(), initialBalance)
+		must.OK(network.FundAccount(key.PubKey(), initialBalance))
 	}
-	network.ResetGenesisTxs()
+	// network.ResetGenesisTxs()
 
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
 	var node0 *cored.Cored
@@ -53,7 +55,7 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 			GRPCWeb:    cored.DefaultPorts.GRPCWeb + portDelta,
 			PProf:      cored.DefaultPorts.PProf + portDelta,
 			Prometheus: cored.DefaultPorts.Prometheus + portDelta,
-		}, node0)
+		}, i < numOfValidators, node0)
 		if node0 == nil {
 			node0 = &node
 		}
