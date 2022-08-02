@@ -74,7 +74,7 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 
 // TestTransferFailsIfNotEnoughGasIsProvided checks that transfer fails if not enough gas is provided
 func TestTransferFailsIfNotEnoughGasIsProvided(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
-	maxGasAssumed := chain.Network().DeterministicGas().BankSend // set it to 50%+ higher than maximum observed value
+	maxGasAssumed := chain.Network().DeterministicGas().BankSend
 	var sender types.Wallet
 
 	return func(ctx context.Context) error {
