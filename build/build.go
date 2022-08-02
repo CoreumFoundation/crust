@@ -13,7 +13,7 @@ import (
 )
 
 func buildAll(deps build.DepsFunc) {
-	deps(buildCored, buildZNet, buildZStress)
+	deps(buildCored, buildZNet, buildZStress, buildContracts)
 }
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
@@ -64,5 +64,14 @@ func buildZStress(ctx context.Context, deps build.DepsFunc) error {
 	return golang.BuildInDocker(ctx, golang.BuildConfig{
 		PackagePath:   "cmd/zstress",
 		BinOutputPath: "bin/.cache/docker/zstress",
+	})
+}
+
+func buildContracts(ctx context.Context, deps build.DepsFunc) error {
+	deps(golang.EnsureGo)
+
+	return golang.BuildLocally(ctx, golang.BuildConfig{
+		PackagePath:   "cmd/contracts",
+		BinOutputPath: "bin/.cache/contracts",
 	})
 }

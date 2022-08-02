@@ -41,6 +41,15 @@ case "$1" in
      exec "$REPO/bin/.cache/zstress" "$@"
      ;;
 
+   "contracts")
+     if [ ! -f "$REPO/bin/.cache/contracts" ]; then
+       "$REPO/bin/.cache/crust" build/contracts
+     fi
+
+     shift 1
+     exec "$REPO/bin/.cache/contracts" "$@"
+     ;;
+
    *)
      exec "$CRUST_BIN" "$@"
      ;;

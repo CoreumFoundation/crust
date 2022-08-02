@@ -1,6 +1,8 @@
 # crust
 `crust` helps you build and run all the applications needed for development and testing.
 
+👉 There is a [dedicated section](/SMART_CONTRACTS.md) for smart-contracts development and deployment.
+
 ## Prerequisites
 To use `crust` you need:
 - `go 1.16` or newer
