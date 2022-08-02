@@ -155,7 +155,7 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	}
 
 	dockerfileChecksum := sha256.Sum256(dockerfileBuf.Bytes())
-	image := "crust-cgo-build:" + hex.EncodeToString(dockerfileChecksum[:4])
+	image := "crust-go-build:" + hex.EncodeToString(dockerfileChecksum[:4])
 
 	imageBuf := &bytes.Buffer{}
 	imageCmd := exec.Command("docker", "images", "-q", image)
