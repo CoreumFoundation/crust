@@ -255,6 +255,7 @@ func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning
 		Sequence:      signer.AccountSequence,
 	}
 	sigData := &signing.SingleSignatureData{
+		//nolint:nosnakecase // MixedCap can't be forced on imported constants
 		SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 		Signature: nil,
 	}
@@ -265,6 +266,7 @@ func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning
 	}
 	must.OK(txBuilder.SetSignatures(sig))
 
+	//nolint:nosnakecase // MixedCap can't be forced on imported constants
 	bytesToSign := must.Bytes(clientCtx.TxConfig.SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, txBuilder.GetTx()))
 	sigBytes, err := privKey.Sign(bytesToSign)
 	must.OK(err)
