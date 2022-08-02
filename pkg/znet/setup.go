@@ -20,6 +20,7 @@ import (
 // IoC configures IoC container
 func IoC(c *ioc.Container) {
 	c.Singleton(func() app.NetworkConfig {
+		// FIXME: this is only a temporary hack until we develop out own address encoder.
 		app.NewNetwork(cored.CustomZNetNetworkConfig).SetupPrefixes()
 		return cored.CustomZNetNetworkConfig
 	})
