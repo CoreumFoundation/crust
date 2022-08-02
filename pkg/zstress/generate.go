@@ -12,6 +12,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
@@ -37,52 +40,62 @@ type GenerateConfig struct {
 
 	// OutDirectory is the path to the directory where generated files are stored
 	OutDirectory string
+
+	// Network is the cored network config
+	Network app.Network
 }
 
 // Generate generates all the files required to deploy blockchain used for benchmarking
-func Generate(config GenerateConfig) error {
-	outDir := config.OutDirectory + "/zstress-deployment"
+func Generate(cfg GenerateConfig) error {
+	outDir := cfg.OutDirectory + "/zstress-deployment"
 	if err := os.RemoveAll(outDir); err != nil && !os.IsNotExist(err) {
 		panic(err)
 	}
 
-	if err := generateDocker(outDir, config.BinDirectory+"/cored"); err != nil {
+	if err := generateDocker(outDir, cfg.BinDirectory+"/cored"); err != nil {
 		return err
 	}
-	if err := generateDocker(outDir, config.BinDirectory+"/zstress"); err != nil {
+	if err := generateDocker(outDir, cfg.BinDirectory+"/zstress"); err != nil {
 		return err
 	}
 
-	genesis := cored.NewGenesis(config.ChainID)
-	nodeIDs := make([]string, 0, config.NumOfValidators)
-	for i := 0; i < config.NumOfValidators; i++ {
+	network := cfg.Network
+	// FIXME: make clientCtx as private field of the client type
+	clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
+	nodeIDs := make([]string, 0, cfg.NumOfValidators)
+	for i := 0; i < cfg.NumOfValidators; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 		nodeIDs = append(nodeIDs, cored.NodeID(nodePublicKey))
 		validatorPublicKey, validatorPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
-		stakerPublicKey, stakerPrivateKey := cored.GenerateSecp256k1Key()
+		stakerPublicKey, stakerPrivateKey := types.GenerateSecp256k1Key()
 
 		valDir := fmt.Sprintf("%s/validators/%d", outDir, i)
 
-		cored.NodeConfig{
+		nodeConfig := app.NodeConfig{
 			Name:           fmt.Sprintf("validator-%d", i),
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
 			ValidatorKey:   validatorPrivateKey,
-		}.Save(valDir)
+		}
+		cored.SaveConfig(nodeConfig, valDir)
 
-		genesis.AddWallet(stakerPublicKey, "100000000000000000000000core")
-		genesis.AddValidator(validatorPublicKey, stakerPrivateKey, "100000000core")
+		err = network.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
+		must.OK(err)
+		tx, err := client.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
+		must.OK(err)
+		network.AddGenesisTx(tx)
 	}
 	must.OK(ioutil.WriteFile(outDir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 
-	for i := 0; i < config.NumOfInstances; i++ {
-		accounts := make([]cored.Secp256k1PrivateKey, 0, config.NumOfAccountsPerInstance)
-		for j := 0; j < config.NumOfAccountsPerInstance; j++ {
-			accountPublicKey, accountPrivateKey := cored.GenerateSecp256k1Key()
+	for i := 0; i < cfg.NumOfInstances; i++ {
+		accounts := make([]types.Secp256k1PrivateKey, 0, cfg.NumOfAccountsPerInstance)
+		for j := 0; j < cfg.NumOfAccountsPerInstance; j++ {
+			accountPublicKey, accountPrivateKey := types.GenerateSecp256k1Key()
 			accounts = append(accounts, accountPrivateKey)
-			genesis.AddWallet(accountPublicKey, "10000000000000000000000000000core")
+			err := network.FundAccount(accountPublicKey, "10000000000000000000000000000"+network.TokenSymbol())
+			must.OK(err)
 		}
 
 		instanceDir := fmt.Sprintf("%s/instances/%d", outDir, i)
@@ -90,25 +103,28 @@ func Generate(config GenerateConfig) error {
 		must.OK(ioutil.WriteFile(instanceDir+"/accounts.json", must.Bytes(json.Marshal(accounts)), 0o600))
 	}
 
-	for i := 0; i < config.NumOfValidators; i++ {
-		genesis.Save(fmt.Sprintf("%s/validators/%d", outDir, i))
+	for i := 0; i < cfg.NumOfValidators; i++ {
+		err := network.SaveGenesis(fmt.Sprintf("%s/validators/%d", outDir, i))
+		must.OK(err)
 	}
 
-	nodeIDs = make([]string, 0, config.NumOfSentryNodes)
-	for i := 0; i < config.NumOfSentryNodes; i++ {
+	nodeIDs = make([]string, 0, cfg.NumOfSentryNodes)
+	for i := 0; i < cfg.NumOfSentryNodes; i++ {
 		nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 		nodeIDs = append(nodeIDs, cored.NodeID(nodePublicKey))
 
 		nodeDir := fmt.Sprintf("%s/sentry-nodes/%d", outDir, i)
 
-		cored.NodeConfig{
+		nodeConfig := app.NodeConfig{
 			Name:           fmt.Sprintf("sentry-node-%d", i),
 			PrometheusPort: cored.DefaultPorts.Prometheus,
 			NodeKey:        nodePrivateKey,
-		}.Save(nodeDir)
+		}
+		cored.SaveConfig(nodeConfig, nodeDir)
 
-		genesis.Save(nodeDir)
+		err = network.SaveGenesis(nodeDir)
+		must.OK(err)
 	}
 	must.OK(ioutil.WriteFile(outDir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 	return nil
