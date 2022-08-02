@@ -23,6 +23,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -224,18 +226,18 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 	client := coredNode.Client()
 
-	alice := cored.Wallet{Name: "alice", Key: cored.AlicePrivKey}
-	bob := cored.Wallet{Name: "bob", Key: cored.BobPrivKey}
-	charlie := cored.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
+	alice := types.Wallet{Name: "alice", Key: cored.AlicePrivKey}
+	bob := types.Wallet{Name: "bob", Key: cored.BobPrivKey}
+	charlie := types.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
 
 	for {
-		if err := sendTokens(ctx, client, alice, bob); err != nil {
+		if err := sendTokens(ctx, client, alice, bob, *coredNode.Network()); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, bob, charlie); err != nil {
+		if err := sendTokens(ctx, client, bob, charlie, *coredNode.Network()); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, charlie, alice); err != nil {
+		if err := sendTokens(ctx, client, charlie, alice, *coredNode.Network()); err != nil {
 			return err
 		}
 
@@ -260,12 +262,16 @@ func Stress(ctx context.Context, mode infra.Mode) error {
 		return err
 	}
 
-	return zstress.Stress(ctx, zstress.StressConfig{
-		ChainID:           coredNode.ChainID(),
-		NodeAddress:       infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
-		Accounts:          cored.RandomWallets[:10],
-		NumOfTransactions: 100,
-	})
+	return zstress.Stress(
+		ctx,
+		zstress.StressConfig{
+			ChainID:           string(coredNode.Network().ChainID()),
+			NodeAddress:       infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
+			Accounts:          cored.RandomWallets[:10],
+			NumOfTransactions: 100,
+		},
+		coredNode.Network(),
+	)
 }
 
 func coredNode(mode infra.Mode) (cored.Cored, error) {
@@ -277,17 +283,22 @@ func coredNode(mode infra.Mode) (cored.Cored, error) {
 	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
-func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet) error {
+func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet, network app.Network) error {
 	log := logger.Get(ctx)
 
-	amount := cored.Coin{Amount: big.NewInt(1), Denom: "core"}
+	amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
+	if err != nil {
+		return err
+	}
+	gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
+	if err != nil {
+		return err
+	}
 	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
 		Base: cored.BaseInput{
-			Signer: from,
-			// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
-			GasLimit: 120000,
-			// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
+			Signer:   from,
+			GasLimit: network.DeterministicGas().BankSend,
+			GasPrice: gasPrice,
 		},
 		Sender:   from,
 		Receiver: to,
@@ -313,8 +324,8 @@ func sendTokens(ctx context.Context, client cored.Client, from, to cored.Wallet)
 		return err
 	}
 
-	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance["core"]))
-	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance["core"]))
+	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance[network.TokenSymbol()]))
+	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance[network.TokenSymbol()]))
 
 	return nil
 }

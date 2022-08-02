@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 )
@@ -14,10 +15,10 @@ import (
 // TestUnexpectedSequenceNumber test verifies that we correctly handle error reporting invalid account sequence number
 // used to sign transaction
 func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
-	var sender cored.Wallet
+	var sender types.Wallet
 
 	return func(ctx context.Context) error {
-			sender = chain.AddWallet("180000010core")
+			sender = chain.AddWallet("180000010" + chain.Network().TokenSymbol())
 			return nil
 		},
 		func(ctx context.Context, t *testing.T) {
@@ -34,15 +35,13 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 			// Broadcast a transaction using incorrect sequence number
 			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
 				Base: cored.BaseInput{
-					Signer: sender,
-					// FIXME (wojtek): Take this value from Network.TxBankSendGas() once Milad integrates it into crust
-					GasLimit: 120000,
-					// FIXME (wojtek): Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-					GasPrice: cored.Coin{Amount: big.NewInt(1500), Denom: "core"},
+					Signer:   sender,
+					GasLimit: chain.Network().DeterministicGas().BankSend,
+					GasPrice: types.Coin{Amount: chain.Network().InitialGasPrice(), Denom: chain.Network().TokenSymbol()},
 				},
 				Sender:   sender,
 				Receiver: sender,
-				Amount:   cored.Coin{Denom: "core", Amount: big.NewInt(1)},
+				Amount:   types.Coin{Denom: chain.Network().TokenSymbol(), Amount: big.NewInt(1)},
 			})
 			require.NoError(t, err)
 			_, err = client.Broadcast(ctx, txBytes)

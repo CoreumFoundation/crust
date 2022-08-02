@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/cosmos/cosmos-sdk/client"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoserrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -21,6 +21,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/pkg/retry"
 )
 
@@ -33,10 +35,13 @@ const (
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
 // NewClient creates new client for cored
-func NewClient(chainID string, addr string) Client {
-	rpcClient, err := client.NewClientFromNode("tcp://" + addr)
+func NewClient(chainID app.ChainID, addr string) Client {
+	rpcClient, err := cosmosclient.NewClientFromNode("tcp://" + addr)
 	must.OK(err)
-	clientCtx := NewContext(chainID, rpcClient)
+	clientCtx := app.
+		NewDefaultClientContext().
+		WithChainID(string(chainID)).
+		WithClient(rpcClient)
 	return Client{
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
@@ -46,7 +51,7 @@ func NewClient(chainID string, addr string) Client {
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx       client.Context
+	clientCtx       cosmosclient.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
 }
@@ -74,7 +79,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Coin, error) {
+func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map[string]types.Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -84,9 +89,13 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]Coin{}
+	balances := map[string]types.Coin{}
 	for _, b := range resp.Balances {
-		balances[b.Denom] = Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
+		coin, err := types.NewCoin(b.Amount.BigInt(), b.Denom)
+		if err != nil {
+			return nil, err
+		}
+		balances[b.Denom] = coin
 	}
 	return balances, nil
 }
@@ -130,7 +139,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			return BroadcastResult{}, errors.WithStack(err)
 		}
 
-		errRes := client.CheckTendermintError(err, encodedTx)
+		errRes := cosmosclient.CheckTendermintError(err, encodedTx)
 		if !isTxInMempool(errRes) {
 			return BroadcastResult{}, errors.WithStack(err)
 		}
@@ -162,7 +171,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
 			}
-			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+			if errRes := cosmosclient.CheckTendermintError(err, encodedTx); errRes != nil {
 				if isTxInMempool(errRes) {
 					return retry.Retryable(errors.WithStack(err))
 				}
@@ -190,17 +199,17 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 
 // BaseInput holds input data common to every transaction
 type BaseInput struct {
-	Signer   Wallet
+	Signer   types.Wallet
 	GasLimit uint64
-	GasPrice Coin
+	GasPrice types.Coin
 	Memo     string
 }
 
 // TxBankSendInput holds input data for PrepareTxBankSend
 type TxBankSendInput struct {
-	Sender   Wallet
-	Receiver Wallet
-	Amount   Coin
+	Sender   types.Wallet
+	Receiver types.Wallet
+	Amount   types.Coin
 
 	Base BaseInput
 }
@@ -229,7 +238,7 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	return c.Encode(signedTx), nil
 }
 
-func signTx(clientCtx client.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
+func signTx(clientCtx cosmosclient.Context, input BaseInput, msg sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}

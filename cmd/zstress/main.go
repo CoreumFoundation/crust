@@ -11,10 +11,11 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/crust/cmd"
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/pkg/zstress"
 )
 
@@ -24,7 +25,8 @@ const (
 )
 
 func main() {
-	cmd.SetAccountPrefixes("core")
+	network := app.NewNetwork(cored.CustomZNetNetworkConfig)
+	network.SetupPrefixes()
 	run.Tool("zstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig
 		var accountFile string
@@ -50,7 +52,7 @@ func main() {
 					return errors.New("number of accounts is greater than the number of provided private keys")
 				}
 				stressConfig.Accounts = stressConfig.Accounts[:numOfAccounts]
-				return zstress.Stress(ctx, stressConfig)
+				return zstress.Stress(ctx, stressConfig, &network)
 			},
 		}
 		logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
@@ -60,7 +62,9 @@ func main() {
 		rootCmd.Flags().IntVar(&numOfAccounts, "accounts", defaultNumOfAccounts, "Number of accounts used to benchmark the node in parallel, must not be greater than the number of keys available in account file")
 		rootCmd.Flags().IntVar(&stressConfig.NumOfTransactions, "transactions", 1000, "Number of transactions to send from each account")
 
-		var generateConfig zstress.GenerateConfig
+		generateConfig := zstress.GenerateConfig{
+			Network: network,
+		}
 		generateCmd := &cobra.Command{
 			Use:   "generate",
 			Short: "Generates all the files required to deploy the blockchain used for benchmarking",

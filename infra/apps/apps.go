@@ -3,6 +3,8 @@ package apps
 import (
 	"fmt"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
@@ -12,31 +14,32 @@ import (
 )
 
 // NewFactory creates new app factory
-func NewFactory(config infra.Config, spec *infra.Spec) *Factory {
+func NewFactory(config infra.Config, spec *infra.Spec, networkConfig app.NetworkConfig) *Factory {
 	return &Factory{
-		config: config,
-		spec:   spec,
+		config:        config,
+		spec:          spec,
+		networkConfig: networkConfig,
 	}
 }
 
 // Factory produces apps from config
 type Factory struct {
-	config infra.Config
-	spec   *infra.Spec
+	config        infra.Config
+	spec          *infra.Spec
+	networkConfig app.NetworkConfig
 }
 
 // CoredNetwork creates new network of cored nodes
 func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
-	const initialBalance = "1000000000000000core"
+	network := app.NewNetwork(f.networkConfig)
+	initialBalance := "1000000000000000" + network.TokenSymbol()
 
-	genesis := cored.NewGenesis(name)
-
-	genesis.AddWallet(cored.AlicePrivKey.PubKey(), initialBalance)
-	genesis.AddWallet(cored.BobPrivKey.PubKey(), initialBalance)
-	genesis.AddWallet(cored.CharliePrivKey.PubKey(), initialBalance)
+	must.OK(network.FundAccount(cored.AlicePrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(cored.BobPrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(cored.CharliePrivKey.PubKey(), initialBalance))
 
 	for _, key := range cored.RandomWallets {
-		genesis.AddWallet(key.PubKey(), initialBalance)
+		must.OK(network.FundAccount(key.PubKey(), initialBalance))
 	}
 
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
@@ -44,7 +47,7 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 	for i := 0; i < cap(nodes); i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
-		node := cored.New(name, f.config, genesis, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
+		node := cored.New(name, f.config, &network, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
 			RPC:        cored.DefaultPorts.RPC + portDelta,
 			P2P:        cored.DefaultPorts.P2P + portDelta,
 			GRPC:       cored.DefaultPorts.GRPC + portDelta,

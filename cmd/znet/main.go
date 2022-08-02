@@ -11,13 +11,11 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/crust/cmd"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/pkg/znet"
 )
 
 func main() {
-	cmd.SetAccountPrefixes("core")
 	run.Tool("znet", znet.IoC, func(c *ioc.Container, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage:  true,
