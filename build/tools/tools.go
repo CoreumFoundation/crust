@@ -341,6 +341,7 @@ func save(url string, reader io.Reader, path string) error {
 		}
 		return untar(reader, path)
 	default:
+		//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 		f, err := os.OpenFile(filepath.Join(path, filepath.Base(url)), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
 		if err != nil {
 			return errors.WithStack(err)
@@ -378,6 +379,8 @@ func untar(reader io.Reader, path string) error {
 			if err := ensureDir(header.Name); err != nil {
 				return err
 			}
+
+			//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 			f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_WRONLY, mode)
 			if err != nil {
 				return errors.WithStack(err)
@@ -398,7 +401,8 @@ func untar(reader io.Reader, path string) error {
 			if err := ensureDir(header.Name); err != nil {
 				return err
 			}
-			// linked file may not exist yet, so let's create it - i will be overwritten later
+			// linked file may not exist yet, so let's create it - it will be overwritten later
+			//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 			f, err := os.OpenFile(header.Linkname, os.O_CREATE|os.O_EXCL, mode)
 			if err != nil {
 				if !os.IsExist(err) {

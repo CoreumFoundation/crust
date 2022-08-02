@@ -27,6 +27,7 @@ func NewContext(chainID string, rpcClient rpcclient.Client) client.Context {
 		Codec:             codec,
 		InterfaceRegistry: interfaceRegistry,
 		Client:            rpcClient,
-		TxConfig:          tx.NewTxConfig(codec, []signing.SignMode{signing.SignMode_SIGN_MODE_DIRECT}),
+		//nolint:nosnakecase // MixedCap can't be forced on imported constants
+		TxConfig: tx.NewTxConfig(codec, []signing.SignMode{signing.SignMode_SIGN_MODE_DIRECT}),
 	}
 }
