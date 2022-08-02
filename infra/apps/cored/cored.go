@@ -194,6 +194,8 @@ func (c Cored) Deployment() infra.Deployment {
 				args := []string{
 					"start",
 					"--home", targets.AppHomeDir,
+					"--log_level", "debug",
+					"--trace",
 					"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.ports.RPC),
 					"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.ports.P2P),
 					"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.GRPC),
