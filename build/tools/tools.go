@@ -31,20 +31,20 @@ const (
 var tools = map[Name]Tool{
 	// https://go.dev/dl/
 	Go: {
-		Version:  "1.18.3",
+		Version:  "1.18.5",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://go.dev/dl/go1.18.3.linux-amd64.tar.gz",
-				Hash: "sha256:956f8507b302ab0bb747613695cdae10af99bbd39a90cae522b7c0302cc27245",
+				URL:  "https://go.dev/dl/go1.18.5.linux-amd64.tar.gz",
+				Hash: "sha256:9e5de37f9c49942c601b191ac5fba404b868bfc21d446d6960acc12283d6e5f2",
 			},
 			darwinAMD64: {
-				URL:  "https://go.dev/dl/go1.18.3.darwin-amd64.tar.gz",
-				Hash: "sha256:d9dcf8fc35da54c6f259be41954783a9f4984945a855d03a003a7fd6ea4c5ca1",
+				URL:  "https://go.dev/dl/go1.18.5.darwin-amd64.tar.gz",
+				Hash: "sha256:828eeca8b5abea3e56921df8fa4b1101380a5ebcfee10acbc8ffe7ec0bf5876b",
 			},
 			darwinARM64: {
-				URL:  "https://go.dev/dl/go1.18.3.darwin-arm64.tar.gz",
-				Hash: "sha256:40ecd383c941cc9f0682e6a6f2a333539d58c7dea15c842434d03afafe2f7242",
+				URL:  "https://go.dev/dl/go1.18.5.darwin-arm64.tar.gz",
+				Hash: "sha256:923a377c6fc9a2c789f5db61c24b8f64133f7889056897449891f256af34065f",
 			},
 		},
 		Binaries: map[string]string{
@@ -55,28 +55,28 @@ var tools = map[Name]Tool{
 
 	// https://github.com/golangci/golangci-lint/releases/
 	GolangCI: {
-		Version:  "1.46.2",
+		Version:  "1.47.3",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-linux-amd64.tar.gz",
-				Hash: "sha256:242cd4f2d6ac0556e315192e8555784d13da5d1874e51304711570769c4f2b9b",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.47.3/golangci-lint-1.47.3-linux-amd64.tar.gz",
+				Hash: "sha256:67b5f7a2275d94034c5c87ff7655ba4b20bdb5f83c43c5d22476f2bf5c6766ef",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.46.2-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.47.3-linux-amd64/golangci-lint",
 				},
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-darwin-amd64.tar.gz",
-				Hash: "sha256:658078aaaf7608693f37c4cf1380b2af418ab8b2d23fdb33e7e2d4339328590e",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.47.3/golangci-lint-1.47.3-darwin-amd64.tar.gz",
+				Hash: "sha256:75ff9491f1ac88ab8594d0498d2a86168ad20e3f4b958dd21be8a6c2988d50cf",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.46.2-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.47.3-darwin-amd64/golangci-lint",
 				},
 			},
 			darwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.46.2/golangci-lint-1.46.2-darwin-arm64.tar.gz",
-				Hash: "sha256:81f9b4afd62ec5e612ef8bc3b1d612a88b56ff289874831845cdad394427385f",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.47.3/golangci-lint-1.47.3-darwin-arm64.tar.gz",
+				Hash: "sha256:589ea0d8fa80b37a94c4f54479a9cd89c9187e5cb123214d45227b67110f207d",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.46.2-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.47.3-darwin-arm64/golangci-lint",
 				},
 			},
 		},
@@ -84,20 +84,20 @@ var tools = map[Name]Tool{
 
 	// https://github.com/ignite/cli/releases/
 	Ignite: {
-		Version:  "v0.22.2",
+		Version:  "0.23.0",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_linux_amd64.tar.gz",
-				Hash: "sha256:c73654403ce7c27a8a8d2845a45beb284120c83d854c4312955658125764c296",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_linux_amd64.tar.gz",
+				Hash: "sha256:915a96eb366fbf9c353af32d0ddb01796a30b86343ac77d613cc8a8af3dd395a",
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_darwin_amd64.tar.gz",
-				Hash: "sha256:25cfb61c6c5d26ab303153211097d357f3c1bce63351276a870b7b6b4420b8b5",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_darwin_amd64.tar.gz",
+				Hash: "sha256:b9ca67a70f4d1b43609c4289a7e83dc2174754d35f30fb43f1518c0434361c4e",
 			},
 			darwinARM64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.22.2/ignite_0.22.2_darwin_arm64.tar.gz",
-				Hash: "sha256:19757865d00e0d08c36a83a3cb9035a76ee0b542c20efed00f48a01eb12fb879",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_darwin_arm64.tar.gz",
+				Hash: "sha256:daefd4ac83e3bb384cf97a2ff8cc6e81427f74e2c81c567fd0507fce647146ec",
 			},
 		},
 		Binaries: map[string]string{
@@ -341,6 +341,7 @@ func save(url string, reader io.Reader, path string) error {
 		}
 		return untar(reader, path)
 	default:
+		//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 		f, err := os.OpenFile(filepath.Join(path, filepath.Base(url)), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
 		if err != nil {
 			return errors.WithStack(err)
@@ -378,6 +379,8 @@ func untar(reader io.Reader, path string) error {
 			if err := ensureDir(header.Name); err != nil {
 				return err
 			}
+
+			//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 			f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_WRONLY, mode)
 			if err != nil {
 				return errors.WithStack(err)
@@ -398,7 +401,8 @@ func untar(reader io.Reader, path string) error {
 			if err := ensureDir(header.Name); err != nil {
 				return err
 			}
-			// linked file may not exist yet, so let's create it - i will be overwritten later
+			// linked file may not exist yet, so let's create it - it will be overwritten later
+			//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 			f, err := os.OpenFile(header.Linkname, os.O_CREATE|os.O_EXCL, mode)
 			if err != nil {
 				if !os.IsExist(err) {
