@@ -14,11 +14,11 @@ import (
 )
 
 // NewFactory creates new app factory
-func NewFactory(config infra.Config, spec *infra.Spec, network app.NetworkConfig) *Factory {
+func NewFactory(config infra.Config, spec *infra.Spec, networkConfig app.NetworkConfig) *Factory {
 	return &Factory{
 		config:        config,
 		spec:          spec,
-		networkConfig: network,
+		networkConfig: networkConfig,
 	}
 }
 
