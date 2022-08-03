@@ -2,12 +2,13 @@ package wasm
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
@@ -20,19 +21,22 @@ import (
 )
 
 var (
-	//go:embed test_fixtures/simple-state/artifacts/simple_state.wasm
-	simpleStateWASM []byte
+	//go:embed test_fixtures/bank-send/artifacts/bank_send.wasm
+	bankSendWASM []byte
 )
 
-// TestSimpleStateContract runs a contract deployment flow and tries to modify the state after deployment.
-// This is a E2E check for the WASM integration, to ensure it works for a simple state contract (Counter).
-func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
+// TestBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
+// to dispurse the native coins.
+func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
 	var adminWallet cored.Wallet
+	var testWallet cored.Wallet
 	var networkConfig contracts.ChainConfig
 	var stagedContractPath string
 
 	initTestState := func(ctx context.Context) error {
 		adminWallet = chain.AddWallet("100000000000000000000000000000000000core")
+		testWallet = chain.AddWallet("0core")
+
 		networkConfig = contracts.ChainConfig{
 			ChainID: chain.ChainID(),
 			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
@@ -49,8 +53,8 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 			return err
 		}
 
-		stagedContractPath = filepath.Join(stagedContractsDir, "simple_state.wasm")
-		if err := ioutil.WriteFile(stagedContractPath, simpleStateWASM, 0600); err != nil {
+		stagedContractPath = filepath.Join(stagedContractsDir, "bank_send.wasm")
+		if err := ioutil.WriteFile(stagedContractPath, bankSendWASM, 0600); err != nil {
 			err = errors.Wrap(err, "failed to stage the WASM contract for the test")
 			return err
 		}
@@ -80,49 +84,74 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 			ArtefactPath: stagedContractPath,
 			InstantiationConfig: contracts.ContractInstanceConfig{
 				NeedInstantiation:  true,
-				InstantiatePayload: `{"count": 1337}`,
+				InstantiatePayload: `{"count": 0}`,
+
+				// transfer some coins during instantiation,
+				// so we could withdraw them later using contract code.
+				Amount: "10000core",
 			},
 		})
 		expect.NoError(err)
 		expect.NotEmpty(deployOut.InitTxHash)
 		expect.NotEmpty(deployOut.ContractAddr)
 
-		queryOut, err := contracts.Query(ctx, deployOut.ContractAddr, contracts.QueryConfig{
-			Network:      networkConfig,
-			QueryPayload: `{"get_count": {}}`,
+		// check that the contract has the bank balance after instantiation
+
+		client := chain.Client()
+		contractBalance, err := client.BankQueryClient().Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: deployOut.ContractAddr,
+			Denom:   "core",
 		})
 		expect.NoError(err)
+		expect.NotNil(contractBalance.Balance)
+		expect.Equal("core", contractBalance.Balance.Denom)
+		expect.Equal("10000", contractBalance.Balance.Amount.String())
 
-		response := simpleStateQueryResponse{}
-		err = json.Unmarshal(queryOut.Result, &response)
-		expect.NoError(err)
-		expect.Equal(1337, response.Count)
+		// withdraw half of the coins to a test wallet, previously empty
+
+		withdrawMsg := fmt.Sprintf(
+			`{"withdraw": { "amount":"5000", "denom":"core", "recipient":"%s" }}`,
+			testWallet.Address().String(),
+		)
 
 		execOut, err := contracts.Execute(ctx, deployOut.ContractAddr, contracts.ExecuteConfig{
 			Network:        networkConfig,
 			From:           adminWallet,
-			ExecutePayload: `{"increment": {}}`,
+			ExecutePayload: withdrawMsg,
 		})
 		expect.NoError(err)
 		expect.NotEmpty(execOut.ExecuteTxHash)
 		expect.Equal(deployOut.ContractAddr, execOut.ContractAddress)
-		expect.Equal("try_increment", execOut.MethodExecuted)
+		expect.Equal("try_withdraw", execOut.MethodExecuted)
 
-		queryOut, err = contracts.Query(ctx, deployOut.ContractAddr, contracts.QueryConfig{
-			Network:      networkConfig,
-			QueryPayload: `{"get_count": {}}`,
+		// check that contract now has half of the coins
+
+		contractBalance, err = client.BankQueryClient().Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: deployOut.ContractAddr,
+			Denom:   "core",
 		})
 		expect.NoError(err)
+		expect.NotNil(contractBalance.Balance)
+		expect.Equal("core", contractBalance.Balance.Denom)
+		expect.Equal("5000", contractBalance.Balance.Amount.String())
 
-		response = simpleStateQueryResponse{}
-		err = json.Unmarshal(queryOut.Result, &response)
+		// check that the target test wallet has another half
+
+		testWalletBalance, err := client.BankQueryClient().Balance(ctx, &banktypes.QueryBalanceRequest{
+			Address: testWallet.Address().String(),
+			Denom:   "core",
+		})
 		expect.NoError(err)
-		expect.Equal(1338, response.Count)
+		expect.NotNil(testWalletBalance.Balance)
+		expect.Equal("core", testWalletBalance.Balance.Denom)
+		expect.Equal("5000", testWalletBalance.Balance.Amount.String())
+
+		// bank send invoked by the contract code succeeded! 〠
 	}
 
 	return initTestState, runTestFunc
 }
 
-type simpleStateQueryResponse struct {
-	Count int `json:"count"`
-}
+// type simpleStateQueryResponse struct {
+// 	Count int `json:"count"`
+// }

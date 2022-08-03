@@ -429,6 +429,12 @@ func buildSimTx(
 	return clientCtx.TxConfig.TxEncoder()(txb.GetTx())
 }
 
+// BankQueryClient returns a Bank module querying client, initialized
+// using the internal clientCtx.
+func (c Client) BankQueryClient() banktypes.QueryClient {
+	return c.bankQueryClient
+}
+
 // WASMQueryClient returns a WASM module querying client, initialized
 // using the internal clientCtx.
 func (c Client) WASMQueryClient() wasmtypes.QueryClient {
