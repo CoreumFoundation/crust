@@ -14,11 +14,11 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
 // StressConfig contains config for benchmarking the blockchain
@@ -36,7 +36,7 @@ type StressConfig struct {
 	NumOfTransactions int
 }
 
-type tx struct {
+type txRequest struct {
 	AccountIndex int
 	TxIndex      int
 	From         types.Wallet
@@ -47,10 +47,10 @@ type tx struct {
 // Stress runs a benchmark test
 func Stress(ctx context.Context, config StressConfig, network *app.Network) error {
 	log := logger.Get(ctx)
-	client := cored.NewClient(app.ChainID(config.ChainID), config.NodeAddress)
+	coredClient := client.New(app.ChainID(config.ChainID), config.NodeAddress)
 
 	log.Info("Preparing signed transactions...")
-	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, client, network)
+	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, coredClient, network)
 	if err != nil {
 		return err
 	}
@@ -93,12 +93,12 @@ func Stress(ctx context.Context, config StressConfig, network *app.Network) erro
 					spawn(fmt.Sprintf("account-%d", i), parallel.Continue, func(ctx context.Context) error {
 						for txIndex := 0; txIndex < config.NumOfTransactions; {
 							tx := accountTxs[txIndex]
-							result, err := client.Broadcast(ctx, tx)
+							result, err := coredClient.Broadcast(ctx, tx)
 							if err != nil {
 								if errors.Is(err, ctx.Err()) {
 									return err
 								}
-								expectedAccSeq, ok, err2 := cored.ExpectedSequenceFromError(err)
+								expectedAccSeq, ok, err2 := client.ExpectedSequenceFromError(err)
 								if err2 != nil {
 									return err2
 								}
@@ -140,37 +140,37 @@ func Stress(ctx context.Context, config StressConfig, network *app.Network) erro
 	return nil
 }
 
-func prepareTransactions(ctx context.Context, config StressConfig, client cored.Client, network *app.Network) ([][][]byte, []uint64, error) {
+func prepareTransactions(ctx context.Context, config StressConfig, coredClient client.Client, network *app.Network) ([][][]byte, []uint64, error) {
 	numOfAccounts := len(config.Accounts)
 	var signedTxs [][][]byte
 	var initialAccountSequences []uint64
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
-		queue := make(chan tx)
-		results := make(chan tx)
+		queue := make(chan txRequest)
+		results := make(chan txRequest)
 		for i := 0; i < runtime.NumCPU(); i++ {
 			spawn(fmt.Sprintf("signer-%d", i), parallel.Continue, func(ctx context.Context) error {
 				for {
 					select {
 					case <-ctx.Done():
 						return ctx.Err()
-					case tx, ok := <-queue:
+					case txReq, ok := <-queue:
 						if !ok {
 							return nil
 						}
-						tx.TxBytes = must.Bytes(client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
-							Base: cored.BaseInput{
-								Signer:   tx.From,
+						txReq.TxBytes = must.Bytes(coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+							Base: tx.BaseInput{
+								Signer:   txReq.From,
 								GasLimit: network.DeterministicGas().BankSend,
 								GasPrice: types.Coin{Amount: network.InitialGasPrice(), Denom: network.TokenSymbol()},
 							},
-							Sender:   tx.From,
-							Receiver: tx.To,
+							Sender:   txReq.From,
+							Receiver: txReq.To,
 							Amount:   types.Coin{Amount: big.NewInt(1), Denom: network.TokenSymbol()},
 						}))
 						select {
 						case <-ctx.Done():
 							return ctx.Err()
-						case results <- tx:
+						case results <- txReq:
 						}
 					}
 				}
@@ -187,13 +187,13 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 				}
 				toPrivateKey := config.Accounts[toPrivateKeyIndex]
 
-				accNum, accSeq, err := getAccountNumberSequence(ctx, client, fromPrivateKey.Address())
+				accNum, accSeq, err := getAccountNumberSequence(ctx, coredClient, fromPrivateKey.Address())
 				if err != nil {
 					return errors.WithStack(fmt.Errorf("fetching account number and sequence failed: %w", err))
 				}
 				initialAccountSequences = append(initialAccountSequences, accSeq)
 
-				tx := tx{
+				tx := txRequest{
 					AccountIndex: i,
 					From:         types.Wallet{Name: "sender", Key: fromPrivateKey, AccountNumber: accNum, AccountSequence: accSeq},
 					To:           types.Wallet{Name: "receiver", Key: toPrivateKey},
@@ -236,11 +236,11 @@ func prepareTransactions(ctx context.Context, config StressConfig, client cored.
 	return signedTxs, initialAccountSequences, nil
 }
 
-func getAccountNumberSequence(ctx context.Context, client cored.Client, accountAddress string) (uint64, uint64, error) {
+func getAccountNumberSequence(ctx context.Context, coredClient client.Client, accountAddress string) (uint64, uint64, error) {
 	var accNum, accSeq uint64
 	err := retry.Do(ctx, time.Second, func() error {
 		var err error
-		accNum, accSeq, err = client.GetNumberSequence(ctx, accountAddress)
+		accNum, accSeq, err = coredClient.GetNumberSequence(ctx, accountAddress)
 		if err != nil {
 			return retry.Retryable(errors.Wrap(err, "querying for account number and sequence failed"))
 		}
