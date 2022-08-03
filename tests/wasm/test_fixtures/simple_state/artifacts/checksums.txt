@@ -1,1 +1,0 @@
-8ad1893782caa7fec0847272bc0ba6d73562658ae5ded56e3a5cbe8976c52733  simple_state.wasm
