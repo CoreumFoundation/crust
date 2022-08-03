@@ -109,8 +109,6 @@ github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d h1:nalkkPQ
 github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d/go.mod h1:URdX5+vg25ts3aCh8H5IFZybJYKWhJHYMTnf+ULtoC4=
 github.com/CoreumFoundation/coreum v0.0.0-20220802125158-6367db253f6b h1:5XLPbyoO92nJ1rR4aVapCHIU+j5+v7zBWw5QS3CVmBI=
 github.com/CoreumFoundation/coreum v0.0.0-20220802125158-6367db253f6b/go.mod h1:5un1lhsvk53efKfAPez9M7Y6IWzvhk5FI4Pcsh/qQPg=
-github.com/CoreumFoundation/coreum-tools v0.2.0 h1:OTlvFXSBGXyzO0+nmNswLuftTBqyasQ00bh+MMW2/QY=
-github.com/CoreumFoundation/coreum-tools v0.2.0/go.mod h1:3zOaSSZQHpOj4iBbNqH0auelYVMeGrnZ4yzhTLU5pUw=
 github.com/CoreumFoundation/coreum-tools v0.2.1 h1:mns3e0lcY/+nRnpaxHo3KyKon+bveXFdczKJXLi3TvQ=
 github.com/CoreumFoundation/coreum-tools v0.2.1/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
