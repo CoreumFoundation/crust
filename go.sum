@@ -111,6 +111,8 @@ github.com/CoreumFoundation/coreum v0.0.0-20220802125158-6367db253f6b h1:5XLPbyo
 github.com/CoreumFoundation/coreum v0.0.0-20220802125158-6367db253f6b/go.mod h1:5un1lhsvk53efKfAPez9M7Y6IWzvhk5FI4Pcsh/qQPg=
 github.com/CoreumFoundation/coreum-tools v0.2.0 h1:OTlvFXSBGXyzO0+nmNswLuftTBqyasQ00bh+MMW2/QY=
 github.com/CoreumFoundation/coreum-tools v0.2.0/go.mod h1:3zOaSSZQHpOj4iBbNqH0auelYVMeGrnZ4yzhTLU5pUw=
+github.com/CoreumFoundation/coreum-tools v0.2.1 h1:mns3e0lcY/+nRnpaxHo3KyKon+bveXFdczKJXLi3TvQ=
+github.com/CoreumFoundation/coreum-tools v0.2.1/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.4.1/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
