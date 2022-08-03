@@ -10,7 +10,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum v0.0.0-20220802125158-6367db253f6b
-	github.com/CoreumFoundation/coreum-tools v0.1.6
+	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/jackc/pgx/v4 v4.16.1
