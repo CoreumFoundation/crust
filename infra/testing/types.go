@@ -3,10 +3,15 @@ package testing
 import (
 	"context"
 	"reflect"
-	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/pkg/errors"
+
+	coreumtests "github.com/CoreumFoundation/coreum/tests"
+	coreumtesting "github.com/CoreumFoundation/coreum/tests/testing"
+	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
 // PrepareFunc defines function which is executed before environment is deployed
@@ -49,8 +54,36 @@ func New(prepare PrepareFunc, run RunFunc) *T {
 	}
 }
 
-var funcToDescriptionRegEx = regexp.MustCompile(`(^.+/|\.func1$)`)
+// FromCoreum imports coreum tests
+func FromCoreum(mode infra.Mode) []*T {
+	tests := coreumtests.Tests()
+	node := mode[0].(cored.Cored)
+	chain := coreumtesting.Chain{
+		Network: node.Network(),
+		Client:  node.Client(),
+	}
+
+	var ts []*T
+	for _, testFunc := range tests.SingleChain {
+		prepareFunc, runFunc := testFunc(chain)
+		ts = append(ts, &T{
+			name:    funcToName(testFunc),
+			prepare: PrepareFunc(prepareFunc),
+			run: func(ctx context.Context, t *T) {
+				runFunc(ctx, t)
+			},
+		})
+	}
+	return ts
+}
 
 func funcToName(f interface{}) string {
-	return funcToDescriptionRegEx.ReplaceAllString(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), "")
+	parts := strings.Split(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), "/")
+	repoName := parts[2]
+	funcName := parts[len(parts)-1]
+
+	// FIXME(wojtek): Remove this once all the tests are migrated
+	funcName = strings.TrimSuffix(funcName, ".func1")
+
+	return repoName + "/" + funcName
 }
