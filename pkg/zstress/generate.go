@@ -10,11 +10,12 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
@@ -83,7 +84,7 @@ func Generate(cfg GenerateConfig) error {
 
 		err = network.FundAccount(stakerPublicKey, "100000000000000000000000"+network.TokenSymbol())
 		must.OK(err)
-		tx, err := client.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
+		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, validatorPublicKey, stakerPrivateKey, "100000000"+network.TokenSymbol())
 		must.OK(err)
 		network.AddGenesisTx(tx)
 	}

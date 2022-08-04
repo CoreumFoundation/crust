@@ -6,11 +6,14 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
+
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 )
@@ -32,10 +35,10 @@ func TestInitialBalance(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc
 			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
 
 			// Create client so we can send transactions and query state
-			client := chain.Client()
+			coredClient := chain.Client()
 
 			// Query for current balance available on the wallet
-			balances, err := client.QueryBankBalances(ctx, wallet)
+			balances, err := coredClient.QueryBankBalances(ctx, wallet)
 			require.NoError(t, err)
 
 			// Test that wallet owns expected balance
@@ -61,11 +64,11 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
 
 			// Create client so we can send transactions and query state
-			client := chain.Client()
+			coredClient := chain.Client()
 
 			// Transfer 10 cores from sender to receiver
-			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
-				Base: cored.BaseInput{
+			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: chain.Network().DeterministicGas().BankSend,
 					GasPrice: types.Coin{Amount: chain.Network().InitialGasPrice(), Denom: chain.Network().TokenSymbol()},
@@ -75,16 +78,16 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 				Amount:   types.Coin{Denom: chain.Network().TokenSymbol(), Amount: big.NewInt(10)},
 			})
 			require.NoError(t, err)
-			result, err := client.Broadcast(ctx, txBytes)
+			result, err := coredClient.Broadcast(ctx, txBytes)
 			require.NoError(t, err)
 
 			logger.Get(ctx).Info("Transfer executed", zap.String("txHash", result.TxHash))
 
 			// Query wallets for current balance
-			balancesSender, err := client.QueryBankBalances(ctx, sender)
+			balancesSender, err := coredClient.QueryBankBalances(ctx, sender)
 			require.NoError(t, err)
 
-			balancesReceiver, err := client.QueryBankBalances(ctx, receiver)
+			balancesReceiver, err := coredClient.QueryBankBalances(ctx, receiver)
 			require.NoError(t, err)
 
 			// Test that tokens disappeared from sender's wallet
