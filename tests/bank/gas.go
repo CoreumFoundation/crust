@@ -8,6 +8,8 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,13 +90,13 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain cored.Cored) (testing.Prepa
 				types.Coin{Amount: big.NewInt(1), Denom: chain.Network().TokenSymbol()},
 				// declaring gas limit as maxGasAssumed-1 means that tx must fail
 				maxGasAssumed-1, *chain.Network())
-			assert.Error(t, err)
+			assert.True(t, client.IsInsufficientFeeError(err))
 		}
 }
 
-func sendAndReturnGasUsed(ctx context.Context, client cored.Client, sender, receiver types.Wallet, toSend types.Coin, gasLimit uint64, network app.Network) (int64, error) {
-	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
-		Base: cored.BaseInput{
+func sendAndReturnGasUsed(ctx context.Context, coredClient client.Client, sender, receiver types.Wallet, toSend types.Coin, gasLimit uint64, network app.Network) (int64, error) {
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
 			Signer:   sender,
 			GasLimit: gasLimit,
 			GasPrice: types.Coin{Amount: network.InitialGasPrice(), Denom: network.TokenSymbol()},
@@ -107,7 +109,7 @@ func sendAndReturnGasUsed(ctx context.Context, client cored.Client, sender, rece
 	if err != nil {
 		return 0, err
 	}
-	result, err := client.Broadcast(ctx, txBytes)
+	result, err := coredClient.Broadcast(ctx, txBytes)
 	if err != nil {
 		return 0, err
 	}

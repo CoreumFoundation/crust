@@ -5,9 +5,12 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
+
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 )
@@ -24,17 +27,17 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 		func(ctx context.Context, t *testing.T) {
 			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
 
-			client := chain.Client()
+			coredClient := chain.Client()
 
-			accNum, accSeq, err := client.GetNumberSequence(ctx, sender.Key.Address())
+			accNum, accSeq, err := coredClient.GetNumberSequence(ctx, sender.Key.Address())
 			require.NoError(t, err)
 
 			sender.AccountNumber = accNum
 			sender.AccountSequence = accSeq + 1 // Intentionally set incorrect sequence number
 
 			// Broadcast a transaction using incorrect sequence number
-			txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
-				Base: cored.BaseInput{
+			txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+				Base: tx.BaseInput{
 					Signer:   sender,
 					GasLimit: chain.Network().DeterministicGas().BankSend,
 					GasPrice: types.Coin{Amount: chain.Network().InitialGasPrice(), Denom: chain.Network().TokenSymbol()},
@@ -44,11 +47,11 @@ func TestUnexpectedSequenceNumber(chain cored.Cored) (testing.PrepareFunc, testi
 				Amount:   types.Coin{Denom: chain.Network().TokenSymbol(), Amount: big.NewInt(1)},
 			})
 			require.NoError(t, err)
-			_, err = client.Broadcast(ctx, txBytes)
+			_, err = coredClient.Broadcast(ctx, txBytes)
 			require.Error(t, err) // We expect error
 
 			// We expect that we get an error saying what the correct sequence number should be
-			expectedSeq, ok, err2 := cored.ExpectedSequenceFromError(err)
+			expectedSeq, ok, err2 := client.ExpectedSequenceFromError(err)
 			require.NoError(t, err2)
 			if !ok {
 				require.Fail(t, "Unexpected error", err.Error())
