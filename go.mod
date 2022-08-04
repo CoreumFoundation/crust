@@ -9,7 +9,7 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220802125158-6367db253f6b
+	github.com/CoreumFoundation/coreum v0.0.0-20220803133000-3e0778020f8d
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/fsnotify/fsnotify v1.5.4
@@ -20,7 +20,6 @@ require (
 	github.com/tendermint/tendermint v0.34.19
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
-	google.golang.org/grpc v1.46.2
 )
 
 require (
@@ -183,6 +182,7 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
+	google.golang.org/grpc v1.46.2 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

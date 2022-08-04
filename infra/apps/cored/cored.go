@@ -18,6 +18,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
 
@@ -55,7 +56,7 @@ func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.App
 		clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
 
 		// FIXME: make clientCtx as private field of the client type
-		tx, err := client.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
+		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
 		must.OK(err)
 		network.AddGenesisTx(tx)
 	}
@@ -146,8 +147,8 @@ func (c Cored) AddWallet(balances string) types.Wallet {
 }
 
 // Client creates new client for cored blockchain
-func (c Cored) Client() Client {
-	return NewClient(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
+func (c Cored) Client() client.Client {
+	return client.New(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
