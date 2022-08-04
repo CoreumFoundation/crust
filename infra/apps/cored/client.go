@@ -9,8 +9,11 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/client"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -26,8 +29,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-
-	"github.com/CoreumFoundation/crust/pkg/retry"
 )
 
 const (
@@ -38,8 +39,7 @@ const (
 
 var expectedSequenceRegExp = regexp.MustCompile(`account sequence mismatch, expected (\d+), got \d+`)
 
-// NewClient creates new client for cored
-func NewClient(chainID string, addr string) Client {
+func NewClient(chainID app.ChainID, addr string) Client {
 	switch {
 	case strings.HasPrefix(addr, "tcp://"),
 		strings.HasPrefix(addr, "http://"),
@@ -48,9 +48,12 @@ func NewClient(chainID string, addr string) Client {
 		addr = "http://" + addr
 	}
 
-	rpcClient, err := client.NewClientFromNode(addr)
+	rpcClient, err := cosmosclient.NewClientFromNode(addr)
 	must.OK(err)
-	clientCtx := NewContext(chainID, rpcClient)
+	clientCtx := app.
+		NewDefaultClientContext().
+		WithChainID(string(chainID)).
+		WithClient(rpcClient)
 	return Client{
 		clientCtx:       clientCtx,
 		authQueryClient: authtypes.NewQueryClient(clientCtx),
@@ -61,7 +64,7 @@ func NewClient(chainID string, addr string) Client {
 
 // Client is the client for cored blockchain
 type Client struct {
-	clientCtx       client.Context
+	clientCtx       cosmosclient.Context
 	authQueryClient authtypes.QueryClient
 	bankQueryClient banktypes.QueryClient
 	wasmQueryClient wasmtypes.QueryClient
@@ -90,7 +93,7 @@ func (c Client) GetNumberSequence(ctx context.Context, address string) (uint64, 
 }
 
 // QueryBankBalances queries for bank balances owned by wallet
-func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[string]Coin, error) {
+func (c Client) QueryBankBalances(ctx context.Context, wallet types.Wallet) (map[string]types.Coin, error) {
 	requestCtx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
 
@@ -100,9 +103,13 @@ func (c Client) QueryBankBalances(ctx context.Context, wallet Wallet) (map[strin
 		return nil, errors.WithStack(err)
 	}
 
-	balances := map[string]Coin{}
+	balances := map[string]types.Coin{}
 	for _, b := range resp.Balances {
-		balances[b.Denom] = Coin{Amount: b.Amount.BigInt(), Denom: b.Denom}
+		coin, err := types.NewCoin(b.Amount.BigInt(), b.Denom)
+		if err != nil {
+			return nil, err
+		}
+		balances[b.Denom] = coin
 	}
 	return balances, nil
 }
@@ -178,13 +185,12 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	defer cancel()
 
 	res, err := c.clientCtx.Client.BroadcastTxSync(requestCtx, encodedTx)
-	// nolint:nestif // This code is still easy to understand
 	if err != nil {
 		if errors.Is(err, requestCtx.Err()) {
 			return BroadcastResult{}, errors.WithStack(err)
 		}
 
-		errRes := client.CheckTendermintError(err, encodedTx)
+		errRes := cosmosclient.CheckTendermintError(err, encodedTx)
 		if !isTxInMempool(errRes) {
 			return BroadcastResult{}, errors.WithStack(err)
 		}
@@ -192,11 +198,8 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 	} else {
 		txHash = res.Hash.String()
 		if res.Code != 0 {
-			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
-				return BroadcastResult{}, err
-			}
-			return BroadcastResult{}, errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
-				txHash, res.Code, res.Codespace, res.Log)
+			return BroadcastResult{}, errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log),
+				"transaction '%s' failed", txHash)
 		}
 	}
 
@@ -219,7 +222,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 			if errors.Is(err, requestCtx.Err()) {
 				return retry.Retryable(errors.WithStack(err))
 			}
-			if errRes := client.CheckTendermintError(err, encodedTx); errRes != nil {
+			if errRes := cosmosclient.CheckTendermintError(err, encodedTx); errRes != nil {
 				if isTxInMempool(errRes) {
 					return retry.Retryable(errors.WithStack(err))
 				}
@@ -229,11 +232,7 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 		}
 		if resultTx.TxResult.Code != 0 {
 			res := resultTx.TxResult
-			if err := checkSequence(res.Codespace, res.Code, res.Log); err != nil {
-				return err
-			}
-			return errors.Errorf("node returned non-zero code for tx '%s' (code: %d, codespace: %s): %s",
-				txHash, res.Code, res.Codespace, res.Log)
+			return errors.Wrapf(cosmoserrors.New(res.Codespace, res.Code, res.Log), "transaction '%s' failed", txHash)
 		}
 		if resultTx.Height == 0 {
 			return retry.Retryable(errors.Errorf("transaction '%s' hasn't been included in a block yet", txHash))
@@ -252,17 +251,17 @@ func (c Client) Broadcast(ctx context.Context, encodedTx []byte) (BroadcastResul
 
 // BaseInput holds input data common to every transaction
 type BaseInput struct {
-	Signer   Wallet
+	Signer   types.Wallet
 	GasLimit uint64
-	GasPrice Coin
+	GasPrice types.Coin
 	Memo     string
 }
 
 // TxBankSendInput holds input data for PrepareTxBankSend
 type TxBankSendInput struct {
-	Sender   Wallet
-	Receiver Wallet
-	Amount   Coin
+	Sender   types.Wallet
+	Receiver types.Wallet
+	Amount   types.Coin
 
 	Base BaseInput
 }
@@ -291,19 +290,7 @@ func (c Client) PrepareTxBankSend(ctx context.Context, input TxBankSendInput) ([
 	return c.Encode(signedTx), nil
 }
 
-func isTxInMempool(errRes *sdk.TxResponse) bool {
-	if errRes == nil {
-		return false
-	}
-	return isSDKErrorResult(errRes.Codespace, errRes.Code, cosmoserrors.ErrTxInMempoolCache)
-}
-
-func isSDKErrorResult(codespace string, code uint32, sdkErr *cosmoserrors.Error) bool {
-	return codespace == sdkErr.Codespace() &&
-		code == sdkErr.ABCICode()
-}
-
-func signTx(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
+func signTx(clientCtx cosmosclient.Context, input BaseInput, msgs ...sdk.Msg) (authsigning.Tx, error) {
 	signer := input.Signer
 
 	privKey := &cosmossecp256k1.PrivKey{Key: signer.Key}
@@ -329,6 +316,7 @@ func signTx(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsig
 		Sequence:      signer.AccountSequence,
 	}
 	sigData := &signing.SingleSignatureData{
+		//nolint:nosnakecase // MixedCap can't be forced on imported constants
 		SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 		Signature: nil,
 	}
@@ -339,6 +327,7 @@ func signTx(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsig
 	}
 	must.OK(txBuilder.SetSignatures(sig))
 
+	//nolint:nosnakecase // MixedCap can't be forced on imported constants
 	bytesToSign := must.Bytes(clientCtx.TxConfig.SignModeHandler().GetSignBytes(signing.SignMode_SIGN_MODE_DIRECT, signerData, txBuilder.GetTx()))
 	sigBytes, err := privKey.Sign(bytesToSign)
 	must.OK(err)
@@ -350,47 +339,55 @@ func signTx(clientCtx client.Context, input BaseInput, msgs ...sdk.Msg) (authsig
 	return txBuilder.GetTx(), nil
 }
 
-type sequenceError struct {
-	expectedSequence uint64
-	message          string
+func isTxInMempool(errRes *sdk.TxResponse) bool {
+	if errRes == nil {
+		return false
+	}
+	return isSDKErrorResult(errRes.Codespace, errRes.Code, cosmoserrors.ErrTxInMempoolCache)
 }
 
-func (e sequenceError) Error() string {
-	return e.message
+func isSDKErrorResult(codespace string, code uint32, expectedSDKError *cosmoserrors.Error) bool {
+	return codespace == expectedSDKError.Codespace() &&
+		code == expectedSDKError.ABCICode()
 }
 
-func checkSequence(codespace string, code uint32, log string) error {
-	// Cosmos SDK doesn't return expected sequence number as a parameter from RPC call,
-	// so we must parse the error message in a hacky way.
-
-	if !isSDKErrorResult(codespace, code, cosmoserrors.ErrWrongSequence) {
+func asSDKError(err error, expectedSDKErr *cosmoserrors.Error) *cosmoserrors.Error {
+	var sdkErr *cosmoserrors.Error
+	if !errors.As(err, &sdkErr) || !isSDKErrorResult(sdkErr.Codespace(), sdkErr.ABCICode(), expectedSDKErr) {
 		return nil
 	}
+	return sdkErr
+}
+
+// ExpectedSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
+func ExpectedSequenceFromError(err error) (uint64, bool, error) {
+	sdkErr := asSDKError(err, cosmoserrors.ErrWrongSequence)
+	if sdkErr == nil {
+		return 0, false, nil
+	}
+
+	log := sdkErr.Error()
 	matches := expectedSequenceRegExp.FindStringSubmatch(log)
 	if len(matches) != 2 {
-		return errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
+		return 0, false, errors.Errorf("cosmos sdk hasn't returned expected sequence number, log mesage received: %s", log)
 	}
 	expectedSequence, err := strconv.ParseUint(matches[1], 10, 64)
 	if err != nil {
-		return errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
+		return 0, false, errors.Wrapf(err, "can't parse expected sequence number, log mesage received: %s", log)
 	}
-	return errors.WithStack(sequenceError{message: log, expectedSequence: expectedSequence})
+	return expectedSequence, true, nil
 }
 
-// FetchSequenceFromError checks if error is related to account sequence mismatch, and returns expected account sequence
-func FetchSequenceFromError(err error) (uint64, bool) {
-	var seqErr sequenceError
-	if errors.As(err, &seqErr) {
-		return seqErr.expectedSequence, true
-	}
-	return 0, false
+// IsInsufficientFeeError returns true if error was caused by insufficient fee provided with the transaction
+func IsInsufficientFeeError(err error) bool {
+	return asSDKError(err, cosmoserrors.ErrInsufficientFee) != nil
 }
 
 // buildSimTx creates an unsigned tx with an empty single signature and returns
 // the encoded transaction or an error if the unsigned transaction cannot be
 // built.
 func buildSimTx(
-	clientCtx client.Context,
+	clientCtx cosmosclient.Context,
 	base BaseInput,
 	msgs ...sdk.Msg,
 ) ([]byte, error) {

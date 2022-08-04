@@ -10,15 +10,19 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
-	"github.com/CoreumFoundation/crust/pkg/retry"
 	"github.com/CoreumFoundation/crust/pkg/rnd"
 )
 
@@ -26,11 +30,11 @@ import (
 const AppType infra.AppType = "cored"
 
 // New creates new cored app
-func New(name string, config infra.Config, genesis *Genesis, appInfo *infra.AppInfo, ports Ports, validator bool, rootNode *Cored) Cored {
+func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.AppInfo, ports Ports, validator bool, rootNode *Cored) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
-	walletKeys := map[string]Secp256k1PrivateKey{
+	walletKeys := map[string]types.Secp256k1PrivateKey{
 		"alice":   AlicePrivKey,
 		"bob":     BobPrivKey,
 		"charlie": CharliePrivKey,
@@ -41,29 +45,36 @@ func New(name string, config infra.Config, genesis *Genesis, appInfo *infra.AppI
 		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
-		stakerPubKey, stakerPrivKey := GenerateSecp256k1Key()
+		stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
 
 		validatorPrivateKey = valPrivateKey
 		walletKeys["staker"] = stakerPrivKey
 
-		genesis.AddWallet(stakerPubKey, "100000000000000000000000core")
-		genesis.AddValidator(valPublicKey, stakerPrivKey, "100000000core")
+		must.OK(network.FundAccount(stakerPubKey, "100000000000000000000000"+network.TokenSymbol()))
+
+		clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
+
+		// FIXME: make clientCtx as private field of the client type
+		tx, err := client.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
+		must.OK(err)
+		network.AddGenesisTx(tx)
 	}
 
-	return Cored{
+	cored := Cored{
 		name:                name,
-		homeDir:             config.AppDir + "/" + name,
-		config:              config,
+		homeDir:             filepath.Join(cfg.AppDir, name, string(network.ChainID())),
+		config:              cfg,
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
-		genesis:             genesis,
+		network:             network,
 		appInfo:             appInfo,
 		ports:               ports,
 		rootNode:            rootNode,
 		mu:                  &sync.RWMutex{},
 		walletKeys:          walletKeys,
 	}
+	return cored
 }
 
 // Cored represents cored
@@ -74,13 +85,13 @@ type Cored struct {
 	nodeID              string
 	nodePrivateKey      ed25519.PrivateKey
 	validatorPrivateKey ed25519.PrivateKey
-	genesis             *Genesis
+	network             *app.Network
 	appInfo             *infra.AppInfo
 	ports               Ports
 	rootNode            *Cored
 
 	mu         *sync.RWMutex
-	walletKeys map[string]Secp256k1PrivateKey
+	walletKeys map[string]types.Secp256k1PrivateKey
 }
 
 // Type returns type of application
@@ -103,9 +114,9 @@ func (c Cored) Ports() Ports {
 	return c.ports
 }
 
-// ChainID returns ID of the chain
-func (c Cored) ChainID() string {
-	return c.genesis.ChainID()
+// Network returns the network config used in the chain
+func (c Cored) Network() *app.Network {
+	return c.network
 }
 
 // Info returns deployment info
@@ -114,9 +125,10 @@ func (c Cored) Info() infra.DeploymentInfo {
 }
 
 // AddWallet adds wallet to genesis block and local keystore
-func (c Cored) AddWallet(balances string) Wallet {
-	pubKey, privKey := GenerateSecp256k1Key()
-	c.genesis.AddWallet(pubKey, balances)
+func (c Cored) AddWallet(balances string) types.Wallet {
+	pubKey, privKey := types.GenerateSecp256k1Key()
+	err := c.network.FundAccount(pubKey, balances)
+	must.OK(err)
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -130,12 +142,12 @@ func (c Cored) AddWallet(balances string) Wallet {
 	}
 
 	c.walletKeys[name] = privKey
-	return Wallet{Name: name, Key: privKey}
+	return types.Wallet{Name: name, Key: privKey}
 }
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() Client {
-	return NewClient(c.genesis.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
+	return NewClient(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -194,11 +206,14 @@ func (c Cored) Deployment() infra.Deployment {
 				args := []string{
 					"start",
 					"--home", targets.AppHomeDir,
+					"--log_level", "debug",
+					"--trace",
 					"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.ports.RPC),
 					"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.ports.P2P),
 					"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.GRPC),
 					"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.GRPCWeb),
 					"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.ports.PProf),
+					"--chain-id", string(c.network.ChainID()),
 				}
 				if c.rootNode != nil {
 					args = append(args,
@@ -213,17 +228,17 @@ func (c Cored) Deployment() infra.Deployment {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				NodeConfig{
+				nodeConfig := app.NodeConfig{
 					Name:           c.name,
 					PrometheusPort: c.ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,
 					ValidatorKey:   c.validatorPrivateKey,
-				}.Save(c.homeDir)
+				}
+				SaveConfig(nodeConfig, c.homeDir)
 
-				AddKeysToStore(c.homeDir, c.walletKeys)
+				addKeysToStore(c.homeDir, c.walletKeys)
 
-				c.genesis.Save(c.homeDir)
-				return nil
+				return c.network.SaveGenesis(c.homeDir)
 			},
 			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 				return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
@@ -245,7 +260,7 @@ func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
 	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
-	OPTS="$OPTS --chain-id ""` + c.genesis.ChainID() + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
+	OPTS="$OPTS --chain-id ""` + string(c.network.ChainID()) + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
 fi
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""

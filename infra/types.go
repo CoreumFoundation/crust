@@ -280,7 +280,7 @@ type AppBase struct {
 	ConfigureFunc func(ctx context.Context, deployment DeploymentInfo) error
 }
 
-func (app AppBase) preprocess(ctx context.Context, config Config, target AppTarget) error {
+func (app AppBase) preprocess(ctx context.Context, config Config) error {
 	must.OK(os.MkdirAll(config.AppDir+"/"+app.Name, 0o700))
 
 	if len(app.Requires.Dependencies) > 0 {
@@ -331,7 +331,7 @@ func (app Binary) Dependencies() []HealthCheckCapable {
 
 // Deploy deploys binary to the target
 func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
-	if err := app.AppBase.preprocess(ctx, config, target); err != nil {
+	if err := app.AppBase.preprocess(ctx, config); err != nil {
 		return DeploymentInfo{}, err
 	}
 
@@ -374,7 +374,7 @@ func (app Container) Dependencies() []HealthCheckCapable {
 
 // Deploy deploys container to the target
 func (app Container) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
-	if err := app.AppBase.preprocess(ctx, config, target); err != nil {
+	if err := app.AppBase.preprocess(ctx, config); err != nil {
 		return DeploymentInfo{}, err
 	}
 
