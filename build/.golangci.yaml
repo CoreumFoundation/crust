@@ -51,6 +51,7 @@ linters:
     - exhaustruct
     - errchkjson
     - forcetypeassert
+    - tagliatelle
     # deprecated:
     - interfacer
     - golint

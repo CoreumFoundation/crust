@@ -24,7 +24,7 @@ const (
 	defaultTemplateVersion = "1.0"
 )
 
-type RunE func(cmd *cobra.Command, args []string) error
+type runE func(cmd *cobra.Command, args []string) error
 
 func main() {
 	cmd.SetAccountPrefixes("core")
@@ -75,7 +75,7 @@ func main() {
 		rootCmd.AddCommand(buildCmd)
 
 		var deployConfig contracts.DeployConfig
-		var keyringParams KeyringParams
+		var keyringParams keyringParams
 		deployCmd := &cobra.Command{
 			Use:     "deploy [wasm-artefact] [workspace-dir]",
 			Aliases: []string{"d"},
@@ -116,23 +116,23 @@ func main() {
 	})
 }
 
-var contractsRootRunE RunE = func(cmd *cobra.Command, args []string) error {
+var contractsRootRunE runE = func(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		cmd.Help()
+		_ = cmd.Help()
 		os.Exit(0)
 	}
 
 	return nil
 }
 
-func initRunE(ctx context.Context, initConfig *contracts.InitConfig) RunE {
+func initRunE(ctx context.Context, initConfig *contracts.InitConfig) runE {
 	return func(cmd *cobra.Command, args []string) error {
 		initConfig.TargetDir = args[0]
 		return contracts.Init(ctx, *initConfig)
 	}
 }
 
-func testRunE(ctx context.Context, testConfig *contracts.TestConfig) RunE {
+func testRunE(ctx context.Context, testConfig *contracts.TestConfig) runE {
 	return func(cmd *cobra.Command, args []string) error {
 		var targetDir string
 		if len(args) > 0 {
@@ -147,7 +147,7 @@ func testRunE(ctx context.Context, testConfig *contracts.TestConfig) RunE {
 	}
 }
 
-func buildRunE(ctx context.Context, buildConfig *contracts.BuildConfig) RunE {
+func buildRunE(ctx context.Context, buildConfig *contracts.BuildConfig) runE {
 	return func(cmd *cobra.Command, args []string) error {
 		var targetDir string
 		if len(args) > 0 {
@@ -166,44 +166,47 @@ func buildRunE(ctx context.Context, buildConfig *contracts.BuildConfig) RunE {
 func deployRunE(
 	ctx context.Context,
 	deployConfig *contracts.DeployConfig,
-	keyringParams *KeyringParams,
-) RunE {
+	keyringParams *keyringParams,
+) runE {
 	return func(cmd *cobra.Command, args []string) error {
 		switch len(args) {
 		case 2:
-			if isDir(args[0]) {
+			switch {
+			case isDir(args[0]):
 				deployConfig.WorkspaceDir = args[0]
-			} else if isFile(args[0]) {
+			case isFile(args[0]):
 				deployConfig.ArtefactPath = args[0]
-			} else {
+			default:
 				err := errors.Errorf("path specified but not found: %s", args[0])
 				return err
 			}
 
-			if isDir(args[1]) {
+			switch {
+			case isDir(args[1]):
 				if len(deployConfig.WorkspaceDir) > 0 {
 					err := errors.Errorf("both paths specified are dirs, need only one")
 					return err
 				}
 
 				deployConfig.WorkspaceDir = args[1]
-			} else if isFile(args[1]) {
+			case isFile(args[1]):
 				if len(deployConfig.ArtefactPath) > 0 {
 					err := errors.Errorf("both paths specified are files, need only one")
 					return err
 				}
 
 				deployConfig.ArtefactPath = args[1]
-			} else {
+			default:
 				err := errors.Errorf("path specified but not found: %s", args[1])
 				return err
 			}
 		case 1:
-			if isDir(args[0]) {
+			switch {
+			case isDir(args[0]):
 				deployConfig.WorkspaceDir = args[0]
-			} else if isFile(args[0]) {
+			case isFile(args[0]):
 				deployConfig.ArtefactPath = args[0]
-			} else {
+			default:
 				err := errors.Errorf("path specified but not found: %s", args[0])
 				return err
 			}
@@ -238,8 +241,8 @@ func deployRunE(
 func executeRunE(
 	ctx context.Context,
 	execConfig *contracts.ExecuteConfig,
-	keyringParams *KeyringParams,
-) RunE {
+	keyringParams *keyringParams,
+) runE {
 	return func(cmd *cobra.Command, args []string) error {
 		var contractAddress string
 
@@ -280,7 +283,7 @@ func executeRunE(
 func queryRunE(
 	ctx context.Context,
 	queryConfig *contracts.QueryConfig,
-) RunE {
+) runE {
 	return func(cmd *cobra.Command, args []string) error {
 		var contractAddress string
 
@@ -451,7 +454,7 @@ func addExecuteFlags(execCmd *cobra.Command, execConfig *contracts.ExecuteConfig
 	)
 }
 
-type KeyringParams struct {
+type keyringParams struct {
 	KeyringDir     string
 	KeyringAppName string
 	KeyringBackend string
@@ -461,52 +464,53 @@ type KeyringParams struct {
 	UseLedger      bool
 }
 
-func addTxKeyringFlags(txCmd *cobra.Command, keyringParams *KeyringParams) {
+func addTxKeyringFlags(txCmd *cobra.Command, params *keyringParams) {
 	txCmd.Flags().StringVar(
-		&keyringParams.KeyringDir,
+		&params.KeyringDir,
 		"keyring-dir",
 		defaultString("CRUST_KEYRING_DIR", ""),
 		`Sets keyring path in the filesystem, useful when CRUST_KEYRING_BACKEND is "file".`,
 	)
 	txCmd.Flags().StringVar(
-		&keyringParams.KeyringAppName,
+		&params.KeyringAppName,
 		"keyring-app-name",
 		defaultString("CRUST_KEYRING_APP_NAME", "cored"),
 		"Sets keyring application name (used by Cosmos to separate keyrings)",
 	)
 	txCmd.Flags().StringVar(
-		&keyringParams.KeyringBackend,
+		&params.KeyringBackend,
 		"keyring-backend",
 		defaultString("CRUST_KEYRING_BACKEND", "test"),
 		"Sets the keyring backend. Expected values: test, file, os.",
 	)
 	txCmd.Flags().StringVar(
-		&keyringParams.KeyFrom,
+		&params.KeyFrom,
 		"key-from",
 		defaultString("CRUST_KEYRING_KEY_FROM", ""),
 		"Sets the key name to use for signing. Must exist in the provided keyring.",
 	)
 	txCmd.Flags().StringVar(
-		&keyringParams.KeyPassphrase,
+		&params.KeyPassphrase,
 		"key-passphrase",
 		defaultString("CRUST_KEYRING_KEY_PASSPHRASE", ""),
 		"Sets the passphrase for keyring files. Insecure option, use for testing only. If not set, will read from stdin.",
 	)
 	txCmd.Flags().StringVar(
-		&keyringParams.PrivKeyHex,
+		&params.PrivKeyHex,
 		"key-priv-hex",
 		defaultString("CRUST_KEYRING_PRIVKEY_HEX", ""),
 		"Specify a private key as plaintext hex. Insecure option, use for testing only.",
 	)
 	txCmd.Flags().BoolVar(
-		&keyringParams.UseLedger,
+		&params.UseLedger,
 		"use-ledger",
 		toBool("CRUST_KEYRING_USE_LEDGER", false),
 		"Set the option to use hardware wallet, if available on the system.",
 	)
 }
 
-func (k *KeyringParams) Opts() (opts []keyring.ConfigOpt) {
+// Opts converts keyring params into list of keyring config opts.
+func (k *keyringParams) Opts() (opts []keyring.ConfigOpt) {
 	if len(k.KeyringDir) > 0 {
 		opts = append(opts, keyring.WithKeyringDir(k.KeyringDir))
 	}
@@ -563,8 +567,10 @@ func toBool(env string, def bool) bool {
 	switch strings.ToLower(os.Getenv(env)) {
 	case "1", "y", "yes", "true":
 		return true
-	default:
+	case "0", "n", "no", "false":
 		return false
+	default:
+		return def
 	}
 }
 

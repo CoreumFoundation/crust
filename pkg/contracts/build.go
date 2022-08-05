@@ -93,22 +93,6 @@ func runCargoCheck(ctx context.Context, workspaceDir string) error {
 	return nil
 }
 
-// runDebugBuild builds the debug variant of the contract for the wasm target
-func runDebugBuild(ctx context.Context, workspaceDir string) error {
-	cmdArgs := []string{
-		"build", "--debug", "--target", wasmTarget,
-	}
-	cmd := exec.Command("cargo", cmdArgs...)
-	cmd.Dir = workspaceDir
-
-	if err := libexec.Exec(ctx, cmd); err != nil {
-		err = errors.Wrap(err, "errors during cargo wasm build debug")
-		return err
-	}
-
-	return nil
-}
-
 // runReleaseBuild builds the release variant of the contract for the wasm target
 func runReleaseBuild(ctx context.Context, workspaceDir string) error {
 	cmdArgs := []string{

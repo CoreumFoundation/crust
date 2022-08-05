@@ -68,6 +68,30 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 	}
 
 	runTestFunc := func(ctx context.Context, t *testing.T) {
+		testBankSendContract(
+			chain,
+			adminWallet,
+			testWallet,
+			networkConfig,
+			stagedContractPath,
+			nativeDenom,
+			nativeTokens,
+		)(ctx, t)
+	}
+
+	return initTestState, runTestFunc
+}
+
+func testBankSendContract(
+	chain cored.Cored,
+	adminWallet types.Wallet,
+	testWallet types.Wallet,
+	networkConfig contracts.ChainConfig,
+	stagedContractPath string,
+	nativeDenom string,
+	nativeTokens func(string) string,
+) func(context.Context, *testing.T) {
+	return func(ctx context.Context, t *testing.T) {
 		expect := require.New(t)
 
 		testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
@@ -154,10 +178,4 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 
 		// bank send invoked by the contract code succeeded! 〠
 	}
-
-	return initTestState, runTestFunc
 }
-
-// type simpleStateQueryResponse struct {
-// 	Count int `json:"count"`
-// }

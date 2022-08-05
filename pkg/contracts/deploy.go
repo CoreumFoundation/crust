@@ -173,38 +173,8 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 		config.ArtefactPath = artefactPath
 	}
 
-	artefactBase := filepath.Base(config.ArtefactPath)
-	contractName := strings.TrimSuffix(artefactBase, filepath.Ext(artefactBase))
-	deployLog := log.With(zap.String("name", contractName))
-
-	wasmData, err := ioutil.ReadFile(config.ArtefactPath)
+	wasmData, codeDataHash, err := loadContractCode(config)
 	if err != nil {
-		err = errors.Wrap(err, "failed to read artefact data from the fs")
-		return nil, err
-	}
-
-	var codeDataHash string
-	if ioutils.IsWasm(wasmData) {
-		codeDataHash = hashContractCode(wasmData)
-		wasmData, err = ioutils.GzipIt(wasmData)
-
-		if err != nil {
-			err = errors.Wrap(err, "failed to gzip the wasm data")
-			return nil, err
-		}
-	} else if ioutils.IsGzip(wasmData) {
-		srcWasmData, err := ioutils.Uncompress(wasmData, uint64(wasmtypes.MaxWasmSize))
-		if err != nil {
-			err = errors.Wrap(err, "failed to uncompress the gzip data")
-			return nil, err
-		} else if !ioutils.IsWasm(srcWasmData) {
-			err := errors.New("invalid input file. Use wasm binary or gzip of a wasm binary")
-			return nil, err
-		}
-
-		codeDataHash = hashContractCode(srcWasmData)
-	} else {
-		err := errors.New("invalid input file. Use wasm binary or gzip")
 		return nil, err
 	}
 
@@ -212,56 +182,13 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 		CodeID: config.CodeID,
 	}
 	if config.CodeID == 0 {
-		deployLog.Sugar().
-			With(zap.String("from", config.From.Address().String())).
-			Infof("Deploying %s on chain", artefactBase)
-
-		var accessConfig *wasmtypes.AccessConfig
-		if config.InstantiationConfig.accessTypeParsed != wasmtypes.AccessTypeUnspecified {
-			accessConfig = &wasmtypes.AccessConfig{
-				Permission: config.InstantiationConfig.accessTypeParsed,
-				Address:    config.InstantiationConfig.accessAddressParsed.String(),
-			}
-		}
-
-		codeID, storeTxHash, err := runContractStore(
-			ctx,
-			config.Network,
-			config.From,
-			wasmData,
-			accessConfig,
-		)
-		if err != nil {
-			err = errors.Wrap(err, "failed to run contract code store")
+		if out, err = deployCode(ctx, config, out, codeDataHash, wasmData); err != nil {
 			return nil, err
 		}
 
-		config.CodeID = codeID
-		out.CodeID = codeID
-		out.StoreTxHash = storeTxHash
-		out.Creator = config.From.Address().String()
-		out.CodeDataHash = codeDataHash
-	} else {
-		// codeID has been provided by the config, let's validate the code on chain
-
-		info, err := queryContractCodeInfo(ctx, config.Network, config.CodeID)
-		if err != nil {
-			err = errors.Wrap(err, "failed to check contract code on chain")
-			return nil, err
-		}
-
-		if config.CodeID == info.CodeID {
-			if codeDataHash != info.CodeDataHash {
-				err := errors.Errorf("code hash mismatch: expected %s, chain has %s",
-					codeDataHash, info.CodeDataHash,
-				)
-
-				return nil, err
-			}
-		}
-
-		out.Creator = info.Creator
-		out.CodeDataHash = info.CodeDataHash
+		config.CodeID = out.CodeID
+	} else if out, err = checkCode(ctx, config, out, codeDataHash); err != nil {
+		return nil, err
 	}
 
 	if !config.InstantiationConfig.NeedInstantiation {
@@ -269,13 +196,124 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 		return out, nil
 	}
 
+	if len(config.InstantiationConfig.Label) == 0 {
+		artefactBase := filepath.Base(config.ArtefactPath)
+		contractName := strings.TrimSuffix(artefactBase, filepath.Ext(artefactBase))
+		config.InstantiationConfig.Label = contractName
+	}
+
+	return instantiateContract(ctx, config, out)
+}
+
+func loadContractCode(config DeployConfig) (wasmData []byte, codeDataHash string, err error) {
+	wasmData, err = ioutil.ReadFile(config.ArtefactPath)
+	if err != nil {
+		err = errors.Wrap(err, "failed to read artefact data from the fs")
+		return nil, "", err
+	}
+
+	switch {
+	case ioutils.IsWasm(wasmData):
+		codeDataHash = hashContractCode(wasmData)
+		wasmData, err = ioutils.GzipIt(wasmData)
+
+		if err != nil {
+			err = errors.Wrap(err, "failed to gzip the wasm data")
+			return nil, "", err
+		}
+	case ioutils.IsGzip(wasmData):
+		srcWasmData, err := ioutils.Uncompress(wasmData, uint64(wasmtypes.MaxWasmSize))
+		if err != nil {
+			err = errors.Wrap(err, "failed to uncompress the gzip data")
+			return nil, "", err
+		} else if !ioutils.IsWasm(srcWasmData) {
+			err := errors.New("invalid input file. Use wasm binary or gzip of a wasm binary")
+			return nil, "", err
+		}
+
+		codeDataHash = hashContractCode(srcWasmData)
+	default:
+		err := errors.New("invalid input file. Use wasm binary or gzip")
+		return nil, "", err
+	}
+
+	return wasmData, codeDataHash, err
+}
+
+func deployCode(
+	ctx context.Context,
+	config DeployConfig,
+	out *DeployOutput,
+	codeDataHash string,
+	wasmData []byte,
+) (*DeployOutput, error) {
+	artefactBase := filepath.Base(config.ArtefactPath)
+	contractName := strings.TrimSuffix(artefactBase, filepath.Ext(artefactBase))
+
+	deployLog := logger.Get(ctx).With(zap.String("name", contractName))
+	deployLog.Sugar().
+		With(zap.String("from", config.From.Address().String())).
+		Infof("Deploying %s on chain", artefactBase)
+
+	var accessConfig *wasmtypes.AccessConfig
+	if config.InstantiationConfig.accessTypeParsed != wasmtypes.AccessTypeUnspecified {
+		accessConfig = &wasmtypes.AccessConfig{
+			Permission: config.InstantiationConfig.accessTypeParsed,
+			Address:    config.InstantiationConfig.accessAddressParsed.String(),
+		}
+	}
+
+	codeID, storeTxHash, err := runContractStore(
+		ctx,
+		config.Network,
+		config.From,
+		wasmData,
+		accessConfig,
+	)
+	if err != nil {
+		err = errors.Wrap(err, "failed to run contract code store")
+		return nil, err
+	}
+
+	out.CodeID = codeID
+	out.StoreTxHash = storeTxHash
+	out.Creator = config.From.Address().String()
+	out.CodeDataHash = codeDataHash
+	return out, nil
+}
+
+func checkCode(
+	ctx context.Context,
+	config DeployConfig,
+	out *DeployOutput,
+	codeDataHash string,
+) (*DeployOutput, error) {
+	info, err := queryContractCodeInfo(ctx, config.Network, config.CodeID)
+	if err != nil {
+		err = errors.Wrap(err, "failed to check contract code on chain")
+		return nil, err
+	}
+
+	if config.CodeID == info.CodeID {
+		if codeDataHash != info.CodeDataHash {
+			err := errors.Errorf("code hash mismatch: expected %s, chain has %s",
+				codeDataHash, info.CodeDataHash,
+			)
+
+			return nil, err
+		}
+	}
+
+	out.Creator = info.Creator
+	out.CodeDataHash = info.CodeDataHash
+
+	return out, nil
+}
+
+func instantiateContract(ctx context.Context, config DeployConfig, out *DeployOutput) (*DeployOutput, error) {
 	var adminAddress *sdk.AccAddress
 	if config.InstantiationConfig.NeedAdmin {
 		adminAddress = &config.InstantiationConfig.adminAddressParsed
-	}
-
-	if len(config.InstantiationConfig.Label) == 0 {
-		config.InstantiationConfig.Label = contractName
 	}
 
 	contractAddr, initTxHash, err := runContractInstantiate(
@@ -299,15 +337,17 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 	return out, nil
 }
 
+// DeployOutput has the results of running the Deploy method.
 type DeployOutput struct {
 	Creator      string `json:"creator"`
-	CodeID       uint64 `json:"codeID"`
+	CodeID       uint64 `json:"codeId"`
 	ContractAddr string `json:"contractAddr,omitempty"`
 	CodeDataHash string `json:"codeDataHash,omitempty"`
 	StoreTxHash  string `json:"storeTxHash,omitempty"`
 	InitTxHash   string `json:"initTxHash,omitempty"`
 }
 
+// Validate checks the deployment config and loads some data.
 func (c *DeployConfig) Validate() error {
 	if len(c.ArtefactPath) == 0 && len(c.WorkspaceDir) == 0 {
 		err := errors.New("both ArtefactPath and WorkspaceDir are empty in the deployment config, either is required")
@@ -315,24 +355,12 @@ func (c *DeployConfig) Validate() error {
 	}
 
 	if len(c.InstantiationConfig.InstantiatePayload) > 0 {
-		if body := []byte(c.InstantiationConfig.InstantiatePayload); json.Valid(body) {
-			c.InstantiationConfig.instantiatePayloadBody = json.RawMessage(body)
-		} else {
-			payloadFilePath := c.InstantiationConfig.InstantiatePayload
-
-			body, err := ioutil.ReadFile(payloadFilePath)
-			if err != nil {
-				err = errors.Wrapf(err, "file specified for instantiate payload, but couldn't be read: %s", payloadFilePath)
-				return err
-			}
-
-			if !json.Valid(body) {
-				err = errors.Wrapf(err, "file specified for instantiate payload, but doesn't contain valid JSON: %s", payloadFilePath)
-				return err
-			}
-
-			c.InstantiationConfig.instantiatePayloadBody = json.RawMessage(body)
+		body, err := getPayloadBody(c.InstantiationConfig.InstantiatePayload)
+		if err != nil {
+			return err
 		}
+
+		c.InstantiationConfig.instantiatePayloadBody = body
 	}
 
 	if len(c.InstantiationConfig.Amount) > 0 {
@@ -399,6 +427,27 @@ func (c *DeployConfig) Validate() error {
 	return nil
 }
 
+func getPayloadBody(payloadPathOrBody string) (json.RawMessage, error) {
+	if body := []byte(payloadPathOrBody); json.Valid(body) {
+		return json.RawMessage(body), nil
+	}
+
+	payloadFilePath := payloadPathOrBody
+
+	body, err := ioutil.ReadFile(payloadFilePath)
+	if err != nil {
+		err = errors.Wrapf(err, "file specified for instantiate payload, but couldn't be read: %s", payloadFilePath)
+		return nil, err
+	}
+
+	if !json.Valid(body) {
+		err = errors.Wrapf(err, "file specified for instantiate payload, but doesn't contain valid JSON: %s", payloadFilePath)
+		return nil, err
+	}
+
+	return json.RawMessage(body), nil
+}
+
 func runContractStore(
 	ctx context.Context,
 	network ChainConfig,
@@ -424,14 +473,14 @@ func runContractStore(
 	if err != nil {
 		err = errors.Wrap(err, "failed to estimate gas for MsgStoreCode")
 		return 0, "", err
-	} else {
-		log.Info("Estimated gas limit",
-			zap.Int("bytecode_size", len(wasmData)),
-			zap.Uint64("gas_limit", gasLimit),
-		)
-
-		input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
 	}
+
+	log.Info("Estimated gas limit",
+		zap.Int("bytecode_size", len(wasmData)),
+		zap.Uint64("gas_limit", gasLimit),
+	)
+
+	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgStoreCode)
 	if err != nil {
@@ -506,14 +555,13 @@ func runContractInstantiate(
 	if err != nil {
 		err = errors.Wrap(err, "failed to estimate gas for MsgInstantiateContract")
 		return "", "", err
-	} else {
-		log.Info("Estimated gas limit",
-			zap.Int("contract_msg_size", len(initMsg)),
-			zap.Uint64("gas_limit", gasLimit),
-		)
-
-		input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
 	}
+
+	log.Info("Estimated gas limit",
+		zap.Int("contract_msg_size", len(initMsg)),
+		zap.Uint64("gas_limit", gasLimit),
+	)
+	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgInstantiateContract)
 	if err != nil {
@@ -549,7 +597,7 @@ func runContractInstantiate(
 	return contractAddr, txHash, nil
 }
 
-type ContractCodeInfo struct {
+type contractCodeInfo struct {
 	CodeID       uint64
 	Creator      string
 	CodeDataHash string
@@ -559,7 +607,7 @@ func queryContractCodeInfo(
 	ctx context.Context,
 	network ChainConfig,
 	codeID uint64,
-) (info *ContractCodeInfo, err error) {
+) (info *contractCodeInfo, err error) {
 	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
 
 	resp, err := chainClient.WASMQueryClient().Code(ctx, &wasmtypes.QueryCodeRequest{
@@ -576,7 +624,7 @@ func queryContractCodeInfo(
 		return nil, err
 	}
 
-	info = &ContractCodeInfo{
+	info = &contractCodeInfo{
 		CodeID:       resp.CodeID,
 		Creator:      resp.Creator,
 		CodeDataHash: resp.DataHash.String(),
@@ -589,11 +637,11 @@ func attrFromEvent(ev sdk.StringEvent, attr string) (value string, ok bool) {
 		if attrItem.Key == attr {
 			value = attrItem.Value
 			ok = true
-			return
+			return value, ok
 		}
 	}
 
-	return
+	return "", false
 }
 
 func checkWasmFile(path string) bool {
@@ -606,7 +654,6 @@ func checkWasmFile(path string) bool {
 }
 
 func hashContractCode(wasmData []byte) string {
-
 	h := sha256.Sum256(wasmData)
 	return fmt.Sprintf("%X", h[:])
 }

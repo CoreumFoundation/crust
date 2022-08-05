@@ -37,6 +37,7 @@ type ExecuteConfig struct {
 	executePayloadBody json.RawMessage
 }
 
+// ExecuteOutput contains the results of the contract method execution.
 type ExecuteOutput struct {
 	ContractAddress string `json:"contractAddress"`
 	MethodExecuted  string `json:"methodExecuted"`
@@ -108,14 +109,14 @@ func runContractExecution(
 	if err != nil {
 		err = errors.Wrap(err, "failed to estimate gas for MsgExecuteContract")
 		return "", "", err
-	} else {
-		log.Info("Estimated gas limit",
-			zap.Int("contract_msg_size", len(execMsg)),
-			zap.Uint64("gas_limit", gasLimit),
-		)
-
-		input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
 	}
+
+	log.Info("Estimated gas limit",
+		zap.Int("contract_msg_size", len(execMsg)),
+		zap.Uint64("gas_limit", gasLimit),
+	)
+
+	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgExecuteContract)
 	if err != nil {
@@ -147,6 +148,7 @@ func runContractExecution(
 	return methodName, txHash, nil
 }
 
+// Validate validates the contract execution config. May load some data from disk.
 func (c *ExecuteConfig) Validate() error {
 	if body := []byte(c.ExecutePayload); json.Valid(body) {
 		c.executePayloadBody = json.RawMessage(body)

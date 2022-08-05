@@ -23,6 +23,7 @@ type QueryConfig struct {
 	queryPayloadBody json.RawMessage
 }
 
+// QueryOutput contains results of contract querying.
 type QueryOutput struct {
 	ContractAddress string          `json:"contractAddress"`
 	Result          json.RawMessage `json:"queryResult"`
@@ -82,6 +83,7 @@ func runContractQuery(
 	return json.RawMessage(resp.Data), nil
 }
 
+// Validate validates the contract query method config.
 func (c *QueryConfig) Validate() error {
 	if body := []byte(c.QueryPayload); json.Valid(body) {
 		c.queryPayloadBody = json.RawMessage(body)

@@ -27,6 +27,7 @@ type InitConfig struct {
 	ProjectName string
 }
 
+// Sanitize filles the InitConfig with sane defaults.
 func (c InitConfig) Sanitize() InitConfig {
 	if len(c.ProjectName) == 0 {
 		c.ProjectName = "new-project"

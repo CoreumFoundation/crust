@@ -39,8 +39,8 @@ var (
 )
 
 var (
-	toolIsNotInstalled  = errors.New("tool is not installed")
-	crateIsNotInstalled = errors.New("crate is not installed")
+	errToolIsNotInstalled  = errors.New("tool is not installed")
+	errCrateIsNotInstalled = errors.New("crate is not installed")
 )
 
 func ensureInitTools(ctx context.Context) error {
@@ -115,10 +115,15 @@ func ensureRustToolchain(ctx context.Context) error {
 	if _, err := exec.LookPath("cargo"); err != nil {
 		err = errors.Wrap(err, "cargo command is not available in PATH")
 		return err
-	} else if cargoVersion, err := readCargoVersion(ctx); err != nil {
+	}
+
+	cargoVersion, err := readCargoVersion(ctx)
+	if err != nil {
 		err = errors.Wrap(err, "failed to read cargo version")
 		return err
-	} else if len(cargoVersion) == 0 {
+	}
+
+	if len(cargoVersion) == 0 {
 		return errors.New("failed to read cargo version: empty match")
 	} else if isLessVersion(cargoVersion, minimalCargoVersion) {
 		log.Warn("You may want to update the cargo version using `rustup update stable`")
@@ -129,10 +134,15 @@ func ensureRustToolchain(ctx context.Context) error {
 	if _, err := exec.LookPath("rustc"); err != nil {
 		err = errors.Wrap(err, "rustc command is not available in PATH")
 		return err
-	} else if rustVersion, err := readRustVersion(ctx); err != nil {
+	}
+
+	rustVersion, err := readRustVersion(ctx)
+	if err != nil {
 		err = errors.Wrap(err, "failed to read rustc version")
 		return err
-	} else if len(rustVersion) == 0 {
+	}
+
+	if len(rustVersion) == 0 {
 		return errors.New("failed to read rustc version: empty match")
 	} else if isLessVersion(rustVersion, minimalRustVersion) {
 		log.Warn("You may want to update the rustc version using `rustup update stable`")
@@ -154,7 +164,7 @@ func readRustVersion(ctx context.Context) (string, error) {
 
 	semVerMatches := versionRx.FindStringSubmatch(out.String())
 	if len(semVerMatches) < 2 {
-		return "", errors.WithStack(toolIsNotInstalled)
+		return "", errors.WithStack(errToolIsNotInstalled)
 	}
 
 	return semVerMatches[1], nil
@@ -171,7 +181,7 @@ func readCargoVersion(ctx context.Context) (string, error) {
 
 	semVerMatches := versionRx.FindStringSubmatch(out.String())
 	if len(semVerMatches) < 2 {
-		return "", errors.WithStack(toolIsNotInstalled)
+		return "", errors.WithStack(errToolIsNotInstalled)
 	}
 
 	return semVerMatches[1], nil
@@ -194,7 +204,7 @@ func readCrateVersion(ctx context.Context, crateName string) (string, error) {
 
 	semVerMatches := crateVerRx.FindStringSubmatch(out.String())
 	if len(semVerMatches) < 2 {
-		return "", errors.WithStack(crateIsNotInstalled)
+		return "", errors.WithStack(errCrateIsNotInstalled)
 	}
 
 	return semVerMatches[1], nil
@@ -206,7 +216,9 @@ func ensureCrateAndVersion(
 	installArgs ...string,
 ) error {
 	log := logger.Get(ctx)
-	if crateVer, err := readCrateVersion(ctx, crateName); errors.Is(err, crateIsNotInstalled) {
+
+	crateVer, err := readCrateVersion(ctx, crateName)
+	if err != nil && errors.Is(err, errCrateIsNotInstalled) {
 		log.Info("Crate is missing and requires installation",
 			zap.String("crate", crateName),
 			zap.String("version", requiredVersion),
@@ -225,7 +237,9 @@ func ensureCrateAndVersion(
 	} else if err != nil {
 		err = errors.Wrap(err, "failed to check crate version")
 		return err
-	} else if isLessVersion(crateVer, requiredVersion) {
+	}
+
+	if isLessVersion(crateVer, requiredVersion) {
 		log.Info("Crate is outdated and requires update",
 			zap.String("crate", crateName),
 			zap.String("installedVersion", crateVer),

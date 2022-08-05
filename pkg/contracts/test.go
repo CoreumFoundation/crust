@@ -50,21 +50,22 @@ func Test(ctx context.Context, workspaceDir string, config TestConfig) error {
 	}
 
 	if config.NeedCoverageReport {
-		if runtime.GOOS == "linux" {
+		switch runtime.GOOS {
+		case "linux":
 			crateLog.Info("Running unit-tests suite with coverage enabled (Ptrace)")
 
 			if err := runTestsWithCoverageLinux(ctx, workspaceDir); err != nil {
 				err = errors.Wrap(err, "problem with tests")
 				return err
 			}
-		} else if runtime.GOOS == "darwin" {
+		case "darwin":
 			crateLog.Info("Running unit-tests suite with coverage enabled (LLVM)")
 
 			if err := runTestsWithCoverageMac(ctx, workspaceDir); err != nil {
 				err = errors.Wrap(err, "problem with tests")
 				return err
 			}
-		} else {
+		default:
 			err = errors.Errorf("target OS doesn't support unit tests with coverage yet: %s", runtime.GOOS)
 			return err
 		}
@@ -150,7 +151,9 @@ func runIntegrationTests(ctx context.Context, workspaceDir string) error {
 func runTestsWithCoverageLinux(ctx context.Context, workspaceDir string) error {
 	if err := ensureCrateAndVersion(ctx, "cargo-tarpaulin", cargoTarpaulinVersion); err != nil {
 		err = errors.Wrap(err, "failed to ensure cargo-tarpaulin dependency")
+		return err
 	}
+
 	cmdArgs := []string{
 		"tarpaulin", "--out", "html", "--output-dir", "./coverage",
 	}
@@ -186,6 +189,7 @@ func runTestsWithCoverageMac(ctx context.Context, workspaceDir string) error {
 		"--rev", cargoTarpaulinMacFeatureRev,
 	); err != nil {
 		err = errors.Wrap(err, "failed to ensure cargo-tarpaulin dependency")
+		return err
 	}
 
 	cmdArgs := []string{
