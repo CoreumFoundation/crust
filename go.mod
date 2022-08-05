@@ -9,7 +9,7 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220803133000-3e0778020f8d
+	github.com/CoreumFoundation/coreum v0.0.0-20220805003208-37861318616c
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/CosmWasm/wasmd v0.27.0
 	github.com/cosmos/cosmos-sdk v0.45.4
@@ -23,8 +23,6 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 )
-
-replace github.com/CoreumFoundation/coreum => ../coreum
 
 require (
 	filippo.io/edwards25519 v1.0.0-beta.2 // indirect
