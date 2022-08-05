@@ -33,6 +33,7 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 	var networkConfig contracts.ChainConfig
 	var stagedContractPath string
 
+	minGasPrice := chain.Network().InitialGasPrice()
 	nativeDenom := chain.Network().TokenSymbol()
 	nativeTokens := func(v string) string {
 		return v + nativeDenom
@@ -43,9 +44,8 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 		testWallet = chain.AddWallet(nativeTokens("0"))
 
 		networkConfig = contracts.ChainConfig{
-			ChainID: string(chain.Network().ChainID()),
-			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			MinGasPrice: nativeTokens("1500"),
+			ChainID:     string(chain.Network().ChainID()),
+			MinGasPrice: nativeTokens(minGasPrice.String()),
 			RPCEndpoint: infra.JoinNetAddr("", chain.Info().HostFromHost, chain.Ports().RPC),
 		}
 

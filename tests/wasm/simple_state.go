@@ -31,6 +31,7 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 	var networkConfig contracts.ChainConfig
 	var stagedContractPath string
 
+	minGasPrice := chain.Network().InitialGasPrice()
 	nativeDenom := chain.Network().TokenSymbol()
 	nativeTokens := func(v string) string {
 		return v + nativeDenom
@@ -41,7 +42,7 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 		networkConfig = contracts.ChainConfig{
 			ChainID: string(chain.Network().ChainID()),
 			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			MinGasPrice: nativeTokens("1500"),
+			MinGasPrice: nativeTokens(minGasPrice.String()),
 			RPCEndpoint: infra.JoinNetAddr("", chain.Info().HostFromHost, chain.Ports().RPC),
 		}
 
