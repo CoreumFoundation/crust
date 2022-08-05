@@ -3,14 +3,14 @@ package bank
 import (
 	"context"
 	"math/big"
-	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
 
@@ -31,9 +31,6 @@ func TestInitialBalance(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc
 
 		// Second function runs test
 		func(ctx context.Context, t *testing.T) {
-			// Wait until chain is healthy
-			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
-
 			// Create client so we can send transactions and query state
 			coredClient := chain.Client()
 
@@ -60,9 +57,6 @@ func TestCoreTransfer(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) 
 
 		// Second function runs test
 		func(ctx context.Context, t *testing.T) {
-			// Wait until chain is healthy
-			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
-
 			// Create client so we can send transactions and query state
 			coredClient := chain.Client()
 

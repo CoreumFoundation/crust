@@ -3,11 +3,11 @@ package auth
 import (
 	"context"
 	"math/big"
-	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CoreumFoundation/coreum/pkg/types"
 
@@ -25,8 +25,6 @@ func TestTooLowGasPrice(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc
 			return nil
 		},
 		func(ctx context.Context, t *testing.T) {
-			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
-
 			coredClient := chain.Client()
 
 			gasPrice := big.NewInt(0).Sub(chain.Network().MinDiscountedGasPrice(), big.NewInt(1))

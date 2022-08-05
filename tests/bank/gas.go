@@ -4,16 +4,16 @@ import (
 	"context"
 	"math/big"
 	"strings"
-	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
@@ -46,8 +46,6 @@ func TestTransferMaximumGas(chain cored.Cored, numOfTransactions int) (testing.P
 			return nil
 		},
 		func(ctx context.Context, t *testing.T) {
-			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
-
 			client := chain.Client()
 
 			var err error
@@ -84,8 +82,6 @@ func TestTransferFailsIfNotEnoughGasIsProvided(chain cored.Cored) (testing.Prepa
 			return nil
 		},
 		func(ctx context.Context, t *testing.T) {
-			testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
-
 			_, err := sendAndReturnGasUsed(ctx, chain.Client(), sender, sender,
 				types.Coin{Amount: big.NewInt(1), Denom: chain.Network().TokenSymbol()},
 				// declaring gas limit as maxGasAssumed-1 means that tx must fail
