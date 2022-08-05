@@ -8,8 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	coreumtests "github.com/CoreumFoundation/coreum/tests"
-	coreumtesting "github.com/CoreumFoundation/coreum/tests/testing"
+	coreumtests "github.com/CoreumFoundation/coreum/integration-tests"
+	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
