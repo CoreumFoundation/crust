@@ -25,7 +25,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const gasEstimationAdj = 1.5
+const gasEstimationAdjustment = 1.5
 
 // DeployConfig provides params for the deploying stage.
 type DeployConfig struct {
@@ -480,7 +480,7 @@ func runContractStore(
 		zap.Uint64("gas_limit", gasLimit),
 	)
 
-	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
+	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdjustment)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgStoreCode)
 	if err != nil {
@@ -561,7 +561,7 @@ func runContractInstantiate(
 		zap.Int("contract_msg_size", len(initMsg)),
 		zap.Uint64("gas_limit", gasLimit),
 	)
-	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
+	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdjustment)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgInstantiateContract)
 	if err != nil {

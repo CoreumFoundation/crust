@@ -116,7 +116,7 @@ func runContractExecution(
 		zap.Uint64("gas_limit", gasLimit),
 	)
 
-	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdj)
+	input.GasLimit = uint64(float64(gasLimit) * gasEstimationAdjustment)
 
 	signedTx, err := chainClient.Sign(ctx, input, msgExecuteContract)
 	if err != nil {

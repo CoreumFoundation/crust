@@ -38,7 +38,7 @@ Use " [command] --help" for more information about a command.
 
 Creating a WASM-ready contract is just a bit more involved procedure, as compared to Solidity contracts, when you can have a single file and be happy. WASM contracts require to have Cargo configuration for dependency and target management, similar to NPM/YARN.
 
-We are providing a template repo with bare minimum scaffolded code to help you be up and running with a new shiny contract. Crust provides an `contracts init` subcommand that clones the template into any target dir. Don't forget to specify a name!
+We are providing a template repository with bare minimum scaffolded code to help you be up and running with a new contract. Crust provides an `contracts init` subcommand that clones the template into any target dir. Don't forget to specify a name!
 
 ```bash
 > crust contracts init -h
@@ -121,7 +121,7 @@ test integration_tests::tests::count::count ... ok
 test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-If you are lucky to have **Linux x86_64** or **MacOS Intel x64 / M1** platforms at hand, you can run the unit testing with reported coverage:
+If you have **Linux x86_64** or **MacOS Intel x64 / M1** platforms at hand, you can run the unit testing with reported coverage:
 
 ```bash
 > crust contracts test --coverage ./test2
