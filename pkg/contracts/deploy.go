@@ -13,14 +13,16 @@ import (
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"go.uber.org/zap"
-
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
 const gasEstimationAdj = 1.5
@@ -52,7 +54,7 @@ type DeployConfig struct {
 	Network ChainConfig
 
 	// From specifies credentials for signing deployement / instantiation transactions.
-	From cored.Wallet
+	From types.Wallet
 }
 
 // ChainConfig encapsulates chain-specific parameters, used to communicate with daemon.
@@ -65,7 +67,7 @@ type ChainConfig struct {
 	// RPCAddr is the Tendermint RPC endpoint for the chain client
 	RPCEndpoint string
 
-	minGasPriceParsed cored.Coin
+	minGasPriceParsed types.Coin
 }
 
 // ContractInstanceConfig contains params specific to contract instantiation.
@@ -211,7 +213,7 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 	}
 	if config.CodeID == 0 {
 		deployLog.Sugar().
-			With(zap.String("from", config.From.AddressString())).
+			With(zap.String("from", config.From.Address().String())).
 			Infof("Deploying %s on chain", artefactBase)
 
 		var accessConfig *wasmtypes.AccessConfig
@@ -237,7 +239,7 @@ func Deploy(ctx context.Context, config DeployConfig) (*DeployOutput, error) {
 		config.CodeID = codeID
 		out.CodeID = codeID
 		out.StoreTxHash = storeTxHash
-		out.Creator = config.From.AddressString()
+		out.Creator = config.From.Address().String()
 		out.CodeDataHash = codeDataHash
 	} else {
 		// codeID has been provided by the config, let's validate the code on chain
@@ -377,7 +379,7 @@ func (c *DeployConfig) Validate() error {
 	}
 
 	if len(c.Network.MinGasPrice) == 0 {
-		c.Network.minGasPriceParsed = cored.Coin{
+		c.Network.minGasPriceParsed = types.Coin{
 			Amount: big.NewInt(1500), // matches InitialGasPrice in cored
 			Denom:  "core",
 		}
@@ -388,7 +390,7 @@ func (c *DeployConfig) Validate() error {
 			return err
 		}
 
-		c.Network.minGasPriceParsed = cored.Coin{
+		c.Network.minGasPriceParsed = types.Coin{
 			Amount: coinValue.Amount.BigInt(),
 			Denom:  coinValue.Denom,
 		}
@@ -400,20 +402,20 @@ func (c *DeployConfig) Validate() error {
 func runContractStore(
 	ctx context.Context,
 	network ChainConfig,
-	from cored.Wallet,
+	from types.Wallet,
 	wasmData []byte,
 	accessConfig *wasmtypes.AccessConfig,
 ) (codeID uint64, txHash string, err error) {
 	log := logger.Get(ctx)
-	chainClient := cored.NewClient(network.ChainID, network.RPCEndpoint)
+	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
 
-	input := cored.BaseInput{
+	input := tx.BaseInput{
 		Signer:   from,
 		GasPrice: network.minGasPriceParsed,
 	}
 
 	msgStoreCode := &wasmtypes.MsgStoreCode{
-		Sender:                from.AddressString(),
+		Sender:                from.Address().String(),
 		WASMByteCode:          wasmData,
 		InstantiatePermission: accessConfig,
 	}
@@ -433,7 +435,7 @@ func runContractStore(
 
 	signedTx, err := chainClient.Sign(ctx, input, msgStoreCode)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to sign transaction as %s", from.AddressString())
+		err = errors.Wrapf(err, "failed to sign transaction as %s", from.Address().String())
 		return 0, "", err
 	}
 
@@ -446,7 +448,7 @@ func runContractStore(
 	}
 
 	if len(res.EventLogs) > 0 {
-		cored.LogEventLogsInfo(log, res.EventLogs)
+		client.LogEventLogsInfo(log, res.EventLogs)
 	}
 
 	for _, ev := range res.EventLogs {
@@ -473,7 +475,7 @@ func runContractStore(
 func runContractInstantiate(
 	ctx context.Context,
 	network ChainConfig,
-	from cored.Wallet,
+	from types.Wallet,
 	codeID uint64,
 	initMsg json.RawMessage,
 	amount sdk.Coins,
@@ -481,15 +483,15 @@ func runContractInstantiate(
 	adminAcc *sdk.AccAddress,
 ) (contractAddr, txHash string, err error) {
 	log := logger.Get(ctx)
-	chainClient := cored.NewClient(network.ChainID, network.RPCEndpoint)
+	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
 
-	input := cored.BaseInput{
+	input := tx.BaseInput{
 		Signer:   from,
 		GasPrice: network.minGasPriceParsed,
 	}
 
 	msgInstantiateContract := &wasmtypes.MsgInstantiateContract{
-		Sender: from.AddressString(),
+		Sender: from.Address().String(),
 		CodeID: codeID,
 		Label:  label,
 		Msg:    wasmtypes.RawContractMessage(initMsg),
@@ -515,7 +517,7 @@ func runContractInstantiate(
 
 	signedTx, err := chainClient.Sign(ctx, input, msgInstantiateContract)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to sign transaction as %s", from.AddressString())
+		err = errors.Wrapf(err, "failed to sign transaction as %s", from.Address().String())
 		return "", "", err
 	}
 
@@ -528,7 +530,7 @@ func runContractInstantiate(
 	}
 
 	if len(res.EventLogs) > 0 {
-		cored.LogEventLogsInfo(log, res.EventLogs)
+		client.LogEventLogsInfo(log, res.EventLogs)
 	}
 
 	for _, ev := range res.EventLogs {
@@ -558,7 +560,7 @@ func queryContractCodeInfo(
 	network ChainConfig,
 	codeID uint64,
 ) (info *ContractCodeInfo, err error) {
-	chainClient := cored.NewClient(network.ChainID, network.RPCEndpoint)
+	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
 
 	resp, err := chainClient.WASMQueryClient().Code(ctx, &wasmtypes.QueryCodeRequest{
 		CodeId: codeID,

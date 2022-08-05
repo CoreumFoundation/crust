@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/pkg/errors"
-
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
 // QueryConfig contains contract execution arguments and options.
@@ -66,7 +66,7 @@ func runContractQuery(
 	contractAddr string,
 	queryMsg json.RawMessage,
 ) (result json.RawMessage, err error) {
-	chainClient := cored.NewClient(network.ChainID, network.RPCEndpoint)
+	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
 
 	query := &wasmtypes.QuerySmartContractStateRequest{
 		Address:   contractAddr,

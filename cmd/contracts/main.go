@@ -11,13 +11,12 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/cmd"
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/cored/keyring"
 	"github.com/CoreumFoundation/crust/pkg/contracts"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -219,9 +218,9 @@ func deployRunE(
 			err = errors.Wrap(err, "failed to initialize Cosmos keyring")
 			return err
 		}
-		deployConfig.From, err = cored.NewWalletFromKeyring(kb, mainAcc)
+		deployConfig.From, err = types.NewWalletFromKeyring(kb, mainAcc)
 		if err != nil {
-			err = errors.Wrap(err, "failed to initialize cored.Wallet from provided keyring")
+			err = errors.Wrap(err, "failed to initialize coreum.Wallet from provided keyring")
 			return err
 		}
 
@@ -261,9 +260,9 @@ func executeRunE(
 			err = errors.Wrap(err, "failed to initialize Cosmos keyring")
 			return err
 		}
-		execConfig.From, err = cored.NewWalletFromKeyring(kb, mainAcc)
+		execConfig.From, err = types.NewWalletFromKeyring(kb, mainAcc)
 		if err != nil {
-			err = errors.Wrap(err, "failed to initialize cored.Wallet from provided keyring")
+			err = errors.Wrap(err, "failed to initialize coreum.Wallet from provided keyring")
 			return err
 		}
 

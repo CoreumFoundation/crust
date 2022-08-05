@@ -8,13 +8,15 @@ import (
 	"math/big"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"go.uber.org/zap"
-
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
 // ExecuteConfig contains contract execution arguments and options.
@@ -23,7 +25,7 @@ type ExecuteConfig struct {
 	Network ChainConfig
 
 	// From specifies credentials for signing the execution transactions.
-	From cored.Wallet
+	From types.Wallet
 
 	// ExecutePayload is a path to a file containing JSON-encoded contract exec args, or JSON-encoded body itself.
 	ExecutePayload string
@@ -57,7 +59,7 @@ func Execute(ctx context.Context, contractAddr string, config ExecuteConfig) (*E
 		ContractAddress: contractAddr,
 	}
 	log.Sugar().
-		With(zap.String("from", config.From.AddressString())).
+		With(zap.String("from", config.From.Address().String())).
 		Infof("Executing %s on chain", contractAddr)
 
 	methodName, execTxHash, err := runContractExecution(
@@ -82,21 +84,21 @@ func Execute(ctx context.Context, contractAddr string, config ExecuteConfig) (*E
 func runContractExecution(
 	ctx context.Context,
 	network ChainConfig,
-	from cored.Wallet,
+	from types.Wallet,
 	contractAddr string,
 	execMsg json.RawMessage,
 	amount sdk.Coins,
 ) (methodName, txHash string, err error) {
 	log := logger.Get(ctx)
-	chainClient := cored.NewClient(network.ChainID, network.RPCEndpoint)
+	chainClient := client.New(app.ChainID(network.ChainID), network.RPCEndpoint)
 
-	input := cored.BaseInput{
+	input := tx.BaseInput{
 		Signer:   from,
 		GasPrice: network.minGasPriceParsed,
 	}
 
 	msgExecuteContract := &wasmtypes.MsgExecuteContract{
-		Sender:   from.AddressString(),
+		Sender:   from.Address().String(),
 		Contract: contractAddr,
 		Msg:      wasmtypes.RawContractMessage(execMsg),
 		Funds:    amount,
@@ -117,7 +119,7 @@ func runContractExecution(
 
 	signedTx, err := chainClient.Sign(ctx, input, msgExecuteContract)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to sign transaction as %s", from.AddressString())
+		err = errors.Wrapf(err, "failed to sign transaction as %s", from.Address().String())
 		return "", "", err
 	}
 
@@ -130,7 +132,7 @@ func runContractExecution(
 	}
 
 	if len(res.EventLogs) > 0 {
-		cored.LogEventLogsInfo(log, res.EventLogs)
+		client.LogEventLogsInfo(log, res.EventLogs)
 	}
 
 	for _, ev := range res.EventLogs {
@@ -176,7 +178,7 @@ func (c *ExecuteConfig) Validate() error {
 	}
 
 	if len(c.Network.MinGasPrice) == 0 {
-		c.Network.minGasPriceParsed = cored.Coin{
+		c.Network.minGasPriceParsed = types.Coin{
 			Amount: big.NewInt(1500), // matches InitialGasPrice in cored
 			Denom:  "core",
 		}
@@ -187,7 +189,7 @@ func (c *ExecuteConfig) Validate() error {
 			return err
 		}
 
-		c.Network.minGasPriceParsed = cored.Coin{
+		c.Network.minGasPriceParsed = types.Coin{
 			Amount: coinValue.Amount.BigInt(),
 			Denom:  coinValue.Denom,
 		}
