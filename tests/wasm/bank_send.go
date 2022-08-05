@@ -33,14 +33,19 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 	var networkConfig contracts.ChainConfig
 	var stagedContractPath string
 
+	nativeDenom := chain.Network().TokenSymbol()
+	nativeTokens := func(v string) string {
+		return v + nativeDenom
+	}
+
 	initTestState := func(ctx context.Context) error {
-		adminWallet = chain.AddWallet("100000000000000000000000000000000000core")
-		testWallet = chain.AddWallet("0core")
+		adminWallet = chain.AddWallet(nativeTokens("100000000000000000000000000000000000"))
+		testWallet = chain.AddWallet(nativeTokens("0"))
 
 		networkConfig = contracts.ChainConfig{
 			ChainID: string(chain.Network().ChainID()),
 			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			MinGasPrice: "1500core",
+			MinGasPrice: nativeTokens("1500"),
 			RPCEndpoint: infra.JoinNetAddr("", chain.Info().HostFromHost, chain.Ports().RPC),
 		}
 
@@ -88,7 +93,7 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 
 				// transfer some coins during instantiation,
 				// so we could withdraw them later using contract code.
-				Amount: "10000core",
+				Amount: nativeTokens("10000"),
 			},
 		})
 		expect.NoError(err)
@@ -100,17 +105,18 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 		client := chain.Client()
 		contractBalance, err := client.BankQueryClient().Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: deployOut.ContractAddr,
-			Denom:   "core",
+			Denom:   nativeDenom,
 		})
 		expect.NoError(err)
 		expect.NotNil(contractBalance.Balance)
-		expect.Equal("core", contractBalance.Balance.Denom)
+		expect.Equal(nativeDenom, contractBalance.Balance.Denom)
 		expect.Equal("10000", contractBalance.Balance.Amount.String())
 
 		// withdraw half of the coins to a test wallet, previously empty
 
 		withdrawMsg := fmt.Sprintf(
-			`{"withdraw": { "amount":"5000", "denom":"core", "recipient":"%s" }}`,
+			`{"withdraw": { "amount":"5000", "denom":"%s", "recipient":"%s" }}`,
+			nativeDenom,
 			testWallet.Address().String(),
 		)
 
@@ -128,22 +134,22 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 
 		contractBalance, err = client.BankQueryClient().Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: deployOut.ContractAddr,
-			Denom:   "core",
+			Denom:   nativeDenom,
 		})
 		expect.NoError(err)
 		expect.NotNil(contractBalance.Balance)
-		expect.Equal("core", contractBalance.Balance.Denom)
+		expect.Equal(nativeDenom, contractBalance.Balance.Denom)
 		expect.Equal("5000", contractBalance.Balance.Amount.String())
 
 		// check that the target test wallet has another half
 
 		testWalletBalance, err := client.BankQueryClient().Balance(ctx, &banktypes.QueryBalanceRequest{
 			Address: testWallet.Address().String(),
-			Denom:   "core",
+			Denom:   nativeDenom,
 		})
 		expect.NoError(err)
 		expect.NotNil(testWalletBalance.Balance)
-		expect.Equal("core", testWalletBalance.Balance.Denom)
+		expect.Equal(nativeDenom, testWalletBalance.Balance.Denom)
 		expect.Equal("5000", testWalletBalance.Balance.Amount.String())
 
 		// bank send invoked by the contract code succeeded! 〠

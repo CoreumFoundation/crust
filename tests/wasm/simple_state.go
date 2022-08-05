@@ -31,12 +31,17 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 	var networkConfig contracts.ChainConfig
 	var stagedContractPath string
 
+	nativeDenom := chain.Network().TokenSymbol()
+	nativeTokens := func(v string) string {
+		return v + nativeDenom
+	}
+
 	initTestState := func(ctx context.Context) error {
-		adminWallet = chain.AddWallet("100000000000000000000000000000000000core")
+		adminWallet = chain.AddWallet(nativeTokens("100000000000000000000000000000000000"))
 		networkConfig = contracts.ChainConfig{
 			ChainID: string(chain.Network().ChainID()),
 			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
-			MinGasPrice: "1500core",
+			MinGasPrice: nativeTokens("1500"),
 			RPCEndpoint: infra.JoinNetAddr("", chain.Info().HostFromHost, chain.Ports().RPC),
 		}
 
