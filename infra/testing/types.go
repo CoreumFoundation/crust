@@ -54,7 +54,7 @@ func New(prepare PrepareFunc, run RunFunc) *T {
 	}
 }
 
-// FromCoreum imports coreum tests
+// FromCoreum imports tests from coreum repository
 func FromCoreum(mode infra.Mode) []*T {
 	tests := coreumtests.Tests()
 	node := mode[0].(cored.Cored)
