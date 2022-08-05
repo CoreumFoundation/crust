@@ -8,14 +8,14 @@ import (
 	"path/filepath"
 	"time"
 
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
-
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/contracts"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 
 	_ "embed"
 )
@@ -28,8 +28,8 @@ var (
 // TestBankSendContract runs a contract deployment flow and tests that the contract is able to use Bank module
 // to dispurse the native coins.
 func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
-	var adminWallet cored.Wallet
-	var testWallet cored.Wallet
+	var adminWallet types.Wallet
+	var testWallet types.Wallet
 	var networkConfig contracts.ChainConfig
 	var stagedContractPath string
 
@@ -38,7 +38,7 @@ func TestBankSendContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFu
 		testWallet = chain.AddWallet("0core")
 
 		networkConfig = contracts.ChainConfig{
-			ChainID: chain.ChainID(),
+			ChainID: string(chain.Network().ChainID()),
 			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
 			MinGasPrice: "1500core",
 			RPCEndpoint: infra.JoinNetAddr("", chain.Info().HostFromHost, chain.Ports().RPC),

@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
-
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/contracts"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 
 	_ "embed"
 )
@@ -27,14 +27,14 @@ var (
 // TestSimpleStateContract runs a contract deployment flow and tries to modify the state after deployment.
 // This is a E2E check for the WASM integration, to ensure it works for a simple state contract (Counter).
 func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.RunFunc) {
-	var adminWallet cored.Wallet
+	var adminWallet types.Wallet
 	var networkConfig contracts.ChainConfig
 	var stagedContractPath string
 
 	initTestState := func(ctx context.Context) error {
 		adminWallet = chain.AddWallet("100000000000000000000000000000000000core")
 		networkConfig = contracts.ChainConfig{
-			ChainID: chain.ChainID(),
+			ChainID: string(chain.Network().ChainID()),
 			// FIXME: Take this value from Network.InitialGasPrice() once Milad integrates it into crust
 			MinGasPrice: "1500core",
 			RPCEndpoint: infra.JoinNetAddr("", chain.Info().HostFromHost, chain.Ports().RPC),
