@@ -68,7 +68,7 @@ func FromCoreum(mode infra.Mode) []*T {
 		prepareFunc, runFunc := testFunc(chain)
 		ts = append(ts, &T{
 			name:    funcToName(testFunc),
-			prepare: PrepareFunc(prepareFunc),
+			prepare: prepareFunc,
 			run: func(ctx context.Context, t *T) {
 				runFunc(ctx, t)
 			},
