@@ -11,9 +11,10 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/keyring"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/CoreumFoundation/crust/cmd"
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/pkg/contracts"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -27,7 +28,9 @@ const (
 type runE func(cmd *cobra.Command, args []string) error
 
 func main() {
-	cmd.SetAccountPrefixes("core")
+	network := app.NewNetwork(cored.CustomZNetNetworkConfig)
+	network.SetupPrefixes()
+
 	run.Tool("contracts", nil, func(ctx context.Context) error {
 		rootCmd := &cobra.Command{
 			SilenceUsage:  true,
