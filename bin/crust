@@ -43,7 +43,7 @@ case "$1" in
 
    "contracts")
      if [ ! -f "$REPO/bin/.cache/contracts" ]; then
-       "$REPO/bin/.cache/crust" build/contracts
+       "$CRUST_BIN" build/contracts
      fi
 
      shift 1
