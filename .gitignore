@@ -1,6 +1,2 @@
-.idea
-.vscode
-.DS_Store
-/var
 /bin/*
 !/bin/crust
