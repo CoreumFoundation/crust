@@ -80,10 +80,7 @@ func FromCoreum(mode infra.Mode) []*T {
 func funcToName(f interface{}) string {
 	parts := strings.Split(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), "/")
 	repoName := parts[2]
-	funcName := parts[len(parts)-1]
-
-	// FIXME(wojtek): Remove this once all the tests are migrated
-	funcName = strings.TrimSuffix(funcName, ".func1")
+	funcName := strings.TrimSuffix(parts[len(parts)-1], ".func1")
 
 	return repoName + "/" + funcName
 }
