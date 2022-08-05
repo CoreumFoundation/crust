@@ -1,4 +1,4 @@
-# Don't put files or directories specific to your operating system or development environment here.
+# Please don't put files or directories specific to your operating system or development environment here.
 # For those project-unrelated files and directories create your personal global .gitignore file:
 #
 # git config --global core.excludesFile '~/.gitignore'
