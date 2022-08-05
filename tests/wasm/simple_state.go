@@ -69,6 +69,8 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 
 		testing.WaitUntilHealthy(ctx, t, 20*time.Second, chain)
 
+		// Store the contract code on the chain, instantiation will be done in later step
+
 		deployOut, err := contracts.Deploy(ctx, contracts.DeployConfig{
 			Network: networkConfig,
 			From:    adminWallet,
@@ -78,6 +80,10 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 		})
 		expect.NoError(err)
 		expect.NotEmpty(deployOut.StoreTxHash)
+
+		// Instantiate the contract and set the initial counter state
+		// This step could be done within previous step, but separated there
+		// so we could chech the intermediate result of code storage.
 
 		deployOut, err = contracts.Deploy(ctx, contracts.DeployConfig{
 			Network: networkConfig,
@@ -93,6 +99,8 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 		expect.NotEmpty(deployOut.InitTxHash)
 		expect.NotEmpty(deployOut.ContractAddr)
 
+		// Query the contract state to get the initial count
+
 		queryOut, err := contracts.Query(ctx, deployOut.ContractAddr, contracts.QueryConfig{
 			Network:      networkConfig,
 			QueryPayload: `{"get_count": {}}`,
@@ -104,6 +112,8 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 		expect.NoError(err)
 		expect.Equal(1337, response.Count)
 
+		// Execute contract to increment the count
+
 		execOut, err := contracts.Execute(ctx, deployOut.ContractAddr, contracts.ExecuteConfig{
 			Network:        networkConfig,
 			From:           adminWallet,
@@ -113,6 +123,8 @@ func TestSimpleStateContract(chain cored.Cored) (testing.PrepareFunc, testing.Ru
 		expect.NotEmpty(execOut.ExecuteTxHash)
 		expect.Equal(deployOut.ContractAddr, execOut.ContractAddress)
 		expect.Equal("try_increment", execOut.MethodExecuted)
+
+		// Query the contract once again to ensure the count has been incremented
 
 		queryOut, err = contracts.Query(ctx, deployOut.ContractAddr, contracts.QueryConfig{
 			Network:      networkConfig,
