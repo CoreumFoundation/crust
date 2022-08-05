@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"math/big"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
@@ -290,7 +289,7 @@ func coredNode(mode infra.Mode) (cored.Cored, error) {
 func sendTokens(ctx context.Context, coredClient client.Client, from, to types.Wallet, network app.Network) error {
 	log := logger.Get(ctx)
 
-	amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
+	amount, err := types.NewCoin2(types.NewInt(1), network.TokenSymbol())
 	if err != nil {
 		return err
 	}

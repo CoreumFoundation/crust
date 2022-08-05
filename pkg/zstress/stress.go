@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"math/big"
 	"runtime"
 	"sync"
 	"time"
@@ -185,7 +184,7 @@ func signWorkerTask(coredClient client.Client, network app.Network, queue <-chan
 		if err != nil {
 			return err
 		}
-		amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
+		amount, err := types.NewCoin2(types.NewInt(1), network.TokenSymbol())
 		if err != nil {
 			return err
 		}
