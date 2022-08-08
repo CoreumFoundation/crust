@@ -1,8 +1,8 @@
 package build
 
 import (
-	"github.com/CoreumFoundation/coreum/build/golang"
-	"github.com/CoreumFoundation/coreum/build/tools"
+	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 // Commands is a definition of commands available in build system
