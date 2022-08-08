@@ -2,7 +2,10 @@ module github.com/CoreumFoundation/crust/pkg/contracts
 
 go 1.18
 
-replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+replace (
+	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	google.golang.org/grpc => google.golang.org/grpc v1.33.2
+)
 
 require (
 	github.com/CoreumFoundation/coreum v0.0.0-20220808154637-caba0cda8464

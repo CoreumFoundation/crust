@@ -10,9 +10,9 @@ replace (
 replace github.com/CoreumFoundation/coreum => ../coreum
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220808154637-caba0cda8464
+	github.com/CoreumFoundation/coreum v0.0.0-20220808164557-8ef4e1ad74ae
 	github.com/CoreumFoundation/coreum-tools v0.2.1
-	github.com/CosmWasm/wasmd v0.27.0
+	github.com/CoreumFoundation/crust/pkg/contracts v0.0.0-20220808164008-383739ac4b22
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/jackc/pgx/v4 v4.16.1
@@ -21,13 +21,13 @@ require (
 	github.com/tendermint/tendermint v0.34.19
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
-	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 )
 
 require (
 	filippo.io/edwards25519 v1.0.0-beta.2 // indirect
 	github.com/99designs/keyring v1.1.6 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
+	github.com/CosmWasm/wasmd v0.27.0 // indirect
 	github.com/CosmWasm/wasmvm v1.0.0 // indirect
 	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
@@ -180,6 +180,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
