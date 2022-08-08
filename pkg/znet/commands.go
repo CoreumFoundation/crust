@@ -19,15 +19,14 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -174,8 +173,10 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 			}
 		}
 
-		env, tests := tests.Tests(appF)
-		return testing.Run(ctx, target, env, tests, config.TestFilters)
+		mode, tests := tests.Tests(appF)
+		tests = append(tests, testing.FromCoreum(mode)...)
+
+		return testing.Run(ctx, target, mode, tests, config.TestFilters)
 	}, &err)
 	return err
 }

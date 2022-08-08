@@ -15,11 +15,6 @@ import (
 func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 	mode := appF.CoredNetwork("coretest", 3, 0)
 	node := mode[0].(cored.Cored)
-	nodes := []cored.Cored{
-		node,
-		mode[1].(cored.Cored),
-		mode[2].(cored.Cored),
-	}
 
 	tests := []*testing.T{
 		testing.New(auth.TestUnexpectedSequenceNumber(node)),
@@ -35,7 +30,7 @@ func Tests(appF *apps.Factory) (infra.Mode, []*testing.T) {
 	// In the future, once we have more tests running in parallel, we will replace 10 tests running 20 transactions each
 	// with a single one running 200 of them.
 	for i := 0; i < 10; i++ {
-		tests = append(tests, testing.New(bank.TestTransferMaximumGas(nodes[i%len(nodes)], 20)))
+		tests = append(tests, testing.New(bank.TestTransferMaximumGas(node, 20)))
 	}
 
 	return mode, tests
