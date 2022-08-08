@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
@@ -15,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
 type panicError struct {
@@ -44,6 +46,13 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, tests []*T, 
 	}
 
 	if err := target.Deploy(ctx, mode); err != nil {
+		return err
+	}
+
+	node := mode[0].(cored.Cored)
+	waitCtx, waitCancel := context.WithTimeout(ctx, 20*time.Second)
+	defer waitCancel()
+	if err := infra.WaitUntilHealthy(waitCtx, node); err != nil {
 		return err
 	}
 
