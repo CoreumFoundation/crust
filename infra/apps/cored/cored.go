@@ -16,11 +16,12 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	"github.com/pkg/errors"
+
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -164,13 +165,13 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return retry.Retryable(err)
+		return retry.Retryable(errors.WithStack(err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return retry.Retryable(err)
+		return retry.Retryable(errors.WithStack(err))
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -186,7 +187,7 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	}{}
 
 	if err := json.Unmarshal(body, &data); err != nil {
-		return retry.Retryable(err)
+		return retry.Retryable(errors.WithStack(err))
 	}
 
 	if data.Result.SyncInfo.LatestBlockHash == "" {
@@ -269,5 +270,5 @@ fi
 
 exec "` + c.config.BinDir + `/cored" --home "` + c.homeDir + `" "$@" $OPTS
 `
-	return ioutil.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700)
+	return errors.WithStack(ioutil.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700))
 }
