@@ -143,7 +143,7 @@ func Stress(ctx context.Context, config StressConfig, network *app.Network) erro
 func prepareTransactions(ctx context.Context, config StressConfig, coredClient client.Client, network app.Network) ([][][]byte, []uint64, error) {
 	numOfAccounts := len(config.Accounts)
 	var signedTxs [][][]byte
-	initialAccountSequences := make([]uint64, 0, numOfAccounts)
+	initialAccountSequences := make([]uint64, numOfAccounts)
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		queue := make(chan txRequest)
 		results := make(chan txRequest)
@@ -234,7 +234,7 @@ func enqueueTransactionsToSignTask(initialAccountSequences []uint64, privateKeys
 			if err != nil {
 				return errors.WithStack(fmt.Errorf("fetching account number and sequence failed: %w", err))
 			}
-			initialAccountSequences = append(initialAccountSequences, accSeq)
+			initialAccountSequences[i] = accSeq
 
 			tx := txRequest{
 				AccountIndex: i,
