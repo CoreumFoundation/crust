@@ -152,6 +152,11 @@ func (c Cored) Client() client.Client {
 	return client.New(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
 }
 
+// RPCAddr provides node RPC address to allow creating custom clients.
+func (c Cored) RPCAddr() string {
+	return infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC)
+}
+
 // HealthCheck checks if cored chain is ready to accept transactions
 func (c Cored) HealthCheck(ctx context.Context) error {
 	if c.appInfo.Info().Status != infra.AppStatusRunning {

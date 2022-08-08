@@ -61,6 +61,7 @@ func FromCoreum(mode infra.Mode) []*T {
 	chain := coreumtesting.Chain{
 		Network: node.Network(),
 		Client:  node.Client(),
+		RPCAddr: node.RPCAddr(),
 	}
 
 	var ts []*T
