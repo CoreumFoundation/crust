@@ -2,13 +2,10 @@ module github.com/CoreumFoundation/crust/pkg/contracts
 
 go 1.18
 
-replace (
-	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	google.golang.org/grpc => google.golang.org/grpc v1.33.2
-)
+replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220808154637-caba0cda8464
+	github.com/CoreumFoundation/coreum v0.0.0-20220808164557-8ef4e1ad74ae
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/CosmWasm/wasmd v0.27.0
 	github.com/cosmos/cosmos-sdk v0.45.4
