@@ -51,7 +51,7 @@ func Stress(ctx context.Context, config StressConfig, network *app.Network) erro
 	coredClient := client.New(app.ChainID(config.ChainID), config.NodeAddress)
 
 	log.Info("Preparing signed transactions...")
-	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, coredClient, network)
+	signedTxs, initialAccountSequences, err := prepareTransactions(ctx, config, coredClient, *network)
 	if err != nil {
 		return err
 	}
@@ -141,87 +141,19 @@ func Stress(ctx context.Context, config StressConfig, network *app.Network) erro
 	return nil
 }
 
-func prepareTransactions(ctx context.Context, config StressConfig, coredClient client.Client, network *app.Network) ([][][]byte, []uint64, error) {
+func prepareTransactions(ctx context.Context, config StressConfig, coredClient client.Client, network app.Network) ([][][]byte, []uint64, error) {
 	numOfAccounts := len(config.Accounts)
 	var signedTxs [][][]byte
-	var initialAccountSequences []uint64
+	initialAccountSequences := make([]uint64, 0, numOfAccounts)
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		queue := make(chan txRequest)
 		results := make(chan txRequest)
 
-		gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
-		if err != nil {
-			return err
-		}
-		amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
-		if err != nil {
-			return err
-		}
-
 		for i := 0; i < runtime.NumCPU(); i++ {
-			spawn(fmt.Sprintf("signer-%d", i), parallel.Continue, func(ctx context.Context) error {
-				for {
-					select {
-					case <-ctx.Done():
-						return ctx.Err()
-					case txReq, ok := <-queue:
-						if !ok {
-							return nil
-						}
-						txReq.TxBytes = must.Bytes(coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-							Base: tx.BaseInput{
-								Signer:   txReq.From,
-								GasLimit: network.DeterministicGas().BankSend,
-								GasPrice: gasPrice,
-							},
-							Sender:   txReq.From,
-							Receiver: txReq.To,
-							Amount:   amount,
-						}))
-						select {
-						case <-ctx.Done():
-							return ctx.Err()
-						case results <- txReq:
-						}
-					}
-				}
-			})
+			spawn(fmt.Sprintf("signer-%d", i), parallel.Continue, signWorkerTask(coredClient, network, queue, results))
 		}
-		spawn("enqueue", parallel.Continue, func(ctx context.Context) error {
-			initialAccountSequences = make([]uint64, 0, numOfAccounts)
-
-			for i := 0; i < numOfAccounts; i++ {
-				fromPrivateKey := config.Accounts[i]
-				toPrivateKeyIndex := i + 1
-				if toPrivateKeyIndex >= numOfAccounts {
-					toPrivateKeyIndex = 0
-				}
-				toPrivateKey := config.Accounts[toPrivateKeyIndex]
-
-				accNum, accSeq, err := getAccountNumberSequence(ctx, coredClient, fromPrivateKey.Address())
-				if err != nil {
-					return errors.WithStack(fmt.Errorf("fetching account number and sequence failed: %w", err))
-				}
-				initialAccountSequences = append(initialAccountSequences, accSeq)
-
-				tx := txRequest{
-					AccountIndex: i,
-					From:         types.Wallet{Name: "sender", Key: fromPrivateKey, AccountNumber: accNum, AccountSequence: accSeq},
-					To:           types.Wallet{Name: "receiver", Key: toPrivateKey},
-				}
-
-				for j := 0; j < config.NumOfTransactions; j++ {
-					tx.TxIndex = j
-					select {
-					case <-ctx.Done():
-						return ctx.Err()
-					case queue <- tx:
-					}
-					tx.From.AccountSequence++
-				}
-			}
-			return nil
-		})
+		spawn("enqueue", parallel.Continue, enqueueTransactionsToSignTask(initialAccountSequences, config.Accounts,
+			config.NumOfTransactions, coredClient, queue))
 		spawn("integrate", parallel.Exit, func(ctx context.Context) error {
 			signedTxs = make([][][]byte, numOfAccounts)
 			for i := 0; i < numOfAccounts; i++ {
@@ -245,6 +177,84 @@ func prepareTransactions(ctx context.Context, config StressConfig, coredClient c
 		return nil, nil, err
 	}
 	return signedTxs, initialAccountSequences, nil
+}
+
+func signWorkerTask(coredClient client.Client, network app.Network, queue <-chan txRequest, results chan<- txRequest) parallel.Task {
+	return func(ctx context.Context) error {
+		gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
+		if err != nil {
+			return err
+		}
+		amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
+		if err != nil {
+			return err
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case txReq, ok := <-queue:
+				if !ok {
+					return nil
+				}
+				txReq.TxBytes = must.Bytes(coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+					Base: tx.BaseInput{
+						Signer:   txReq.From,
+						GasLimit: network.DeterministicGas().BankSend,
+						GasPrice: gasPrice,
+					},
+					Sender:   txReq.From,
+					Receiver: txReq.To,
+					Amount:   amount,
+				}))
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case results <- txReq:
+				}
+			}
+		}
+	}
+}
+
+func enqueueTransactionsToSignTask(initialAccountSequences []uint64, privateKeys []types.Secp256k1PrivateKey,
+	numOfTransactions int, coredClient client.Client, queue chan<- txRequest) parallel.Task {
+	return func(ctx context.Context) error {
+		numOfAccounts := len(privateKeys)
+
+		for i := 0; i < numOfAccounts; i++ {
+			fromPrivateKey := privateKeys[i]
+			toPrivateKeyIndex := i + 1
+			if toPrivateKeyIndex >= numOfAccounts {
+				toPrivateKeyIndex = 0
+			}
+			toPrivateKey := privateKeys[toPrivateKeyIndex]
+
+			accNum, accSeq, err := getAccountNumberSequence(ctx, coredClient, fromPrivateKey.Address())
+			if err != nil {
+				return errors.WithStack(fmt.Errorf("fetching account number and sequence failed: %w", err))
+			}
+			initialAccountSequences = append(initialAccountSequences, accSeq)
+
+			tx := txRequest{
+				AccountIndex: i,
+				From:         types.Wallet{Name: "sender", Key: fromPrivateKey, AccountNumber: accNum, AccountSequence: accSeq},
+				To:           types.Wallet{Name: "receiver", Key: toPrivateKey},
+			}
+
+			for j := 0; j < numOfTransactions; j++ {
+				tx.TxIndex = j
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case queue <- tx:
+				}
+				tx.From.AccountSequence++
+			}
+		}
+		return nil
+	}
 }
 
 func getAccountNumberSequence(ctx context.Context, coredClient client.Client, accountAddress string) (uint64, uint64, error) {
