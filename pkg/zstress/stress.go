@@ -13,12 +13,13 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 // StressConfig contains config for benchmarking the blockchain
@@ -147,6 +148,16 @@ func prepareTransactions(ctx context.Context, config StressConfig, coredClient c
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		queue := make(chan txRequest)
 		results := make(chan txRequest)
+
+		gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
+		if err != nil {
+			return err
+		}
+		amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
+		if err != nil {
+			return err
+		}
+
 		for i := 0; i < runtime.NumCPU(); i++ {
 			spawn(fmt.Sprintf("signer-%d", i), parallel.Continue, func(ctx context.Context) error {
 				for {
@@ -161,11 +172,11 @@ func prepareTransactions(ctx context.Context, config StressConfig, coredClient c
 							Base: tx.BaseInput{
 								Signer:   txReq.From,
 								GasLimit: network.DeterministicGas().BankSend,
-								GasPrice: types.Coin{Amount: network.InitialGasPrice(), Denom: network.TokenSymbol()},
+								GasPrice: gasPrice,
 							},
 							Sender:   txReq.From,
 							Receiver: txReq.To,
-							Amount:   types.Coin{Amount: big.NewInt(1), Denom: network.TokenSymbol()},
+							Amount:   amount,
 						}))
 						select {
 						case <-ctx.Done():
