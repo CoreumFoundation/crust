@@ -27,7 +27,7 @@ const (
 )
 
 func main() {
-	network := app.NewNetwork(testing.ZNetNetworkConfig)
+	network := app.NewNetwork(testing.NetworkConfig)
 	// FIXME (wojtek): this is only a temporary hack until we develop our own address encoder.
 	network.SetupPrefixes()
 	run.Tool("zstress", nil, func(ctx context.Context) error {

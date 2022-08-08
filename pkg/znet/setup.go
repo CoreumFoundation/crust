@@ -22,8 +22,8 @@ import (
 func IoC(c *ioc.Container) {
 	c.Singleton(func() app.NetworkConfig {
 		// FIXME (wojtek): this is only a temporary hack until we develop our own address encoder.
-		app.NewNetwork(testing.ZNetNetworkConfig).SetupPrefixes()
-		return testing.ZNetNetworkConfig
+		app.NewNetwork(testing.NetworkConfig).SetupPrefixes()
+		return testing.NetworkConfig
 	})
 	c.Singleton(NewCmdFactory)
 	c.Singleton(infra.NewConfigFactory)
