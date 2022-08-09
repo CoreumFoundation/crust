@@ -67,7 +67,7 @@ func (j BDJuno) Info() infra.DeploymentInfo {
 	return j.appInfo.Info()
 }
 
-// Deployment returns deployment of hasura
+// Deployment returns deployment of bdjuno
 func (j BDJuno) Deployment() infra.Deployment {
 	return infra.Container{
 		Image: "gcr.io/coreum-devnet-1/bdjuno:0.44.0",
