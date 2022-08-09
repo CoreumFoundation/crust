@@ -160,7 +160,9 @@ func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.Depl
 			runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
 		}
 		runArgs = append(runArgs, app.DockerImage(), internalBinPath)
-		runArgs = append(runArgs, app.ArgsFunc()...)
+		if app.ArgsFunc != nil {
+			runArgs = append(runArgs, app.ArgsFunc()...)
+		}
 
 		startCmd = exec.Docker(runArgs...)
 	}
@@ -213,8 +215,13 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 		for _, env := range app.EnvVars {
 			runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
 		}
+		for _, vol := range app.Volumes {
+			runArgs = append(runArgs, "-v", vol.From+":"+vol.To)
+		}
 		runArgs = append(runArgs, app.DockerImage())
-		runArgs = append(runArgs, app.ArgsFunc()...)
+		if app.ArgsFunc != nil {
+			runArgs = append(runArgs, app.ArgsFunc()...)
+		}
 
 		startCmd = exec.Docker(runArgs...)
 	}

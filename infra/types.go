@@ -351,6 +351,12 @@ type EnvVar struct {
 	Value string
 }
 
+// Volume is used to define mounted volume for docker container
+type Volume struct {
+	From string
+	To   string
+}
+
 // Container represents container to be deployed
 type Container struct {
 	AppBase
@@ -358,8 +364,11 @@ type Container struct {
 	// Image is the url of the container image
 	Image string
 
-	// EnvVars define environment variables for docker container
+	// EnvVars defines environment variables for docker container
 	EnvVars []EnvVar
+
+	// Volume defines mounted volumes for docker container
+	Volumes []Volume
 }
 
 // DockerImage returns the docker image used by the deployment

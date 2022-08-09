@@ -4,9 +4,11 @@ import (
 	"fmt"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
+	"github.com/CoreumFoundation/crust/infra/apps/bigdipper"
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
@@ -68,14 +70,17 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 	namePostgres := name + "-postgres"
 	nameHasura := name + "-hasura"
 	nameBDJuno := name + "-bdjuno"
+	nameBigDipper := name + "-bigdipper"
 
 	postgresApp := postgres.New(namePostgres, f.spec.DescribeApp(postgres.AppType, namePostgres), blockexplorer.DefaultPorts.Postgres, blockexplorer.LoadPostgresSchema)
 	hasuraApp := hasura.New(nameHasura, f.spec.DescribeApp(hasura.AppType, nameHasura), blockexplorer.DefaultPorts.Hasura, blockexplorer.HasuraMetadataTemplate, postgresApp)
 	bdjunoApp := bdjuno.New(nameBDJuno, f.config, f.spec.DescribeApp(bdjuno.AppType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, blockexplorer.BDJunoConfigTemplate, coredApp, postgresApp)
+	bigDipperApp := bigdipper.New(nameBigDipper, f.config, f.spec.DescribeApp(bigdipper.AppType, nameBigDipper), blockexplorer.DefaultPorts.BigDipper, blockexplorer.BigDipperEnvTemplate, coredApp, hasuraApp)
+
 	return infra.Mode{
 		postgresApp,
 		hasuraApp,
 		bdjunoApp,
-		// FIXME (wojciech): more apps coming soon
+		bigDipperApp,
 	}
 }
