@@ -231,7 +231,8 @@ func enqueueTransactionsToSignTask(initialAccountSequences []uint64, privateKeys
 			}
 			toPrivateKey := privateKeys[toPrivateKeyIndex]
 
-			accNum, accSeq, err := getAccountNumberSequence(ctx, coredClient, fromPrivateKey.Address())
+			//nolint:unconvert // temporary conversion to `string` due to transition to new client
+			accNum, accSeq, err := getAccountNumberSequence(ctx, coredClient, string(fromPrivateKey.Address()))
 			if err != nil {
 				return errors.WithStack(fmt.Errorf("fetching account number and sequence failed: %w", err))
 			}
