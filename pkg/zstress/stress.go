@@ -181,7 +181,9 @@ func prepareTransactions(ctx context.Context, config StressConfig, coredClient c
 
 func signWorkerTask(coredClient client.Client, network app.Network, queue <-chan txRequest, results chan<- txRequest) parallel.Task {
 	return func(ctx context.Context) error {
-		gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
+		// FIXME (wojtek): set to `network.FeeModel().InitialGasPrice` once fee model is merged
+		initialGasPrice := big.NewInt(1500)
+		gasPrice, err := types.NewCoin(initialGasPrice, network.TokenSymbol())
 		if err != nil {
 			return err
 		}

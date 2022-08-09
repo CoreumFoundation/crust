@@ -15,6 +15,7 @@ require (
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/fsnotify/fsnotify v1.5.4
+	github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
@@ -97,7 +98,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hdevalence/ed25519consensus v0.0.0-20210204194344-59a8610d2b87 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
-	github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7 // indirect
 	github.com/ignite/cli v0.22.2 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/improbable-eng/grpc-web v0.14.1 // indirect

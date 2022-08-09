@@ -294,7 +294,9 @@ func sendTokens(ctx context.Context, coredClient client.Client, from, to types.W
 	if err != nil {
 		return err
 	}
-	gasPrice, err := types.NewCoin(network.InitialGasPrice(), network.TokenSymbol())
+	// FIXME (wojtek): set to `network.FeeModel().InitialGasPrice` once fee model is merged
+	initialGasPrice := big.NewInt(1500)
+	gasPrice, err := types.NewCoin(initialGasPrice, network.TokenSymbol())
 	if err != nil {
 		return err
 	}
