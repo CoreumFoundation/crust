@@ -3,6 +3,7 @@ package bigdipper
 import (
 	"bytes"
 	"io/ioutil"
+	"path/filepath"
 	"text/template"
 	"time"
 
@@ -25,7 +26,7 @@ const (
 func New(name string, config infra.Config, appInfo *infra.AppInfo, port int, envTemplate string, cored cored.Cored, hasura hasura.Hasura) BigDipper {
 	return BigDipper{
 		name:        name,
-		homeDir:     config.AppDir + "/" + name,
+		homeDir:     filepath.Join(config.AppDir, name),
 		appInfo:     appInfo,
 		envTemplate: envTemplate,
 		port:        port,
@@ -66,8 +67,8 @@ func (bd BigDipper) Deployment() infra.Deployment {
 		Image: "gcr.io/coreum-devnet-1/big-dipper-ui:latest-dev",
 		Volumes: []infra.Volume{
 			{
-				From: bd.homeDir + "/env",
-				To:   "/.env",
+				Source:      filepath.Join(bd.homeDir, "env"),
+				Destination: "/.env",
 			},
 		},
 		AppBase: infra.AppBase{
@@ -84,7 +85,7 @@ func (bd BigDipper) Deployment() infra.Deployment {
 				},
 			},
 			PrepareFunc: func() error {
-				return ioutil.WriteFile(bd.homeDir+"/env", bd.prepareEnv(), 0o644)
+				return ioutil.WriteFile(filepath.Join(bd.homeDir, "env"), bd.prepareEnv(), 0o644)
 			},
 		},
 	}

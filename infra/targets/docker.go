@@ -216,7 +216,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 			runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
 		}
 		for _, vol := range app.Volumes {
-			runArgs = append(runArgs, "-v", vol.From+":"+vol.To)
+			runArgs = append(runArgs, "-v", vol.Source+":"+vol.Destination)
 		}
 		runArgs = append(runArgs, app.DockerImage())
 		if app.ArgsFunc != nil {

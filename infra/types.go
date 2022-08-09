@@ -353,8 +353,8 @@ type EnvVar struct {
 
 // Volume is used to define mounted volume for docker container
 type Volume struct {
-	From string
-	To   string
+	Source      string
+	Destination string
 }
 
 // Container represents container to be deployed
