@@ -12,18 +12,19 @@ import (
 	"net/url"
 	"path/filepath"
 	"sync"
-
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
-	"github.com/CoreumFoundation/crust/pkg/retry"
 	"github.com/CoreumFoundation/crust/pkg/rnd"
 )
 
@@ -56,7 +57,7 @@ func New(name string, cfg infra.Config, network *app.Network, appInfo *infra.App
 		clientCtx := app.NewDefaultClientContext().WithChainID(string(network.ChainID()))
 
 		// FIXME: make clientCtx as private field of the client type
-		tx, err := client.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
+		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, "100000000"+network.TokenSymbol())
 		must.OK(err)
 		network.AddGenesisTx(tx)
 	}
@@ -147,8 +148,8 @@ func (c Cored) AddWallet(balances string) types.Wallet {
 }
 
 // Client creates new client for cored blockchain
-func (c Cored) Client() Client {
-	return NewClient(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
+func (c Cored) Client() client.Client {
+	return client.New(c.network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -164,13 +165,13 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return retry.Retryable(err)
+		return retry.Retryable(errors.WithStack(err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return retry.Retryable(err)
+		return retry.Retryable(errors.WithStack(err))
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -186,7 +187,7 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	}{}
 
 	if err := json.Unmarshal(body, &data); err != nil {
-		return retry.Retryable(err)
+		return retry.Retryable(errors.WithStack(err))
 	}
 
 	if data.Result.SyncInfo.LatestBlockHash == "" {
@@ -269,5 +270,5 @@ fi
 
 exec "` + c.config.BinDir + `/cored" --home "` + c.homeDir + `" "$@" $OPTS
 `
-	return ioutil.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700)
+	return errors.WithStack(ioutil.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700))
 }

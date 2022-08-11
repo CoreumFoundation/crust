@@ -24,6 +24,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
@@ -171,8 +173,10 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 			}
 		}
 
-		env, tests := tests.Tests(appF)
-		return testing.Run(ctx, target, env, tests, config.TestFilters)
+		mode, tests := tests.Tests(appF)
+		tests = append(tests, testing.FromCoreum(mode)...)
+
+		return testing.Run(ctx, target, mode, tests, config.TestFilters)
 	}, &err)
 	return err
 }
@@ -283,7 +287,7 @@ func coredNode(mode infra.Mode) (cored.Cored, error) {
 	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
-func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet, network app.Network) error {
+func sendTokens(ctx context.Context, coredClient client.Client, from, to types.Wallet, network app.Network) error {
 	log := logger.Get(ctx)
 
 	amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
@@ -294,8 +298,8 @@ func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet,
 	if err != nil {
 		return err
 	}
-	txBytes, err := client.PrepareTxBankSend(ctx, cored.TxBankSendInput{
-		Base: cored.BaseInput{
+	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
+		Base: tx.BaseInput{
 			Signer:   from,
 			GasLimit: network.DeterministicGas().BankSend,
 			GasPrice: gasPrice,
@@ -306,7 +310,7 @@ func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet,
 	if err != nil {
 		return err
 	}
-	result, err := client.Broadcast(ctx, txBytes)
+	result, err := coredClient.Broadcast(ctx, txBytes)
 	if err != nil {
 		return err
 	}
@@ -315,11 +319,11 @@ func sendTokens(ctx context.Context, client cored.Client, from, to types.Wallet,
 		zap.Stringer("amount", amount), zap.String("txHash", result.TxHash),
 		zap.Int64("gasUsed", result.GasUsed))
 
-	fromBalance, err := client.QueryBankBalances(ctx, from)
+	fromBalance, err := coredClient.QueryBankBalances(ctx, from)
 	if err != nil {
 		return err
 	}
-	toBalance, err := client.QueryBankBalances(ctx, to)
+	toBalance, err := coredClient.QueryBankBalances(ctx, to)
 	if err != nil {
 		return err
 	}

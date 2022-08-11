@@ -11,11 +11,13 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
+
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/pkg/zstress"
 )
 
@@ -25,7 +27,8 @@ const (
 )
 
 func main() {
-	network := app.NewNetwork(cored.CustomZNetNetworkConfig)
+	network := app.NewNetwork(testing.NetworkConfig)
+	// FIXME (wojtek): this is only a temporary hack until we develop our own address encoder.
 	network.SetupPrefixes()
 	run.Tool("zstress", nil, func(ctx context.Context) error {
 		var stressConfig zstress.StressConfig

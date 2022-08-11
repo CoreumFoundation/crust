@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/pkg/retry"
 )
 
 const (

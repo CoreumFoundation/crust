@@ -134,7 +134,7 @@ Tests are defined in [crust/tests/index.go](crust/tests/index.go)
 You may run tests directly:
 
 ```
-$crust znet test
+$ crust znet test
 ```
 
 Tests run on top `--mode=test`.
@@ -146,7 +146,7 @@ $ crust znet --mode=test
 (znet) [znet] $ tests
 
 # Remember to clean everything
-(crustznet) [logs] $ remove
+(znet) [logs] $ remove
 ```
 
 After tests complete environment is still running so if something went wrong you may inspect it manually.

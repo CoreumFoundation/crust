@@ -22,8 +22,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum/build/git"
-	"github.com/CoreumFoundation/coreum/build/tools"
+	"github.com/CoreumFoundation/crust/build/git"
+	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 const goAlpineVersion = "3.16"

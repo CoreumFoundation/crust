@@ -8,19 +8,19 @@ replace (
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
 
+replace github.com/CoreumFoundation/coreum => ../coreum
+
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220802125158-6367db253f6b
-	github.com/CoreumFoundation/coreum-tools v0.1.6
+	github.com/CoreumFoundation/coreum v0.0.0
+	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
-	github.com/stretchr/testify v1.7.1
 	github.com/tendermint/tendermint v0.34.19
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
-	google.golang.org/grpc v1.46.2
 )
 
 require (
@@ -158,6 +158,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.10.1 // indirect
+	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca // indirect
 	github.com/takuoki/gocase v1.0.0 // indirect
@@ -183,6 +184,7 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
+	google.golang.org/grpc v1.46.2 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
