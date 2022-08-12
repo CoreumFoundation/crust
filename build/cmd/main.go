@@ -10,7 +10,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-
 	selfBuild "github.com/CoreumFoundation/crust/build"
 )
 

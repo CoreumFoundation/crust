@@ -15,13 +15,13 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
 )

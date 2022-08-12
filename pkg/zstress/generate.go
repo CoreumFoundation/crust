@@ -9,13 +9,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
