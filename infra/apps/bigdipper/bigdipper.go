@@ -1,13 +1,8 @@
 package bigdipper
 
 import (
-	"bytes"
-	"io/ioutil"
-	"path/filepath"
-	"text/template"
+	"strconv"
 	"time"
-
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -23,27 +18,23 @@ const (
 )
 
 // New creates new big dipper app
-func New(name string, config infra.Config, appInfo *infra.AppInfo, port int, envTemplate string, cored cored.Cored, hasura hasura.Hasura) BigDipper {
+func New(name string, config infra.Config, appInfo *infra.AppInfo, port int, cored cored.Cored, hasura hasura.Hasura) BigDipper {
 	return BigDipper{
-		name:        name,
-		homeDir:     filepath.Join(config.AppDir, name),
-		appInfo:     appInfo,
-		envTemplate: envTemplate,
-		port:        port,
-		cored:       cored,
-		hasura:      hasura,
+		name:    name,
+		appInfo: appInfo,
+		port:    port,
+		cored:   cored,
+		hasura:  hasura,
 	}
 }
 
 // BigDipper represents big dipper
 type BigDipper struct {
-	name        string
-	homeDir     string
-	appInfo     *infra.AppInfo
-	envTemplate string
-	port        int
-	cored       cored.Cored
-	hasura      hasura.Hasura
+	name    string
+	appInfo *infra.AppInfo
+	port    int
+	cored   cored.Cored
+	hasura  hasura.Hasura
 }
 
 // Type returns type of application
@@ -65,11 +56,37 @@ func (bd BigDipper) Info() infra.DeploymentInfo {
 func (bd BigDipper) Deployment() infra.Deployment {
 	return infra.Container{
 		Image: "gcr.io/coreum-devnet-1/big-dipper-ui:latest-dev",
-		Volumes: []infra.Volume{
-			{
-				Source:      filepath.Join(bd.homeDir, "env"),
-				Destination: "/.env",
-			},
+		EnvVarsFunc: func() []infra.EnvVar {
+			return []infra.EnvVar{
+				{
+					Name:  "PORT",
+					Value: strconv.Itoa(bd.port),
+				},
+				{
+					Name:  "NEXT_PUBLIC_URL",
+					Value: infra.JoinNetAddr("http", "localhost", bd.port),
+				},
+				{
+					Name:  "NEXT_PUBLIC_RPC_WEBSOCKET",
+					Value: infra.JoinNetAddr("ws", bd.cored.Info().HostFromHost, bd.cored.Ports().RPC) + "/websocket",
+				},
+				{
+					Name:  "NEXT_PUBLIC_GRAPHQL_URL",
+					Value: infra.JoinNetAddr("http", bd.hasura.Info().HostFromHost, bd.hasura.Port()) + "/v1/graphql",
+				},
+				{
+					Name:  "NEXT_PUBLIC_GRAPHQL_WS",
+					Value: infra.JoinNetAddr("ws", bd.hasura.Info().HostFromHost, bd.hasura.Port()) + "/v1/graphql",
+				},
+				{
+					Name:  "NODE_ENV",
+					Value: "development",
+				},
+				{
+					Name:  "NEXT_PUBLIC_CHAIN_TYPE",
+					Value: string(bd.cored.Network().ChainID()),
+				},
+			}
 		},
 		AppBase: infra.AppBase{
 			Name: bd.Name(),
@@ -84,46 +101,6 @@ func (bd BigDipper) Deployment() infra.Deployment {
 					infra.IsRunning(bd.hasura),
 				},
 			},
-			PrepareFunc: func() error {
-				return ioutil.WriteFile(filepath.Join(bd.homeDir, "env"), bd.prepareEnv(), 0o644)
-			},
 		},
 	}
-}
-
-func (bd BigDipper) prepareEnv() []byte {
-	envBuf := &bytes.Buffer{}
-	must.OK(template.Must(template.New("env").Parse(bd.envTemplate)).Execute(envBuf, struct {
-		Port  int
-		URL   string
-		Cored struct {
-			ChainID string
-			Host    string
-			PortRPC int
-		}
-		Hasura struct {
-			Host string
-			Port int
-		}
-	}{
-		Port: bd.port,
-		URL:  infra.JoinNetAddr("http", "localhost", bd.port),
-		Cored: struct {
-			ChainID string
-			Host    string
-			PortRPC int
-		}{
-			ChainID: string(bd.cored.Network().ChainID()),
-			Host:    bd.cored.Info().HostFromHost,
-			PortRPC: bd.cored.Ports().RPC,
-		},
-		Hasura: struct {
-			Host string
-			Port int
-		}{
-			Host: bd.hasura.Info().HostFromHost,
-			Port: bd.hasura.Port(),
-		},
-	}))
-	return envBuf.Bytes()
 }

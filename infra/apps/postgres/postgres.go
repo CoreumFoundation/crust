@@ -98,22 +98,24 @@ func (p Postgres) HealthCheck(ctx context.Context) error {
 func (p Postgres) Deployment() infra.Deployment {
 	return infra.Container{
 		Image: "postgres:14.3-alpine",
-		EnvVars: []infra.EnvVar{
-			{
-				Name:  "POSTGRES_USER",
-				Value: User,
-			},
-			{
-				Name:  "POSTGRES_DB",
-				Value: DB,
-			},
+		EnvVarsFunc: func() []infra.EnvVar {
+			return []infra.EnvVar{
+				{
+					Name:  "POSTGRES_USER",
+					Value: User,
+				},
+				{
+					Name:  "POSTGRES_DB",
+					Value: DB,
+				},
 
-			// This allows to log in using any existing user (even superuser) without providing a password.
-			// This is local, temporary development setup so security doesn't matter.
-			{
-				Name:  "POSTGRES_HOST_AUTH_METHOD",
-				Value: "trust",
-			},
+				// This allows to log in using any existing user (even superuser) without providing a password.
+				// This is local, temporary development setup so security doesn't matter.
+				{
+					Name:  "POSTGRES_HOST_AUTH_METHOD",
+					Value: "trust",
+				},
+			}
 		},
 		AppBase: infra.AppBase{
 			Name: p.Name(),
