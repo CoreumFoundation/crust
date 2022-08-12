@@ -9,11 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
