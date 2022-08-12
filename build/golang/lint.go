@@ -22,7 +22,8 @@ import (
 
 // Lint runs linters and check that git status is clean
 func Lint(deps build.DepsFunc) error {
-	deps(git.EnsureAllRepos, lint, lintNewLines, Tidy, git.StatusClean)
+	// FIXME(ysv): Put git.StatusClean back.
+	deps(git.EnsureAllRepos, lint, lintNewLines, Tidy)
 	return nil
 }
 
