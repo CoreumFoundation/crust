@@ -23,28 +23,27 @@ const (
 	DefaultPort = 3030
 )
 
+// Config storesbdjuno app configuration
+type Config struct {
+	Name           string
+	HomeDir        string
+	AppInfo        *infra.AppInfo
+	Port           int
+	ConfigTemplate string
+	Cored          cored.Cored
+	Postgres       postgres.Postgres
+}
+
 // New creates new bdjuno app
-func New(name string, config infra.Config, appInfo *infra.AppInfo, port int, configTemplate string, cored cored.Cored, postgres postgres.Postgres) BDJuno {
+func New(config Config) BDJuno {
 	return BDJuno{
-		name:           name,
-		homeDir:        config.AppDir + "/" + name,
-		appInfo:        appInfo,
-		port:           port,
-		configTemplate: configTemplate,
-		cored:          cored,
-		postgres:       postgres,
+		config: config,
 	}
 }
 
 // BDJuno represents bdjuno
 type BDJuno struct {
-	name           string
-	homeDir        string
-	appInfo        *infra.AppInfo
-	port           int
-	configTemplate string
-	cored          cored.Cored
-	postgres       postgres.Postgres
+	config Config
 }
 
 // Type returns type of application
@@ -54,17 +53,17 @@ func (j BDJuno) Type() infra.AppType {
 
 // Name returns name of app
 func (j BDJuno) Name() string {
-	return j.name
+	return j.config.Name
 }
 
 // Port returns port used by hasura to accept client connections
 func (j BDJuno) Port() int {
-	return j.port
+	return j.config.Port
 }
 
 // Info returns deployment info
 func (j BDJuno) Info() infra.DeploymentInfo {
-	return j.appInfo.Info()
+	return j.config.AppInfo.Info()
 }
 
 // Deployment returns deployment of bdjuno
@@ -73,7 +72,7 @@ func (j BDJuno) Deployment() infra.Deployment {
 		Image: "gcr.io/coreum-devnet-1/bdjuno:0.44.0",
 		AppBase: infra.AppBase{
 			Name: j.Name(),
-			Info: j.appInfo,
+			Info: j.config.AppInfo,
 			ArgsFunc: func() []string {
 				return []string{
 					"bdjuno", "start",
@@ -81,17 +80,17 @@ func (j BDJuno) Deployment() infra.Deployment {
 				}
 			},
 			Ports: map[string]int{
-				"actions": j.port,
+				"actions": j.config.Port,
 			},
 			Requires: infra.Prerequisites{
 				Timeout: 20 * time.Second,
 				Dependencies: []infra.HealthCheckCapable{
-					j.cored,
-					j.postgres,
+					j.config.Cored,
+					j.config.Postgres,
 				},
 			},
 			PrepareFunc: func() error {
-				return ioutil.WriteFile(j.homeDir+"/config.yaml", j.prepareConfig(), 0o644)
+				return ioutil.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644)
 			},
 		},
 	}
@@ -99,7 +98,7 @@ func (j BDJuno) Deployment() infra.Deployment {
 
 func (j BDJuno) prepareConfig() []byte {
 	configBuf := &bytes.Buffer{}
-	must.OK(template.Must(template.New("config").Parse(j.configTemplate)).Execute(configBuf, struct {
+	must.OK(template.Must(template.New("config").Parse(j.config.ConfigTemplate)).Execute(configBuf, struct {
 		Port  int
 		Cored struct {
 			Host          string
@@ -114,16 +113,16 @@ func (j BDJuno) prepareConfig() []byte {
 			DB   string
 		}
 	}{
-		Port: j.port,
+		Port: j.config.Port,
 		Cored: struct {
 			Host          string
 			PortRPC       int
 			PortGRPC      int
 			AddressPrefix string
 		}{
-			Host:          j.cored.Info().HostFromContainer,
-			PortRPC:       j.cored.Ports().RPC,
-			PortGRPC:      j.cored.Ports().GRPC,
+			Host:          j.config.Cored.Info().HostFromContainer,
+			PortRPC:       j.config.Cored.Ports().RPC,
+			PortGRPC:      j.config.Cored.Ports().GRPC,
 			AddressPrefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		},
 		Postgres: struct {
@@ -132,8 +131,8 @@ func (j BDJuno) prepareConfig() []byte {
 			User string
 			DB   string
 		}{
-			Host: j.postgres.Info().HostFromContainer,
-			Port: j.postgres.Port(),
+			Host: j.config.Postgres.Info().HostFromContainer,
+			Port: j.config.Postgres.Port(),
 			User: postgres.User,
 			DB:   postgres.DB,
 		},

@@ -2,6 +2,7 @@ package apps
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 
@@ -49,14 +50,24 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 	for i := 0; i < cap(nodes); i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
-		node := cored.New(name, f.config, &network, f.spec.DescribeApp(cored.AppType, name), cored.Ports{
-			RPC:        cored.DefaultPorts.RPC + portDelta,
-			P2P:        cored.DefaultPorts.P2P + portDelta,
-			GRPC:       cored.DefaultPorts.GRPC + portDelta,
-			GRPCWeb:    cored.DefaultPorts.GRPCWeb + portDelta,
-			PProf:      cored.DefaultPorts.PProf + portDelta,
-			Prometheus: cored.DefaultPorts.Prometheus + portDelta,
-		}, i < numOfValidators, node0)
+		node := cored.New(cored.Config{
+			Name:       name,
+			HomeDir:    filepath.Join(f.config.AppDir, name, string(network.ChainID())),
+			BinDir:     f.config.BinDir,
+			WrapperDir: f.config.WrapperDir,
+			Network:    &network,
+			AppInfo:    f.spec.DescribeApp(cored.AppType, name),
+			Ports: cored.Ports{
+				RPC:        cored.DefaultPorts.RPC + portDelta,
+				P2P:        cored.DefaultPorts.P2P + portDelta,
+				GRPC:       cored.DefaultPorts.GRPC + portDelta,
+				GRPCWeb:    cored.DefaultPorts.GRPCWeb + portDelta,
+				PProf:      cored.DefaultPorts.PProf + portDelta,
+				Prometheus: cored.DefaultPorts.Prometheus + portDelta,
+			},
+			Validator: i < numOfValidators,
+			RootNode:  node0,
+		})
 		if node0 == nil {
 			node0 = &node
 		}
@@ -72,10 +83,35 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 	nameBDJuno := name + "-bdjuno"
 	nameBigDipper := name + "-bigdipper"
 
-	postgresApp := postgres.New(namePostgres, f.spec.DescribeApp(postgres.AppType, namePostgres), blockexplorer.DefaultPorts.Postgres, blockexplorer.LoadPostgresSchema)
-	hasuraApp := hasura.New(nameHasura, f.spec.DescribeApp(hasura.AppType, nameHasura), blockexplorer.DefaultPorts.Hasura, blockexplorer.HasuraMetadataTemplate, postgresApp)
-	bdjunoApp := bdjuno.New(nameBDJuno, f.config, f.spec.DescribeApp(bdjuno.AppType, nameBDJuno), blockexplorer.DefaultPorts.BDJuno, blockexplorer.BDJunoConfigTemplate, coredApp, postgresApp)
-	bigDipperApp := bigdipper.New(nameBigDipper, f.config, f.spec.DescribeApp(bigdipper.AppType, nameBigDipper), blockexplorer.DefaultPorts.BigDipper, coredApp, hasuraApp)
+	postgresApp := postgres.New(postgres.Config{
+		Name:             namePostgres,
+		AppInfo:          f.spec.DescribeApp(postgres.AppType, namePostgres),
+		Port:             blockexplorer.DefaultPorts.Postgres,
+		SchemaLoaderFunc: blockexplorer.LoadPostgresSchema,
+	})
+	hasuraApp := hasura.New(hasura.Config{
+		Name:             nameHasura,
+		AppInfo:          f.spec.DescribeApp(hasura.AppType, nameHasura),
+		Port:             blockexplorer.DefaultPorts.Hasura,
+		MetadataTemplate: blockexplorer.HasuraMetadataTemplate,
+		Postgres:         postgresApp,
+	})
+	bdjunoApp := bdjuno.New(bdjuno.Config{
+		Name:           nameBDJuno,
+		HomeDir:        filepath.Join(f.config.AppDir, nameBDJuno),
+		AppInfo:        f.spec.DescribeApp(bdjuno.AppType, nameBDJuno),
+		Port:           blockexplorer.DefaultPorts.BDJuno,
+		ConfigTemplate: blockexplorer.BDJunoConfigTemplate,
+		Cored:          coredApp,
+		Postgres:       postgresApp,
+	})
+	bigDipperApp := bigdipper.New(bigdipper.Config{
+		Name:    nameBigDipper,
+		AppInfo: f.spec.DescribeApp(bigdipper.AppType, nameBigDipper),
+		Port:    blockexplorer.DefaultPorts.BigDipper,
+		Cored:   coredApp,
+		Hasura:  hasuraApp,
+	})
 
 	return infra.Mode{
 		postgresApp,

@@ -29,24 +29,25 @@ const (
 	DefaultPort = 8080
 )
 
+// Config stores hasura app config
+type Config struct {
+	Name             string
+	AppInfo          *infra.AppInfo
+	Port             int
+	MetadataTemplate string
+	Postgres         postgres.Postgres
+}
+
 // New creates new hasura app
-func New(name string, appInfo *infra.AppInfo, port int, metadataTemplate string, postgres postgres.Postgres) Hasura {
+func New(config Config) Hasura {
 	return Hasura{
-		name:             name,
-		appInfo:          appInfo,
-		port:             port,
-		metadataTemplate: metadataTemplate,
-		postgres:         postgres,
+		config: config,
 	}
 }
 
 // Hasura represents hasura
 type Hasura struct {
-	name             string
-	appInfo          *infra.AppInfo
-	port             int
-	metadataTemplate string
-	postgres         postgres.Postgres
+	config Config
 }
 
 // Type returns type of application
@@ -56,17 +57,17 @@ func (h Hasura) Type() infra.AppType {
 
 // Name returns name of app
 func (h Hasura) Name() string {
-	return h.name
+	return h.config.Name
 }
 
 // Port returns port used by hasura to accept client connections
 func (h Hasura) Port() int {
-	return h.port
+	return h.config.Port
 }
 
 // Info returns deployment info
 func (h Hasura) Info() infra.DeploymentInfo {
-	return h.appInfo.Info()
+	return h.config.AppInfo.Info()
 }
 
 // Deployment returns deployment of hasura
@@ -75,34 +76,34 @@ func (h Hasura) Deployment() infra.Deployment {
 		Image: "hasura/graphql-engine:v2.8.0",
 		AppBase: infra.AppBase{
 			Name: h.Name(),
-			Info: h.appInfo,
+			Info: h.config.AppInfo,
 			ArgsFunc: func() []string {
 				return []string{
 					"graphql-engine",
-					"--host", h.postgres.Info().HostFromContainer,
-					"--port", strconv.Itoa(h.postgres.Port()),
+					"--host", h.config.Postgres.Info().HostFromContainer,
+					"--port", strconv.Itoa(h.config.Postgres.Port()),
 					"--user", postgres.User,
 					"--dbname", postgres.DB,
 					"serve",
 					"--server-host", net.IPv4zero.String(),
-					"--server-port", strconv.Itoa(h.port),
+					"--server-port", strconv.Itoa(h.config.Port),
 					"--enable-console",
 					"--dev-mode",
 					"--enabled-log-types", "startup,http-log,webhook-log,websocket-log,query-log",
 				}
 			},
 			Ports: map[string]int{
-				"server": h.port,
+				"server": h.config.Port,
 			},
 			Requires: infra.Prerequisites{
 				Timeout: 20 * time.Second,
 				Dependencies: []infra.HealthCheckCapable{
-					h.postgres,
+					h.config.Postgres,
 				},
 			},
 			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 				metadata := h.prepareMetadata()
-				metaURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", deployment.HostFromHost, h.port), Path: "/v1/metadata"}
+				metaURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", deployment.HostFromHost, h.config.Port), Path: "/v1/metadata"}
 
 				log := logger.Get(ctx)
 				log.Info("Loading metadata")
@@ -120,10 +121,10 @@ func (h Hasura) Deployment() infra.Deployment {
 
 func (h Hasura) prepareMetadata() []byte {
 	metadataBuf := &bytes.Buffer{}
-	must.OK(template.Must(template.New("metadata").Parse(h.metadataTemplate)).Execute(metadataBuf, struct {
+	must.OK(template.Must(template.New("metadata").Parse(h.config.MetadataTemplate)).Execute(metadataBuf, struct {
 		DatabaseURL string
 	}{
-		DatabaseURL: "postgresql://" + postgres.User + "@" + infra.JoinNetAddr("", h.postgres.Info().HostFromContainer, h.postgres.Port()) + "/" + postgres.DB,
+		DatabaseURL: "postgresql://" + postgres.User + "@" + infra.JoinNetAddr("", h.config.Postgres.Info().HostFromContainer, h.config.Postgres.Port()) + "/" + postgres.DB,
 	}))
 	reqData := struct {
 		Type    string          `json:"type"`
