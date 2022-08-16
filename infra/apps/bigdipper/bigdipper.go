@@ -56,6 +56,7 @@ func (bd BigDipper) Info() infra.DeploymentInfo {
 // Deployment returns deployment of big dipper
 func (bd BigDipper) Deployment() infra.Deployment {
 	return infra.Container{
+		// TODO: Get image from docker hub once it's there
 		Image: "gcr.io/coreum-devnet-1/big-dipper-ui:latest-dev",
 		EnvVarsFunc: func() []infra.EnvVar {
 			return []infra.EnvVar{
