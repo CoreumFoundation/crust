@@ -6,10 +6,10 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -180,8 +180,8 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 	data := struct {
 		Result struct {
 			SyncInfo struct {
-				LatestBlockHash string `json:"latest_block_hash"` // nolint: tagliatelle
-			} `json:"sync_info"` // nolint: tagliatelle
+				LatestBlockHash string `json:"latest_block_hash"` //nolint: tagliatelle
+			} `json:"sync_info"` //nolint: tagliatelle
 		} `json:"result"`
 	}{}
 
@@ -269,5 +269,5 @@ fi
 
 exec "` + c.config.BinDir + `/cored" --home "` + c.homeDir + `" "$@" $OPTS
 `
-	return errors.WithStack(ioutil.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700))
+	return errors.WithStack(os.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700))
 }

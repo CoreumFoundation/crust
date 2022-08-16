@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -87,7 +86,7 @@ func Generate(cfg GenerateConfig) error {
 		must.OK(err)
 		network.AddGenesisTx(tx)
 	}
-	must.OK(ioutil.WriteFile(outDir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
+	must.OK(os.WriteFile(outDir+"/validators/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 
 	for i := 0; i < cfg.NumOfInstances; i++ {
 		accounts := make([]types.Secp256k1PrivateKey, 0, cfg.NumOfAccountsPerInstance)
@@ -100,7 +99,7 @@ func Generate(cfg GenerateConfig) error {
 
 		instanceDir := fmt.Sprintf("%s/instances/%d", outDir, i)
 		must.OK(os.MkdirAll(instanceDir, 0o700))
-		must.OK(ioutil.WriteFile(instanceDir+"/accounts.json", must.Bytes(json.Marshal(accounts)), 0o600))
+		must.OK(os.WriteFile(instanceDir+"/accounts.json", must.Bytes(json.Marshal(accounts)), 0o600))
 	}
 
 	for i := 0; i < cfg.NumOfValidators; i++ {
@@ -126,7 +125,7 @@ func Generate(cfg GenerateConfig) error {
 		err = network.SaveGenesis(nodeDir)
 		must.OK(err)
 	}
-	must.OK(ioutil.WriteFile(outDir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
+	must.OK(os.WriteFile(outDir+"/sentry-nodes/ids.json", must.Bytes(json.Marshal(nodeIDs)), 0o600))
 	return nil
 }
 
@@ -139,7 +138,7 @@ func generateDocker(outDir, toolPath string) error {
 		return errors.Wrapf(err, `can't find %[1]s binary, run "crust build/%[1]s" to build it`, toolName)
 	}
 
-	must.OK(ioutil.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM alpine:3.16.0
+	must.OK(os.WriteFile(dockerDir+"/Dockerfile", []byte(`FROM alpine:3.16.0
 COPY . .
 ENTRYPOINT ["`+toolName+`"]
 `), 0o600))

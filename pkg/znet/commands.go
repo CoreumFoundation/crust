@@ -3,7 +3,6 @@ package znet
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	osexec "os/exec"
@@ -335,13 +334,13 @@ func sendTokens(ctx context.Context, coredClient client.Client, from, to types.W
 }
 
 func saveWrapper(dir, file, command string) {
-	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
+	must.OK(os.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
 exec "`+exe+`" "`+command+`" "$@"
 `), 0o700))
 }
 
 func saveLogsWrapper(dir, envName, file string) {
-	must.OK(ioutil.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
+	must.OK(os.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
 if [ "$1" == "" ]; then
   echo "Provide the name of application"
   exit 1
