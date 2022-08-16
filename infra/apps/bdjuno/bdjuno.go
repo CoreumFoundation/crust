@@ -2,7 +2,7 @@ package bdjuno
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"text/template"
 	"time"
 
@@ -90,7 +90,7 @@ func (j BDJuno) Deployment() infra.Deployment {
 				},
 			},
 			PrepareFunc: func() error {
-				return ioutil.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644)
+				return os.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644)
 			},
 		},
 	}

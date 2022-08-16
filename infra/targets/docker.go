@@ -333,7 +333,7 @@ func forContainer(ctx context.Context, envName string, fn func(ctx context.Conte
 	}
 
 	var info []struct {
-		ID    string `json:"Id"` // nolint:tagliatelle // `Id` is defined by docker
+		ID    string `json:"Id"` //nolint:tagliatelle // `Id` is defined by docker
 		Name  string
 		State struct {
 			Running bool

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"sync"
@@ -417,7 +416,7 @@ type ConfigFactory struct {
 // NewSpec returns new spec
 func NewSpec(configF *ConfigFactory) *Spec {
 	specFile := configF.HomeDir + "/" + configF.EnvName + "/spec.json"
-	specRaw, err := ioutil.ReadFile(specFile)
+	specRaw, err := os.ReadFile(specFile)
 	switch {
 	case err == nil:
 		spec := &Spec{
@@ -498,7 +497,7 @@ func (s *Spec) String() string {
 
 // Save saves spec into file
 func (s *Spec) Save() error {
-	return ioutil.WriteFile(s.specFile, []byte(s.String()), 0o600)
+	return os.WriteFile(s.specFile, []byte(s.String()), 0o600)
 }
 
 // AppStatus describes current status of an application
