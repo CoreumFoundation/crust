@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-
 	"github.com/CoreumFoundation/coreum/app"
 )
 

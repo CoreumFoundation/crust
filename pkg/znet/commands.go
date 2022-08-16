@@ -14,15 +14,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	"github.com/fsnotify/fsnotify"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"

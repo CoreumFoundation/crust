@@ -9,21 +9,20 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 // Lint runs linters and check that git status is clean
 func Lint(deps build.DepsFunc) error {
-	// FIXME(ysv): Put git.StatusClean back.
-	deps(git.EnsureAllRepos, lint, lintNewLines, Tidy)
+	deps(git.EnsureAllRepos, lint, lintNewLines, Tidy, git.StatusClean)
 	return nil
 }
 
