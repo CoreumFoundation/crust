@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
