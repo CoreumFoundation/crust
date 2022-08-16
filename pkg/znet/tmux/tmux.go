@@ -4,9 +4,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/crust/exec"
 )
 

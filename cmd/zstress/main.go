@@ -8,16 +8,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/run"
+	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/crust/pkg/zstress"
 )
 

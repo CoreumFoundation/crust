@@ -36,7 +36,6 @@ linters:
     - gocognit
     - lll
     - cyclop
-    - gci
     - gochecknoinits
     - exhaustive
     - exhaustivestruct
@@ -70,3 +69,11 @@ linters-settings:
     # If lower than 0, disable the check.
     # Default: 40
     statements: 60
+
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/CoreumFoundation)
+
+    custom-order: true
