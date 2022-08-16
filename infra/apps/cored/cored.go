@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -261,13 +262,13 @@ func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
 	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
-	OPTS="$OPTS --chain-id ""` + string(c.config.Network.ChainID()) + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.config.Ports.RPC) + `"""
+	OPTS="$OPTS --node ""` + infra.JoinNetAddr("tcp", hostname, c.config.Ports.RPC) + `"""
 fi
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
 fi
 
-exec "` + c.config.BinDir + `/cored" --home "` + c.config.HomeDir + `" "$@" $OPTS
+exec "` + c.config.BinDir + `/cored" --chain-id "` + string(c.config.Network.ChainID()) + `" --home "` + filepath.Dir(c.config.HomeDir) + `" "$@" $OPTS
 `
 	return errors.WithStack(ioutil.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700))
 }
