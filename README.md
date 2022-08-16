@@ -122,9 +122,9 @@ To use the client you may use `coredev-00` wrapper:
 
 ```
 (znet) [znet] $ coredev-00 keys list
-(znet) [znet] $ coredev-00 query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f4
-(znet) [znet] $ coredev-00 tx bank send bob cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f4 10core
-(znet) [znet] $ coredev-00 query bank balances cosmos1rd8wynz2987ey6pwmkuwfg9q8hf04xdyjqy2f
+(znet) [znet] $ coredev-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
+(znet) [znet] $ coredev-00 tx bank send bob devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky 10core
+(znet) [znet] $ coredev-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
 ```
 
 ## Integration tests
