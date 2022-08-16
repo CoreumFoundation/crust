@@ -13,15 +13,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/pkg/errors"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
-
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/CoreumFoundation/crust/pkg/rnd"

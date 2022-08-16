@@ -6,9 +6,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
