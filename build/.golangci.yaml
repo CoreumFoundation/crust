@@ -50,6 +50,8 @@ linters:
     - exhaustruct
     - errchkjson
     - forcetypeassert
+    # FIXME (wojtek): remove once linter 1.48.0 is committed
+    - nolintlint
     # deprecated:
     - interfacer
     - golint
