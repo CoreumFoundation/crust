@@ -18,6 +18,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/staking"
@@ -261,13 +262,13 @@ func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
 	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
-	OPTS="$OPTS --chain-id ""` + string(c.network.ChainID()) + `"" --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
+	OPTS="$OPTS --node ""` + infra.JoinNetAddr("tcp", hostname, c.ports.RPC) + `"""
 fi
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
 fi
 
-exec "` + c.config.BinDir + `/cored" --home "` + c.homeDir + `" "$@" $OPTS
+exec "` + c.config.BinDir + `/cored" --chain-id "` + string(c.network.ChainID()) + `" --home "` + filepath.Dir(c.homeDir) + `" "$@" $OPTS
 `
 	return errors.WithStack(ioutil.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700))
 }
