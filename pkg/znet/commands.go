@@ -31,7 +31,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
-	"github.com/CoreumFoundation/crust/pkg/zstress"
 	"github.com/CoreumFoundation/crust/tests"
 )
 
@@ -58,7 +57,6 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 	saveWrapper(config.WrapperDir, "spec", "spec")
 	saveWrapper(config.WrapperDir, "console", "console")
 	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
-	saveWrapper(config.WrapperDir, "stress", "stress")
 	saveLogsWrapper(config.WrapperDir, config.EnvName, "logs")
 
 	shell, promptVar, err := shellConfig(config.EnvName)
@@ -250,31 +248,6 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 		case <-time.After(time.Second):
 		}
 	}
-}
-
-// Stress runs benchmark implemented by `zstress` on top of network deployed by `znet`
-func Stress(ctx context.Context, mode infra.Mode) error {
-	coredNode, err := coredNode(mode)
-	if err != nil {
-		return err
-	}
-
-	healthyCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
-	defer cancel()
-	if err := infra.WaitUntilHealthy(healthyCtx, coredNode); err != nil {
-		return err
-	}
-
-	return zstress.Stress(
-		ctx,
-		zstress.StressConfig{
-			ChainID:           string(coredNode.Network().ChainID()),
-			NodeAddress:       infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
-			Accounts:          cored.RandomWallets[:10],
-			NumOfTransactions: 100,
-		},
-		coredNode.Network(),
-	)
 }
 
 func coredNode(mode infra.Mode) (cored.Cored, error) {
