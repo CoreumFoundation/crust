@@ -11,6 +11,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
+	"github.com/CoreumFoundation/crust/infra/testing"
 )
 
 // NewFactory creates new app factory
@@ -32,11 +33,12 @@ type Factory struct {
 // CoredNetwork creates new network of cored nodes
 func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
 	network := app.NewNetwork(f.networkConfig)
-	initialBalance := "1000000000000000" + network.TokenSymbol()
+	initialBalance := "1000000000000000000000000000000000000000000000000000000000000000000000" + network.TokenSymbol()
 
 	must.OK(network.FundAccount(cored.AlicePrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(cored.BobPrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(cored.CharliePrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(testing.HornOfPlentyPrivKey.PubKey(), initialBalance))
 
 	for _, key := range cored.RandomWallets {
 		must.OK(network.FundAccount(key.PubKey(), initialBalance))
