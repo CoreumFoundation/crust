@@ -38,10 +38,6 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 	must.OK(network.FundAccount(cored.BobPrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(cored.CharliePrivKey.PubKey(), initialBalance))
 
-	for _, key := range cored.RandomWallets {
-		must.OK(network.FundAccount(key.PubKey(), initialBalance))
-	}
-
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
 	var node0 *cored.Cored
 	for i := 0; i < cap(nodes); i++ {
