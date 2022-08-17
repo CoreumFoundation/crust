@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -41,7 +40,7 @@ func main() {
 					return errors.New("number of accounts must be greater than 0")
 				}
 
-				keysRaw, err := ioutil.ReadFile(accountFile)
+				keysRaw, err := os.ReadFile(accountFile)
 				if err != nil {
 					return errors.WithStack(fmt.Errorf("reading account file failed: %w", err))
 				}
