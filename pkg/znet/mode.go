@@ -4,7 +4,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
-	"github.com/CoreumFoundation/crust/tests"
 )
 
 // DevMode is the environment for developer
@@ -20,6 +19,5 @@ func DevMode(appF *apps.Factory) infra.Mode {
 
 // TestMode returns environment used for testing
 func TestMode(appF *apps.Factory) infra.Mode {
-	mode, _ := tests.Tests(appF)
-	return mode
+	return appF.CoredNetwork("coretest", 3, 0)
 }
