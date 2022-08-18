@@ -357,8 +357,8 @@ type Container struct {
 	// Image is the url of the container image
 	Image string
 
-	// EnvVars define environment variables for docker container
-	EnvVars []EnvVar
+	// EnvVarsFunc is a function defining environment variables for docker container
+	EnvVarsFunc func() []EnvVar
 }
 
 // DockerImage returns the docker image used by the deployment
