@@ -12,7 +12,7 @@ replace github.com/CoreumFoundation/coreum => ../coreum
 
 require (
 	github.com/CoreumFoundation/coreum v0.0.0
-	github.com/CoreumFoundation/coreum-tools v0.2.1
+	github.com/CoreumFoundation/coreum-tools v0.2.2
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/jackc/pgx/v4 v4.16.1
