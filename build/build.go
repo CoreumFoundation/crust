@@ -12,7 +12,7 @@ import (
 )
 
 func buildAll(deps build.DepsFunc) {
-	deps(buildCored, buildZNet, buildZStress)
+	deps(buildCored, buildZNet)
 }
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
@@ -48,20 +48,5 @@ func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	return golang.BuildLocally(ctx, golang.BuildConfig{
 		PackagePath:   "cmd/znet",
 		BinOutputPath: "bin/.cache/znet",
-	})
-}
-
-func buildZStress(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo)
-	if err := golang.BuildLocally(ctx, golang.BuildConfig{
-		PackagePath:   "cmd/zstress",
-		BinOutputPath: "bin/.cache/zstress",
-	}); err != nil {
-		return err
-	}
-
-	return golang.BuildInDocker(ctx, golang.BuildConfig{
-		PackagePath:   "cmd/zstress",
-		BinOutputPath: "bin/.cache/docker/zstress",
 	})
 }
