@@ -223,9 +223,22 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 	client := coredNode.Client()
 
-	alice := types.Wallet{Name: "alice", Key: cored.AlicePrivKey}
-	bob := types.Wallet{Name: "bob", Key: cored.BobPrivKey}
-	charlie := types.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
+	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
+	if err != nil {
+		return err
+	}
+	bobPrivKey, err := cored.PrivateKeyFromMnemonic(cored.BobMnemonic)
+	if err != nil {
+		return err
+	}
+	charliePrivKey, err := cored.PrivateKeyFromMnemonic(cored.CharlieMnemonic)
+	if err != nil {
+		return err
+	}
+
+	alice := types.Wallet{Name: "alice", Key: alicePrivKey}
+	bob := types.Wallet{Name: "bob", Key: bobPrivKey}
+	charlie := types.Wallet{Name: "charlie", Key: charliePrivKey}
 
 	for {
 		if err := sendTokens(ctx, client, alice, bob, *coredNode.Network()); err != nil {

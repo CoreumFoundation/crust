@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/bigdipper"
@@ -33,14 +36,37 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) infra.Mode {
+func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) (infra.Mode, error) {
 	network := app.NewNetwork(f.networkConfig)
-	initialBalance := "1000000000000000000000000000000000000000000000000000000000000000000000" + network.TokenSymbol()
+	initialBalance := "500000000000000" + network.TokenSymbol()
 
-	must.OK(network.FundAccount(cored.AlicePrivKey.PubKey(), initialBalance))
-	must.OK(network.FundAccount(cored.BobPrivKey.PubKey(), initialBalance))
-	must.OK(network.FundAccount(cored.CharliePrivKey.PubKey(), initialBalance))
-	must.OK(network.FundAccount(testing.HornOfPlentyPrivKey.PubKey(), initialBalance))
+	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	bobPrivKey, err := cored.PrivateKeyFromMnemonic(cored.BobMnemonic)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	charliePrivKey, err := cored.PrivateKeyFromMnemonic(cored.CharlieMnemonic)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	testsFundingPrivKey, err := cored.PrivateKeyFromMnemonic(testing.FundingMnemonic)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	must.OK(network.FundAccount(alicePrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(bobPrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(charliePrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(testsFundingPrivKey.PubKey(), initialBalance))
+
+	wallets := map[string]types.Secp256k1PrivateKey{
+		"alice":   alicePrivKey,
+		"bob":     bobPrivKey,
+		"charlie": charliePrivKey,
+	}
 
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
 	var node0 *cored.Cored
@@ -64,13 +90,14 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 			},
 			Validator: i < numOfValidators,
 			RootNode:  node0,
+			Wallets:   wallets,
 		})
 		if node0 == nil {
 			node0 = &node
 		}
 		nodes = append(nodes, node)
 	}
-	return nodes
+	return nodes, nil
 }
 
 // BlockExplorer returns set of applications required to run block explorer
