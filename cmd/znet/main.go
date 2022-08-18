@@ -78,12 +78,6 @@ func main() {
 			RunE:  cmdF.Cmd(znet.PingPong),
 		})
 
-		rootCmd.AddCommand(&cobra.Command{
-			Use:   "stress",
-			Short: "Runs the logic used by zstress to test benchmarking",
-			RunE:  cmdF.Cmd(znet.Stress),
-		})
-
 		return rootCmd.Execute()
 	})
 }
