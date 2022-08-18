@@ -27,11 +27,9 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
-	"github.com/CoreumFoundation/crust/tests"
 )
 
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
@@ -160,7 +158,7 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 	configF.ModeName = "test"
 	var err error
-	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, appF *apps.Factory, spec *infra.Spec) (retErr error) {
+	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
 		if err := spec.Verify(); err != nil {
 			return err
 		}
@@ -170,9 +168,7 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 			}
 		}
 
-		mode, tests := tests.Tests(appF)
-		tests = append(tests, testing.FromCoreum(mode)...)
-
+		tests := testing.FromCoreum(mode)
 		return testing.Run(ctx, target, mode, tests, config.TestFilters)
 	}, &err)
 	return err

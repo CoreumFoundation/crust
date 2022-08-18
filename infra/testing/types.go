@@ -14,17 +14,11 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
-// PrepareFunc defines function which is executed before environment is deployed
-type PrepareFunc func(ctx context.Context) error
-
-// RunFunc defines function which is responsible for running the test
-type RunFunc func(ctx context.Context, t *T)
-
 // T is the test
 type T struct {
 	name    string
-	prepare PrepareFunc
-	run     RunFunc
+	prepare func(ctx context.Context) error
+	run     func(ctx context.Context, t *T)
 
 	errors []error
 	failed bool
@@ -43,15 +37,6 @@ func (t *T) FailNow() {
 
 	// This panic is used to exit the test immediately. It is neither logged nor breaks the app, test executor recovers from it.
 	panic(t)
-}
-
-// New creates new test from functions
-func New(prepare PrepareFunc, run RunFunc) *T {
-	return &T{
-		name:    funcToName(prepare),
-		prepare: prepare,
-		run:     run,
-	}
 }
 
 // FromCoreum imports tests from coreum repository
