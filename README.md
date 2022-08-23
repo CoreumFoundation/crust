@@ -69,7 +69,6 @@ Available commands are:
 - `tests` - run integration tests
 - `console` - starts `tmux` session containing logs of all the running applications
 - `ping-pong` - sends transactions to generate traffic on blockchain
-- `stress` - tests the benchmarking logic of `zstress`
 
 ## Example
 

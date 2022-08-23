@@ -27,12 +27,9 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
-	"github.com/CoreumFoundation/crust/pkg/zstress"
-	"github.com/CoreumFoundation/crust/tests"
 )
 
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
@@ -58,7 +55,6 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 	saveWrapper(config.WrapperDir, "spec", "spec")
 	saveWrapper(config.WrapperDir, "console", "console")
 	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
-	saveWrapper(config.WrapperDir, "stress", "stress")
 	saveLogsWrapper(config.WrapperDir, config.EnvName, "logs")
 
 	shell, promptVar, err := shellConfig(config.EnvName)
@@ -162,7 +158,7 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 	configF.ModeName = "test"
 	var err error
-	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, appF *apps.Factory, spec *infra.Spec) (retErr error) {
+	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
 		if err := spec.Verify(); err != nil {
 			return err
 		}
@@ -172,9 +168,7 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 			}
 		}
 
-		mode, tests := tests.Tests(appF)
-		tests = append(tests, testing.FromCoreum(mode)...)
-
+		tests := testing.FromCoreum(mode)
 		return testing.Run(ctx, target, mode, tests, config.TestFilters)
 	}, &err)
 	return err
@@ -229,9 +223,22 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 	client := coredNode.Client()
 
-	alice := types.Wallet{Name: "alice", Key: cored.AlicePrivKey}
-	bob := types.Wallet{Name: "bob", Key: cored.BobPrivKey}
-	charlie := types.Wallet{Name: "charlie", Key: cored.CharliePrivKey}
+	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
+	if err != nil {
+		return err
+	}
+	bobPrivKey, err := cored.PrivateKeyFromMnemonic(cored.BobMnemonic)
+	if err != nil {
+		return err
+	}
+	charliePrivKey, err := cored.PrivateKeyFromMnemonic(cored.CharlieMnemonic)
+	if err != nil {
+		return err
+	}
+
+	alice := types.Wallet{Name: "alice", Key: alicePrivKey}
+	bob := types.Wallet{Name: "bob", Key: bobPrivKey}
+	charlie := types.Wallet{Name: "charlie", Key: charliePrivKey}
 
 	for {
 		if err := sendTokens(ctx, client, alice, bob, *coredNode.Network()); err != nil {
@@ -250,31 +257,6 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 		case <-time.After(time.Second):
 		}
 	}
-}
-
-// Stress runs benchmark implemented by `zstress` on top of network deployed by `znet`
-func Stress(ctx context.Context, mode infra.Mode) error {
-	coredNode, err := coredNode(mode)
-	if err != nil {
-		return err
-	}
-
-	healthyCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
-	defer cancel()
-	if err := infra.WaitUntilHealthy(healthyCtx, coredNode); err != nil {
-		return err
-	}
-
-	return zstress.Stress(
-		ctx,
-		zstress.StressConfig{
-			ChainID:           string(coredNode.Network().ChainID()),
-			NodeAddress:       infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
-			Accounts:          cored.RandomWallets[:10],
-			NumOfTransactions: 100,
-		},
-		coredNode.Network(),
-	)
 }
 
 func coredNode(mode infra.Mode) (cored.Cored, error) {

@@ -14,6 +14,7 @@ require (
 	github.com/CoreumFoundation/coreum v0.0.0
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.4
+	github.com/cosmos/go-bip39 v1.0.0
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/ignite-hq/cli v0.22.1-0.20220610070456-1b33c09fceb7
 	github.com/jackc/pgx/v4 v4.16.1
@@ -48,7 +49,6 @@ require (
 	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/containerd v1.6.2 // indirect
 	github.com/cosmos/btcutil v1.0.4 // indirect
-	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.17.3 // indirect
 	github.com/cosmos/ibc-go/v3 v3.0.0 // indirect
