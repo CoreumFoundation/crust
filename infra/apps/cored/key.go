@@ -5,17 +5,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/go-bip39"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // addKeysToStore adds keys to local keystore
 func addKeysToStore(homeDir string, keys map[string]types.Secp256k1PrivateKey) {
-	encCfg := simapp.MakeTestEncodingConfig()
+	encCfg := app.NewEncodingConfig()
 	keyringDB, err := keyring.New("cored", "test", homeDir, nil, encCfg.Codec)
 	must.OK(err)
 	signatureAlgos, _ := keyringDB.SupportedAlgorithms()
