@@ -208,6 +208,15 @@ func Test(ctx context.Context, deps build.DepsFunc) error {
 	deps(EnsureGo, git.EnsureAllRepos)
 	log := logger.Get(ctx)
 	return onModule(func(path string) error {
+		goCodePresent, err := containsGoCode(path)
+		if err != nil {
+			return err
+		}
+		if !goCodePresent {
+			log.Info("No code to test", zap.String("path", path))
+			return nil
+		}
+
 		log.Info("Running go tests", zap.String("path", path))
 		cmd := exec.Command(tools.Path("go"), "test", "-count=1", "-shuffle=on", "-race", "./...")
 		cmd.Dir = path
@@ -249,4 +258,21 @@ func onModule(fn func(path string) error) error {
 		}
 	}
 	return nil
+}
+
+func containsGoCode(path string) (bool, error) {
+	errFound := errors.New("found")
+	err := filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.HasSuffix(d.Name(), ".go") {
+			return nil
+		}
+		return errFound
+	})
+	if errors.Is(err, errFound) {
+		return true, nil
+	}
+	return false, errors.WithStack(err)
 }
