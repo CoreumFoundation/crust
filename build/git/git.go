@@ -17,10 +17,13 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
-const coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
+const (
+	coreumRepoURL = "https://github.com/CoreumFoundation/coreum.git"
+	faucetRepoURL = "https://github.com/CoreumFoundation/faucet.git"
+)
 
 // Repositories is the list of paths to repositories
-var Repositories = []string{"../crust", "../coreum"}
+var Repositories = []string{"../crust", "../coreum", "../faucet"}
 
 // StatusClean checks that there are no uncommitted files
 func StatusClean(ctx context.Context) error {
@@ -43,12 +46,17 @@ func StatusClean(ctx context.Context) error {
 
 // EnsureAllRepos ensures that all repos are cloned
 func EnsureAllRepos(deps build.DepsFunc) {
-	deps(EnsureCoreumRepo)
+	deps(EnsureCoreumRepo, EnsureFaucetRepo)
 }
 
 // EnsureCoreumRepo ensures that coreum repo is cloned
 func EnsureCoreumRepo(ctx context.Context) error {
 	return ensureRepo(ctx, coreumRepoURL)
+}
+
+// EnsureFaucetRepo ensures that faucet repo is cloned
+func EnsureFaucetRepo(ctx context.Context) error {
+	return ensureRepo(ctx, faucetRepoURL)
 }
 
 func ensureRepo(ctx context.Context, repoURL string) error {

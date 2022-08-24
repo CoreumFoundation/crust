@@ -11,6 +11,8 @@ import (
 	"github.com/CoreumFoundation/crust/build/golang"
 )
 
+// FIXME (wojtek): rearrange functions here and in `git` in product-specific subpackages
+
 func buildAll(deps build.DepsFunc) {
 	deps(buildCored, buildZNet)
 }

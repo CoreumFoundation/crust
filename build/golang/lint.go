@@ -31,6 +31,15 @@ func lint(ctx context.Context, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	config := must.String(filepath.Abs("build/.golangci.yaml"))
 	err := onModule(func(path string) error {
+		goCodePresent, err := containsGoCode(path)
+		if err != nil {
+			return err
+		}
+		if !goCodePresent {
+			log.Info("No code to lint", zap.String("path", path))
+			return nil
+		}
+
 		log.Info("Running linter", zap.String("path", path))
 		cmd := exec.Command(tools.Path("golangci-lint"), "run", "--config", config)
 		cmd.Dir = path

@@ -12,6 +12,8 @@ require (
 
 require (
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/testify v1.8.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
