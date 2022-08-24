@@ -41,6 +41,7 @@ type Config struct {
 	Ports      Ports
 	Validator  bool
 	RootNode   *Cored
+	Wallets    map[string]types.Secp256k1PrivateKey
 }
 
 // New creates new cored app
@@ -48,28 +49,21 @@ func New(config Config) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
-	walletKeys := map[string]types.Secp256k1PrivateKey{
-		"alice":   AlicePrivKey,
-		"bob":     BobPrivKey,
-		"charlie": CharliePrivKey,
-	}
-
 	var validatorPrivateKey ed25519.PrivateKey
 	if config.Validator {
 		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
 		stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
-
 		validatorPrivateKey = valPrivateKey
-		walletKeys["staker"] = stakerPrivKey
+		stake := "100000000" + config.Network.TokenSymbol()
 
-		must.OK(config.Network.FundAccount(stakerPubKey, "100000000000000000000000"+config.Network.TokenSymbol()))
+		must.OK(config.Network.FundAccount(stakerPubKey, stake))
 
 		clientCtx := app.NewDefaultClientContext().WithChainID(string(config.Network.ChainID()))
 
 		// FIXME: make clientCtx as private field of the client type
-		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, "100000000"+config.Network.TokenSymbol())
+		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake)
 		must.OK(err)
 		config.Network.AddGenesisTx(tx)
 	}
@@ -80,7 +74,7 @@ func New(config Config) Cored {
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
 		mu:                  &sync.RWMutex{},
-		walletKeys:          walletKeys,
+		walletKeys:          config.Wallets,
 	}
 	return cored
 }
