@@ -8,10 +8,8 @@ replace (
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
 
-replace github.com/CoreumFoundation/coreum => ../coreum
-
 require (
-	github.com/CoreumFoundation/coreum v0.0.0
+	github.com/CoreumFoundation/coreum v0.0.0-20220824104718-41b8344f3f7e
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/go-bip39 v1.0.0
