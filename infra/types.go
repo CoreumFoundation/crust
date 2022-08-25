@@ -406,11 +406,14 @@ type ConfigFactory struct {
 	// BinDir is the path where all binaries are present
 	BinDir string
 
-	// TestFilters are regular expressions used to filter tests to run
-	TestFilters []string
+	// TestFilter is a regular expressions used to filter tests to run
+	TestFilter string
 
 	// VerboseLogging turns on verbose logging
 	VerboseLogging bool
+
+	// LogFormat is the format used to encode logs
+	LogFormat string
 }
 
 // NewSpec returns new spec

@@ -8,10 +8,8 @@ replace (
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
 
-replace github.com/CoreumFoundation/coreum => ../coreum
-
 require (
-	github.com/CoreumFoundation/coreum v0.0.0
+	github.com/CoreumFoundation/coreum v0.0.0-20220824104718-41b8344f3f7e
 	github.com/CoreumFoundation/coreum-tools v0.2.1
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/go-bip39 v1.0.0
@@ -21,7 +19,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
 	github.com/tendermint/tendermint v0.34.19
-	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
 )
 
@@ -174,6 +171,7 @@ require (
 	github.com/zondax/hid v0.9.0 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.opencensus.io v0.23.0 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
