@@ -1,8 +1,8 @@
 module github.com/CoreumFoundation/crust/build
 
-// 1.17 is used here because still not all distros deliver 1.18.
+// 1.18 is used here because still not all distros deliver 1.19.
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
-go 1.17
+go 1.18
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.2.1
