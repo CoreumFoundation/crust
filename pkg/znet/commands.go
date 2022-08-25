@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strings"
 	"syscall"
 	"time"
 
@@ -68,7 +67,7 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 		"CRUST_ZNET_MODE="+configF.ModeName,
 		"CRUST_ZNET_HOME="+configF.HomeDir,
 		"CRUST_ZNET_BIN_DIR="+configF.BinDir,
-		"CRUST_ZNET_FILTERS="+strings.Join(configF.TestFilters, ","),
+		"CRUST_ZNET_FILTER="+configF.TestFilter,
 	)
 	if promptVar != "" {
 		shellCmd.Env = append(shellCmd.Env, promptVar)
@@ -163,13 +162,12 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 			return err
 		}
 		for _, app := range spec.Apps {
-			if app.Info().Status != infra.AppStatusNotDeployed {
-				return errors.New("tests can't be executed on top of existing environment, remove it first")
+			if app.Info().Status == infra.AppStatusStopped {
+				return errors.New("tests can't be executed on top of stopped environment, start it first")
 			}
 		}
 
-		tests := testing.FromCoreum(mode)
-		return testing.Run(ctx, target, mode, tests, config.TestFilters)
+		return testing.Run(ctx, target, mode, config)
 	}, &err)
 	return err
 }

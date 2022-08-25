@@ -21,7 +21,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
 	github.com/tendermint/tendermint v0.34.19
-	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
 )
 
@@ -174,6 +173,7 @@ require (
 	github.com/zondax/hid v0.9.0 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.opencensus.io v0.23.0 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect

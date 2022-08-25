@@ -93,7 +93,7 @@ func addModeFlag(cmd *cobra.Command, c *ioc.Container, configF *infra.ConfigFact
 }
 
 func addFilterFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringArrayVar(&configF.TestFilters, "filter", defaultFilters("CRUST_ZNET_FILTERS"), "Regular expression used to filter tests to run")
+	cmd.Flags().StringVar(&configF.TestFilter, "filter", defaultString("CRUST_ZNET_FILTER", ""), "Regular expression used to filter tests to run")
 }
 
 func defaultString(env, def string) string {
@@ -102,12 +102,4 @@ func defaultString(env, def string) string {
 		val = def
 	}
 	return val
-}
-
-func defaultFilters(env string) []string {
-	val := os.Getenv(env)
-	if val == "" {
-		return nil
-	}
-	return strings.Split(val, ",")
 }
