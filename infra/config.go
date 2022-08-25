@@ -1,9 +1,5 @@
 package infra
 
-import (
-	"regexp"
-)
-
 // Config stores configuration
 type Config struct {
 	// EnvName is the name of created environment
@@ -24,9 +20,12 @@ type Config struct {
 	// BinDir is the path where all binaries are present
 	BinDir string
 
-	// TestFilters are regular expressions used to filter tests to run
-	TestFilters []*regexp.Regexp
+	// TestFilter is a regular expressions used to filter tests to run
+	TestFilter string
 
 	// VerboseLogging turns on verbose logging
 	VerboseLogging bool
+
+	// LogFormat is the format used to encode logs
+	LogFormat string
 }

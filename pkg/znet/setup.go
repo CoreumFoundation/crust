@@ -3,7 +3,6 @@ package znet
 import (
 	"os"
 	"path/filepath"
-	"regexp"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -40,20 +39,24 @@ func IoC(c *ioc.Container) {
 }
 
 // NewCmdFactory returns new CmdFactory
-func NewCmdFactory(c *ioc.Container) *CmdFactory {
+func NewCmdFactory(c *ioc.Container, configF *infra.ConfigFactory) *CmdFactory {
 	return &CmdFactory{
-		c: c,
+		c:       c,
+		configF: configF,
 	}
 }
 
 // CmdFactory is a wrapper around cobra RunE
 type CmdFactory struct {
-	c *ioc.Container
+	c       *ioc.Container
+	configF *infra.ConfigFactory
 }
 
 // Cmd returns function compatible with RunE
 func (f *CmdFactory) Cmd(cmdFunc interface{}) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		f.configF.VerboseLogging = cmd.Flags().Lookup("verbose").Value.String() == "true"
+		f.configF.LogFormat = cmd.Flags().Lookup("log-format").Value.String()
 		var err error
 		f.c.Call(cmdFunc, &err)
 		return err
@@ -75,11 +78,9 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 		AppDir:         homeDir + "/app",
 		WrapperDir:     homeDir + "/bin",
 		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.BinDir)))),
+		TestFilter:     configF.TestFilter,
 		VerboseLogging: configF.VerboseLogging,
-	}
-
-	for _, v := range configF.TestFilters {
-		config.TestFilters = append(config.TestFilters, regexp.MustCompile(v))
+		LogFormat:      configF.LogFormat,
 	}
 
 	createDirs(config)
