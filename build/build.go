@@ -14,13 +14,27 @@ import (
 // FIXME (wojtek): rearrange functions here and in `git` in product-specific subpackages
 
 func buildAll(deps build.DepsFunc) {
-	deps(buildCored, buildZNet)
+	deps(buildCored, buildZNet, buildAllIntegrationTests)
+}
+
+func buildAllIntegrationTests(deps build.DepsFunc) {
+	deps(buildCoreumIntegrationTests)
+}
+
+func buildCoreumIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
+	deps(golang.EnsureGo, git.EnsureCoreumRepo)
+
+	return golang.BuildTests(ctx, golang.TestBuildConfig{
+		PackagePath:   "../coreum/integration-tests",
+		BinOutputPath: "bin/.cache/integration-tests/coreum",
+		Tags:          []string{"integration"},
+	})
 }
 
 func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, git.EnsureCoreumRepo)
 
-	if err := golang.BuildLocally(ctx, golang.BuildConfig{
+	if err := golang.BuildLocally(ctx, golang.BinaryBuildConfig{
 		PackagePath:   "../coreum/cmd/cored",
 		BinOutputPath: "bin/cored",
 		CGOEnabled:    true,
@@ -28,7 +42,7 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	return golang.BuildInDocker(ctx, golang.BuildConfig{
+	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  "bin/.cache/docker/cored",
 		CGOEnabled:     true,
@@ -39,7 +53,7 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 
 func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
-	return golang.BuildLocally(ctx, golang.BuildConfig{
+	return golang.BuildLocally(ctx, golang.BinaryBuildConfig{
 		PackagePath:   "build/cmd",
 		BinOutputPath: must.String(filepath.EvalSymlinks(must.String(os.Executable()))),
 	})
@@ -47,7 +61,7 @@ func buildCrust(ctx context.Context, deps build.DepsFunc) error {
 
 func buildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
-	return golang.BuildLocally(ctx, golang.BuildConfig{
+	return golang.BuildLocally(ctx, golang.BinaryBuildConfig{
 		PackagePath:   "cmd/znet",
 		BinOutputPath: "bin/.cache/znet",
 	})

@@ -28,8 +28,8 @@ import (
 
 const goAlpineVersion = "3.16"
 
-// BuildConfig is the configuration for `go build`
-type BuildConfig struct {
+// BinaryBuildConfig is the configuration for `go build`
+type BinaryBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
@@ -44,6 +44,18 @@ type BuildConfig struct {
 
 	// CGOEnabled builds cgo binary
 	CGOEnabled bool
+}
+
+// TestBuildConfig is the configuration for `go test -c`
+type TestBuildConfig struct {
+	// PackagePath is the path to package to build
+	PackagePath string
+
+	// BinOutputPath is the path for compiled binary file
+	BinOutputPath string
+
+	// Tags is the list of additional tags to build
+	Tags []string
 }
 
 // EnsureGo ensures that go is available
@@ -62,7 +74,7 @@ func EnsureLibWASMVMMuslC(ctx context.Context) error {
 }
 
 // BuildLocally builds binary locally
-func BuildLocally(ctx context.Context, config BuildConfig) error {
+func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
 		zap.String("binary", config.BinOutputPath))
 
@@ -81,7 +93,7 @@ func BuildLocally(ctx context.Context, config BuildConfig) error {
 }
 
 // BuildInDocker builds binary inside docker container
-func BuildInDocker(ctx context.Context, config BuildConfig) error {
+func BuildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	// FIXME (wojciech): use docker API instead of docker executable
 
 	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath),
@@ -136,6 +148,29 @@ func BuildInDocker(ctx context.Context, config BuildConfig) error {
 	return nil
 }
 
+// BuildTests builds tests
+func BuildTests(ctx context.Context, config TestBuildConfig) error {
+	logger.Get(ctx).Info("Building go tests", zap.String("package", config.PackagePath),
+		zap.String("binary", config.BinOutputPath))
+
+	args := []string{
+		"test",
+		"-c",
+		"-o", must.String(filepath.Abs(config.BinOutputPath)),
+	}
+	if len(config.Tags) > 0 {
+		args = append(args, "-tags="+strings.Join(config.Tags, ","))
+	}
+
+	cmd := exec.Command(tools.Path("go"), args...)
+	cmd.Dir = config.PackagePath
+
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return errors.Wrapf(err, "building go tests '%s' failed", config.PackagePath)
+	}
+	return nil
+}
+
 //go:embed Dockerfile.tmpl
 var dockerfileTemplate string
 
@@ -176,7 +211,7 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	return image, nil
 }
 
-func buildArgsAndEnvs(config BuildConfig, libDir string) (args []string, envs []string) {
+func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args []string, envs []string) {
 	ldFlags := []string{"-w", "-s"}
 	if config.LinkStatically {
 		ldFlags = append(ldFlags, "-extldflags=-static")
