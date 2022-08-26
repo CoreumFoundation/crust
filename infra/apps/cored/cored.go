@@ -68,7 +68,7 @@ func New(config Config) Cored {
 		config.Network.AddGenesisTx(tx)
 	}
 
-	cored := Cored{
+	return Cored{
 		config:              config,
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
@@ -76,7 +76,6 @@ func New(config Config) Cored {
 		mu:                  &sync.RWMutex{},
 		walletKeys:          config.Wallets,
 	}
-	return cored
 }
 
 // Cored represents cored

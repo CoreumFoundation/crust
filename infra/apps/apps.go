@@ -14,6 +14,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/bigdipper"
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/testing"
@@ -52,6 +53,10 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	faucetPrivKey, err := cored.PrivateKeyFromMnemonic(faucet.PrivateKeyMnemonic)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	testsFundingPrivKey, err := cored.PrivateKeyFromMnemonic(testing.FundingMnemonic)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -60,6 +65,7 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 	must.OK(network.FundAccount(alicePrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(bobPrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(charliePrivKey.PubKey(), initialBalance))
+	must.OK(network.FundAccount(faucetPrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(testsFundingPrivKey.PubKey(), initialBalance))
 
 	wallets := map[string]types.Secp256k1PrivateKey{
@@ -98,6 +104,25 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 		nodes = append(nodes, node)
 	}
 	return nodes, nil
+}
+
+// Faucet creates new faucet
+func (f *Factory) Faucet(name string, coredApp cored.Cored) (faucet.Faucet, error) {
+	privKey, err := cored.PrivateKeyFromMnemonic(faucet.PrivateKeyMnemonic)
+	if err != nil {
+		return faucet.Faucet{}, errors.WithStack(err)
+	}
+
+	return faucet.New(faucet.Config{
+		Name:       name,
+		HomeDir:    filepath.Join(f.config.AppDir, name),
+		BinDir:     f.config.BinDir,
+		ChainID:    f.networkConfig.ChainID,
+		AppInfo:    f.spec.DescribeApp(faucet.AppType, name),
+		Port:       faucet.DefaultPort,
+		PrivateKey: privKey,
+		Cored:      coredApp,
+	}), nil
 }
 
 // BlockExplorer returns set of applications required to run block explorer
