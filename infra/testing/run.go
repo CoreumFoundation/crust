@@ -36,16 +36,35 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		return err
 	}
 
-	node := mode[0].(cored.Cored)
-	waitCtx, waitCancel := context.WithTimeout(ctx, 20*time.Second)
-	defer waitCancel()
-	if err := infra.WaitUntilHealthy(waitCtx, node); err != nil {
-		return err
+	waitForApps := make([]infra.HealthCheckCapable, 0, len(mode))
+	for _, app := range mode {
+		withHealthCheck, ok := app.(infra.HealthCheckCapable)
+		if !ok {
+			withHealthCheck = infra.IsRunning(app)
+		}
+		waitForApps = append(waitForApps, withHealthCheck)
 	}
 
 	log := logger.Get(ctx)
+	log.Info("Waiting until all applications start...")
+
+	waitCtx, waitCancel := context.WithTimeout(ctx, 20*time.Second)
+	defer waitCancel()
+	if err := infra.WaitUntilHealthy(waitCtx, waitForApps...); err != nil {
+		return err
+	}
+
+	log.Info("All the applications are ready")
+
+	coredApp := mode.FindApp(cored.AppType)
+	if coredApp == nil {
+		return errors.New("no running cored app found")
+	}
+
+	coredNode := coredApp.(cored.Cored)
+
 	args := []string{
-		"-cored-address", infra.JoinNetAddr("", node.Info().HostFromHost, node.Ports().RPC),
+		"-cored-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
 		"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
 		"-log-format", config.LogFormat,
 
@@ -55,6 +74,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
 	}
 	if config.TestFilter != "" {
+		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
 		args = append(args, "-filter", config.TestFilter)
 	}
 	if config.VerboseLogging {
