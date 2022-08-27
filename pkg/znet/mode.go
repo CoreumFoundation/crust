@@ -27,7 +27,7 @@ func DevMode(appF *apps.Factory) infra.Mode {
 func TestMode(appF *apps.Factory) infra.Mode {
 	coredNodes, err := appF.CoredNetwork("coretest", 3, 0)
 	must.OK(err)
-	node := coredNodes[0].(cored.Cored)
+	node := coredNodes[2].(cored.Cored)
 
 	faucet, err := appF.Faucet("faucet", node)
 	must.OK(err)
