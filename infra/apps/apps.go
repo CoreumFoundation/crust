@@ -37,29 +37,29 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) (infra.Mode, error) {
+func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) (cored.Cored, infra.Mode, error) {
 	network := app.NewNetwork(f.networkConfig)
 	initialBalance := "500000000000000" + network.TokenSymbol()
 
 	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return cored.Cored{}, nil, errors.WithStack(err)
 	}
 	bobPrivKey, err := cored.PrivateKeyFromMnemonic(cored.BobMnemonic)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return cored.Cored{}, nil, errors.WithStack(err)
 	}
 	charliePrivKey, err := cored.PrivateKeyFromMnemonic(cored.CharlieMnemonic)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return cored.Cored{}, nil, errors.WithStack(err)
 	}
 	faucetPrivKey, err := cored.PrivateKeyFromMnemonic(faucet.PrivateKeyMnemonic)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return cored.Cored{}, nil, errors.WithStack(err)
 	}
 	testsFundingPrivKey, err := cored.PrivateKeyFromMnemonic(testing.FundingMnemonic)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return cored.Cored{}, nil, errors.WithStack(err)
 	}
 
 	must.OK(network.FundAccount(alicePrivKey.PubKey(), initialBalance))
@@ -76,6 +76,7 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 
 	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
 	var node0 *cored.Cored
+	var lastNode cored.Cored
 	for i := 0; i < cap(nodes); i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
@@ -101,9 +102,10 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 		if node0 == nil {
 			node0 = &node
 		}
+		lastNode = node
 		nodes = append(nodes, node)
 	}
-	return nodes, nil
+	return lastNode, nodes, nil
 }
 
 // Faucet creates new faucet
