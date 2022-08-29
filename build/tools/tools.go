@@ -2,6 +2,8 @@ package tools
 
 import (
 	"archive/tar"
+	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
@@ -26,6 +28,8 @@ const (
 	Go           Name = "go"
 	GolangCI     Name = "golangci"
 	Ignite       Name = "ignite"
+	Protoc       Name = "protoc"
+	ProtocGenGo  Name = "protoc-gen-go"
 	LibWASMMuslC Name = "libwasmvm_muslc"
 )
 
@@ -103,6 +107,52 @@ var tools = map[Name]Tool{
 		},
 		Binaries: map[string]string{
 			"bin/ignite": "ignite",
+		},
+	},
+
+	// https://github.com/protocolbuffers/protobuf/releases/
+	Protoc: {
+		Version:  "21.5",
+		ForLocal: true,
+		Sources: Sources{
+			linuxAMD64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v21.5/protoc-21.5-linux-x86_64.zip",
+				Hash: "sha256:92fb4f5066a6f7b870e09c73115a2c861852af8f6555d8da9955fdb80710bf7f",
+			},
+			darwinAMD64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v21.5/protoc-21.5-osx-x86_64.zip",
+				Hash: "sha256:495d86aaaf5e8b536fbf04471ee9d7b21addeee5f1e949742c67bd09bb59c890",
+			},
+			darwinARM64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v21.5/protoc-21.5-osx-aarch_64.zip",
+				Hash: "sha256:b22aed8dce62656687c6c4a323aab4e6baf1cb81ee423e77bc671bd69679e2c3",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/protoc": "bin/protoc",
+		},
+	},
+
+	// https://github.com/protocolbuffers/protobuf-go/releases
+	ProtocGenGo: {
+		Version:  "1.28.1",
+		ForLocal: true,
+		Sources: Sources{
+			linuxAMD64: {
+				URL:  "https://github.com/protocolbuffers/protobuf-go/releases/download/v1.28.1/protoc-gen-go.v1.28.1.linux.amd64.tar.gz",
+				Hash: "sha256:5c5802081fb9998c26cdfe607017a677c3ceaa19aae7895dbb1eef9518ebcb7f",
+			},
+			darwinAMD64: {
+				URL:  "https://github.com/protocolbuffers/protobuf-go/releases/download/v1.28.1/protoc-gen-go.v1.28.1.darwin.amd64.tar.gz",
+				Hash: "sha256:6bc912fcc453741477568ae758c601ef74696e1e37027911f202479666f441f2",
+			},
+			darwinARM64: {
+				URL:  "https://github.com/protocolbuffers/protobuf-go/releases/download/v1.28.1/protoc-gen-go.v1.28.1.darwin.arm64.tar.gz",
+				Hash: "sha256:8ed99262b74cfdb89efbae8e2cb7d0409457d66dcf18dbdb124143186a6804d5",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/protoc-gen-go": "protoc-gen-go",
 		},
 	},
 
@@ -341,6 +391,8 @@ func save(url string, reader io.Reader, path string) error {
 			return errors.WithStack(err)
 		}
 		return untar(reader, path)
+	case strings.HasSuffix(url, ".zip"):
+		return unzip(reader, path)
 	default:
 		//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 		f, err := os.OpenFile(filepath.Join(path, filepath.Base(url)), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
@@ -419,6 +471,57 @@ func untar(reader io.Reader, path string) error {
 			return errors.Errorf("unsupported file type: %d", header.Typeflag)
 		}
 	}
+}
+
+func unzip(reader io.Reader, path string) error {
+	// To unzip archive it is required to store it entirely on disk or in memory.
+	// Zip does not support unzipping from one-way reader.
+	// Here we store entire file in memory, so it's feasible only for small archives.
+	archive, err := io.ReadAll(reader)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	zr, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
+	if err != nil {
+		panic(err)
+	}
+
+	for _, f := range zr.File {
+		filePath := filepath.Join(path, f.Name)
+		if f.FileInfo().IsDir() {
+			if err := os.MkdirAll(filePath, f.Mode()); err != nil {
+				return errors.WithStack(err)
+			}
+			continue
+		}
+
+		if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
+			return errors.WithStack(err)
+		}
+
+		err := func() error {
+			fileInArchive, err := f.Open()
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			defer fileInArchive.Close()
+
+			dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			defer dstFile.Close()
+
+			_, err = io.Copy(dstFile, fileInArchive)
+			return errors.WithStack(err)
+
+		}()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // CacheDir returns path to cache directory
