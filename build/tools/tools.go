@@ -507,6 +507,7 @@ func unzip(reader io.Reader, path string) error {
 			}
 			defer fileInArchive.Close()
 
+			//nolint:nosnakecase // Imported constants
 			dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
 				return errors.WithStack(err)
@@ -515,7 +516,6 @@ func unzip(reader io.Reader, path string) error {
 
 			_, err = io.Copy(dstFile, fileInArchive)
 			return errors.WithStack(err)
-
 		}()
 		if err != nil {
 			return err
