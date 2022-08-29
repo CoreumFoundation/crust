@@ -156,6 +156,16 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 	return spec.Save()
 }
 
+// FindAnyRunningApp returns first running app of particular type available in mode
+func (m Mode) FindAnyRunningApp(appType AppType) App {
+	for _, app := range m {
+		if app.Type() == appType && app.Info().Status == AppStatusRunning {
+			return app
+		}
+	}
+	return nil
+}
+
 func ensureDockerImage(ctx context.Context, image string, slots chan struct{}, readyCh chan struct{}) error {
 	select {
 	case <-ctx.Done():

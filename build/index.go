@@ -10,6 +10,7 @@ var Commands = map[string]interface{}{
 	"build":                   buildAll,
 	"build/crust":             buildCrust,
 	"build/cored":             buildCored,
+	"build/faucet":            buildFaucet,
 	"build/znet":              buildZNet,
 	"build/integration-tests": buildAllIntegrationTests,
 	"lint":                    golang.Lint,

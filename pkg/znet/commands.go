@@ -215,10 +215,11 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 // PingPong connects to cored node and sends transactions back and forth from one account to another to generate
 // transactions on the blockchain
 func PingPong(ctx context.Context, mode infra.Mode) error {
-	coredNode, err := coredNode(mode)
-	if err != nil {
-		return err
+	coredApp := mode.FindAnyRunningApp(cored.AppType)
+	if coredApp == nil {
+		return errors.New("no running cored app found")
 	}
+	coredNode := coredApp.(cored.Cored)
 	client := coredNode.Client()
 
 	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
@@ -255,15 +256,6 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 		case <-time.After(time.Second):
 		}
 	}
-}
-
-func coredNode(mode infra.Mode) (cored.Cored, error) {
-	for _, app := range mode {
-		if app.Type() == cored.AppType && app.Info().Status == infra.AppStatusRunning {
-			return app.(cored.Cored), nil
-		}
-	}
-	return cored.Cored{}, errors.New("haven't found any running cored node")
 }
 
 func sendTokens(ctx context.Context, coredClient client.Client, from, to types.Wallet, network app.Network) error {

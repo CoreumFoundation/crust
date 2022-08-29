@@ -14,7 +14,7 @@ import (
 // FIXME (wojtek): rearrange functions here and in `git` in product-specific subpackages
 
 func buildAll(deps build.DepsFunc) {
-	deps(buildCored, buildZNet, buildAllIntegrationTests)
+	deps(buildCored, buildFaucet, buildZNet, buildAllIntegrationTests)
 }
 
 func buildAllIntegrationTests(deps build.DepsFunc) {
@@ -45,6 +45,18 @@ func buildCored(ctx context.Context, deps build.DepsFunc) error {
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  "bin/.cache/docker/cored",
+		CGOEnabled:     true,
+		Tags:           []string{"muslc"},
+		LinkStatically: true,
+	})
+}
+
+func buildFaucet(ctx context.Context, deps build.DepsFunc) error {
+	deps(golang.EnsureGo, git.EnsureFaucetRepo)
+
+	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
+		PackagePath:    "../faucet",
+		BinOutputPath:  "bin/.cache/docker/faucet",
 		CGOEnabled:     true,
 		Tags:           []string{"muslc"},
 		LinkStatically: true,
