@@ -163,6 +163,8 @@ $ crust znet
 
 You will see logs reporting that tokens are constantly transferred.
 
+This is the only change I made now
+
 ## Hard reset
 
 If you want to manually remove all the data created by `znet` do this:
