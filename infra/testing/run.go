@@ -56,7 +56,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 
 	log.Info("All the applications are ready")
 
-	coredApp := mode.FindApp(cored.AppType)
+	coredApp := mode.FindAnyRunningApp(cored.AppType)
 	if coredApp == nil {
 		return errors.New("no running cored app found")
 	}

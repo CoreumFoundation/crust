@@ -156,8 +156,8 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 	return spec.Save()
 }
 
-// FindApp returns first running app of particular type available in mode
-func (m Mode) FindApp(appType AppType) App {
+// FindAnyRunningApp returns first running app of particular type available in mode
+func (m Mode) FindAnyRunningApp(appType AppType) App {
 	for _, app := range m {
 		if app.Type() == appType && app.Info().Status == AppStatusRunning {
 			return app
