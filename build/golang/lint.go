@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+	"regexp"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -18,6 +18,11 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
+)
+
+var (
+	lintNewLinesSkipDirsRegexps  = []string{"\\.", "vendor"}
+	lintNewLinesSkipFilesRegexps = []string{".iml", ".wasm"}
 )
 
 // Lint runs linters and check that git status is clean
@@ -55,15 +60,28 @@ func lint(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func lintNewLines() error {
+	skipDirsRegexps, err := parseRegexps(lintNewLinesSkipDirsRegexps)
+	if err != nil {
+		return err
+	}
+
+	skipFilesRegexps, err := parseRegexps(lintNewLinesSkipFilesRegexps)
+	if err != nil {
+		return err
+	}
+
 	for _, repoPath := range git.Repositories {
 		err := filepath.WalkDir(repoPath, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
 			if d.IsDir() {
-				if strings.HasPrefix(d.Name(), ".") {
-					return filepath.SkipDir
+				for _, reg := range skipDirsRegexps {
+					if reg.MatchString(d.Name()) {
+						return filepath.SkipDir
+					}
 				}
+
 				return nil
 			}
 			info, err := d.Info()
@@ -74,6 +92,13 @@ func lintNewLines() error {
 				// skip executable files
 				return nil
 			}
+
+			for _, reg := range skipFilesRegexps {
+				if reg.MatchString(info.Name()) {
+					return nil
+				}
+			}
+
 			f, err := os.Open(path)
 			if err != nil {
 				return errors.WithStack(err)
@@ -101,4 +126,17 @@ func lintNewLines() error {
 		}
 	}
 	return nil
+}
+
+func parseRegexps(strRegexps []string) ([]*regexp.Regexp, error) {
+	compiledRegexps := make([]*regexp.Regexp, 0, len(strRegexps))
+	for _, strReg := range strRegexps {
+		r, err := regexp.Compile(strReg)
+		if err != nil {
+			return nil, errors.Wrapf(err, "invalid regexp '%s'", strReg)
+		}
+		compiledRegexps = append(compiledRegexps, r)
+	}
+
+	return compiledRegexps, nil
 }
