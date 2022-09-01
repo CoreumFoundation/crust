@@ -289,12 +289,7 @@ func sendTokens(ctx context.Context, clientCtx cosmosclient.Context, from, to ty
 		GasLimit:   network.DeterministicGas().BankSend,
 		GasPrice:   sdk.NewCoin(gasPrice.Denom, sdk.NewIntFromBigInt(gasPrice.Amount)),
 	}
-	txHash, err := tx.BroadcastAsync(ctx, clientCtx, signInput, msg)
-	if err != nil {
-		return err
-	}
-
-	result, err := tx.AwaitTx(ctx, clientCtx, txHash)
+	result, err := tx.BroadcastSync(ctx, clientCtx, signInput, msg)
 	if err != nil {
 		return err
 	}
