@@ -12,6 +12,10 @@ import (
 	"syscall"
 	"time"
 
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -22,7 +26,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
@@ -240,13 +243,13 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	charlie := types.Wallet{Name: "charlie", Key: charliePrivKey}
 
 	for {
-		if err := sendTokens(ctx, client, alice, bob, *coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client.Context(), alice, bob, *coredNode.Network()); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, bob, charlie, *coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client.Context(), bob, charlie, *coredNode.Network()); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, charlie, alice, *coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client.Context(), charlie, alice, *coredNode.Network()); err != nil {
 			return err
 		}
 
@@ -258,7 +261,7 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-func sendTokens(ctx context.Context, coredClient client.Client, from, to types.Wallet, network app.Network) error {
+func sendTokens(ctx context.Context, clientCtx cosmosclient.Context, from, to types.Wallet, network app.Network) error {
 	log := logger.Get(ctx)
 
 	amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
@@ -269,38 +272,49 @@ func sendTokens(ctx context.Context, coredClient client.Client, from, to types.W
 	if err != nil {
 		return err
 	}
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   from,
-			GasLimit: network.DeterministicGas().BankSend,
-			GasPrice: gasPrice,
+	senderPrivateKey := secp256k1.PrivKey{Key: from.Key}
+	fromAddress := sdk.AccAddress(senderPrivateKey.PubKey().Address())
+
+	toPrivateKey := secp256k1.PrivKey{Key: to.Key}
+	toAddress := sdk.AccAddress(toPrivateKey.PubKey().Address())
+	msg := &banktypes.MsgSend{
+		FromAddress: fromAddress.String(),
+		ToAddress:   toAddress.String(),
+		Amount: []sdk.Coin{
+			sdk.NewCoin(amount.Denom, sdk.NewIntFromBigInt(amount.Amount)),
 		},
-		Sender:   from,
-		Receiver: to,
-		Amount:   amount})
+	}
+	signInput := tx.SignInput{
+		PrivateKey: senderPrivateKey,
+		GasLimit:   network.DeterministicGas().BankSend,
+		GasPrice:   sdk.NewCoin(gasPrice.Denom, sdk.NewIntFromBigInt(gasPrice.Amount)),
+	}
+	txHash, err := tx.BroadcastAsync(ctx, clientCtx, signInput, msg)
 	if err != nil {
 		return err
 	}
-	result, err := coredClient.Broadcast(ctx, txBytes)
+
+	result, err := tx.AwaitTx(ctx, clientCtx, txHash)
 	if err != nil {
 		return err
 	}
 
 	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
-		zap.Stringer("amount", amount), zap.String("txHash", result.TxHash),
-		zap.Int64("gasUsed", result.GasUsed))
+		zap.Stringer("amount", amount), zap.String("txHash", result.Hash.String()),
+		zap.Int64("gasUsed", result.TxResult.GasUsed))
 
-	fromBalance, err := coredClient.QueryBankBalances(ctx, from)
+	bankQueryClient := banktypes.NewQueryClient(clientCtx)
+	fromBalance, err := bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: fromAddress.String()})
 	if err != nil {
 		return err
 	}
-	toBalance, err := coredClient.QueryBankBalances(ctx, to)
+	toBalance, err := bankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: toAddress.String()})
 	if err != nil {
 		return err
 	}
 
-	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance[network.TokenSymbol()]))
-	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance[network.TokenSymbol()]))
+	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance.GetBalances().AmountOf(network.TokenSymbol())))
+	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance.GetBalances().AmountOf(network.TokenSymbol())))
 
 	return nil
 }
