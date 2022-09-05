@@ -69,18 +69,19 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		// transactions to be included in blocks, so it should be safe to run more tests in parallel than we have CPus
 		// available.
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
-	}
-
-	coredArgs := []string{
-		"-log-format", config.LogFormat,
 		"-cored-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
-		"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
 	}
 
-	faucetArgs := []string{
-		"-nodeURI", "localhost:26657",
-		"-transfer-amount", "1000000",
+	appArgs := map[string][]string{
+		"coreum": {
+			"-log-format", config.LogFormat,
+			"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
+		},
+		"faucet": {
+			"-transfer-amount", "1000000",
+		},
 	}
+
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
 		args = append(args, "-filter", config.TestFilter)
@@ -98,19 +99,17 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		if len(onlyRepos) > 0 && !lo.Contains(onlyRepos, f.Name()) {
 			continue
 		}
-		switch f.Name() {
-		case "coreum":
-			args = append(args, coredArgs...)
-		case "faucet":
-			args = append(args, faucetArgs...)
-		default:
-		}
+
+		// copy is not used here, since the linter complains in the next line that using append with pre-allocated
+		// length leads to extra space getting allocated.
+		fullArgs := append([]string{}, args...)
+		fullArgs = append(fullArgs, appArgs[f.Name()]...)
 
 		binPath := filepath.Join(testDir, f.Name())
 		log := log.With(zap.String("binary", binPath))
 		log.Info("Running tests")
 
-		if err := libexec.Exec(ctx, exec.Command(binPath, args...)); err != nil {
+		if err := libexec.Exec(ctx, exec.Command(binPath, fullArgs...)); err != nil {
 			log.Error("Tests failed", zap.Error(err))
 			failed = true
 		}

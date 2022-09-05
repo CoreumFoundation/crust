@@ -54,18 +54,9 @@ func main() {
 		testCmd := &cobra.Command{
 			Use:   "test",
 			Short: "Runs integration tests for all repos",
-			RunE:  cmdF.Cmd(znet.Test()),
+			RunE:  cmdF.Cmd(znet.Test),
 		}
-		testCmd.AddCommand(&cobra.Command{
-			Use:   "faucet",
-			Short: "Runs integration tests for faucet",
-			RunE:  cmdF.Cmd(znet.Test("faucet")),
-		})
-		testCmd.AddCommand(&cobra.Command{
-			Use:   "coreum",
-			Short: "Runs integration tests for coreum",
-			RunE:  cmdF.Cmd(znet.Test("coreum")),
-		})
+		addTestRepoFlag(testCmd, configF)
 		addBinDirFlag(testCmd, configF)
 		addFilterFlag(testCmd, configF)
 		rootCmd.AddCommand(testCmd)
@@ -90,6 +81,15 @@ func main() {
 
 		return rootCmd.Execute()
 	})
+}
+
+func addTestRepoFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
+	cmd.Flags().StringSliceVar(
+		&configF.TestRepos,
+		"repos",
+		[]string{},
+		"repos to run integration test for,empty means all repos,e.g. --repos=faucet,coreum or --repos=faucet --repos=coreum",
+	)
 }
 
 func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {

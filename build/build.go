@@ -18,8 +18,7 @@ func buildAll(deps build.DepsFunc) {
 }
 
 func buildAllIntegrationTests(deps build.DepsFunc) {
-	deps(buildCoreumIntegrationTests)
-	deps(buildFaucetIntegrationTests)
+	deps(buildCoreumIntegrationTests, buildFaucetIntegrationTests)
 }
 
 func buildCoreumIntegrationTests(ctx context.Context, deps build.DepsFunc) error {

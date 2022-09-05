@@ -154,24 +154,22 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 }
 
 // Test runs integration tests
-func Test(onlyRepos ...string) func(c *ioc.Container, configF *infra.ConfigFactory) error {
-	return func(c *ioc.Container, configF *infra.ConfigFactory) error {
-		configF.ModeName = "test"
-		var err error
-		c.Call(func(ctx context.Context, config infra.Config, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
-			if err := spec.Verify(); err != nil {
-				return err
+func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
+	configF.ModeName = "test"
+	var err error
+	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
+		if err := spec.Verify(); err != nil {
+			return err
+		}
+		for _, app := range spec.Apps {
+			if app.Info().Status == infra.AppStatusStopped {
+				return errors.New("tests can't be executed on top of stopped environment, start it first")
 			}
-			for _, app := range spec.Apps {
-				if app.Info().Status == infra.AppStatusStopped {
-					return errors.New("tests can't be executed on top of stopped environment, start it first")
-				}
-			}
+		}
 
-			return testing.Run(ctx, target, mode, config, onlyRepos...)
-		}, &err)
-		return err
-	}
+		return testing.Run(ctx, target, mode, config, configF.TestRepos...)
+	}, &err)
+	return err
 }
 
 // Spec prints specification of running environment
