@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -20,7 +21,7 @@ import (
 )
 
 // Run deploys testing environment and runs tests there
-func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra.Config) error {
+func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra.Config, onlyRepos ...string) error {
 	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
 	files, err := os.ReadDir(testDir)
 	if err != nil {
@@ -64,14 +65,21 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	coredNode := coredApp.(cored.Cored)
 
 	args := []string{
-		"-cored-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
-		"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
-		"-log-format", config.LogFormat,
-
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for
 		// transactions to be included in blocks, so it should be safe to run more tests in parallel than we have CPus
 		// available.
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
+	}
+
+	coredArgs := []string{
+		"-log-format", config.LogFormat,
+		"-cored-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
+		"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
+	}
+
+	faucetArgs := []string{
+		"-nodeURI", "localhost:26657",
+		"-transfer-amount", "1000000",
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
@@ -85,6 +93,17 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	for _, f := range files {
 		if f.IsDir() {
 			continue
+		}
+
+		if len(onlyRepos) > 0 && !lo.Contains(onlyRepos, f.Name()) {
+			continue
+		}
+		switch f.Name() {
+		case "coreum":
+			args = append(args, coredArgs...)
+		case "faucet":
+			args = append(args, faucetArgs...)
+		default:
 		}
 
 		binPath := filepath.Join(testDir, f.Name())

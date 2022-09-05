@@ -16,6 +16,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/pkg/errors v0.9.1
+	github.com/samber/lo v1.27.1
 	github.com/spf13/cobra v1.4.0
 	github.com/tendermint/tendermint v0.34.19
 	go.uber.org/zap v1.21.0
@@ -177,6 +178,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220811182439-13a9a731de15 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect

@@ -53,9 +53,19 @@ func main() {
 
 		testCmd := &cobra.Command{
 			Use:   "test",
-			Short: "Runs integration tests",
-			RunE:  cmdF.Cmd(znet.Test),
+			Short: "Runs integration tests for all repos",
+			RunE:  cmdF.Cmd(znet.Test()),
 		}
+		testCmd.AddCommand(&cobra.Command{
+			Use:   "faucet",
+			Short: "Runs integration tests for faucet",
+			RunE:  cmdF.Cmd(znet.Test("faucet")),
+		})
+		testCmd.AddCommand(&cobra.Command{
+			Use:   "coreum",
+			Short: "Runs integration tests for coreum",
+			RunE:  cmdF.Cmd(znet.Test("coreum")),
+		})
 		addBinDirFlag(testCmd, configF)
 		addFilterFlag(testCmd, configF)
 		rootCmd.AddCommand(testCmd)
