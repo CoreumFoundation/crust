@@ -64,7 +64,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	coredNode := coredApp.(cored.Cored)
 
 	args := []string{
-		"-cored-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
+		"-cored-address", infra.JoinNetAddr("tcp", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
 		"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
 		"-log-format", config.LogFormat,
 
