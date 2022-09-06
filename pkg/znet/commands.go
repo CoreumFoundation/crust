@@ -158,6 +158,7 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 	configF.ModeName = "test"
 	var err error
 	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
+		config.TestRepos = append(config.TestRepos, configF.TestRepos...)
 		if err := spec.Verify(); err != nil {
 			return err
 		}
@@ -167,7 +168,7 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 			}
 		}
 
-		return testing.Run(ctx, target, mode, config, configF.TestRepos...)
+		return testing.Run(ctx, target, mode, config, config.TestRepos...)
 	}, &err)
 	return err
 }

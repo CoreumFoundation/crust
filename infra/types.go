@@ -419,7 +419,7 @@ type ConfigFactory struct {
 	// TestFilter is a regular expressions used to filter tests to run
 	TestFilter string
 
-	// TestRepos limits running integration tests on sp
+	// TestRepos limits running integration tests on selected repositories, empty means no filter
 	TestRepos []string
 
 	// VerboseLogging turns on verbose logging
