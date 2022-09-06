@@ -83,6 +83,9 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 		LogFormat:      configF.LogFormat,
 	}
 
+	// we use append to make a copy of the original list, so it is not passed by reference
+	config.TestRepos = append(config.TestRepos, configF.TestRepos...)
+
 	createDirs(config)
 
 	return config

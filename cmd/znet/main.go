@@ -88,7 +88,7 @@ func addTestRepoFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 		&configF.TestRepos,
 		"repos",
 		[]string{},
-		"repositories to run integration test for,empty means all repositories,e.g. --repos=faucet,coreum or --repos=faucet --repos=coreum",
+		"Repositories to run integration test for,empty means all repositories,e.g. --repos=faucet,coreum or --repos=faucet --repos=coreum",
 	)
 }
 
