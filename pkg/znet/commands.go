@@ -265,7 +265,7 @@ func sendTokens(ctx context.Context, coredClient client.Client, from, to types.W
 	if err != nil {
 		return err
 	}
-	gasPrice, err := types.NewCoin(network.FeeModel().InitialGasPrice.BigInt(), network.TokenSymbol())
+	gasPrice, err := types.NewCoin(network.FeeModel().Params().InitialGasPrice.BigInt(), network.TokenSymbol())
 	if err != nil {
 		return err
 	}
