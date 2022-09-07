@@ -18,7 +18,7 @@ func buildAll(deps build.DepsFunc) {
 }
 
 func buildAllIntegrationTests(deps build.DepsFunc) {
-	deps(buildCoreumIntegrationTests)
+	deps(buildCoreumIntegrationTests, buildFaucetIntegrationTests)
 }
 
 func buildCoreumIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
@@ -27,6 +27,16 @@ func buildCoreumIntegrationTests(ctx context.Context, deps build.DepsFunc) error
 	return golang.BuildTests(ctx, golang.TestBuildConfig{
 		PackagePath:   "../coreum/integration-tests",
 		BinOutputPath: "bin/.cache/integration-tests/coreum",
+		Tags:          []string{"integration"},
+	})
+}
+
+func buildFaucetIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
+	deps(golang.EnsureGo, git.EnsureFaucetRepo)
+
+	return golang.BuildTests(ctx, golang.TestBuildConfig{
+		PackagePath:   "../faucet/integration-tests",
+		BinOutputPath: "bin/.cache/integration-tests/faucet",
 		Tags:          []string{"integration"},
 	})
 }

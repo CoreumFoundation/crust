@@ -167,7 +167,7 @@ func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
 			}
 		}
 
-		return testing.Run(ctx, target, mode, config)
+		return testing.Run(ctx, target, mode, config, config.TestRepos...)
 	}, &err)
 	return err
 }

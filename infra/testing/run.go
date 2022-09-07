@@ -11,16 +11,18 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 )
 
 // Run deploys testing environment and runs tests there
-func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra.Config) error {
+func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra.Config, onlyRepos ...string) error {
 	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
 	files, err := os.ReadDir(testDir)
 	if err != nil {
@@ -62,17 +64,14 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	}
 
 	coredNode := coredApp.(cored.Cored)
-
 	args := []string{
-		"-cored-address", infra.JoinNetAddr("tcp", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
-		"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
-		"-log-format", config.LogFormat,
-
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for
 		// transactions to be included in blocks, so it should be safe to run more tests in parallel than we have CPus
 		// available.
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
+		"-cored-address", infra.JoinNetAddr("tcp", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
 	}
+
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
 		args = append(args, "-filter", config.TestFilter)
@@ -86,12 +85,35 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		if f.IsDir() {
 			continue
 		}
+		if len(onlyRepos) > 0 && !lo.Contains(onlyRepos, f.Name()) {
+			continue
+		}
+		// copy is not used here, since the linter complains in the next line that using append with pre-allocated
+		// length leads to extra space getting allocated.
+		fullArgs := append([]string{}, args...)
+		switch f.Name() {
+		case "coreum":
+			fullArgs = append(fullArgs,
+				"-log-format", config.LogFormat,
+				"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
+			)
+		case "faucet":
+			faucetApp := mode.FindAnyRunningApp(faucet.AppType)
+			if faucetApp == nil {
+				return errors.New("no running faucet app found")
+			}
+			faucetNode := faucetApp.(faucet.Faucet)
+			fullArgs = append(fullArgs,
+				"-transfer-amount", "1000000",
+				"-faucet-address", infra.JoinNetAddr("http", faucetNode.Info().HostFromHost, faucetNode.Port()),
+			)
+		}
 
 		binPath := filepath.Join(testDir, f.Name())
 		log := log.With(zap.String("binary", binPath))
 		log.Info("Running tests")
 
-		if err := libexec.Exec(ctx, exec.Command(binPath, args...)); err != nil {
+		if err := libexec.Exec(ctx, exec.Command(binPath, fullArgs...)); err != nil {
 			log.Error("Tests failed", zap.Error(err))
 			failed = true
 		}
