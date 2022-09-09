@@ -131,7 +131,7 @@ func (c Cored) AddWallet(balances string) types.Wallet {
 	var name string
 	for {
 		name = rnd.GetRandomName()
-		if c.walletKeys[name] == nil {
+		if len(c.walletKeys[name]) == 0 {
 			break
 		}
 	}
