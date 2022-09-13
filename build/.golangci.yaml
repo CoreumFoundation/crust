@@ -79,3 +79,8 @@ linters-settings:
       - prefix(github.com/CoreumFoundation)
 
     custom-order: true
+
+  revive:
+    rules:
+      - name: package-comments
+        disabled: true
