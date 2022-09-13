@@ -104,7 +104,7 @@ func (f Faucet) Deployment() infra.Deployment {
 				return []string{
 					"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
 					"--chain-id", string(f.config.ChainID),
-					"--mnemonic-key-path", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
+					"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
 					// TODO (milad): remove after faucet is updated to use mnemonic
 					"--key-path", filepath.Join(targets.AppHomeDir, "key"),
 					"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Ports().RPC),
