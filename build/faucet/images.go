@@ -22,6 +22,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
+		RepoPath:   "../faucet",
 		ContextDir: filepath.Dir(dockerBinaryPath),
 		ImageName:  filepath.Base(dockerBinaryPath),
 		Dockerfile: dockerfile,

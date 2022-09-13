@@ -11,6 +11,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/crust/build/git"
 )
 
 // AlpineImage contains tag of alpine image used to build dockerfiles
@@ -18,6 +19,9 @@ const AlpineImage = "alpine:3.16.0"
 
 // BuildImageConfig contains the configuration required to build docker image
 type BuildImageConfig struct {
+	// RepoPath is the path to the repo where binary comes from
+	RepoPath string
+
 	// ContextDir
 	ContextDir string
 
@@ -37,9 +41,24 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	logger.Get(ctx).Info("Building docker image", zap.String("image", config.ImageName))
 
-	buildCmd := exec.Command("docker", "build", "-t", config.ImageName, "-f", "-", contextDir)
+	hash, err := git.HeadHash(ctx, config.RepoPath)
+	if err != nil {
+		return err
+	}
+	tagZNet := config.ImageName + ":znet"
+	tag := config.ImageName + ":" + hash[:7]
+	clean, err := git.StatusClean(ctx, config.RepoPath)
+	if err != nil {
+		return err
+	}
+	if !clean {
+		tag += "-dirty"
+	}
+
+	logger.Get(ctx).Info("Building docker image", zap.String("image", tag))
+
+	buildCmd := exec.Command("docker", "build", "-t", tag, "-t", tagZNet, "-f", "-", contextDir)
 	buildCmd.Stdin = bytes.NewReader(config.Dockerfile)
 
 	return libexec.Exec(ctx, buildCmd)

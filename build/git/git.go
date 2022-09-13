@@ -25,19 +25,43 @@ const (
 // Repositories is the list of paths to repositories
 var Repositories = []string{"../crust", "../coreum", "../faucet"}
 
-// StatusClean checks that there are no uncommitted files
-func StatusClean(ctx context.Context) error {
+// HeadHash returns hash of the latest commit in the repository
+func HeadHash(ctx context.Context, repoPath string) (string, error) {
+	buf := &bytes.Buffer{}
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	cmd.Dir = repoPath
+	cmd.Stdout = buf
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return "", errors.Wrap(err, "git command failed")
+	}
+	return buf.String(), nil
+}
+
+// StatusClean checks that there are no uncommitted files in the repo
+func StatusClean(ctx context.Context, repoPath string) (bool, error) {
+	buf := &bytes.Buffer{}
+	cmd := exec.Command("git", "status", "-s")
+	cmd.Dir = repoPath
+	cmd.Stdout = buf
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return false, errors.Wrap(err, "git command failed")
+	}
+	if buf.Len() > 0 {
+		fmt.Println("git status:")
+		fmt.Println(buf)
+		return false, nil
+	}
+	return true, nil
+}
+
+// StatusCleanAll checks that there are no uncommitted files in any repo
+func StatusCleanAll(ctx context.Context) error {
 	for _, repoPath := range Repositories {
-		buf := &bytes.Buffer{}
-		cmd := exec.Command("git", "status", "-s")
-		cmd.Dir = repoPath
-		cmd.Stdout = buf
-		if err := libexec.Exec(ctx, cmd); err != nil {
-			return errors.Wrap(err, "git command failed")
+		clean, err := StatusClean(ctx, repoPath)
+		if err != nil {
+			return err
 		}
-		if buf.Len() > 0 {
-			fmt.Println("git status:")
-			fmt.Println(buf)
+		if !clean {
 			return errors.Errorf("git status of repository '%s' is not empty", filepath.Base(repoPath))
 		}
 	}

@@ -22,6 +22,7 @@ func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
+		RepoPath:   "../coreum",
 		ContextDir: filepath.Dir(dockerBinaryPath),
 		ImageName:  filepath.Base(dockerBinaryPath),
 		Dockerfile: dockerfile,
