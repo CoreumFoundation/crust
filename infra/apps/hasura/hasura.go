@@ -64,8 +64,9 @@ func (h Hasura) Deployment() infra.Deployment {
 			return []infra.EnvVar{
 				{
 					Name: "HASURA_GRAPHQL_DATABASE_URL",
-					Value: fmt.Sprintf("postgres://%s@%s:%d/%s", postgres.User,
-						h.config.Postgres.Info().HostFromContainer, h.config.Postgres.Port(), postgres.DB),
+					Value: fmt.Sprintf("postgres://%s@%s/%s", postgres.User,
+						infra.JoinNetAddr("", h.config.Postgres.Info().HostFromContainer, h.config.Postgres.Port()),
+						postgres.DB),
 				},
 			}
 		},
