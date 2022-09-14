@@ -3,7 +3,7 @@
 
 ## Prerequisites
 To use `crust` you need:
-- `go 1.17` or newer
+- `go 1.18` or newer
 - `tmux`
 - `docker`
 
