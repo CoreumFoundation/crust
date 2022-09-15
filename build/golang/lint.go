@@ -27,7 +27,7 @@ var (
 
 // Lint runs linters and check that git status is clean
 func Lint(deps build.DepsFunc) error {
-	deps(git.EnsureAllRepos, lint, lintNewLines, Tidy, git.StatusClean)
+	deps(git.EnsureAllRepos, lint, lintNewLines, Tidy, git.StatusCleanAll)
 	return nil
 }
 
