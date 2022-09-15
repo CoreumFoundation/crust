@@ -1,0 +1,5 @@
+FROM {{ .From }}
+
+COPY {{ .Binary }} /bin/{{ .Binary }}
+
+ENTRYPOINT ["{{ .Binary }}"]

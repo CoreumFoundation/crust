@@ -22,7 +22,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -238,11 +237,11 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args []string, e
 	return args, envs
 }
 
-// Test runs go test
-func Test(ctx context.Context, deps build.DepsFunc) error {
-	deps(EnsureGo, git.EnsureAllRepos)
+// Test runs go tests in repository
+func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+	deps(EnsureGo)
 	log := logger.Get(ctx)
-	return onModule(func(path string) error {
+	return onModule(repoPath, func(path string) error {
 		goCodePresent, err := containsGoCode(path)
 		if err != nil {
 			return err
@@ -262,11 +261,11 @@ func Test(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-// Tidy runs go mod tidy
-func Tidy(ctx context.Context, deps build.DepsFunc) error {
-	deps(EnsureGo, git.EnsureAllRepos)
+// Tidy runs go mod tidy in repository
+func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+	deps(EnsureGo)
 	log := logger.Get(ctx)
-	return onModule(func(path string) error {
+	return onModule(repoPath, func(path string) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
 		cmd := exec.Command(tools.Path("go"), "mod", "tidy")
 		cmd.Dir = path
@@ -277,22 +276,16 @@ func Tidy(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-func onModule(fn func(path string) error) error {
-	for _, repoPath := range git.Repositories {
-		err := filepath.WalkDir(repoPath, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.IsDir() || d.Name() != "go.mod" {
-				return nil
-			}
-			return fn(filepath.Dir(path))
-		})
+func onModule(repoPath string, fn func(path string) error) error {
+	return filepath.WalkDir(repoPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-	}
-	return nil
+		if d.IsDir() || d.Name() != "go.mod" {
+			return nil
+		}
+		return fn(filepath.Dir(path))
+	})
 }
 
 func containsGoCode(path string) (bool, error) {
