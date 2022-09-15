@@ -26,16 +26,33 @@ var (
 )
 
 // Lint runs linters and check that git status is clean
-func Lint(deps build.DepsFunc) error {
-	deps(git.EnsureAllRepos, lint, lintNewLines, Tidy, git.StatusCleanAll)
+func Lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+	if err := lint(ctx, repoPath, deps); err != nil {
+		return err
+	}
+	if err := lintNewLines(repoPath); err != nil {
+		return err
+	}
+	if err := Tidy(ctx, repoPath, deps); err != nil {
+		return err
+	}
+
+	isClean, err := git.StatusClean(ctx, repoPath)
+	if err != nil {
+		return err
+	}
+	if !isClean {
+		return errors.Errorf("git status of repository '%s' is not empty", filepath.Base(repoPath))
+	}
 	return nil
 }
 
-func lint(ctx context.Context, deps build.DepsFunc) error {
-	deps(EnsureGo, EnsureGolangCI, git.EnsureAllRepos)
+func lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+	deps(EnsureGo, EnsureGolangCI)
 	log := logger.Get(ctx)
 	config := must.String(filepath.Abs("build/.golangci.yaml"))
-	err := onModule(func(path string) error {
+
+	return onModule(repoPath, func(path string) error {
 		goCodePresent, err := containsGoCode(path)
 		if err != nil {
 			return err
@@ -53,13 +70,9 @@ func lint(ctx context.Context, deps build.DepsFunc) error {
 		}
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
-func lintNewLines() error {
+func lintNewLines(repoPath string) error {
 	skipDirsRegexps, err := parseRegexps(lintNewLinesSkipDirsRegexps)
 	if err != nil {
 		return err
@@ -70,62 +83,56 @@ func lintNewLines() error {
 		return err
 	}
 
-	for _, repoPath := range git.Repositories {
-		err := filepath.WalkDir(repoPath, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.IsDir() {
-				for _, reg := range skipDirsRegexps {
-					if reg.MatchString(d.Name()) {
-						return filepath.SkipDir
-					}
-				}
-
-				return nil
-			}
-			info, err := d.Info()
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			if info.Mode()&0o111 != 0 {
-				// skip executable files
-				return nil
-			}
-
-			for _, reg := range skipFilesRegexps {
-				if reg.MatchString(info.Name()) {
-					return nil
-				}
-			}
-
-			f, err := os.Open(path)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			defer f.Close()
-
-			if _, err := f.Seek(-2, io.SeekEnd); err != nil {
-				return errors.WithStack(err)
-			}
-
-			buf := make([]byte, 2)
-			if _, err := f.Read(buf); err != nil {
-				return errors.WithStack(err)
-			}
-			if buf[1] != '\n' {
-				return errors.Errorf("no empty line at the end of file '%s'", path)
-			}
-			if buf[0] == '\n' {
-				return errors.Errorf("many empty lines at the end of file '%s'", path)
-			}
-			return nil
-		})
+	return filepath.WalkDir(repoPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-	}
-	return nil
+		if d.IsDir() {
+			for _, reg := range skipDirsRegexps {
+				if reg.MatchString(d.Name()) {
+					return filepath.SkipDir
+				}
+			}
+
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if info.Mode()&0o111 != 0 {
+			// skip executable files
+			return nil
+		}
+
+		for _, reg := range skipFilesRegexps {
+			if reg.MatchString(info.Name()) {
+				return nil
+			}
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer f.Close()
+
+		if _, err := f.Seek(-2, io.SeekEnd); err != nil {
+			return errors.WithStack(err)
+		}
+
+		buf := make([]byte, 2)
+		if _, err := f.Read(buf); err != nil {
+			return errors.WithStack(err)
+		}
+		if buf[1] != '\n' {
+			return errors.Errorf("no empty line at the end of file '%s'", path)
+		}
+		if buf[0] == '\n' {
+			return errors.Errorf("many empty lines at the end of file '%s'", path)
+		}
+		return nil
+	})
 }
 
 func parseRegexps(strRegexps []string) ([]*regexp.Regexp, error) {
