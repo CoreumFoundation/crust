@@ -220,6 +220,7 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 		return errors.New("no running cored app found")
 	}
 	coredNode := coredApp.(cored.Cored)
+	//nolint:contextcheck // Function `Client->New->New->NewWithClient->New$1` should pass the context parameter... whatever it really means
 	client := coredNode.Client()
 
 	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
