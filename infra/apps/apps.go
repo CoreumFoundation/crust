@@ -141,11 +141,10 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 		SchemaLoaderFunc: blockexplorer.LoadPostgresSchema,
 	})
 	hasuraApp := hasura.New(hasura.Config{
-		Name:             nameHasura,
-		AppInfo:          f.spec.DescribeApp(hasura.AppType, nameHasura),
-		Port:             blockexplorer.DefaultPorts.Hasura,
-		MetadataTemplate: blockexplorer.HasuraMetadataTemplate,
-		Postgres:         postgresApp,
+		Name:     nameHasura,
+		AppInfo:  f.spec.DescribeApp(hasura.AppType, nameHasura),
+		Port:     blockexplorer.DefaultPorts.Hasura,
+		Postgres: postgresApp,
 	})
 	bdjunoApp := bdjuno.New(bdjuno.Config{
 		Name:           nameBDJuno,
