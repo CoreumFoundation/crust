@@ -201,7 +201,7 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 		return image, nil
 	}
 
-	buildCmd := exec.Command("docker", "build", "--tag", image, "-")
+	buildCmd := exec.Command("docker", "build", "--tag", image, "--tag", "znet", "-")
 	buildCmd.Stdin = dockerfileBuf
 
 	if err := libexec.Exec(ctx, buildCmd); err != nil {
