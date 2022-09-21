@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"path/filepath"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/types"
+	feemodeltypes "github.com/CoreumFoundation/coreum/x/feemodel/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/bigdipper"
@@ -22,6 +24,19 @@ import (
 
 // NewFactory creates new app factory
 func NewFactory(config infra.Config, spec *infra.Spec, networkConfig app.NetworkConfig) *Factory {
+	// FIXME (wojtek): remove once fractional gas price PR is emrged into coreum
+	networkConfig.Fee.FeeModel = feemodeltypes.NewModel(feemodeltypes.Params{
+		// TODO: Find good parameters before launching mainnet
+		InitialGasPrice:         sdk.MustNewDecFromStr("0.0625"),
+		MaxGasPrice:             sdk.MustNewDecFromStr("62.5"),
+		MaxDiscount:             sdk.MustNewDecFromStr("0.5"),
+		EscalationStartBlockGas: 37500000, // 300 * BankSend message
+		// TODO: adjust MaxBlockGas before creating testnet & mainnet
+		MaxBlockGas:         50000000, // 400 * BankSend message
+		ShortEmaBlockLength: 10,
+		LongEmaBlockLength:  1000,
+	})
+
 	return &Factory{
 		config:        config,
 		spec:          spec,
