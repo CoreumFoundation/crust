@@ -3,7 +3,6 @@ package znet
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -262,14 +262,8 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 func sendTokens(ctx context.Context, coredClient client.Client, from, to types.Wallet, network app.Network) error {
 	log := logger.Get(ctx)
 
-	amount, err := types.NewCoin(big.NewInt(1), network.TokenSymbol())
-	if err != nil {
-		return err
-	}
-	gasPrice, err := types.NewCoin(network.FeeModel().Params().InitialGasPrice.BigInt(), network.TokenSymbol())
-	if err != nil {
-		return err
-	}
+	amount := sdk.NewCoin(network.TokenSymbol(), sdk.OneInt())
+	gasPrice := sdk.NewDecCoinFromDec(network.TokenSymbol(), network.FeeModel().Params().InitialGasPrice)
 	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
 		Base: tx.BaseInput{
 			Signer:   from,
