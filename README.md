@@ -145,7 +145,7 @@ $ crust znet --mode=test
 (znet) [znet] $ tests
 
 # Remember to clean everything
-(znet) [logs] $ remove
+(znet) [znet] $ remove
 ```
 
 After tests complete environment is still running so if something went wrong you may inspect it manually.
