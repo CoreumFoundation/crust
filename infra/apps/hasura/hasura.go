@@ -57,8 +57,8 @@ func (h Hasura) Info() infra.DeploymentInfo {
 }
 
 // Deployment returns deployment of hasura
-func (h Hasura) Deployment() infra.Container {
-	return infra.Container{
+func (h Hasura) Deployment() infra.Deployment {
+	return infra.Deployment{
 		Image: "gcr.io/coreum-devnet-1/hasura:v2.1.1.cli-migrations-v3",
 		EnvVarsFunc: func() []infra.EnvVar {
 			return []infra.EnvVar{

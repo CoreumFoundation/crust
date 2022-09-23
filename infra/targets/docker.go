@@ -124,7 +124,7 @@ func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 }
 
 // DeployContainer starts container in docker
-func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infra.DeploymentInfo, error) {
+func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (infra.DeploymentInfo, error) {
 	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
 		return infra.DeploymentInfo{}, err
 	}

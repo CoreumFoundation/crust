@@ -35,7 +35,7 @@ type App interface {
 	Name() string
 
 	// Deployment returns app ready to deploy
-	Deployment() Container
+	Deployment() Deployment
 }
 
 // Mode is the list of applications to deploy
@@ -54,7 +54,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 		}
 
 		deployments := map[string]struct {
-			Deployment   Container
+			Deployment   Deployment
 			ImageReadyCh chan struct{}
 			ReadyCh      chan struct{}
 		}{}
@@ -67,7 +67,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 				images[deployment.Image] = ch
 			}
 			deployments[app.Name()] = struct {
-				Deployment   Container
+				Deployment   Deployment
 				ImageReadyCh chan struct{}
 				ReadyCh      chan struct{}
 			}{
@@ -234,7 +234,7 @@ type Target interface {
 // AppTarget represents target of deployment from the perspective of application
 type AppTarget interface {
 	// DeployContainer deploys container to the target
-	DeployContainer(ctx context.Context, app Container) (DeploymentInfo, error)
+	DeployContainer(ctx context.Context, app Deployment) (DeploymentInfo, error)
 }
 
 // Prerequisites specifies list of other apps which have to be healthy before app may be started.
@@ -252,8 +252,8 @@ type EnvVar struct {
 	Value string
 }
 
-// Container represents container to be deployed
-type Container struct {
+// Deployment represents application to be deployed
+type Deployment struct {
 	// Name of the application
 	Name string
 
@@ -285,7 +285,7 @@ type Container struct {
 }
 
 // Deploy deploys container to the target
-func (app Container) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
+func (app Deployment) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
 	if err := app.preprocess(ctx, config); err != nil {
 		return DeploymentInfo{}, err
 	}
@@ -300,7 +300,7 @@ func (app Container) Deploy(ctx context.Context, target AppTarget, config Config
 	return info, nil
 }
 
-func (app Container) preprocess(ctx context.Context, config Config) error {
+func (app Deployment) preprocess(ctx context.Context, config Config) error {
 	must.OK(os.MkdirAll(config.AppDir+"/"+app.Name, 0o700))
 
 	if len(app.Requires.Dependencies) > 0 {
@@ -321,7 +321,7 @@ func (app Container) preprocess(ctx context.Context, config Config) error {
 	return nil
 }
 
-func (app Container) postprocess(ctx context.Context, info DeploymentInfo) error {
+func (app Deployment) postprocess(ctx context.Context, info DeploymentInfo) error {
 	if app.Info.Info().Status == AppStatusStopped {
 		return nil
 	}

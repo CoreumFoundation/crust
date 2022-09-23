@@ -97,8 +97,8 @@ func (p Postgres) HealthCheck(ctx context.Context) error {
 }
 
 // Deployment returns deployment of postgres
-func (p Postgres) Deployment() infra.Container {
-	return infra.Container{
+func (p Postgres) Deployment() infra.Deployment {
+	return infra.Deployment{
 		Image: "postgres:14.3-alpine",
 		EnvVarsFunc: func() []infra.EnvVar {
 			return []infra.EnvVar{

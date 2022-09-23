@@ -191,8 +191,8 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 }
 
 // Deployment returns deployment of cored
-func (c Cored) Deployment() infra.Container {
-	deployment := infra.Container{
+func (c Cored) Deployment() infra.Deployment {
+	deployment := infra.Deployment{
 		Image: "cored:znet",
 		Name:  c.Name(),
 		Info:  c.config.AppInfo,
