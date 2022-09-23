@@ -57,7 +57,7 @@ func (h Hasura) Info() infra.DeploymentInfo {
 }
 
 // Deployment returns deployment of hasura
-func (h Hasura) Deployment() infra.Deployment {
+func (h Hasura) Deployment() infra.Container {
 	return infra.Container{
 		Image: "gcr.io/coreum-devnet-1/hasura:v2.1.1.cli-migrations-v3",
 		EnvVarsFunc: func() []infra.EnvVar {
@@ -70,17 +70,15 @@ func (h Hasura) Deployment() infra.Deployment {
 				},
 			}
 		},
-		AppBase: infra.AppBase{
-			Name: h.Name(),
-			Info: h.config.AppInfo,
-			Ports: map[string]int{
-				"server": h.config.Port,
-			},
-			Requires: infra.Prerequisites{
-				Timeout: 20 * time.Second,
-				Dependencies: []infra.HealthCheckCapable{
-					h.config.Postgres,
-				},
+		Name: h.Name(),
+		Info: h.config.AppInfo,
+		Ports: map[string]int{
+			"server": h.config.Port,
+		},
+		Requires: infra.Prerequisites{
+			Timeout: 20 * time.Second,
+			Dependencies: []infra.HealthCheckCapable{
+				h.config.Postgres,
 			},
 		},
 	}

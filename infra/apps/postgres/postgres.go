@@ -97,7 +97,7 @@ func (p Postgres) HealthCheck(ctx context.Context) error {
 }
 
 // Deployment returns deployment of postgres
-func (p Postgres) Deployment() infra.Deployment {
+func (p Postgres) Deployment() infra.Container {
 	return infra.Container{
 		Image: "postgres:14.3-alpine",
 		EnvVarsFunc: func() []infra.EnvVar {
@@ -119,40 +119,38 @@ func (p Postgres) Deployment() infra.Deployment {
 				},
 			}
 		},
-		AppBase: infra.AppBase{
-			Name: p.Name(),
-			Info: p.config.AppInfo,
-			ArgsFunc: func() []string {
-				return []string{
-					"-h", net.IPv4zero.String(),
-					"-p", strconv.Itoa(p.config.Port),
-				}
-			},
-			Ports: map[string]int{
-				"sql": p.config.Port,
-			},
-			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				if p.config.SchemaLoaderFunc == nil {
-					return nil
-				}
-
-				log := logger.Get(ctx)
-
-				db, err := p.dbConnection(ctx, deployment.HostFromHost)
-				if err != nil {
-					return err
-				}
-				defer db.Close(ctx)
-
-				log.Info("Loading schema into the database")
-
-				if err := p.config.SchemaLoaderFunc(ctx, db); err != nil {
-					return errors.Wrap(err, "loading schema failed")
-				}
-
-				log.Info("Database ready")
+		Name: p.Name(),
+		Info: p.config.AppInfo,
+		ArgsFunc: func() []string {
+			return []string{
+				"-h", net.IPv4zero.String(),
+				"-p", strconv.Itoa(p.config.Port),
+			}
+		},
+		Ports: map[string]int{
+			"sql": p.config.Port,
+		},
+		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
+			if p.config.SchemaLoaderFunc == nil {
 				return nil
-			},
+			}
+
+			log := logger.Get(ctx)
+
+			db, err := p.dbConnection(ctx, deployment.HostFromHost)
+			if err != nil {
+				return err
+			}
+			defer db.Close(ctx)
+
+			log.Info("Loading schema into the database")
+
+			if err := p.config.SchemaLoaderFunc(ctx, db); err != nil {
+				return errors.Wrap(err, "loading schema failed")
+			}
+
+			log.Info("Database ready")
+			return nil
 		},
 	}
 }

@@ -67,31 +67,29 @@ func (j BDJuno) Info() infra.DeploymentInfo {
 }
 
 // Deployment returns deployment of bdjuno
-func (j BDJuno) Deployment() infra.Deployment {
+func (j BDJuno) Deployment() infra.Container {
 	return infra.Container{
 		Image: "gcr.io/coreum-devnet-1/bdjuno:0.44.0",
-		AppBase: infra.AppBase{
-			Name: j.Name(),
-			Info: j.config.AppInfo,
-			ArgsFunc: func() []string {
-				return []string{
-					"bdjuno", "start",
-					"--home", targets.AppHomeDir,
-				}
+		Name:  j.Name(),
+		Info:  j.config.AppInfo,
+		ArgsFunc: func() []string {
+			return []string{
+				"bdjuno", "start",
+				"--home", targets.AppHomeDir,
+			}
+		},
+		Ports: map[string]int{
+			"actions": j.config.Port,
+		},
+		Requires: infra.Prerequisites{
+			Timeout: 20 * time.Second,
+			Dependencies: []infra.HealthCheckCapable{
+				j.config.Cored,
+				j.config.Postgres,
 			},
-			Ports: map[string]int{
-				"actions": j.config.Port,
-			},
-			Requires: infra.Prerequisites{
-				Timeout: 20 * time.Second,
-				Dependencies: []infra.HealthCheckCapable{
-					j.config.Cored,
-					j.config.Postgres,
-				},
-			},
-			PrepareFunc: func() error {
-				return os.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644)
-			},
+		},
+		PrepareFunc: func() error {
+			return os.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644)
 		},
 	}
 }

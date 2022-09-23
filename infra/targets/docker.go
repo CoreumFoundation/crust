@@ -155,7 +155,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Container) (infr
 				runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
 			}
 		}
-		runArgs = append(runArgs, app.DockerImage())
+		runArgs = append(runArgs, app.Image)
 		if app.ArgsFunc != nil {
 			runArgs = append(runArgs, app.ArgsFunc()...)
 		}

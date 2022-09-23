@@ -94,41 +94,39 @@ func (f Faucet) HealthCheck(ctx context.Context) error {
 }
 
 // Deployment returns deployment of cored
-func (f Faucet) Deployment() infra.Deployment {
+func (f Faucet) Deployment() infra.Container {
 	return infra.Container{
 		Image: "faucet:znet",
-		AppBase: infra.AppBase{
-			Name: f.Name(),
-			Info: f.config.AppInfo,
-			ArgsFunc: func() []string {
-				return []string{
-					"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
-					"--chain-id", string(f.config.ChainID),
-					"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
-					// TODO (milad): remove after faucet is updated to use mnemonic
-					"--key-path", filepath.Join(targets.AppHomeDir, "key"),
-					"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Ports().RPC),
-					"--log-format", "yaml",
-				}
-			},
-			Ports: map[string]int{
-				"server": f.config.Port,
-			},
-			Requires: infra.Prerequisites{
-				Timeout: 20 * time.Second,
-				Dependencies: []infra.HealthCheckCapable{
-					f.config.Cored,
-				},
-			},
-			PrepareFunc: func() error {
+		Name:  f.Name(),
+		Info:  f.config.AppInfo,
+		ArgsFunc: func() []string {
+			return []string{
+				"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
+				"--chain-id", string(f.config.ChainID),
+				"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
 				// TODO (milad): remove after faucet is updated to use mnemonic
-				err := errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "key"), []byte(hex.EncodeToString(f.config.PrivateKey)), 0o400))
-				if err != nil {
-					return err
-				}
-
-				return errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "mnemonic-key"), []byte(PrivateKeyMnemonic), 0o400))
+				"--key-path", filepath.Join(targets.AppHomeDir, "key"),
+				"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Ports().RPC),
+				"--log-format", "yaml",
+			}
+		},
+		Ports: map[string]int{
+			"server": f.config.Port,
+		},
+		Requires: infra.Prerequisites{
+			Timeout: 20 * time.Second,
+			Dependencies: []infra.HealthCheckCapable{
+				f.config.Cored,
 			},
+		},
+		PrepareFunc: func() error {
+			// TODO (milad): remove after faucet is updated to use mnemonic
+			err := errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "key"), []byte(hex.EncodeToString(f.config.PrivateKey)), 0o400))
+			if err != nil {
+				return err
+			}
+
+			return errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "mnemonic-key"), []byte(PrivateKeyMnemonic), 0o400))
 		},
 	}
 }

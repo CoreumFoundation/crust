@@ -54,7 +54,7 @@ func (bd BigDipper) Info() infra.DeploymentInfo {
 }
 
 // Deployment returns deployment of big dipper
-func (bd BigDipper) Deployment() infra.Deployment {
+func (bd BigDipper) Deployment() infra.Container {
 	return infra.Container{
 		// TODO: Get image from docker hub once it's there
 		Image: "gcr.io/coreum-devnet-1/big-dipper-ui:latest-dev",
@@ -90,18 +90,16 @@ func (bd BigDipper) Deployment() infra.Deployment {
 				},
 			}
 		},
-		AppBase: infra.AppBase{
-			Name: bd.Name(),
-			Info: bd.config.AppInfo,
-			Ports: map[string]int{
-				"web": bd.config.Port,
-			},
-			Requires: infra.Prerequisites{
-				Timeout: 20 * time.Second,
-				Dependencies: []infra.HealthCheckCapable{
-					bd.config.Cored,
-					infra.IsRunning(bd.config.Hasura),
-				},
+		Name: bd.Name(),
+		Info: bd.config.AppInfo,
+		Ports: map[string]int{
+			"web": bd.config.Port,
+		},
+		Requires: infra.Prerequisites{
+			Timeout: 20 * time.Second,
+			Dependencies: []infra.HealthCheckCapable{
+				bd.config.Cored,
+				infra.IsRunning(bd.config.Hasura),
 			},
 		},
 	}
