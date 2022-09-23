@@ -69,9 +69,10 @@ func (j BDJuno) Info() infra.DeploymentInfo {
 // Deployment returns deployment of bdjuno
 func (j BDJuno) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image: "gcr.io/coreum-devnet-1/bdjuno:0.44.0",
-		Name:  j.Name(),
-		Info:  j.config.AppInfo,
+		MountAppDir: true,
+		Image:       "gcr.io/coreum-devnet-1/bdjuno:0.44.0",
+		Name:        j.Name(),
+		Info:        j.config.AppInfo,
 		ArgsFunc: func() []string {
 			return []string{
 				"bdjuno", "start",

@@ -96,9 +96,10 @@ func (f Faucet) HealthCheck(ctx context.Context) error {
 // Deployment returns deployment of cored
 func (f Faucet) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image: "faucet:znet",
-		Name:  f.Name(),
-		Info:  f.config.AppInfo,
+		MountAppDir: true,
+		Image:       "faucet:znet",
+		Name:        f.Name(),
+		Info:        f.config.AppInfo,
 		ArgsFunc: func() []string {
 			return []string{
 				"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),

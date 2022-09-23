@@ -282,6 +282,11 @@ type Deployment struct {
 
 	// EnvVarsFunc is a function defining environment variables for docker container
 	EnvVarsFunc func() []EnvVar
+
+	// MountAppDir set to true causes the app's home dir to be mounted inside the container under /app.
+	// It also implicates that container is run using uid and gid of current user. Otherwise it's impossible to remove the `znet`
+	// directory when `znet remove` is executed.
+	MountAppDir bool
 }
 
 // Deploy deploys container to the target

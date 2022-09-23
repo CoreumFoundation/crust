@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"os"
 	osexec "os/exec"
 	"strconv"
 	"strings"
@@ -145,7 +147,11 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (inf
 	} else {
 		appHomeDir := d.config.AppDir + "/" + app.Name
 		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
-			"--label", labelApp + "=" + app.Name, "-v", appHomeDir + ":" + AppHomeDir, "--network", d.config.EnvName}
+			"--label", labelApp + "=" + app.Name, "--network", d.config.EnvName}
+		if app.MountAppDir {
+			runArgs = append(runArgs, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
+				"-v", appHomeDir+":"+AppHomeDir)
+		}
 		for _, port := range app.Ports {
 			portStr := strconv.Itoa(port)
 			runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")

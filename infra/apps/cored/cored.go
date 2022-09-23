@@ -193,9 +193,10 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 // Deployment returns deployment of cored
 func (c Cored) Deployment() infra.Deployment {
 	deployment := infra.Deployment{
-		Image: "cored:znet",
-		Name:  c.Name(),
-		Info:  c.config.AppInfo,
+		MountAppDir: true,
+		Image:       "cored:znet",
+		Name:        c.Name(),
+		Info:        c.config.AppInfo,
 		ArgsFunc: func() []string {
 			args := []string{
 				"start",
