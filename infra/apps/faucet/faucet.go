@@ -95,8 +95,8 @@ func (f Faucet) HealthCheck(ctx context.Context) error {
 
 // Deployment returns deployment of cored
 func (f Faucet) Deployment() infra.Deployment {
-	return infra.Binary{
-		BinPath: f.config.BinDir + "/.cache/docker/faucet/faucet",
+	return infra.Container{
+		Image: "faucet:znet",
 		AppBase: infra.AppBase{
 			Name: f.Name(),
 			Info: f.config.AppInfo,
