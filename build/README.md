@@ -4,6 +4,7 @@
 
 We need a tool to automate common tasks:
 - building binaries
+- building docker images
 - linting
 - testing
 - releasing
