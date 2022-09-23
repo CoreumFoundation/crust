@@ -4,11 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
-	"os"
 	osexec "os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -18,7 +15,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/CoreumFoundation/crust/exec"
 	"github.com/CoreumFoundation/crust/infra"
@@ -125,64 +121,6 @@ func (d *Docker) Remove(ctx context.Context) error {
 // Deploy deploys environment to docker target
 func (d *Docker) Deploy(ctx context.Context, mode infra.Mode) error {
 	return mode.Deploy(ctx, d, d.config, d.spec)
-}
-
-// DeployBinary builds container image out of binary file and starts it in docker
-func (d *Docker) DeployBinary(ctx context.Context, app infra.Binary) (infra.DeploymentInfo, error) {
-	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
-		return infra.DeploymentInfo{}, err
-	}
-
-	name := d.config.EnvName + "-" + app.Name
-
-	log := logger.Get(ctx).With(zap.String("name", name), zap.String("appName", app.Name))
-	log.Info("Starting container")
-
-	id, err := containerExists(ctx, name)
-	if err != nil {
-		return infra.DeploymentInfo{}, err
-	}
-
-	var startCmd *osexec.Cmd
-	if id != "" {
-		startCmd = exec.Docker("start", id)
-	} else {
-		appHomeDir := d.config.AppDir + "/" + app.Name
-		must.Any(os.Stat(app.BinPath))
-		internalBinPath := "/bin/" + filepath.Base(app.BinPath)
-
-		runArgs := []string{"run", "--name", name, "-d", "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-			"--label", labelEnv + "=" + d.config.EnvName, "--label", labelApp + "=" + app.Name,
-			"-v", appHomeDir + ":" + AppHomeDir, "-v", app.BinPath + ":" + internalBinPath,
-			"--network", d.config.EnvName}
-		for _, port := range app.Ports {
-			portStr := strconv.Itoa(port)
-			runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
-		}
-		runArgs = append(runArgs, app.DockerImage(), internalBinPath)
-		if app.ArgsFunc != nil {
-			runArgs = append(runArgs, app.ArgsFunc()...)
-		}
-
-		startCmd = exec.Docker(runArgs...)
-	}
-	idBuf := &bytes.Buffer{}
-	startCmd.Stdout = idBuf
-
-	if err := libexec.Exec(ctx, startCmd); err != nil {
-		return infra.DeploymentInfo{}, err
-	}
-
-	log.Info("Container started", zap.String("id", strings.TrimSuffix(idBuf.String(), "\n")))
-
-	// FromHostIP = ipLocalhost here means that application is available on host's localhost, not container's localhost
-	return infra.DeploymentInfo{
-		Container:         name,
-		Status:            infra.AppStatusRunning,
-		HostFromHost:      "localhost",
-		HostFromContainer: name,
-		Ports:             app.Ports,
-	}, nil
 }
 
 // DeployContainer starts container in docker

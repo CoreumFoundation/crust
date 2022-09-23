@@ -20,8 +20,6 @@ import (
 	"github.com/CoreumFoundation/crust/exec"
 )
 
-const binaryDockerImage = "alpine:3.16.0"
-
 // AppType represents the type of application
 type AppType string
 
@@ -247,9 +245,6 @@ type Target interface {
 
 // AppTarget represents target of deployment from the perspective of application
 type AppTarget interface {
-	// DeployBinary deploys binary to the target
-	DeployBinary(ctx context.Context, app Binary) (DeploymentInfo, error)
-
 	// DeployContainer deploys container to the target
 	DeployContainer(ctx context.Context, app Container) (DeploymentInfo, error)
 }
@@ -318,40 +313,6 @@ func (app AppBase) postprocess(ctx context.Context, info DeploymentInfo) error {
 		return app.ConfigureFunc(ctx, info)
 	}
 	return nil
-}
-
-// Binary represents binary file to be deployed
-type Binary struct {
-	AppBase
-
-	// BinPath is the path to linux binary file
-	BinPath string
-}
-
-// DockerImage returns the docker image used by the deployment
-func (app Binary) DockerImage() string {
-	return binaryDockerImage
-}
-
-// Dependencies returns the list of applications which must be running before the current deployment may be started
-func (app Binary) Dependencies() []HealthCheckCapable {
-	return app.Requires.Dependencies
-}
-
-// Deploy deploys binary to the target
-func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
-	if err := app.AppBase.preprocess(ctx, config); err != nil {
-		return DeploymentInfo{}, err
-	}
-
-	info, err := target.DeployBinary(ctx, app)
-	if err != nil {
-		return DeploymentInfo{}, err
-	}
-	if err := app.AppBase.postprocess(ctx, info); err != nil {
-		return DeploymentInfo{}, err
-	}
-	return info, nil
 }
 
 // EnvVar is used to define environment variable for docker container
