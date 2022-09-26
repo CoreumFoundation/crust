@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -36,7 +37,7 @@ type Config struct {
 	HomeDir    string
 	BinDir     string
 	WrapperDir string
-	Network    *app.Network
+	Network    *config.Network
 	AppInfo    *infra.AppInfo
 	Ports      Ports
 	Validator  bool
@@ -45,36 +46,36 @@ type Config struct {
 }
 
 // New creates new cored app
-func New(config Config) Cored {
+func New(cfg Config) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
 	var validatorPrivateKey ed25519.PrivateKey
-	if config.Validator {
+	if cfg.Validator {
 		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
 		stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
 		validatorPrivateKey = valPrivateKey
-		stake := "100000000" + config.Network.TokenSymbol()
+		stake := "100000000" + cfg.Network.TokenSymbol()
 
-		must.OK(config.Network.FundAccount(stakerPubKey, stake))
+		must.OK(cfg.Network.FundAccount(stakerPubKey, stake))
 
-		clientCtx := app.NewDefaultClientContext().WithChainID(string(config.Network.ChainID()))
+		clientCtx := config.NewClientContext(app.ModuleBasics).WithChainID(string(cfg.Network.ChainID()))
 
 		// FIXME: make clientCtx as private field of the client type
 		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake)
 		must.OK(err)
-		config.Network.AddGenesisTx(tx)
+		cfg.Network.AddGenesisTx(tx)
 	}
 
 	return Cored{
-		config:              config,
+		config:              cfg,
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
 		mu:                  &sync.RWMutex{},
-		walletKeys:          config.Wallets,
+		walletKeys:          cfg.Wallets,
 	}
 }
 
@@ -110,7 +111,7 @@ func (c Cored) Ports() Ports {
 }
 
 // Network returns the network config used in the chain
-func (c Cored) Network() *app.Network {
+func (c Cored) Network() *config.Network {
 	return c.config.Network
 }
 
@@ -223,7 +224,7 @@ func (c Cored) Deployment() infra.Deployment {
 				c.mu.RLock()
 				defer c.mu.RUnlock()
 
-				nodeConfig := app.NodeConfig{
+				nodeConfig := config.NodeConfig{
 					Name:           c.config.Name,
 					PrometheusPort: c.config.Ports.Prometheus,
 					NodeKey:        c.nodePrivateKey,
