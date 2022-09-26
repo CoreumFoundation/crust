@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	run.Tool("znet", nil, func(ctx context.Context) error {
+	run.Tool("znet", func(ctx context.Context) error {
 		configF := infra.NewConfigFactory()
 		cmdF := znet.NewCmdFactory(configF)
 		app.NewNetwork(testing.NetworkConfig).SetupPrefixes()

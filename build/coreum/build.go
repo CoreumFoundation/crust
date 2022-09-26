@@ -17,8 +17,9 @@ const (
 )
 
 // BuildCored builds all the versions of cored binary
-func BuildCored(deps build.DepsFunc) {
+func BuildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(BuildCoredLocally, BuildCoredInDocker)
+	return nil
 }
 
 // BuildCoredLocally builds cored locally
@@ -74,6 +75,6 @@ func Test(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
 }
 
-func ensureRepo(ctx context.Context) error {
+func ensureRepo(ctx context.Context, deps build.DepsFunc) error {
 	return git.EnsureRepo(ctx, repoURL)
 }

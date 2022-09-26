@@ -17,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
@@ -178,7 +179,7 @@ type Source struct {
 type Sources map[Platform]Source
 
 // InstallAll installs all the tools
-func InstallAll(ctx context.Context) error {
+func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 	for tool := range tools {
 		if tools[tool].ForLocal {
 			if err := EnsureLocal(ctx, tool); err != nil {

@@ -57,6 +57,6 @@ func Test(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
 }
 
-func ensureRepo(ctx context.Context) error {
+func ensureRepo(ctx context.Context, deps build.DepsFunc) error {
 	return git.EnsureRepo(ctx, repoURL)
 }
