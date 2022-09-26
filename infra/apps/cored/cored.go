@@ -32,16 +32,17 @@ const AppType infra.AppType = "cored"
 
 // Config stores cored app config
 type Config struct {
-	Name       string
-	HomeDir    string
-	BinDir     string
-	WrapperDir string
-	Network    *app.Network
-	AppInfo    *infra.AppInfo
-	Ports      Ports
-	Validator  bool
-	RootNode   *Cored
-	Wallets    map[string]types.Secp256k1PrivateKey
+	Name              string
+	HomeDir           string
+	BinDir            string
+	WrapperDir        string
+	Network           *app.Network
+	AppInfo           *infra.AppInfo
+	Ports             Ports
+	IsValidator       bool
+	ValidatorMnemonic string
+	RootNode          *Cored
+	Wallets           map[string]types.Secp256k1PrivateKey
 }
 
 // New creates new cored app
@@ -50,11 +51,14 @@ func New(config Config) Cored {
 	must.OK(err)
 
 	var validatorPrivateKey ed25519.PrivateKey
-	if config.Validator {
+	if config.IsValidator {
 		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
-		stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
+		stakerPrivKey, err := PrivateKeyFromMnemonic(config.ValidatorMnemonic)
+		must.OK(err)
+
+		stakerPubKey := stakerPrivKey.PubKey()
 		validatorPrivateKey = valPrivateKey
 		stake := "100000000" + config.Network.TokenSymbol()
 

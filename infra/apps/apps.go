@@ -37,7 +37,7 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) (cored.Cored, infra.Mode, error) {
+func (f *Factory) CoredNetwork(name string, validatorMnemonics []string, numOfSentryNodes int) (cored.Cored, infra.Mode, error) {
 	network := app.NewNetwork(f.networkConfig)
 	initialBalance := "500000000000000" + network.TokenSymbol()
 
@@ -74,7 +74,7 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 		"charlie": charliePrivKey,
 	}
 
-	nodes := make(infra.Mode, 0, numOfValidators+numOfSentryNodes)
+	nodes := make(infra.Mode, 0, len(validatorMnemonics)+numOfSentryNodes)
 	var node0 *cored.Cored
 	var lastNode cored.Cored
 	for i := 0; i < cap(nodes); i++ {
@@ -95,9 +95,10 @@ func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNode
 				PProf:      cored.DefaultPorts.PProf + portDelta,
 				Prometheus: cored.DefaultPorts.Prometheus + portDelta,
 			},
-			Validator: i < numOfValidators,
-			RootNode:  node0,
-			Wallets:   wallets,
+			IsValidator:       i < len(validatorMnemonics),
+			ValidatorMnemonic: validatorMnemonics[i],
+			RootNode:          node0,
+			Wallets:           wallets,
 		})
 		if node0 == nil {
 			node0 = &node

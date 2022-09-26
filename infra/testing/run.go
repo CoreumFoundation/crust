@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -34,17 +35,14 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		return err
 	}
 
-	if err := target.Deploy(ctx, mode); err != nil {
-		return err
+	stakerMnemonics := []string{
+		cored.Validator1Mnemonic,
+		cored.Validator2Mnemonic,
+		cored.Validator3Mnemonic,
 	}
 
-	waitForApps := make([]infra.HealthCheckCapable, 0, len(mode))
-	for _, app := range mode {
-		withHealthCheck, ok := app.(infra.HealthCheckCapable)
-		if !ok {
-			withHealthCheck = infra.IsRunning(app)
-		}
-		waitForApps = append(waitForApps, withHealthCheck)
+	if err := target.Deploy(ctx, mode); err != nil {
+		return err
 	}
 
 	log := logger.Get(ctx)
@@ -52,12 +50,11 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 
 	waitCtx, waitCancel := context.WithTimeout(ctx, 20*time.Second)
 	defer waitCancel()
-	if err := infra.WaitUntilHealthy(waitCtx, waitForApps...); err != nil {
+	if err := infra.WaitUntilHealthy(waitCtx, buildWaitForApps(mode)...); err != nil {
 		return err
 	}
 
 	log.Info("All the applications are ready")
-
 	coredApp := mode.FindAnyRunningApp(cored.AppType)
 	if coredApp == nil {
 		return errors.New("no running cored app found")
@@ -96,6 +93,8 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
 				"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
+				"-funding-mnemonic", FundingMnemonic,
+				"-staker-mnemonics", strings.Join(stakerMnemonics, ","),
 			)
 		case "faucet":
 			faucetApp := mode.FindAnyRunningApp(faucet.AppType)
@@ -123,4 +122,16 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	}
 	log.Info("All tests succeeded")
 	return nil
+}
+
+func buildWaitForApps(mode infra.Mode) []infra.HealthCheckCapable {
+	waitForApps := make([]infra.HealthCheckCapable, 0, len(mode))
+	for _, app := range mode {
+		withHealthCheck, ok := app.(infra.HealthCheckCapable)
+		if !ok {
+			withHealthCheck = infra.IsRunning(app)
+		}
+		waitForApps = append(waitForApps, withHealthCheck)
+	}
+	return waitForApps
 }
