@@ -16,17 +16,19 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/CoreumFoundation/coreum/app"
+	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
 )
@@ -111,15 +113,23 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 }
 
 // Start starts environment
-func Start(ctx context.Context, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
+func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
 	if err := spec.Verify(); err != nil {
 		return err
 	}
+
+	target := targets.NewDocker(config, spec)
+	appF := apps.NewFactory(config, spec, coreumtesting.NetworkConfig)
+	mode, err := Mode(appF, config.ModeName)
+	if err != nil {
+		return err
+	}
+
 	return target.Deploy(ctx, mode)
 }
 
 // Stop stops environment
-func Stop(ctx context.Context, target infra.Target, spec *infra.Spec) (retErr error) {
+func Stop(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
 	defer func() {
 		for _, app := range spec.Apps {
 			app.SetInfo(infra.DeploymentInfo{Status: infra.AppStatusStopped})
@@ -128,11 +138,14 @@ func Stop(ctx context.Context, target infra.Target, spec *infra.Spec) (retErr er
 			retErr = err
 		}
 	}()
+
+	target := targets.NewDocker(config, spec)
 	return target.Stop(ctx)
 }
 
 // Remove removes environment
-func Remove(ctx context.Context, config infra.Config, target infra.Target) (retErr error) {
+func Remove(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
+	target := targets.NewDocker(config, spec)
 	if err := target.Remove(ctx); err != nil {
 		return err
 	}
@@ -154,22 +167,24 @@ func Remove(ctx context.Context, config infra.Config, target infra.Target) (retE
 }
 
 // Test runs integration tests
-func Test(c *ioc.Container, configF *infra.ConfigFactory) error {
-	configF.ModeName = "test"
-	var err error
-	c.Call(func(ctx context.Context, config infra.Config, target infra.Target, mode infra.Mode, spec *infra.Spec) (retErr error) {
-		if err := spec.Verify(); err != nil {
-			return err
+func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+	if err := spec.Verify(); err != nil {
+		return err
+	}
+	for _, app := range spec.Apps {
+		if app.Info().Status == infra.AppStatusStopped {
+			return errors.New("tests can't be executed on top of stopped environment, start it first")
 		}
-		for _, app := range spec.Apps {
-			if app.Info().Status == infra.AppStatusStopped {
-				return errors.New("tests can't be executed on top of stopped environment, start it first")
-			}
-		}
+	}
 
-		return testing.Run(ctx, target, mode, config, config.TestRepos...)
-	}, &err)
-	return err
+	target := targets.NewDocker(config, spec)
+	appF := apps.NewFactory(config, spec, coreumtesting.NetworkConfig)
+	mode, err := Mode(appF, config.ModeName)
+	if err != nil {
+		return err
+	}
+
+	return testing.Run(ctx, target, mode, config, config.TestRepos...)
 }
 
 // Spec prints specification of running environment
@@ -220,7 +235,7 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 		return errors.New("no running cored app found")
 	}
 	coredNode := coredApp.(cored.Cored)
-	//nolint:contextcheck // Function `Client->New->New->NewWithClient->New$1` should pass the context parameter... whatever it really means
+	//nolint:contextcheck // Function `Client->New->New->NewWithClient->New$1` should pass the context parameter
 	client := coredNode.Client()
 
 	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)

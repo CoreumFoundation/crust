@@ -7,59 +7,28 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/app"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps"
-	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
-// IoC configures IoC container
-func IoC(c *ioc.Container) {
-	c.Singleton(func() app.NetworkConfig {
-		// FIXME (wojtek): this is only a temporary hack until we develop our own address encoder.
-		app.NewNetwork(testing.NetworkConfig).SetupPrefixes()
-		return testing.NetworkConfig
-	})
-	c.Singleton(NewCmdFactory)
-	c.Singleton(infra.NewConfigFactory)
-	c.Singleton(infra.NewSpec)
-	c.Transient(NewConfig)
-	c.Transient(apps.NewFactory)
-	c.TransientNamed("dev", DevMode)
-	c.TransientNamed("test", TestMode)
-	c.Transient(func(c *ioc.Container, config infra.Config) infra.Mode {
-		var mode infra.Mode
-		c.ResolveNamed(config.ModeName, &mode)
-		return mode
-	})
-	c.Transient(targets.NewDocker)
-}
-
 // NewCmdFactory returns new CmdFactory
-func NewCmdFactory(c *ioc.Container, configF *infra.ConfigFactory) *CmdFactory {
+func NewCmdFactory(configF *infra.ConfigFactory) *CmdFactory {
 	return &CmdFactory{
-		c:       c,
 		configF: configF,
 	}
 }
 
 // CmdFactory is a wrapper around cobra RunE
 type CmdFactory struct {
-	c       *ioc.Container
 	configF *infra.ConfigFactory
 }
 
 // Cmd returns function compatible with RunE
-func (f *CmdFactory) Cmd(cmdFunc interface{}) func(cmd *cobra.Command, args []string) error {
+func (f *CmdFactory) Cmd(cmdFunc func() error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		f.configF.VerboseLogging = cmd.Flags().Lookup("verbose").Value.String() == "true"
 		f.configF.LogFormat = cmd.Flags().Lookup("log-format").Value.String()
-		var err error
-		f.c.Call(cmdFunc, &err)
-		return err
+		return cmdFunc()
 	}
 }
 
