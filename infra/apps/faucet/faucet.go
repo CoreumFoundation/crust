@@ -14,7 +14,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -34,7 +34,7 @@ type Config struct {
 	Name       string
 	HomeDir    string
 	BinDir     string
-	ChainID    app.ChainID
+	ChainID    config.ChainID
 	AppInfo    *infra.AppInfo
 	Port       int
 	PrivateKey types.Secp256k1PrivateKey

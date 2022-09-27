@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
@@ -21,7 +21,7 @@ import (
 )
 
 // NewFactory creates new app factory
-func NewFactory(config infra.Config, spec *infra.Spec, networkConfig app.NetworkConfig) *Factory {
+func NewFactory(config infra.Config, spec *infra.Spec, networkConfig config.NetworkConfig) *Factory {
 	return &Factory{
 		config:        config,
 		spec:          spec,
@@ -33,12 +33,12 @@ func NewFactory(config infra.Config, spec *infra.Spec, networkConfig app.Network
 type Factory struct {
 	config        infra.Config
 	spec          *infra.Spec
-	networkConfig app.NetworkConfig
+	networkConfig config.NetworkConfig
 }
 
 // CoredNetwork creates new network of cored nodes
 func (f *Factory) CoredNetwork(name string, numOfValidators int, numOfSentryNodes int) (cored.Cored, infra.Mode, error) {
-	network := app.NewNetwork(f.networkConfig)
+	network := config.NewNetwork(f.networkConfig)
 	initialBalance := "500000000000000" + network.TokenSymbol()
 
 	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
