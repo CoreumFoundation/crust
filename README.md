@@ -11,10 +11,10 @@ Install them manually before continuing.
 
 ## Building
 
-Build all the required binaries by running:
+Build all the required binaries and docker images by running:
 
 ```
-$ crust build
+$ crust build images
 ```
 
 ## Executing `znet`
