@@ -4,11 +4,11 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 // SaveConfig sets specific tendermint config and saves it alongside private keys
-func SaveConfig(nodeConfig app.NodeConfig, homeDir string) {
+func SaveConfig(nodeConfig config.NodeConfig, homeDir string) {
 	err := nodeConfig.SavePrivateKeys(homeDir)
 	must.OK(err)
 	cfg := nodeConfig.TendermintNodeConfig(nil)
@@ -24,5 +24,5 @@ func SaveConfig(nodeConfig app.NodeConfig, homeDir string) {
 	cfg.Mempool.Size = 50000
 	cfg.Mempool.MaxTxsBytes = 5368709120
 
-	must.OK(app.WriteTendermintConfigToFile(filepath.Join(homeDir, app.DefaultNodeConfigPath), cfg))
+	must.OK(config.WriteTendermintConfigToFile(filepath.Join(homeDir, config.DefaultNodeConfigPath), cfg))
 }

@@ -11,8 +11,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/pkg/znet"
@@ -22,7 +22,7 @@ func main() {
 	run.Tool("znet", func(ctx context.Context) error {
 		configF := infra.NewConfigFactory()
 		cmdF := znet.NewCmdFactory(configF)
-		app.NewNetwork(testing.NetworkConfig).SetupPrefixes()
+		config.NewNetwork(testing.NetworkConfig).SetupPrefixes()
 
 		rootCmd := rootCmd(ctx, configF, cmdF)
 		rootCmd.AddCommand(startCmd(ctx, configF, cmdF))

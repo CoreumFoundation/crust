@@ -14,7 +14,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/app"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -34,7 +34,7 @@ type Config struct {
 	Name       string
 	HomeDir    string
 	BinDir     string
-	ChainID    app.ChainID
+	ChainID    config.ChainID
 	AppInfo    *infra.AppInfo
 	Port       int
 	PrivateKey types.Secp256k1PrivateKey
@@ -95,40 +95,39 @@ func (f Faucet) HealthCheck(ctx context.Context) error {
 
 // Deployment returns deployment of cored
 func (f Faucet) Deployment() infra.Deployment {
-	return infra.Binary{
-		BinPath: f.config.BinDir + "/.cache/docker/faucet/faucet",
-		AppBase: infra.AppBase{
-			Name: f.Name(),
-			Info: f.config.AppInfo,
-			ArgsFunc: func() []string {
-				return []string{
-					"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
-					"--chain-id", string(f.config.ChainID),
-					"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
-					// TODO (milad): remove after faucet is updated to use mnemonic
-					"--key-path", filepath.Join(targets.AppHomeDir, "key"),
-					"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Ports().RPC),
-					"--log-format", "yaml",
-				}
-			},
-			Ports: map[string]int{
-				"server": f.config.Port,
-			},
-			Requires: infra.Prerequisites{
-				Timeout: 20 * time.Second,
-				Dependencies: []infra.HealthCheckCapable{
-					f.config.Cored,
-				},
-			},
-			PrepareFunc: func() error {
+	return infra.Deployment{
+		MountAppDir: true,
+		Image:       "faucet:znet",
+		Name:        f.Name(),
+		Info:        f.config.AppInfo,
+		ArgsFunc: func() []string {
+			return []string{
+				"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
+				"--chain-id", string(f.config.ChainID),
+				"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
 				// TODO (milad): remove after faucet is updated to use mnemonic
-				err := errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "key"), []byte(hex.EncodeToString(f.config.PrivateKey)), 0o400))
-				if err != nil {
-					return err
-				}
-
-				return errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "mnemonic-key"), []byte(PrivateKeyMnemonic), 0o400))
+				"--key-path", filepath.Join(targets.AppHomeDir, "key"),
+				"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Ports().RPC),
+				"--log-format", "yaml",
+			}
+		},
+		Ports: map[string]int{
+			"server": f.config.Port,
+		},
+		Requires: infra.Prerequisites{
+			Timeout: 20 * time.Second,
+			Dependencies: []infra.HealthCheckCapable{
+				f.config.Cored,
 			},
+		},
+		PrepareFunc: func() error {
+			// TODO (milad): remove after faucet is updated to use mnemonic
+			err := errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "key"), []byte(hex.EncodeToString(f.config.PrivateKey)), 0o400))
+			if err != nil {
+				return err
+			}
+
+			return errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "mnemonic-key"), []byte(PrivateKeyMnemonic), 0o400))
 		},
 	}
 }

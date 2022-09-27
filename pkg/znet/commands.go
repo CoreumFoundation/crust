@@ -20,9 +20,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	"github.com/CoreumFoundation/coreum/app"
 	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
@@ -274,7 +274,7 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-func sendTokens(ctx context.Context, coredClient client.Client, from, to types.Wallet, network app.Network) error {
+func sendTokens(ctx context.Context, coredClient client.Client, from, to types.Wallet, network config.Network) error {
 	log := logger.Get(ctx)
 
 	amount := sdk.NewCoin(network.TokenSymbol(), sdk.OneInt())
