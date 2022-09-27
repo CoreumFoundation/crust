@@ -1,6 +1,8 @@
 package build
 
 import (
+	"context"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/coreum"
 	"github.com/CoreumFoundation/crust/build/crust"
@@ -9,7 +11,7 @@ import (
 )
 
 // Commands is a definition of commands available in build system
-var Commands = map[string]interface{}{
+var Commands = map[string]build.CommandFunc{
 	"build":                   buildBinaries,
 	"build/crust":             crust.BuildCrust,
 	"build/cored":             coreum.BuildCored,
@@ -34,26 +36,32 @@ var Commands = map[string]interface{}{
 	"tidy/faucet":             faucet.Tidy,
 }
 
-func tidy(deps build.DepsFunc) {
+func tidy(ctx context.Context, deps build.DepsFunc) error {
 	deps(crust.Tidy, coreum.Tidy, faucet.Tidy)
+	return nil
 }
 
-func lint(deps build.DepsFunc) {
+func lint(ctx context.Context, deps build.DepsFunc) error {
 	deps(crust.Lint, coreum.Lint, faucet.Lint)
+	return nil
 }
 
-func test(deps build.DepsFunc) {
+func test(ctx context.Context, deps build.DepsFunc) error {
 	deps(crust.Test, coreum.Test, faucet.Test)
+	return nil
 }
 
-func buildBinaries(deps build.DepsFunc) {
+func buildBinaries(ctx context.Context, deps build.DepsFunc) error {
 	deps(coreum.BuildCored, faucet.Build, crust.BuildZNet, buildIntegrationTests)
+	return nil
 }
 
-func buildIntegrationTests(deps build.DepsFunc) {
+func buildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	deps(coreum.BuildIntegrationTests, faucet.BuildIntegrationTests)
+	return nil
 }
 
-func buildDockerImages(deps build.DepsFunc) {
+func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
 	deps(coreum.BuildCoredDockerImage, faucet.BuildDockerImage)
+	return nil
 }

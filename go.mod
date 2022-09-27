@@ -1,6 +1,6 @@
 module github.com/CoreumFoundation/crust
 
-go 1.18
+go 1.19
 
 replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
@@ -10,7 +10,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum v0.0.0-20220926172859-7ef5eccd8f9a
-	github.com/CoreumFoundation/coreum-tools v0.2.1
+	github.com/CoreumFoundation/coreum-tools v0.3.0
 	github.com/cosmos/cosmos-sdk v0.45.5
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/fsnotify/fsnotify v1.5.4

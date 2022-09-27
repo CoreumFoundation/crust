@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
-	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
@@ -14,12 +13,12 @@ import (
 )
 
 func main() {
-	run.Tool("crust", nil, func(ctx context.Context, c *ioc.Container) error {
+	run.Tool("crust", func(ctx context.Context) error {
 		flags := logger.Flags(logger.ToolDefaultConfig, "build")
 		if err := flags.Parse(os.Args[1:]); err != nil {
 			return err
 		}
-		exec := build.NewIoCExecutor(selfBuild.Commands, c)
+		exec := build.NewExecutor(selfBuild.Commands)
 		if build.Autocomplete(exec) {
 			return nil
 		}
