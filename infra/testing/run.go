@@ -61,9 +61,8 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 
 	coredNode := coredApp.(cored.Cored)
 	args := []string{
-		// The tests themselves are not computationally expensive, most of the time they spend waiting for
-		// transactions to be included in blocks, so it should be safe to run more tests in parallel than we have CPus
-		// available.
+		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
+		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
 		"-cored-address", infra.JoinNetAddr("tcp", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
 	}
