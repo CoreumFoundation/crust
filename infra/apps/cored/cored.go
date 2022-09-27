@@ -20,6 +20,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
@@ -36,7 +37,7 @@ type Config struct {
 	HomeDir    string
 	BinDir     string
 	WrapperDir string
-	Network    *app.Network
+	Network    *config.Network
 	AppInfo    *infra.AppInfo
 	Ports      Ports
 	Validator  bool
@@ -45,36 +46,36 @@ type Config struct {
 }
 
 // New creates new cored app
-func New(config Config) Cored {
+func New(cfg Config) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
 	var validatorPrivateKey ed25519.PrivateKey
-	if config.Validator {
+	if cfg.Validator {
 		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
 		stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
 		validatorPrivateKey = valPrivateKey
-		stake := "100000000" + config.Network.TokenSymbol()
+		stake := "100000000" + cfg.Network.TokenSymbol()
 
-		must.OK(config.Network.FundAccount(stakerPubKey, stake))
+		must.OK(cfg.Network.FundAccount(stakerPubKey, stake))
 
-		clientCtx := app.NewDefaultClientContext().WithChainID(string(config.Network.ChainID()))
+		clientCtx := config.NewClientContext(app.ModuleBasics).WithChainID(string(cfg.Network.ChainID()))
 
 		// FIXME: make clientCtx as private field of the client type
 		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake)
 		must.OK(err)
-		config.Network.AddGenesisTx(tx)
+		cfg.Network.AddGenesisTx(tx)
 	}
 
 	return Cored{
-		config:              config,
+		config:              cfg,
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
 		mu:                  &sync.RWMutex{},
-		walletKeys:          config.Wallets,
+		walletKeys:          cfg.Wallets,
 	}
 }
 
@@ -110,7 +111,7 @@ func (c Cored) Ports() Ports {
 }
 
 // Network returns the network config used in the chain
-func (c Cored) Network() *app.Network {
+func (c Cored) Network() *config.Network {
 	return c.config.Network
 }
 
@@ -192,52 +193,51 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 
 // Deployment returns deployment of cored
 func (c Cored) Deployment() infra.Deployment {
-	deployment := infra.Binary{
-		BinPath: c.config.BinDir + "/.cache/docker/cored/cored",
-		AppBase: infra.AppBase{
-			Name: c.Name(),
-			Info: c.config.AppInfo,
-			ArgsFunc: func() []string {
-				args := []string{
-					"start",
-					"--home", targets.AppHomeDir,
-					"--log_level", "debug",
-					"--trace",
-					"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.RPC),
-					"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.P2P),
-					"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPC),
-					"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPCWeb),
-					"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
-					"--chain-id", string(c.config.Network.ChainID()),
-				}
-				if c.config.RootNode != nil {
-					args = append(args,
-						"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Ports().P2P),
-					)
-				}
+	deployment := infra.Deployment{
+		MountAppDir: true,
+		Image:       "cored:znet",
+		Name:        c.Name(),
+		Info:        c.config.AppInfo,
+		ArgsFunc: func() []string {
+			args := []string{
+				"start",
+				"--home", targets.AppHomeDir,
+				"--log_level", "debug",
+				"--trace",
+				"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.RPC),
+				"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.P2P),
+				"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPC),
+				"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPCWeb),
+				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
+				"--chain-id", string(c.config.Network.ChainID()),
+			}
+			if c.config.RootNode != nil {
+				args = append(args,
+					"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Ports().P2P),
+				)
+			}
 
-				return args
-			},
-			Ports: infra.PortsToMap(c.config.Ports),
-			PrepareFunc: func() error {
-				c.mu.RLock()
-				defer c.mu.RUnlock()
+			return args
+		},
+		Ports: infra.PortsToMap(c.config.Ports),
+		PrepareFunc: func() error {
+			c.mu.RLock()
+			defer c.mu.RUnlock()
 
-				nodeConfig := app.NodeConfig{
-					Name:           c.config.Name,
-					PrometheusPort: c.config.Ports.Prometheus,
-					NodeKey:        c.nodePrivateKey,
-					ValidatorKey:   c.validatorPrivateKey,
-				}
-				SaveConfig(nodeConfig, c.config.HomeDir)
+			nodeConfig := config.NodeConfig{
+				Name:           c.config.Name,
+				PrometheusPort: c.config.Ports.Prometheus,
+				NodeKey:        c.nodePrivateKey,
+				ValidatorKey:   c.validatorPrivateKey,
+			}
+			SaveConfig(nodeConfig, c.config.HomeDir)
 
-				addKeysToStore(c.config.HomeDir, c.walletKeys)
+			addKeysToStore(c.config.HomeDir, c.walletKeys)
 
-				return c.config.Network.SaveGenesis(c.config.HomeDir)
-			},
-			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
-			},
+			return c.config.Network.SaveGenesis(c.config.HomeDir)
+		},
+		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
+			return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
 		},
 	}
 	if c.config.RootNode != nil {

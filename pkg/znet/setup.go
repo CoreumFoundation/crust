@@ -9,8 +9,8 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/ioc"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/integration-tests/testing"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -18,9 +18,9 @@ import (
 
 // IoC configures IoC container
 func IoC(c *ioc.Container) {
-	c.Singleton(func() app.NetworkConfig {
+	c.Singleton(func() config.NetworkConfig {
 		// FIXME (wojtek): this is only a temporary hack until we develop our own address encoder.
-		app.NewNetwork(testing.NetworkConfig).SetupPrefixes()
+		config.NewNetwork(testing.NetworkConfig).SetupPrefixes()
 		return testing.NetworkConfig
 	})
 	c.Singleton(NewCmdFactory)
