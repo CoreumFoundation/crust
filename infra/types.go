@@ -20,8 +20,6 @@ import (
 	"github.com/CoreumFoundation/crust/exec"
 )
 
-const binaryDockerImage = "alpine:3.16.0"
-
 // AppType represents the type of application
 type AppType string
 
@@ -38,18 +36,6 @@ type App interface {
 
 	// Deployment returns app ready to deploy
 	Deployment() Deployment
-}
-
-// Deployment is the app ready to deploy to the target
-type Deployment interface {
-	// Dependencies returns the list of applications which must be running before the current deployment may be started
-	Dependencies() []HealthCheckCapable
-
-	// DockerImage returns the docker image used by the deployment
-	DockerImage() string
-
-	// Deploy deploys app to the target
-	Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error)
 }
 
 // Mode is the list of applications to deploy
@@ -75,10 +61,10 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 		images := map[string]chan struct{}{}
 		for _, app := range m {
 			deployment := app.Deployment()
-			if _, exists := images[deployment.DockerImage()]; !exists {
+			if _, exists := images[deployment.Image]; !exists {
 				ch := make(chan struct{}, 1)
 				ch <- struct{}{}
-				images[deployment.DockerImage()] = ch
+				images[deployment.Image] = ch
 			}
 			deployments[app.Name()] = struct {
 				Deployment   Deployment
@@ -86,7 +72,7 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 				ReadyCh      chan struct{}
 			}{
 				Deployment:   deployment,
-				ImageReadyCh: images[deployment.DockerImage()],
+				ImageReadyCh: images[deployment.Image],
 				ReadyCh:      make(chan struct{}),
 			}
 		}
@@ -104,12 +90,12 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 
 				log.Info("Deployment initialized")
 
-				if err := ensureDockerImage(ctx, deployment.DockerImage(), imagePullSlots, toDeploy.ImageReadyCh); err != nil {
+				if err := ensureDockerImage(ctx, deployment.Image, imagePullSlots, toDeploy.ImageReadyCh); err != nil {
 					return err
 				}
 
 				var depNames []string
-				if dependencies := deployment.Dependencies(); len(dependencies) > 0 {
+				if dependencies := deployment.Requires.Dependencies; len(dependencies) > 0 {
 					depNames = make([]string, 0, len(dependencies))
 					for _, d := range dependencies {
 						depNames = append(depNames, d.Name())
@@ -247,11 +233,8 @@ type Target interface {
 
 // AppTarget represents target of deployment from the perspective of application
 type AppTarget interface {
-	// DeployBinary deploys binary to the target
-	DeployBinary(ctx context.Context, app Binary) (DeploymentInfo, error)
-
 	// DeployContainer deploys container to the target
-	DeployContainer(ctx context.Context, app Container) (DeploymentInfo, error)
+	DeployContainer(ctx context.Context, app Deployment) (DeploymentInfo, error)
 }
 
 // Prerequisites specifies list of other apps which have to be healthy before app may be started.
@@ -263,8 +246,14 @@ type Prerequisites struct {
 	Dependencies []HealthCheckCapable
 }
 
-// AppBase contain properties common to all types of app
-type AppBase struct {
+// EnvVar is used to define environment variable for docker container
+type EnvVar struct {
+	Name  string
+	Value string
+}
+
+// Deployment represents application to be deployed
+type Deployment struct {
 	// Name of the application
 	Name string
 
@@ -287,9 +276,36 @@ type AppBase struct {
 	// ConfigureFunc is the function called after application is deployed for the first time.
 	// It is a good place to connect to the application to configure it because at this stage the app's IP address is known.
 	ConfigureFunc func(ctx context.Context, deployment DeploymentInfo) error
+
+	// Image is the url of the container image
+	Image string
+
+	// EnvVarsFunc is a function defining environment variables for docker container
+	EnvVarsFunc func() []EnvVar
+
+	// MountAppDir set to true causes the app's home dir to be mounted inside the container under /app.
+	// It also implicates that container is run using uid and gid of current user. Otherwise it's impossible to remove the `znet`
+	// directory when `znet remove` is executed.
+	MountAppDir bool
 }
 
-func (app AppBase) preprocess(ctx context.Context, config Config) error {
+// Deploy deploys container to the target
+func (app Deployment) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
+	if err := app.preprocess(ctx, config); err != nil {
+		return DeploymentInfo{}, err
+	}
+
+	info, err := target.DeployContainer(ctx, app)
+	if err != nil {
+		return DeploymentInfo{}, err
+	}
+	if err := app.postprocess(ctx, info); err != nil {
+		return DeploymentInfo{}, err
+	}
+	return info, nil
+}
+
+func (app Deployment) preprocess(ctx context.Context, config Config) error {
 	must.OK(os.MkdirAll(config.AppDir+"/"+app.Name, 0o700))
 
 	if len(app.Requires.Dependencies) > 0 {
@@ -310,7 +326,7 @@ func (app AppBase) preprocess(ctx context.Context, config Config) error {
 	return nil
 }
 
-func (app AppBase) postprocess(ctx context.Context, info DeploymentInfo) error {
+func (app Deployment) postprocess(ctx context.Context, info DeploymentInfo) error {
 	if app.Info.Info().Status == AppStatusStopped {
 		return nil
 	}
@@ -318,83 +334,6 @@ func (app AppBase) postprocess(ctx context.Context, info DeploymentInfo) error {
 		return app.ConfigureFunc(ctx, info)
 	}
 	return nil
-}
-
-// Binary represents binary file to be deployed
-type Binary struct {
-	AppBase
-
-	// BinPath is the path to linux binary file
-	BinPath string
-}
-
-// DockerImage returns the docker image used by the deployment
-func (app Binary) DockerImage() string {
-	return binaryDockerImage
-}
-
-// Dependencies returns the list of applications which must be running before the current deployment may be started
-func (app Binary) Dependencies() []HealthCheckCapable {
-	return app.Requires.Dependencies
-}
-
-// Deploy deploys binary to the target
-func (app Binary) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
-	if err := app.AppBase.preprocess(ctx, config); err != nil {
-		return DeploymentInfo{}, err
-	}
-
-	info, err := target.DeployBinary(ctx, app)
-	if err != nil {
-		return DeploymentInfo{}, err
-	}
-	if err := app.AppBase.postprocess(ctx, info); err != nil {
-		return DeploymentInfo{}, err
-	}
-	return info, nil
-}
-
-// EnvVar is used to define environment variable for docker container
-type EnvVar struct {
-	Name  string
-	Value string
-}
-
-// Container represents container to be deployed
-type Container struct {
-	AppBase
-
-	// Image is the url of the container image
-	Image string
-
-	// EnvVarsFunc is a function defining environment variables for docker container
-	EnvVarsFunc func() []EnvVar
-}
-
-// DockerImage returns the docker image used by the deployment
-func (app Container) DockerImage() string {
-	return app.Image
-}
-
-// Dependencies returns the list of applications which must be running before the current deployment may be started
-func (app Container) Dependencies() []HealthCheckCapable {
-	return app.Requires.Dependencies
-}
-
-// Deploy deploys container to the target
-func (app Container) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
-	if err := app.AppBase.preprocess(ctx, config); err != nil {
-		return DeploymentInfo{}, err
-	}
-
-	info, err := target.DeployContainer(ctx, app)
-	if err != nil {
-		return DeploymentInfo{}, err
-	}
-	if err := app.AppBase.postprocess(ctx, info); err != nil {
-		return DeploymentInfo{}, err
-	}
-	return info, nil
 }
 
 // NewConfigFactory creates new ConfigFactory

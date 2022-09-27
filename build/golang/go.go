@@ -58,17 +58,17 @@ type TestBuildConfig struct {
 }
 
 // EnsureGo ensures that go is available
-func EnsureGo(ctx context.Context) error {
+func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureLocal(ctx, tools.Go)
 }
 
 // EnsureGolangCI ensures that go linter is available
-func EnsureGolangCI(ctx context.Context) error {
+func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureLocal(ctx, tools.GolangCI)
 }
 
 // EnsureLibWASMVMMuslC ensures that libwasmvm_muslc is installed
-func EnsureLibWASMVMMuslC(ctx context.Context) error {
+func EnsureLibWASMVMMuslC(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureDocker(ctx, tools.LibWASMMuslC)
 }
 
