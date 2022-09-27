@@ -193,52 +193,51 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 
 // Deployment returns deployment of cored
 func (c Cored) Deployment() infra.Deployment {
-	deployment := infra.Binary{
-		BinPath: c.config.BinDir + "/.cache/docker/cored/cored",
-		AppBase: infra.AppBase{
-			Name: c.Name(),
-			Info: c.config.AppInfo,
-			ArgsFunc: func() []string {
-				args := []string{
-					"start",
-					"--home", targets.AppHomeDir,
-					"--log_level", "debug",
-					"--trace",
-					"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.RPC),
-					"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.P2P),
-					"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPC),
-					"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPCWeb),
-					"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
-					"--chain-id", string(c.config.Network.ChainID()),
-				}
-				if c.config.RootNode != nil {
-					args = append(args,
-						"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Ports().P2P),
-					)
-				}
+	deployment := infra.Deployment{
+		MountAppDir: true,
+		Image:       "cored:znet",
+		Name:        c.Name(),
+		Info:        c.config.AppInfo,
+		ArgsFunc: func() []string {
+			args := []string{
+				"start",
+				"--home", targets.AppHomeDir,
+				"--log_level", "debug",
+				"--trace",
+				"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.RPC),
+				"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.P2P),
+				"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPC),
+				"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPCWeb),
+				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
+				"--chain-id", string(c.config.Network.ChainID()),
+			}
+			if c.config.RootNode != nil {
+				args = append(args,
+					"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Ports().P2P),
+				)
+			}
 
-				return args
-			},
-			Ports: infra.PortsToMap(c.config.Ports),
-			PrepareFunc: func() error {
-				c.mu.RLock()
-				defer c.mu.RUnlock()
+			return args
+		},
+		Ports: infra.PortsToMap(c.config.Ports),
+		PrepareFunc: func() error {
+			c.mu.RLock()
+			defer c.mu.RUnlock()
 
-				nodeConfig := config.NodeConfig{
-					Name:           c.config.Name,
-					PrometheusPort: c.config.Ports.Prometheus,
-					NodeKey:        c.nodePrivateKey,
-					ValidatorKey:   c.validatorPrivateKey,
-				}
-				SaveConfig(nodeConfig, c.config.HomeDir)
+			nodeConfig := config.NodeConfig{
+				Name:           c.config.Name,
+				PrometheusPort: c.config.Ports.Prometheus,
+				NodeKey:        c.nodePrivateKey,
+				ValidatorKey:   c.validatorPrivateKey,
+			}
+			SaveConfig(nodeConfig, c.config.HomeDir)
 
-				addKeysToStore(c.config.HomeDir, c.walletKeys)
+			addKeysToStore(c.config.HomeDir, c.walletKeys)
 
-				return c.config.Network.SaveGenesis(c.config.HomeDir)
-			},
-			ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-				return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
-			},
+			return c.config.Network.SaveGenesis(c.config.HomeDir)
+		},
+		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
+			return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
 		},
 	}
 	if c.config.RootNode != nil {
