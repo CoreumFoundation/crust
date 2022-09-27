@@ -56,7 +56,7 @@ func New(cfg Config) Cored {
 		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
-		stakerPrivKey, err := PrivateKeyFromMnemonic(config.ValidatorMnemonic)
+		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.ValidatorMnemonic)
 		must.OK(err)
 
 		stakerPubKey := stakerPrivKey.PubKey()

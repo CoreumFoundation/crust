@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -92,10 +91,13 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		case "coreum":
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
+				// TODO (dhil) remove this arg after the migration to mnemonics
 				"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
 				"-funding-mnemonic", FundingMnemonic,
-				"-staker-mnemonics", strings.Join(stakerMnemonics, ","),
 			)
+			for _, mnemonics := range stakerMnemonics {
+				fullArgs = append(fullArgs, "-staker-mnemonic", mnemonics)
+			}
 		case "faucet":
 			faucetApp := mode.FindAnyRunningApp(faucet.AppType)
 			if faucetApp == nil {
