@@ -34,11 +34,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		return err
 	}
 
-	stakerMnemonics := []string{
-		cored.Validator1Mnemonic,
-		cored.Validator2Mnemonic,
-		cored.Validator3Mnemonic,
-	}
+	stakerMnemonics := cored.StakerMnemonics[:3]
 
 	if err := target.Deploy(ctx, mode); err != nil {
 		return err

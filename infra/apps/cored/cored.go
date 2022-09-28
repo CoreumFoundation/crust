@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -33,17 +34,17 @@ const AppType infra.AppType = "cored"
 
 // Config stores cored app config
 type Config struct {
-	Name              string
-	HomeDir           string
-	BinDir            string
-	WrapperDir        string
-	Network           *config.Network
-	AppInfo           *infra.AppInfo
-	Ports             Ports
-	IsValidator       bool
-	ValidatorMnemonic string
-	RootNode          *Cored
-	Wallets           map[string]types.Secp256k1PrivateKey
+	Name           string
+	HomeDir        string
+	BinDir         string
+	WrapperDir     string
+	Network        *config.Network
+	AppInfo        *infra.AppInfo
+	Ports          Ports
+	IsValidator    bool
+	StakerMnemonic string
+	RootNode       *Cored
+	Wallets        map[string]types.Secp256k1PrivateKey
 }
 
 // New creates new cored app
@@ -56,20 +57,22 @@ func New(cfg Config) Cored {
 		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
-		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.ValidatorMnemonic)
+		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
 
 		stakerPubKey := stakerPrivKey.PubKey()
 		validatorPrivateKey = valPrivateKey
-		stake := "100000000" + cfg.Network.TokenSymbol()
-		// the additional balance will be used to pay for the tx submitted from the validators accounts
-		fullBalance := "100010000" + cfg.Network.TokenSymbol()
-		must.OK(cfg.Network.FundAccount(stakerPubKey, fullBalance))
+
+		stake := sdk.NewInt64Coin(cfg.Network.TokenSymbol(), 1000000000)
+		// the additional balance will be used to pay for the tx submitted from the stakers accounts
+		additionalBalance := sdk.NewInt64Coin(cfg.Network.TokenSymbol(), 1000000000)
+
+		must.OK(cfg.Network.FundAccount(stakerPubKey, stake.Add(additionalBalance).String()))
 
 		clientCtx := config.NewClientContext(app.ModuleBasics).WithChainID(string(cfg.Network.ChainID()))
 
 		// FIXME: make clientCtx as private field of the client type
-		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake)
+		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
 		must.OK(err)
 		cfg.Network.AddGenesisTx(tx)
 	}

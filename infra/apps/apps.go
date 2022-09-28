@@ -37,7 +37,11 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, validatorMnemonics []string, numOfSentryNodes int) (cored.Cored, infra.Mode, error) {
+func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount int) (cored.Cored, infra.Mode, error) {
+	if validatorsCount > len(cored.StakerMnemonics) {
+		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, len(cored.StakerMnemonics))
+	}
+
 	network := config.NewNetwork(f.networkConfig)
 	initialBalance := "500000000000000" + network.TokenSymbol()
 
@@ -74,12 +78,13 @@ func (f *Factory) CoredNetwork(name string, validatorMnemonics []string, numOfSe
 		"charlie": charliePrivKey,
 	}
 
-	nodes := make(infra.Mode, 0, len(validatorMnemonics)+numOfSentryNodes)
+	nodes := make(infra.Mode, 0, validatorsCount+sentriesCount)
 	var node0 *cored.Cored
 	var lastNode cored.Cored
 	for i := 0; i < cap(nodes); i++ {
 		name := name + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
+		isValidator := i < validatorsCount
 		node := cored.New(cored.Config{
 			Name:       name,
 			HomeDir:    filepath.Join(f.config.AppDir, name, string(network.ChainID())),
@@ -95,10 +100,10 @@ func (f *Factory) CoredNetwork(name string, validatorMnemonics []string, numOfSe
 				PProf:      cored.DefaultPorts.PProf + portDelta,
 				Prometheus: cored.DefaultPorts.Prometheus + portDelta,
 			},
-			IsValidator: i < len(validatorMnemonics),
-			ValidatorMnemonic: func() string {
-				if i < len(validatorMnemonics) {
-					return validatorMnemonics[i]
+			IsValidator: isValidator,
+			StakerMnemonic: func() string {
+				if isValidator {
+					return cored.StakerMnemonics[i]
 				}
 				return ""
 			}(),
