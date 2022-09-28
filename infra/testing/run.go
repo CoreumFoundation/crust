@@ -94,8 +94,8 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 				"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
 				"-funding-mnemonic", FundingMnemonic,
 			)
-			for _, mnemonics := range stakerMnemonics {
-				fullArgs = append(fullArgs, "-staker-mnemonic", mnemonics)
+			for _, mnemonic := range stakerMnemonics {
+				fullArgs = append(fullArgs, "-staker-mnemonic", mnemonic)
 			}
 		case "faucet":
 			faucetApp := mode.FindAnyRunningApp(faucet.AppType)

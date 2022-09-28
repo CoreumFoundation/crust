@@ -95,10 +95,15 @@ func (f *Factory) CoredNetwork(name string, validatorMnemonics []string, numOfSe
 				PProf:      cored.DefaultPorts.PProf + portDelta,
 				Prometheus: cored.DefaultPorts.Prometheus + portDelta,
 			},
-			IsValidator:       i < len(validatorMnemonics),
-			ValidatorMnemonic: validatorMnemonics[i],
-			RootNode:          node0,
-			Wallets:           wallets,
+			IsValidator: i < len(validatorMnemonics),
+			ValidatorMnemonic: func() string {
+				if i < len(validatorMnemonics) {
+					return validatorMnemonics[i]
+				}
+				return ""
+			}(),
+			RootNode: node0,
+			Wallets:  wallets,
 		})
 		if node0 == nil {
 			node0 = &node
