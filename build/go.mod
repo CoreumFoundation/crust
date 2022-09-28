@@ -8,6 +8,7 @@ require (
 	github.com/CoreumFoundation/coreum-tools v0.3.0
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.21.0
+	golang.org/x/mod v0.5.1
 )
 
 require (
