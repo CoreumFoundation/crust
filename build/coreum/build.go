@@ -11,10 +11,12 @@ import (
 )
 
 const (
+	blockchainName   = "coreum"
+	binaryName       = "cored"
 	repoURL          = "https://github.com/CoreumFoundation/coreum.git"
 	repoPath         = "../coreum"
-	localBinaryPath  = "bin/cored"
-	dockerBinaryPath = "bin/.cache/docker/cored/cored"
+	localBinaryPath  = "bin/" + binaryName
+	dockerBinaryPath = "bin/.cache/docker/cored/" + binaryName
 	testBinaryPath   = "bin/.cache/integration-tests/coreum"
 )
 
@@ -104,8 +106,8 @@ func coredVersionParams(ctx context.Context) (map[string]string, error) {
 	}
 
 	return map[string]string{
-		"github.com/cosmos/cosmos-sdk/version.Name":    "core",
-		"github.com/cosmos/cosmos-sdk/version.AppName": "cored",
+		"github.com/cosmos/cosmos-sdk/version.Name":    blockchainName,
+		"github.com/cosmos/cosmos-sdk/version.AppName": binaryName,
 		"github.com/cosmos/cosmos-sdk/version.Version": firstVersionTag(tags),
 		"github.com/cosmos/cosmos-sdk/version.Commit":  hash,
 	}, nil
