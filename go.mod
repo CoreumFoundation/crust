@@ -9,7 +9,7 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20220926172859-7ef5eccd8f9a
+	github.com/CoreumFoundation/coreum v0.0.0-20220928114435-b703c8a1c471
 	github.com/CoreumFoundation/coreum-tools v0.3.0
 	github.com/cosmos/cosmos-sdk v0.45.5
 	github.com/cosmos/go-bip39 v1.0.0
