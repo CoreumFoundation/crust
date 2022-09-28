@@ -128,6 +128,11 @@ func (c Cored) Info() infra.DeploymentInfo {
 	return c.config.AppInfo.Info()
 }
 
+// Config returns cored config.
+func (c Cored) Config() Config {
+	return c.config
+}
+
 // AddWallet adds wallet to genesis block and local keystore
 func (c Cored) AddWallet(balances string) types.Wallet {
 	pubKey, privKey := types.GenerateSecp256k1Key()

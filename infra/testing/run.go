@@ -34,7 +34,13 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		return err
 	}
 
-	stakerMnemonics := cored.StakerMnemonics[:3]
+	stakerMnemonics := make([]string, 0, 0)
+	for _, m := range mode {
+		coredApp, ok := m.(cored.Cored)
+		if ok && coredApp.Config().IsValidator {
+			stakerMnemonics = append(stakerMnemonics, coredApp.Config().StakerMnemonic)
+		}
+	}
 
 	if err := target.Deploy(ctx, mode); err != nil {
 		return err
