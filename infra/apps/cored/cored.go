@@ -62,8 +62,9 @@ func New(cfg Config) Cored {
 		stakerPubKey := stakerPrivKey.PubKey()
 		validatorPrivateKey = valPrivateKey
 		stake := "100000000" + cfg.Network.TokenSymbol()
-
-		must.OK(cfg.Network.FundAccount(stakerPubKey, stake))
+		// the additional balance will be used to pay for the tx submitted from the validators accounts
+		fullBalance := "100010000" + cfg.Network.TokenSymbol()
+		must.OK(cfg.Network.FundAccount(stakerPubKey, fullBalance))
 
 		clientCtx := config.NewClientContext(app.ModuleBasics).WithChainID(string(cfg.Network.ChainID()))
 
