@@ -34,7 +34,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		return err
 	}
 
-	stakerMnemonics := make([]string, 0, 0)
+	var stakerMnemonics []string
 	for _, m := range mode {
 		coredApp, ok := m.(cored.Cored)
 		if ok && coredApp.Config().IsValidator {
