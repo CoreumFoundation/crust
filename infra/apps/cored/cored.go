@@ -108,24 +108,14 @@ func (c Cored) Name() string {
 	return c.config.Name
 }
 
-// NodeID returns node ID
-func (c Cored) NodeID() string {
-	return c.nodeID
-}
-
-// Ports returns ports used by the application
-func (c Cored) Ports() Ports {
-	return c.config.Ports
-}
-
-// Network returns the network config used in the chain
-func (c Cored) Network() *config.Network {
-	return c.config.Network
-}
-
 // Info returns deployment info
 func (c Cored) Info() infra.DeploymentInfo {
 	return c.config.AppInfo.Info()
+}
+
+// NodeID returns node ID
+func (c Cored) NodeID() string {
+	return c.nodeID
 }
 
 // Config returns cored config.
@@ -156,7 +146,7 @@ func (c Cored) AddWallet(balances string) types.Wallet {
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() client.Client {
-	return client.New(c.config.Network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
+	return client.New(c.config.Network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -226,7 +216,7 @@ func (c Cored) Deployment() infra.Deployment {
 			}
 			if c.config.RootNode != nil {
 				args = append(args,
-					"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Ports().P2P),
+					"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Config().Ports.P2P),
 				)
 			}
 

@@ -70,7 +70,7 @@ func (bd BigDipper) Deployment() infra.Deployment {
 				},
 				{
 					Name:  "NEXT_PUBLIC_RPC_WEBSOCKET",
-					Value: infra.JoinNetAddr("ws", bd.config.Cored.Info().HostFromHost, bd.config.Cored.Ports().RPC) + "/websocket",
+					Value: infra.JoinNetAddr("ws", bd.config.Cored.Info().HostFromHost, bd.config.Cored.Config().Ports.RPC) + "/websocket",
 				},
 				{
 					Name:  "NEXT_PUBLIC_GRAPHQL_URL",
@@ -86,7 +86,7 @@ func (bd BigDipper) Deployment() infra.Deployment {
 				},
 				{
 					Name:  "NEXT_PUBLIC_CHAIN_TYPE",
-					Value: string(bd.config.Cored.Network().ChainID()),
+					Value: string(bd.config.Cored.Config().Network.ChainID()),
 				},
 			}
 		},

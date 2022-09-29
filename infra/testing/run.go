@@ -48,7 +48,6 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 
 	log := logger.Get(ctx)
 	log.Info("Waiting until all applications start...")
-
 	waitCtx, waitCancel := context.WithTimeout(ctx, 20*time.Second)
 	defer waitCancel()
 	if err := infra.WaitUntilHealthy(waitCtx, buildWaitForApps(mode)...); err != nil {
@@ -66,9 +65,8 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
-		"-cored-address", infra.JoinNetAddr("tcp", coredNode.Info().HostFromHost, coredNode.Ports().RPC),
+		"-cored-address", infra.JoinNetAddr("tcp", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC),
 	}
-
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
 		args = append(args, "-filter", config.TestFilter)
