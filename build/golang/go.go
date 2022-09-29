@@ -43,6 +43,9 @@ type BinaryBuildConfig struct {
 
 	// CGOEnabled builds cgo binary
 	CGOEnabled bool
+
+	// Parameters is the set of values passed to -X flags of `go build`
+	Parameters map[string]string
 }
 
 // TestBuildConfig is the configuration for `go test -c`
@@ -214,6 +217,9 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args []string, e
 	ldFlags := []string{"-w", "-s"}
 	if config.LinkStatically {
 		ldFlags = append(ldFlags, "-extldflags=-static")
+	}
+	for k, v := range config.Parameters {
+		ldFlags = append(ldFlags, "-X", k+"="+v)
 	}
 	args = []string{
 		"build",

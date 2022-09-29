@@ -42,19 +42,12 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 		return errors.WithStack(err)
 	}
 
-	hash, err := git.HeadHash(ctx, config.RepoPath)
+	hash, err := git.DirtyHeadHash(ctx, config.RepoPath)
 	if err != nil {
 		return err
 	}
 	tagZNet := config.ImageName + ":znet"
 	tag := config.ImageName + ":" + hash[:7]
-	clean, err := git.StatusClean(ctx, config.RepoPath)
-	if err != nil {
-		return err
-	}
-	if !clean {
-		tag += "-dirty"
-	}
 
 	logger.Get(ctx).Info("Building docker image", zap.String("image", tag))
 

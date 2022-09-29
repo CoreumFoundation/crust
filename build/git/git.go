@@ -28,6 +28,36 @@ func HeadHash(ctx context.Context, repoPath string) (string, error) {
 	return buf.String(), nil
 }
 
+// DirtyHeadHash returns hash of the latest commit in the repository, adding "-dirty" suffix if there are uncommitted changes
+func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
+	hash, err := HeadHash(ctx, repoPath)
+	if err != nil {
+		return "", err
+	}
+
+	clean, err := StatusClean(ctx, repoPath)
+	if err != nil {
+		return "", err
+	}
+	if !clean {
+		hash += "-dirty"
+	}
+
+	return hash, nil
+}
+
+// HeadTags returns the list of tags applied to the latest commit
+func HeadTags(ctx context.Context, repoPath string) ([]string, error) {
+	buf := &bytes.Buffer{}
+	cmd := exec.Command("git", "tag", "--points-at", "HEAD")
+	cmd.Dir = repoPath
+	cmd.Stdout = buf
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return nil, errors.Wrap(err, "git command failed")
+	}
+	return strings.Split(strings.TrimSuffix(buf.String(), "\n"), "\n"), nil
+}
+
 // StatusClean checks that there are no uncommitted files in the repo
 func StatusClean(ctx context.Context, repoPath string) (bool, error) {
 	buf := &bytes.Buffer{}
