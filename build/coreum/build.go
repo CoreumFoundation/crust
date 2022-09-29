@@ -3,16 +3,20 @@ package coreum
 import (
 	"context"
 
+	"golang.org/x/mod/semver"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
 )
 
 const (
+	blockchainName   = "coreum"
+	binaryName       = "cored"
 	repoURL          = "https://github.com/CoreumFoundation/coreum.git"
 	repoPath         = "../coreum"
-	localBinaryPath  = "bin/cored"
-	dockerBinaryPath = "bin/.cache/docker/cored/cored"
+	localBinaryPath  = "bin/" + binaryName
+	dockerBinaryPath = "bin/.cache/docker/cored/" + binaryName
 	testBinaryPath   = "bin/.cache/integration-tests/coreum"
 )
 
@@ -26,9 +30,15 @@ func BuildCored(ctx context.Context, deps build.DepsFunc) error {
 func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
+	parameters, err := coredVersionParams(ctx)
+	if err != nil {
+		return err
+	}
+
 	return golang.BuildLocally(ctx, golang.BinaryBuildConfig{
 		PackagePath:   "../coreum/cmd/cored",
 		BinOutputPath: localBinaryPath,
+		Parameters:    parameters,
 		CGOEnabled:    true,
 	})
 }
@@ -37,9 +47,15 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
 
+	parameters, err := coredVersionParams(ctx)
+	if err != nil {
+		return err
+	}
+
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  dockerBinaryPath,
+		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           []string{"muslc"},
 		LinkStatically: true,
@@ -77,4 +93,31 @@ func Test(ctx context.Context, deps build.DepsFunc) error {
 
 func ensureRepo(ctx context.Context, deps build.DepsFunc) error {
 	return git.EnsureRepo(ctx, repoURL)
+}
+
+func coredVersionParams(ctx context.Context) (map[string]string, error) {
+	hash, err := git.DirtyHeadHash(ctx, repoPath)
+	if err != nil {
+		return nil, err
+	}
+	tags, err := git.HeadTags(ctx, repoPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		"github.com/cosmos/cosmos-sdk/version.Name":    blockchainName,
+		"github.com/cosmos/cosmos-sdk/version.AppName": binaryName,
+		"github.com/cosmos/cosmos-sdk/version.Version": firstVersionTag(tags),
+		"github.com/cosmos/cosmos-sdk/version.Commit":  hash,
+	}, nil
+}
+
+func firstVersionTag(tags []string) string {
+	for _, tag := range tags {
+		if semver.IsValid(tag) {
+			return tag
+		}
+	}
+	return ""
 }
