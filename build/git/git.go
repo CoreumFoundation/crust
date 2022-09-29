@@ -3,7 +3,6 @@ package git
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,7 +24,7 @@ func HeadHash(ctx context.Context, repoPath string) (string, error) {
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return "", errors.Wrap(err, "git command failed")
 	}
-	return buf.String(), nil
+	return strings.TrimSuffix(buf.String(), "\n"), nil
 }
 
 // DirtyHeadHash returns hash of the latest commit in the repository, adding "-dirty" suffix if there are uncommitted changes
@@ -35,7 +34,7 @@ func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
 		return "", err
 	}
 
-	clean, err := StatusClean(ctx, repoPath)
+	clean, _, err := StatusClean(ctx, repoPath)
 	if err != nil {
 		return "", err
 	}
@@ -59,20 +58,18 @@ func HeadTags(ctx context.Context, repoPath string) ([]string, error) {
 }
 
 // StatusClean checks that there are no uncommitted files in the repo
-func StatusClean(ctx context.Context, repoPath string) (bool, error) {
+func StatusClean(ctx context.Context, repoPath string) (bool, string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "status", "-s")
 	cmd.Dir = repoPath
 	cmd.Stdout = buf
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return false, errors.Wrap(err, "git command failed")
+		return false, "", errors.Wrap(err, "git command failed")
 	}
 	if buf.Len() > 0 {
-		fmt.Println("git status:")
-		fmt.Println(buf)
-		return false, nil
+		return false, buf.String(), nil
 	}
-	return true, nil
+	return true, "", nil
 }
 
 // EnsureRepo ensures that repository is cloned
