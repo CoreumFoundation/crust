@@ -256,13 +256,13 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	charlie := types.Wallet{Name: "charlie", Key: charliePrivKey}
 
 	for {
-		if err := sendTokens(ctx, client, alice, bob, *coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client, alice, bob, *coredNode.Config().Network); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, bob, charlie, *coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client, bob, charlie, *coredNode.Config().Network); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, charlie, alice, *coredNode.Network()); err != nil {
+		if err := sendTokens(ctx, client, charlie, alice, *coredNode.Config().Network); err != nil {
 			return err
 		}
 

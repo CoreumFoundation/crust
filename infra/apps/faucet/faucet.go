@@ -107,7 +107,7 @@ func (f Faucet) Deployment() infra.Deployment {
 				"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
 				// TODO (milad): remove after faucet is updated to use mnemonic
 				"--key-path", filepath.Join(targets.AppHomeDir, "key"),
-				"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Ports().RPC),
+				"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Config().Ports.RPC),
 				"--log-format", "yaml",
 			}
 		},

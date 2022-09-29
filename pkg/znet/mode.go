@@ -55,7 +55,7 @@ func DevMode(appF *apps.Factory) infra.Mode {
 
 // TestMode returns environment used for testing
 func TestMode(appF *apps.Factory) infra.Mode {
-	node, coredNodes, err := appF.CoredNetwork("coretest", 3, 0)
+	node, coredNodes, err := appF.CoredNetwork("coredev", 3, 0)
 	must.OK(err)
 
 	faucet, err := appF.Faucet("faucet", node)

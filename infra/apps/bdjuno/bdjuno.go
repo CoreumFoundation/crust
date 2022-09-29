@@ -120,8 +120,8 @@ func (j BDJuno) prepareConfig() []byte {
 			AddressPrefix string
 		}{
 			Host:          j.config.Cored.Info().HostFromContainer,
-			PortRPC:       j.config.Cored.Ports().RPC,
-			PortGRPC:      j.config.Cored.Ports().GRPC,
+			PortRPC:       j.config.Cored.Config().Ports.RPC,
+			PortGRPC:      j.config.Cored.Config().Ports.GRPC,
 			AddressPrefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		},
 		Postgres: struct {
