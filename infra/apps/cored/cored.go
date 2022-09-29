@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
@@ -34,16 +35,17 @@ const AppType infra.AppType = "cored"
 
 // Config stores cored app config
 type Config struct {
-	Name       string
-	HomeDir    string
-	BinDir     string
-	WrapperDir string
-	Network    *config.Network
-	AppInfo    *infra.AppInfo
-	Ports      Ports
-	Validator  bool
-	RootNode   *Cored
-	Wallets    map[string]types.Secp256k1PrivateKey
+	Name           string
+	HomeDir        string
+	BinDir         string
+	WrapperDir     string
+	Network        *config.Network
+	AppInfo        *infra.AppInfo
+	Ports          Ports
+	IsValidator    bool
+	StakerMnemonic string
+	RootNode       *Cored
+	Wallets        map[string]types.Secp256k1PrivateKey
 }
 
 // New creates new cored app
@@ -52,21 +54,27 @@ func New(cfg Config) Cored {
 	must.OK(err)
 
 	var validatorPrivateKey ed25519.PrivateKey
-	if cfg.Validator {
+	if cfg.IsValidator {
 		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
-		stakerPubKey, stakerPrivKey := types.GenerateSecp256k1Key()
-		validatorPrivateKey = valPrivateKey
-		stake := "100000000" + cfg.Network.TokenSymbol()
+		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
+		must.OK(err)
 
-		must.OK(cfg.Network.FundAccount(stakerPubKey, stake))
+		stakerPubKey := stakerPrivKey.PubKey()
+		validatorPrivateKey = valPrivateKey
+
+		stake := sdk.NewInt64Coin(cfg.Network.TokenSymbol(), 1000000000)
+		// the additional balance will be used to pay for the tx submitted from the stakers accounts
+		additionalBalance := sdk.NewInt64Coin(cfg.Network.TokenSymbol(), 1000000000)
+
+		must.OK(cfg.Network.FundAccount(stakerPubKey, stake.Add(additionalBalance).String()))
 
 		clientCtx := config.NewClientContext(module.NewBasicManager(
 			staking.AppModuleBasic{},
 		)).WithChainID(string(cfg.Network.ChainID()))
 
-		tx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake)
+		tx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
 		must.OK(err)
 		cfg.Network.AddGenesisTx(tx)
 	}
@@ -102,24 +110,19 @@ func (c Cored) Name() string {
 	return c.config.Name
 }
 
+// Info returns deployment info
+func (c Cored) Info() infra.DeploymentInfo {
+	return c.config.AppInfo.Info()
+}
+
 // NodeID returns node ID
 func (c Cored) NodeID() string {
 	return c.nodeID
 }
 
-// Ports returns ports used by the application
-func (c Cored) Ports() Ports {
-	return c.config.Ports
-}
-
-// Network returns the network config used in the chain
-func (c Cored) Network() *config.Network {
-	return c.config.Network
-}
-
-// Info returns deployment info
-func (c Cored) Info() infra.DeploymentInfo {
-	return c.config.AppInfo.Info()
+// Config returns cored config.
+func (c Cored) Config() Config {
+	return c.config
 }
 
 // AddWallet adds wallet to genesis block and local keystore
@@ -145,7 +148,7 @@ func (c Cored) AddWallet(balances string) types.Wallet {
 
 // Client creates new client for cored blockchain
 func (c Cored) Client() client.Client {
-	return client.New(c.config.Network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Ports().RPC))
+	return client.New(c.config.Network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.RPC))
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -215,7 +218,7 @@ func (c Cored) Deployment() infra.Deployment {
 			}
 			if c.config.RootNode != nil {
 				args = append(args,
-					"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Ports().P2P),
+					"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Config().Ports.P2P),
 				)
 			}
 
