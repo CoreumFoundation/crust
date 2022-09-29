@@ -74,7 +74,7 @@ func New(cfg Config) Cored {
 			staking.AppModuleBasic{},
 		)).WithChainID(string(cfg.Network.ChainID()))
 
-		tx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake)
+		tx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
 		must.OK(err)
 		cfg.Network.AddGenesisTx(tx)
 	}
