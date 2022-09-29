@@ -8,7 +8,7 @@ const (
 )
 
 var (
-	// StakerMnemonics defines the list of the staked used by validators.
+	// StakerMnemonics defines the list of the stakers used by validators.
 	StakerMnemonics = []string{
 		"biology rigid design broccoli adult hood modify tissue swallow arctic option improve quiz cliff inject soup ozone suffer fantasy layer negative eagle leader priority",
 		"enemy fix tribe swift alcohol metal salad edge episode dry tired address bless cloth error useful define rough fold swift confirm century wasp acoustic",
