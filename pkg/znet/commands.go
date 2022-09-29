@@ -298,7 +298,7 @@ func sendTokens(ctx context.Context, coredClient client.Client, from, to types.W
 
 	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
 		zap.Stringer("amount", amount), zap.String("txHash", result.TxHash),
-		zap.Int64("gasUsed", result.GasUsed))
+		zap.Uint64("gasUsed", result.GasUsed))
 
 	fromBalance, err := coredClient.QueryBankBalances(ctx, from)
 	if err != nil {

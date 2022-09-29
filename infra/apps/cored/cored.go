@@ -14,14 +14,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/staking"
+	coreumstaking "github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -61,10 +62,11 @@ func New(cfg Config) Cored {
 
 		must.OK(cfg.Network.FundAccount(stakerPubKey, stake))
 
-		clientCtx := config.NewClientContext(app.ModuleBasics).WithChainID(string(cfg.Network.ChainID()))
+		clientCtx := config.NewClientContext(module.NewBasicManager(
+			staking.AppModuleBasic{},
+		)).WithChainID(string(cfg.Network.ChainID()))
 
-		// FIXME: make clientCtx as private field of the client type
-		tx, err := staking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake)
+		tx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake)
 		must.OK(err)
 		cfg.Network.AddGenesisTx(tx)
 	}
