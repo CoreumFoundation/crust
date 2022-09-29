@@ -2,6 +2,7 @@ package hasura
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/crust/infra"
@@ -67,6 +68,10 @@ func (h Hasura) Deployment() infra.Deployment {
 					Value: fmt.Sprintf("postgres://%s@%s/%s", postgres.User,
 						infra.JoinNetAddr("", h.config.Postgres.Info().HostFromContainer, h.config.Postgres.Port()),
 						postgres.DB),
+				},
+				{
+					Name:  "HASURA_GRAPHQL_SERVER_PORT",
+					Value: strconv.Itoa(h.config.Port),
 				},
 			}
 		},
