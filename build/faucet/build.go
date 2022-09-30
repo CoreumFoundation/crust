@@ -20,11 +20,8 @@ func Build(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
-		PackagePath:    "../faucet",
-		BinOutputPath:  dockerBinaryPath,
-		CGOEnabled:     true,
-		Tags:           []string{"muslc"},
-		LinkStatically: true,
+		PackagePath:   "../faucet",
+		BinOutputPath: dockerBinaryPath,
 	})
 }
 
