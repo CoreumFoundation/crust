@@ -2,6 +2,7 @@ package golang
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -37,11 +38,13 @@ func Lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 		return err
 	}
 
-	isClean, err := git.StatusClean(ctx, repoPath)
+	isClean, dirtyContent, err := git.StatusClean(ctx, repoPath)
 	if err != nil {
 		return err
 	}
 	if !isClean {
+		fmt.Println("git status:")
+		fmt.Println(dirtyContent)
 		return errors.Errorf("git status of repository '%s' is not empty", filepath.Base(repoPath))
 	}
 	return nil
