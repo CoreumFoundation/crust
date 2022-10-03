@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -67,6 +68,8 @@ func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount i
 		return cored.Cored{}, nil, errors.WithStack(err)
 	}
 
+	fmt.Printf("faucet address %v & sdk coin type: %v", faucetPrivKey.Address(), sdk.GetConfig().GetCoinType())
+	
 	must.OK(network.FundAccount(alicePrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(bobPrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(charliePrivKey.PubKey(), initialBalance))
