@@ -1,0 +1,7 @@
+FROM {{ .From }}
+
+COPY {{ .CoredBinary }} /bin/{{ .CoredBinary }}
+COPY {{ .CosmovisorBinary }} /bin/{{ .CosmovisorBinary }}
+
+# FIXME (wojtek): Switch to ComovisorBinary in next step
+ENTRYPOINT ["{{ .CoredBinary }}"]
