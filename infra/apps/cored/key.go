@@ -49,17 +49,4 @@ func PrivateKeyFromMnemonic(mnemonic string) (types.Secp256k1PrivateKey, error) 
 		panic(err)
 	}
 	return privKeyBytes, nil
-	//kr.ExportPrivKeyArmor("tmp", "")
-	////kr.Expo
-	//
-	//if !bip39.IsMnemonicValid(mnemonic) {
-	//	return nil, errors.Errorf("invalid mnemonic '%s'", mnemonic)
-	//}
-	//seed, err := bip39.NewSeedWithErrorChecking(mnemonic, "")
-	//if err != nil {
-	//	return nil, errors.WithStack(err)
-	//}
-	//hd.DerivePrivateKeyForPath()
-	//privKey, _ := hd.ComputeMastersFromSeed(seed)
-	//return privKey[:], nil
 }
