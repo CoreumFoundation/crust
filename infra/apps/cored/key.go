@@ -1,12 +1,13 @@
 package cored
 
 import (
+	"encoding/hex"
+
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/go-bip39"
-	"github.com/pkg/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/types"
@@ -30,13 +31,35 @@ func addKeysToStore(homeDir string, keys map[string]types.Secp256k1PrivateKey) {
 
 // PrivateKeyFromMnemonic generates private key from mnemonic
 func PrivateKeyFromMnemonic(mnemonic string) (types.Secp256k1PrivateKey, error) {
-	if !bip39.IsMnemonicValid(mnemonic) {
-		return nil, errors.Errorf("invalid mnemonic '%s'", mnemonic)
-	}
-	seed, err := bip39.NewSeedWithErrorChecking(mnemonic, "")
+	hdPath := hd.CreateHDPath(sdk.GetConfig().GetCoinType(), 0, 0).String()
+
+	kr := keyring.NewUnsafe(keyring.NewInMemory())
+	_, err := kr.NewAccount("tmp", mnemonic, "", hdPath, hd.Secp256k1)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
-	privKey, _ := hd.ComputeMastersFromSeed(seed)
-	return privKey[:], nil
+
+	privKeyHex, err := kr.UnsafeExportPrivKeyHex("tmp")
+	if err != nil {
+		panic(err)
+	}
+
+	privKeyBytes, err := hex.DecodeString(privKeyHex)
+	if err != nil {
+		panic(err)
+	}
+	return privKeyBytes, nil
+	//kr.ExportPrivKeyArmor("tmp", "")
+	////kr.Expo
+	//
+	//if !bip39.IsMnemonicValid(mnemonic) {
+	//	return nil, errors.Errorf("invalid mnemonic '%s'", mnemonic)
+	//}
+	//seed, err := bip39.NewSeedWithErrorChecking(mnemonic, "")
+	//if err != nil {
+	//	return nil, errors.WithStack(err)
+	//}
+	//hd.DerivePrivateKeyForPath()
+	//privKey, _ := hd.ComputeMastersFromSeed(seed)
+	//return privKey[:], nil
 }

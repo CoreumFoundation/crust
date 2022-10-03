@@ -43,6 +43,7 @@ func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount i
 	}
 
 	network := config.NewNetwork(f.networkConfig)
+	network.SetSDKConfig()
 	initialBalance := "500000000000000" + network.TokenSymbol()
 
 	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
