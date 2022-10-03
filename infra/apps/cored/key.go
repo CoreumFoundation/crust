@@ -3,29 +3,22 @@ package cored
 import (
 	"encoding/hex"
 
-	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-// addKeysToStore adds keys to local keystore
-func addKeysToStore(homeDir string, keys map[string]types.Secp256k1PrivateKey) {
+// addMnemonicsToKeyring adds keys to local keystore
+func addMnemonicsToKeyring(homeDir string, mnemonics map[string]string) {
 	keyringDB, err := keyring.New("cored", "test", homeDir, nil)
 	must.OK(err)
-	signatureAlgos, _ := keyringDB.SupportedAlgorithms()
-	signatureAlgo, err := keyring.NewSigningAlgoFromString("secp256k1", signatureAlgos)
-	must.OK(err)
 
-	signatureAlgo.Generate()
-
-	for name, key := range keys {
-		privKey := &cosmossecp256k1.PrivKey{Key: key}
-		must.OK(keyringDB.ImportPrivKey(name, crypto.EncryptArmorPrivKey(privKey, "dummy", privKey.Type()), "dummy"))
+	for name, mnemonic := range mnemonics {
+		_, err := keyringDB.NewAccount(name, mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
+		must.OK(err)
 	}
 }
 
@@ -33,8 +26,7 @@ func addKeysToStore(homeDir string, keys map[string]types.Secp256k1PrivateKey) {
 func PrivateKeyFromMnemonic(mnemonic string) (types.Secp256k1PrivateKey, error) {
 	kr := keyring.NewUnsafe(keyring.NewInMemory())
 
-	hdPath := hd.CreateHDPath(sdk.GetConfig().GetCoinType(), 0, 0).String()
-	_, err := kr.NewAccount("tmp", mnemonic, "", hdPath, hd.Secp256k1)
+	_, err := kr.NewAccount("tmp", mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 	if err != nil {
 		return nil, err
 	}
