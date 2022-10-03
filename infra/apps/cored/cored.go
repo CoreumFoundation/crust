@@ -24,6 +24,7 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	coreumstaking "github.com/CoreumFoundation/coreum/pkg/staking"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -70,13 +71,13 @@ func New(cfg Config) Cored {
 
 		must.OK(cfg.Network.FundAccount(stakerPubKey, stake.Add(additionalBalance).String()))
 
-		clientCtx := config.NewClientContext(module.NewBasicManager(
+		clientCtx := tx.NewClientContext(module.NewBasicManager(
 			staking.AppModuleBasic{},
 		)).WithChainID(string(cfg.Network.ChainID()))
 
-		tx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
+		createValidatorTx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
 		must.OK(err)
-		cfg.Network.AddGenesisTx(tx)
+		cfg.Network.AddGenesisTx(createValidatorTx)
 	}
 
 	return Cored{
