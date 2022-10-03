@@ -31,9 +31,9 @@ func addKeysToStore(homeDir string, keys map[string]types.Secp256k1PrivateKey) {
 
 // PrivateKeyFromMnemonic generates private key from mnemonic
 func PrivateKeyFromMnemonic(mnemonic string) (types.Secp256k1PrivateKey, error) {
-	hdPath := hd.CreateHDPath(sdk.GetConfig().GetCoinType(), 0, 0).String()
-
 	kr := keyring.NewUnsafe(keyring.NewInMemory())
+
+	hdPath := hd.CreateHDPath(sdk.GetConfig().GetCoinType(), 0, 0).String()
 	_, err := kr.NewAccount("tmp", mnemonic, "", hdPath, hd.Secp256k1)
 	if err != nil {
 		return nil, err

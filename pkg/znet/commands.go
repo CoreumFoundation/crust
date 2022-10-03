@@ -168,6 +168,9 @@ func Remove(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr 
 
 // Test runs integration tests
 func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+	log := logger.Get(ctx)
+	log.Info("znet.TEST")
+
 	if err := spec.Verify(); err != nil {
 		return err
 	}

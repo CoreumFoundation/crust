@@ -28,7 +28,6 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
-	"github.com/CoreumFoundation/crust/pkg/rnd"
 )
 
 // AppType is the type of cored application
@@ -124,27 +123,6 @@ func (c Cored) NodeID() string {
 // Config returns cored config.
 func (c Cored) Config() Config {
 	return c.config
-}
-
-// AddWallet adds wallet to genesis block and local keystore
-func (c Cored) AddWallet(balances string) types.Wallet {
-	pubKey, privKey := types.GenerateSecp256k1Key()
-	err := c.config.Network.FundAccount(pubKey, balances)
-	must.OK(err)
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	var name string
-	for {
-		name = rnd.GetRandomName()
-		if len(c.walletKeys[name]) == 0 {
-			break
-		}
-	}
-
-	c.walletKeys[name] = privKey
-	return types.Wallet{Name: name, Key: privKey}
 }
 
 // Client creates new client for cored blockchain

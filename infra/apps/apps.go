@@ -44,7 +44,6 @@ func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount i
 	}
 
 	network := config.NewNetwork(f.networkConfig)
-	network.SetSDKConfig()
 	initialBalance := "500000000000000" + network.TokenSymbol()
 
 	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
@@ -68,8 +67,8 @@ func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount i
 		return cored.Cored{}, nil, errors.WithStack(err)
 	}
 
-	fmt.Printf("faucet address %v & sdk coin type: %v", faucetPrivKey.Address(), sdk.GetConfig().GetCoinType())
-	
+	fmt.Printf("faucet address in crust: %v & sdk coin type: %v \n\n\n\n", testsFundingPrivKey.Address(), int(sdk.GetConfig().GetCoinType()))
+
 	must.OK(network.FundAccount(alicePrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(bobPrivKey.PubKey(), initialBalance))
 	must.OK(network.FundAccount(charliePrivKey.PubKey(), initialBalance))
