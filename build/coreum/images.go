@@ -53,6 +53,8 @@ func ensureCosmovisor(ctx context.Context, deps build.DepsFunc) error {
 	if err := os.MkdirAll("bin/.cache/docker/cored", 0o700); err != nil {
 		return err
 	}
+
+	//nolint:nosnakecase // Those constants are out of our control
 	fw, err := os.OpenFile("bin/.cache/docker/cored/cosmovisor", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o700)
 	if err != nil {
 		return errors.WithStack(err)
