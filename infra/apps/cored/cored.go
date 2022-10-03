@@ -215,7 +215,7 @@ func (c Cored) Deployment() infra.Deployment {
 			}
 			SaveConfig(nodeConfig, c.config.HomeDir)
 
-			addMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
+			importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
 
 			return c.config.Network.SaveGenesis(c.config.HomeDir)
 		},

@@ -11,13 +11,13 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
-// addMnemonicsToKeyring adds keys to local keystore
-func addMnemonicsToKeyring(homeDir string, mnemonics map[string]string) {
-	keyringDB, err := keyring.New("cored", "test", homeDir, nil)
+// importMnemonicsToKeyring adds keys to local keystore
+func importMnemonicsToKeyring(homeDir string, mnemonics map[string]string) {
+	kr, err := keyring.New("cored", "test", homeDir, nil)
 	must.OK(err)
 
 	for name, mnemonic := range mnemonics {
-		_, err := keyringDB.NewAccount(name, mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
+		_, err := kr.NewAccount(name, mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 		must.OK(err)
 	}
 }
