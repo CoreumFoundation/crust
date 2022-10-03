@@ -81,6 +81,8 @@ github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d h1:nalkkPQ
 github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d/go.mod h1:URdX5+vg25ts3aCh8H5IFZybJYKWhJHYMTnf+ULtoC4=
 github.com/CoreumFoundation/coreum v0.0.0-20220930085646-aa661f429910 h1:ceMo4Zw+S9TtzDvcNwu79cuJkraf82N7T0lY6DIEKI8=
 github.com/CoreumFoundation/coreum v0.0.0-20220930085646-aa661f429910/go.mod h1:q+OA339yY/rCgQyclo3muHtdJbAFOg1q//QYkBK6cH8=
+github.com/CoreumFoundation/coreum v0.0.0-20220930142650-1677557a6194 h1:XLB9GQntisNuXLq919OZPZGyDye/sbO1z5xvsCJOicw=
+github.com/CoreumFoundation/coreum v0.0.0-20220930142650-1677557a6194/go.mod h1:q+OA339yY/rCgQyclo3muHtdJbAFOg1q//QYkBK6cH8=
 github.com/CoreumFoundation/coreum-tools v0.3.0 h1:vdl7+d5jwWUwbmuUUhpui1NATvjgRQK/Q0ssSPr50h0=
 github.com/CoreumFoundation/coreum-tools v0.3.0/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
 github.com/CosmWasm/wasmd v0.28.0 h1:t4AMhe6qR/JIpDv7cmKtJKtsGndMRlI2zOgqDtwNfiw=

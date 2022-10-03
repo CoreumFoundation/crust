@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/json"
+	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"io"
 	"net"
 	"net/http"
@@ -70,13 +71,13 @@ func New(cfg Config) Cored {
 
 		must.OK(cfg.Network.FundAccount(stakerPubKey, stake.Add(additionalBalance).String()))
 
-		clientCtx := config.NewClientContext(module.NewBasicManager(
+		clientCtx := tx.NewClientContext(module.NewBasicManager(
 			staking.AppModuleBasic{},
 		)).WithChainID(string(cfg.Network.ChainID()))
 
-		tx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
+		createValidatorTx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
 		must.OK(err)
-		cfg.Network.AddGenesisTx(tx)
+		cfg.Network.AddGenesisTx(createValidatorTx)
 	}
 
 	return Cored{
