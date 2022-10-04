@@ -25,10 +25,8 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	coreumstaking "github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
-	"github.com/CoreumFoundation/crust/pkg/rnd"
 )
 
 // AppType is the type of cored application
@@ -36,17 +34,17 @@ const AppType infra.AppType = "cored"
 
 // Config stores cored app config
 type Config struct {
-	Name           string
-	HomeDir        string
-	BinDir         string
-	WrapperDir     string
-	Network        *config.Network
-	AppInfo        *infra.AppInfo
-	Ports          Ports
-	IsValidator    bool
-	StakerMnemonic string
-	RootNode       *Cored
-	Wallets        map[string]types.Secp256k1PrivateKey
+	Name              string
+	HomeDir           string
+	BinDir            string
+	WrapperDir        string
+	Network           *config.Network
+	AppInfo           *infra.AppInfo
+	Ports             Ports
+	IsValidator       bool
+	StakerMnemonic    string
+	RootNode          *Cored
+	ImportedMnemonics map[string]string
 }
 
 // New creates new cored app
@@ -86,7 +84,7 @@ func New(cfg Config) Cored {
 		nodePrivateKey:      nodePrivateKey,
 		validatorPrivateKey: validatorPrivateKey,
 		mu:                  &sync.RWMutex{},
-		walletKeys:          cfg.Wallets,
+		importedMnemonics:   cfg.ImportedMnemonics,
 	}
 }
 
@@ -97,8 +95,8 @@ type Cored struct {
 	nodePrivateKey      ed25519.PrivateKey
 	validatorPrivateKey ed25519.PrivateKey
 
-	mu         *sync.RWMutex
-	walletKeys map[string]types.Secp256k1PrivateKey
+	mu                *sync.RWMutex
+	importedMnemonics map[string]string
 }
 
 // Type returns type of application
@@ -124,27 +122,6 @@ func (c Cored) NodeID() string {
 // Config returns cored config.
 func (c Cored) Config() Config {
 	return c.config
-}
-
-// AddWallet adds wallet to genesis block and local keystore
-func (c Cored) AddWallet(balances string) types.Wallet {
-	pubKey, privKey := types.GenerateSecp256k1Key()
-	err := c.config.Network.FundAccount(pubKey, balances)
-	must.OK(err)
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	var name string
-	for {
-		name = rnd.GetRandomName()
-		if len(c.walletKeys[name]) == 0 {
-			break
-		}
-	}
-
-	c.walletKeys[name] = privKey
-	return types.Wallet{Name: name, Key: privKey}
 }
 
 // Client creates new client for cored blockchain
@@ -238,7 +215,7 @@ func (c Cored) Deployment() infra.Deployment {
 			}
 			SaveConfig(nodeConfig, c.config.HomeDir)
 
-			addKeysToStore(c.config.HomeDir, c.walletKeys)
+			importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
 
 			return c.config.Network.SaveGenesis(c.config.HomeDir)
 		},
