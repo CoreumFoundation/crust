@@ -8,7 +8,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/bigdipper"
@@ -45,37 +44,18 @@ func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount i
 	network := config.NewNetwork(f.networkConfig)
 	initialBalance := "500000000000000" + network.TokenSymbol()
 
-	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
-	if err != nil {
-		return cored.Cored{}, nil, errors.WithStack(err)
-	}
-	bobPrivKey, err := cored.PrivateKeyFromMnemonic(cored.BobMnemonic)
-	if err != nil {
-		return cored.Cored{}, nil, errors.WithStack(err)
-	}
-	charliePrivKey, err := cored.PrivateKeyFromMnemonic(cored.CharlieMnemonic)
-	if err != nil {
-		return cored.Cored{}, nil, errors.WithStack(err)
-	}
-	faucetPrivKey, err := cored.PrivateKeyFromMnemonic(faucet.PrivateKeyMnemonic)
-	if err != nil {
-		return cored.Cored{}, nil, errors.WithStack(err)
-	}
-	testsFundingPrivKey, err := cored.PrivateKeyFromMnemonic(testing.FundingMnemonic)
-	if err != nil {
-		return cored.Cored{}, nil, errors.WithStack(err)
-	}
-
-	must.OK(network.FundAccount(alicePrivKey.PubKey(), initialBalance))
-	must.OK(network.FundAccount(bobPrivKey.PubKey(), initialBalance))
-	must.OK(network.FundAccount(charliePrivKey.PubKey(), initialBalance))
-	must.OK(network.FundAccount(faucetPrivKey.PubKey(), initialBalance))
-	must.OK(network.FundAccount(testsFundingPrivKey.PubKey(), initialBalance))
-
-	wallets := map[string]types.Secp256k1PrivateKey{
-		"alice":   alicePrivKey,
-		"bob":     bobPrivKey,
-		"charlie": charliePrivKey,
+	for _, mnemonic := range []string{
+		cored.AliceMnemonic,
+		cored.BobMnemonic,
+		cored.CharlieMnemonic,
+		faucet.PrivateKeyMnemonic,
+		testing.FundingMnemonic,
+	} {
+		privKey, err := cored.PrivateKeyFromMnemonic(mnemonic)
+		if err != nil {
+			return cored.Cored{}, nil, errors.WithStack(err)
+		}
+		must.OK(network.FundAccount(privKey.PubKey(), initialBalance))
 	}
 
 	nodes := make(infra.Mode, 0, validatorsCount+sentriesCount)
@@ -108,7 +88,11 @@ func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount i
 				return ""
 			}(),
 			RootNode: node0,
-			Wallets:  wallets,
+			ImportedMnemonics: map[string]string{
+				"alice":   cored.AliceMnemonic,
+				"bob":     cored.BobMnemonic,
+				"charlie": cored.CharlieMnemonic,
+			},
 		})
 		if node0 == nil {
 			node0 = &node
