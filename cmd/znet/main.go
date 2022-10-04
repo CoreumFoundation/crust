@@ -22,7 +22,7 @@ func main() {
 	run.Tool("znet", func(ctx context.Context) error {
 		configF := infra.NewConfigFactory()
 		cmdF := znet.NewCmdFactory(configF)
-		config.NewNetwork(testing.NetworkConfig).SetupPrefixes()
+		config.NewNetwork(testing.NetworkConfig).SetSDKConfig()
 
 		rootCmd := rootCmd(ctx, configF, cmdF)
 		rootCmd.AddCommand(startCmd(ctx, configF, cmdF))
