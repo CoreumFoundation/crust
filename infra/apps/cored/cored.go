@@ -181,8 +181,21 @@ func (c Cored) Deployment() infra.Deployment {
 		Image:       "cored:znet",
 		Name:        c.Name(),
 		Info:        c.config.AppInfo,
+		EnvVarsFunc: func() []infra.EnvVar {
+			return []infra.EnvVar{
+				{
+					Name:  "DAEMON_HOME",
+					Value: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID())),
+				},
+				{
+					Name:  "DAEMON_NAME",
+					Value: "cored",
+				},
+			}
+		},
 		ArgsFunc: func() []string {
 			args := []string{
+				"run",
 				"start",
 				"--home", targets.AppHomeDir,
 				"--log_level", "debug",
@@ -217,7 +230,15 @@ func (c Cored) Deployment() infra.Deployment {
 
 			importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
 
-			return c.config.Network.SaveGenesis(c.config.HomeDir)
+			if err := c.config.Network.SaveGenesis(c.config.HomeDir); err != nil {
+				return err
+			}
+
+			if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
+				return errors.WithStack(err)
+			}
+
+			return errors.WithStack(os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")))
 		},
 		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 			return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)

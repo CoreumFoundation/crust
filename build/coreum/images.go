@@ -55,7 +55,7 @@ func ensureCosmovisor(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	//nolint:nosnakecase // Those constants are out of our control
-	fw, err := os.OpenFile("bin/.cache/docker/cored/cosmovisor", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o700)
+	fw, err := os.OpenFile("bin/.cache/docker/cored/cosmovisor", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
 	if err != nil {
 		return errors.WithStack(err)
 	}
