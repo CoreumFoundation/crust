@@ -237,8 +237,10 @@ func (c Cored) Deployment() infra.Deployment {
 			if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
 				return errors.WithStack(err)
 			}
-
-			return errors.WithStack(os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")))
+			if err := os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")); err != nil {
+				return errors.WithStack(err)
+			}
+			return c.saveUpgradeWrapper("upgrade")
 		},
 		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 			return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
@@ -267,5 +269,18 @@ fi
 
 exec "` + c.config.BinDir + `/cored" --chain-id "` + string(c.config.Network.ChainID()) + `" --home "` + filepath.Dir(c.config.HomeDir) + `" "$@" $OPTS
 `
-	return errors.WithStack(os.WriteFile(wrapperDir+"/"+c.Name(), []byte(client), 0o700))
+	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
+}
+
+func (c Cored) saveUpgradeWrapper(upgradeName string) error {
+	wrapper := `#!/bin/sh
+
+exec /bin/cored "$@" --moniker "` + upgradeName + `"
+`
+	dir := filepath.Join(c.config.HomeDir, "cosmovisor", upgradeName, "bin")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return errors.WithStack(os.WriteFile(filepath.Join(dir, "cored"), []byte(wrapper), 0o755))
 }
