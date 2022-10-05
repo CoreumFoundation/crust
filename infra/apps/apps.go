@@ -36,7 +36,7 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount int) (cored.Cored, infra.Mode, error) {
+func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCount int, sentriesCount int) (cored.Cored, infra.Mode, error) {
 	if validatorsCount > len(cored.StakerMnemonics) {
 		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, len(cored.StakerMnemonics))
 	}
@@ -73,12 +73,12 @@ func (f *Factory) CoredNetwork(name string, validatorsCount int, sentriesCount i
 			Network:    &network,
 			AppInfo:    f.spec.DescribeApp(cored.AppType, name),
 			Ports: cored.Ports{
-				RPC:        cored.DefaultPorts.RPC + portDelta,
-				P2P:        cored.DefaultPorts.P2P + portDelta,
-				GRPC:       cored.DefaultPorts.GRPC + portDelta,
-				GRPCWeb:    cored.DefaultPorts.GRPCWeb + portDelta,
-				PProf:      cored.DefaultPorts.PProf + portDelta,
-				Prometheus: cored.DefaultPorts.Prometheus + portDelta,
+				RPC:        firstPorts.RPC + portDelta,
+				P2P:        firstPorts.P2P + portDelta,
+				GRPC:       firstPorts.GRPC + portDelta,
+				GRPCWeb:    firstPorts.GRPCWeb + portDelta,
+				PProf:      firstPorts.PProf + portDelta,
+				Prometheus: firstPorts.Prometheus + portDelta,
 			},
 			IsValidator: isValidator,
 			StakerMnemonic: func() string {

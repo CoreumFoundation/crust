@@ -230,7 +230,7 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 // PingPong connects to cored node and sends transactions back and forth from one account to another to generate
 // transactions on the blockchain
 func PingPong(ctx context.Context, mode infra.Mode) error {
-	coredApp := mode.FindAnyRunningApp(cored.AppType)
+	coredApp := mode.FindRunningApp(cored.AppType, "coredev-00")
 	if coredApp == nil {
 		return errors.New("no running cored app found")
 	}

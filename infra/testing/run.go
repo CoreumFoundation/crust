@@ -55,7 +55,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	}
 
 	log.Info("All the applications are ready")
-	coredApp := mode.FindAnyRunningApp(cored.AppType)
+	coredApp := mode.FindRunningApp(cored.AppType, "coredev-00")
 	if coredApp == nil {
 		return errors.New("no running cored app found")
 	}
@@ -98,7 +98,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 				fullArgs = append(fullArgs, "-staker-mnemonic", mnemonic)
 			}
 		case "faucet":
-			faucetApp := mode.FindAnyRunningApp(faucet.AppType)
+			faucetApp := mode.FindRunningApp(faucet.AppType, "faucetdev")
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
 			}
