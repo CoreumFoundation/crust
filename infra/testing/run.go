@@ -2,12 +2,12 @@ package testing
 
 import (
 	"context"
-	"encoding/base64"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -27,19 +27,6 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	files, err := os.ReadDir(testDir)
 	if err != nil {
 		return errors.WithStack(err)
-	}
-
-	fundingPrivKey, err := cored.PrivateKeyFromMnemonic(FundingMnemonic)
-	if err != nil {
-		return err
-	}
-
-	var stakerMnemonics []string
-	for _, m := range mode {
-		coredApp, ok := m.(cored.Cored)
-		if ok && coredApp.Config().IsValidator {
-			stakerMnemonics = append(stakerMnemonics, coredApp.Config().StakerMnemonic)
-		}
 	}
 
 	if err := target.Deploy(ctx, mode); err != nil {
@@ -90,12 +77,14 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		case "coreum":
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
-				// TODO (dhil) remove this arg after the migration to mnemonics
-				"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
 				"-funding-mnemonic", FundingMnemonic,
 			)
-			for _, mnemonic := range stakerMnemonics {
-				fullArgs = append(fullArgs, "-staker-mnemonic", mnemonic)
+
+			for _, m := range mode {
+				coredApp, ok := m.(cored.Cored)
+				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "coredev-") {
+					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
+				}
 			}
 		case "faucet":
 			faucetApp := mode.FindRunningApp(faucet.AppType, "faucetdev")
