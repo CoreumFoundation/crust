@@ -277,7 +277,7 @@ func (c Cored) saveUpgradeWrapper(upgradeName string) error {
 
 exec /bin/cored "$@" --moniker "` + upgradeName + `"
 `
-	dir := filepath.Join(c.config.HomeDir, "cosmovisor", upgradeName, "bin")
+	dir := filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", upgradeName, "bin")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
