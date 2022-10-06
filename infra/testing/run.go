@@ -89,8 +89,13 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 
 			for _, m := range mode {
 				coredApp, ok := m.(cored.Cored)
-				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "coredev-") {
-					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
+				if ok && coredApp.Config().IsValidator {
+					switch {
+					case strings.HasPrefix(coredApp.Name(), "coredev-"):
+						fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
+					case strings.HasPrefix(coredApp.Name(), "coreupgrade-"):
+						fullArgs = append(fullArgs, "-upgrade-staker-mnemonic", coredApp.Config().StakerMnemonic)
+					}
 				}
 			}
 		case "faucet":
