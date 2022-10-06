@@ -28,11 +28,6 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		return errors.WithStack(err)
 	}
 
-	fundingPrivKey, err := cored.PrivateKeyFromMnemonic(FundingMnemonic)
-	if err != nil {
-		return err
-	}
-
 	var stakerMnemonics []string
 	for _, m := range mode {
 		coredApp, ok := m.(cored.Cored)
