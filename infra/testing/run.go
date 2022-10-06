@@ -75,7 +75,14 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		fullArgs := append([]string{}, args...)
 		switch f.Name() {
 		case "coreum":
+			coredUpgradeApp := mode.FindRunningApp(cored.AppType, "coreupgrade-00")
+			if coredUpgradeApp == nil {
+				return errors.New("no running cored app found")
+			}
+			coredUpgradeNode := coredUpgradeApp.(cored.Cored)
+
 			fullArgs = append(fullArgs,
+				"-cored-upgrade-address", infra.JoinNetAddr("tcp", coredUpgradeNode.Info().HostFromHost, coredUpgradeNode.Config().Ports.RPC),
 				"-log-format", config.LogFormat,
 				"-funding-mnemonic", FundingMnemonic,
 			)
@@ -91,10 +98,10 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
 			}
-			faucetNode := faucetApp.(faucet.Faucet)
+			faucet := faucetApp.(faucet.Faucet)
 			fullArgs = append(fullArgs,
 				"-transfer-amount", "1000000",
-				"-faucet-address", infra.JoinNetAddr("http", faucetNode.Info().HostFromHost, faucetNode.Port()),
+				"-faucet-address", infra.JoinNetAddr("http", faucet.Info().HostFromHost, faucet.Port()),
 			)
 		}
 
