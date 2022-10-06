@@ -2,7 +2,6 @@ package testing
 
 import (
 	"context"
-	"encoding/base64"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -90,8 +89,6 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		case "coreum":
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
-				// TODO (dhil) remove this arg after the migration to mnemonics
-				"-priv-key", base64.RawURLEncoding.EncodeToString(fundingPrivKey),
 				"-funding-mnemonic", FundingMnemonic,
 			)
 			for _, mnemonic := range stakerMnemonics {
