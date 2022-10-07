@@ -135,12 +135,6 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 		Port:             blockexplorer.DefaultPorts.Postgres,
 		SchemaLoaderFunc: blockexplorer.LoadPostgresSchema,
 	})
-	hasuraApp := hasura.New(hasura.Config{
-		Name:     nameHasura,
-		AppInfo:  f.spec.DescribeApp(hasura.AppType, nameHasura),
-		Port:     blockexplorer.DefaultPorts.Hasura,
-		Postgres: postgresApp,
-	})
 	bdjunoApp := bdjuno.New(bdjuno.Config{
 		Name:           nameBDJuno,
 		HomeDir:        filepath.Join(f.config.AppDir, nameBDJuno),
@@ -149,6 +143,13 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 		ConfigTemplate: blockexplorer.BDJunoConfigTemplate,
 		Cored:          coredApp,
 		Postgres:       postgresApp,
+	})
+	hasuraApp := hasura.New(hasura.Config{
+		Name:     nameHasura,
+		AppInfo:  f.spec.DescribeApp(hasura.AppType, nameHasura),
+		Port:     blockexplorer.DefaultPorts.Hasura,
+		Postgres: postgresApp,
+		BDJuno:   bdjunoApp,
 	})
 	bigDipperApp := bigdipper.New(bigdipper.Config{
 		Name:    nameBigDipper,
