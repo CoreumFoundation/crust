@@ -8,6 +8,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
 var modeMap = map[string]func(appF *apps.Factory) infra.Mode{
@@ -40,7 +41,7 @@ func Mode(appF *apps.Factory, mode string) (infra.Mode, error) {
 
 // DevMode is the environment for developer
 func DevMode(appF *apps.Factory) infra.Mode {
-	node, coredNodes, err := appF.CoredNetwork("coredev", 1, 0)
+	node, coredNodes, err := appF.CoredNetwork("coredev", cored.DefaultPorts, 1, 0)
 	must.OK(err)
 
 	faucet, err := appF.Faucet("faucet", node)
@@ -55,14 +56,25 @@ func DevMode(appF *apps.Factory) infra.Mode {
 
 // TestMode returns environment used for testing
 func TestMode(appF *apps.Factory) infra.Mode {
-	node, coredNodes, err := appF.CoredNetwork("coredev", 3, 0)
+	node, coredNodes, err := appF.CoredNetwork("coredev", cored.DefaultPorts, 3, 0)
 	must.OK(err)
 
-	faucet, err := appF.Faucet("faucet", node)
+	faucet, err := appF.Faucet("faucetdev", node)
+	must.OK(err)
+
+	_, coredUpgradeNodes, err := appF.CoredNetwork("coreupgrade", cored.Ports{
+		RPC:        46657,
+		P2P:        46656,
+		GRPC:       11090,
+		GRPCWeb:    11091,
+		PProf:      8060,
+		Prometheus: 28660,
+	}, 1, 0)
 	must.OK(err)
 
 	var mode infra.Mode
 	mode = append(mode, coredNodes...)
 	mode = append(mode, faucet)
+	mode = append(mode, coredUpgradeNodes...)
 	return mode
 }
