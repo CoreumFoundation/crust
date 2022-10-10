@@ -1,20 +1,17 @@
 chain:
   bech32_prefix: {{ .Cored.AddressPrefix }}
   modules:
-    # cosmos modules
     - modules
-    # - auth
+    - messages
+    - auth
     - bank
-    - staking
     - consensus
-    # - mint
-    # - distribution
-    # - pricefeed
-    # - gov
-    # - slashing
-    # - messages    # listed as available but unsure
-    - actions       # from hasura
-
+    - gov
+    - mint
+    - slashing
+    - staking
+    - distribution
+    - actions
 node:
   type: remote
   config:
@@ -32,6 +29,8 @@ parsing:
   parse_old_blocks: true
   parse_genesis: true
   start_height: 1
+  fast_sync: false
+  genesis_file_path: {{ .Cored.GenesisFilePath }}
   average_block_time: 1.5s
 
 database:

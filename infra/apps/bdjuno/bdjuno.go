@@ -70,7 +70,7 @@ func (j BDJuno) Info() infra.DeploymentInfo {
 func (j BDJuno) Deployment() infra.Deployment {
 	return infra.Deployment{
 		MountAppDir: true,
-		Image:       "gcr.io/coreum-devnet-1/bdjuno:0.44.0",
+		Image:       "coreumfoundation/bdjuno:latest",
 		Name:        j.Name(),
 		Info:        j.config.AppInfo,
 		ArgsFunc: func() []string {
@@ -90,6 +90,10 @@ func (j BDJuno) Deployment() infra.Deployment {
 			},
 		},
 		PrepareFunc: func() error {
+			if err := j.config.Cored.Config().Network.SaveGenesis(j.config.HomeDir); err != nil {
+				return err
+			}
+
 			return os.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644)
 		},
 	}
@@ -100,10 +104,11 @@ func (j BDJuno) prepareConfig() []byte {
 	must.OK(template.Must(template.New("config").Parse(j.config.ConfigTemplate)).Execute(configBuf, struct {
 		Port  int
 		Cored struct {
-			Host          string
-			PortRPC       int
-			PortGRPC      int
-			AddressPrefix string
+			Host            string
+			PortRPC         int
+			PortGRPC        int
+			AddressPrefix   string
+			GenesisFilePath string
 		}
 		Postgres struct {
 			Host string
@@ -114,15 +119,17 @@ func (j BDJuno) prepareConfig() []byte {
 	}{
 		Port: j.config.Port,
 		Cored: struct {
-			Host          string
-			PortRPC       int
-			PortGRPC      int
-			AddressPrefix string
+			Host            string
+			PortRPC         int
+			PortGRPC        int
+			AddressPrefix   string
+			GenesisFilePath string
 		}{
-			Host:          j.config.Cored.Info().HostFromContainer,
-			PortRPC:       j.config.Cored.Config().Ports.RPC,
-			PortGRPC:      j.config.Cored.Config().Ports.GRPC,
-			AddressPrefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
+			Host:            j.config.Cored.Info().HostFromContainer,
+			PortRPC:         j.config.Cored.Config().Ports.RPC,
+			PortGRPC:        j.config.Cored.Config().Ports.GRPC,
+			AddressPrefix:   sdk.GetConfig().GetBech32AccountAddrPrefix(),
+			GenesisFilePath: targets.AppHomeDir + "/config/genesis.json",
 		},
 		Postgres: struct {
 			Host string

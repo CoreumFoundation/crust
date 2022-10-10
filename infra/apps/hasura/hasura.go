@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 )
 
@@ -23,6 +24,7 @@ type Config struct {
 	AppInfo  *infra.AppInfo
 	Port     int
 	Postgres postgres.Postgres
+	BDJuno   bdjuno.BDJuno
 }
 
 // New creates new hasura app
@@ -60,7 +62,7 @@ func (h Hasura) Info() infra.DeploymentInfo {
 // Deployment returns deployment of hasura
 func (h Hasura) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image: "gcr.io/coreum-devnet-1/hasura:v2.1.1.cli-migrations-v3",
+		Image: "coreumfoundation/hasura:latest",
 		EnvVarsFunc: func() []infra.EnvVar {
 			return []infra.EnvVar{
 				{
@@ -72,6 +74,14 @@ func (h Hasura) Deployment() infra.Deployment {
 				{
 					Name:  "HASURA_GRAPHQL_SERVER_PORT",
 					Value: strconv.Itoa(h.config.Port),
+				},
+				{
+					Name:  "HASURA_GRAPHQL_METADATA_DIR",
+					Value: "/hasura/metadata",
+				},
+				{
+					Name:  "ACTION_BASE_URL",
+					Value: infra.JoinNetAddr("http", h.config.BDJuno.Info().HostFromContainer, h.config.BDJuno.Port()),
 				},
 			}
 		},
