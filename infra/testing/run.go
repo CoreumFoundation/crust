@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -28,14 +29,6 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		return errors.WithStack(err)
 	}
 
-	var stakerMnemonics []string
-	for _, m := range mode {
-		coredApp, ok := m.(cored.Cored)
-		if ok && coredApp.Config().IsValidator {
-			stakerMnemonics = append(stakerMnemonics, coredApp.Config().StakerMnemonic)
-		}
-	}
-
 	if err := target.Deploy(ctx, mode); err != nil {
 		return err
 	}
@@ -49,7 +42,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	}
 
 	log.Info("All the applications are ready")
-	coredApp := mode.FindAnyRunningApp(cored.AppType)
+	coredApp := mode.FindRunningApp(cored.AppType, "coredev-00")
 	if coredApp == nil {
 		return errors.New("no running cored app found")
 	}
@@ -86,11 +79,15 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 				"-log-format", config.LogFormat,
 				"-funding-mnemonic", FundingMnemonic,
 			)
-			for _, mnemonic := range stakerMnemonics {
-				fullArgs = append(fullArgs, "-staker-mnemonic", mnemonic)
+
+			for _, m := range mode {
+				coredApp, ok := m.(cored.Cored)
+				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "coredev-") {
+					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
+				}
 			}
 		case "faucet":
-			faucetApp := mode.FindAnyRunningApp(faucet.AppType)
+			faucetApp := mode.FindRunningApp(faucet.AppType, "faucetdev")
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
 			}

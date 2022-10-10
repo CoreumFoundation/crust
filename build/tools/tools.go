@@ -27,6 +27,7 @@ const (
 	Go           Name = "go"
 	GolangCI     Name = "golangci"
 	Ignite       Name = "ignite"
+	Cosmovisor   Name = "cosmovisor"
 	LibWASMMuslC Name = "libwasmvm_muslc"
 )
 
@@ -104,6 +105,29 @@ var tools = map[Name]Tool{
 		},
 		Binaries: map[string]string{
 			"bin/ignite": "ignite",
+		},
+	},
+
+	// https://github.com/cosmos/cosmos-sdk/releases
+	Cosmovisor: {
+		Version:  "1.3.0",
+		ForLocal: true,
+		Sources: Sources{
+			linuxAMD64: {
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-amd64.tar.gz",
+				Hash: "sha256:34d7c9fbaa03f49b8278e13768d0fd82e28101dfa9625e25379c36a86d558826",
+			},
+			darwinAMD64: {
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-darwin-amd64.tar.gz",
+				Hash: "sha256:a1d87494dc00f8098387dc1668e440b98fd31e0be992719f3a850616f6f0fb82",
+			},
+			darwinARM64: {
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-darwin-arm64.tar.gz",
+				Hash: "sha256:b2f27f1f552d6e4720a460f94f18c45126bc7eb88f6a90d739dae33a6fedb6e6",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/.cache/cosmovisor": "cosmovisor",
 		},
 	},
 
