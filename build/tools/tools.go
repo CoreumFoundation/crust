@@ -110,24 +110,20 @@ var tools = map[Name]Tool{
 
 	// https://github.com/cosmos/cosmos-sdk/releases
 	Cosmovisor: {
-		Version:  "1.3.0",
-		ForLocal: true,
+		Version:   "1.3.0",
+		ForDocker: true,
 		Sources: Sources{
-			linuxAMD64: {
+			dockerAMD64: {
 				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-amd64.tar.gz",
 				Hash: "sha256:34d7c9fbaa03f49b8278e13768d0fd82e28101dfa9625e25379c36a86d558826",
 			},
-			darwinAMD64: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-darwin-amd64.tar.gz",
-				Hash: "sha256:a1d87494dc00f8098387dc1668e440b98fd31e0be992719f3a850616f6f0fb82",
-			},
-			darwinARM64: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-darwin-arm64.tar.gz",
-				Hash: "sha256:b2f27f1f552d6e4720a460f94f18c45126bc7eb88f6a90d739dae33a6fedb6e6",
+			dockerARM64: {
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-arm64.tar.gz",
+				Hash: "sha256:8d7de2a18eb2cc4a749efbdbe060ecb34c3e5ca12354b7118a6966fa46d3a33d",
 			},
 		},
 		Binaries: map[string]string{
-			"bin/.cache/cosmovisor": "cosmovisor",
+			"bin/cosmovisor": "cosmovisor",
 		},
 	},
 
@@ -484,7 +480,12 @@ func ByName(name Name) Tool {
 	return tools[name]
 }
 
-// Path returns path to installed tool
-func Path(tool string) string {
-	return must.String(filepath.Abs("bin/" + tool))
+// PathLocal returns path to locally installed tool
+func PathLocal(tool string) string {
+	return must.String(filepath.Abs(filepath.Join("bin", tool)))
+}
+
+// PathDocker returns path to docker-installed tool
+func PathDocker(tool string) string {
+	return must.String(filepath.Abs(filepath.Join(CacheDir(), DockerPlatform.String(), "bin", tool)))
 }
