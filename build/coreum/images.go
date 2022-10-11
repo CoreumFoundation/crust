@@ -36,11 +36,11 @@ func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func ensureCosmovisor(ctx context.Context, deps build.DepsFunc) error {
-	if err := tools.EnsureLocal(ctx, tools.Cosmovisor); err != nil {
+	if err := tools.EnsureDocker(ctx, tools.Cosmovisor); err != nil {
 		return err
 	}
 
-	absPath, err := filepath.EvalSymlinks("bin/.cache/cosmovisor")
+	absPath, err := filepath.EvalSymlinks(tools.PathDocker("cosmovisor"))
 	if err != nil {
 		return errors.WithStack(err)
 	}
