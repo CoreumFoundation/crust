@@ -5,10 +5,10 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 )
 
 // importMnemonicsToKeyring adds keys to local keystore
@@ -23,12 +23,12 @@ func importMnemonicsToKeyring(homeDir string, mnemonics map[string]string) {
 }
 
 // PrivateKeyFromMnemonic generates private key from mnemonic
-func PrivateKeyFromMnemonic(mnemonic string) (types.Secp256k1PrivateKey, error) {
+func PrivateKeyFromMnemonic(mnemonic string) (cosmossecp256k1.PrivKey, error) {
 	kr := keyring.NewUnsafe(keyring.NewInMemory())
 
 	_, err := kr.NewAccount("tmp", mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 	if err != nil {
-		return nil, err
+		return cosmossecp256k1.PrivKey{}, err
 	}
 
 	privKeyHex, err := kr.UnsafeExportPrivKeyHex("tmp")
@@ -40,5 +40,7 @@ func PrivateKeyFromMnemonic(mnemonic string) (types.Secp256k1PrivateKey, error) 
 	if err != nil {
 		panic(err)
 	}
-	return privKeyBytes, nil
+	return cosmossecp256k1.PrivKey{
+		Key: privKeyBytes,
+	}, nil
 }
