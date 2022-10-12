@@ -3,4 +3,4 @@ FROM {{ .From }}
 COPY {{ .CoredBinary }} /bin/{{ .CoredBinary }}
 COPY {{ .CosmovisorBinary }} /bin/{{ .CosmovisorBinary }}
 
-ENTRYPOINT ["{{ .CosmovisorBinary }}"]
+ENTRYPOINT ["{{ .CosmovisorBinary }}", "run"]
