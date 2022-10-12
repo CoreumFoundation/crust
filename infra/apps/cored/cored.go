@@ -177,10 +177,10 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 // Deployment returns deployment of cored
 func (c Cored) Deployment() infra.Deployment {
 	deployment := infra.Deployment{
-		MountAppDir: true,
-		Image:       "cored:znet",
-		Name:        c.Name(),
-		Info:        c.config.AppInfo,
+		RunAsUser: true,
+		Image:     "cored:znet",
+		Name:      c.Name(),
+		Info:      c.config.AppInfo,
 		EnvVarsFunc: func() []infra.EnvVar {
 			return []infra.EnvVar{
 				{
@@ -192,6 +192,16 @@ func (c Cored) Deployment() infra.Deployment {
 					Value: "cored",
 				},
 			}
+		},
+		Volumes: []infra.Volume{
+			{
+				Source:      filepath.Join(c.config.HomeDir, "config"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "config"),
+			},
+			{
+				Source:      filepath.Join(c.config.HomeDir, "data"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "data"),
+			},
 		},
 		ArgsFunc: func() []string {
 			args := []string{
@@ -229,15 +239,7 @@ func (c Cored) Deployment() infra.Deployment {
 
 			importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
 
-			if err := c.config.Network.SaveGenesis(c.config.HomeDir); err != nil {
-				return err
-			}
-
-			if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
-				return errors.WithStack(err)
-			}
-
-			return errors.WithStack(os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")))
+			return c.config.Network.SaveGenesis(c.config.HomeDir)
 		},
 		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 			return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)

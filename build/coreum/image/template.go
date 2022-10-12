@@ -22,6 +22,9 @@ type Data struct {
 
 	// CosmovisorBinary is the name of cosmovisor binary file to copy from build context
 	CosmovisorBinary string
+
+	// Networks is the list of available networks
+	Networks []string
 }
 
 // Execute executes dockerfile template and returns complete dockerfile
