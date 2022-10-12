@@ -34,20 +34,20 @@ const (
 var tools = map[Name]Tool{
 	// https://go.dev/dl/
 	Go: {
-		Version:  "1.19.1",
+		Version:  "1.19.2",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://go.dev/dl/go1.19.1.linux-amd64.tar.gz",
-				Hash: "sha256:acc512fbab4f716a8f97a8b3fbaa9ddd39606a28be6c2515ef7c6c6311acffde",
+				URL:  "https://go.dev/dl/go1.19.2.linux-amd64.tar.gz",
+				Hash: "sha256:5e8c5a74fe6470dd7e055a461acda8bb4050ead8c2df70f227e3ff7d8eb7eeb6",
 			},
 			darwinAMD64: {
-				URL:  "https://go.dev/dl/go1.19.1.darwin-amd64.tar.gz",
-				Hash: "sha256:b2828a2b05f0d2169afc74c11ed010775bf7cf0061822b275697b2f470495fb7",
+				URL:  "https://go.dev/dl/go1.19.2.darwin-amd64.tar.gz",
+				Hash: "sha256:16f8047d7b627699b3773680098fbaf7cc962b7db02b3e02726f78c4db26dfde",
 			},
 			darwinARM64: {
-				URL:  "https://go.dev/dl/go1.19.1.darwin-arm64.tar.gz",
-				Hash: "sha256:e46aecce83a9289be16ce4ba9b8478a5b89b8aa0230171d5c6adbc0c66640548",
+				URL:  "https://go.dev/dl/go1.19.2.darwin-arm64.tar.gz",
+				Hash: "sha256:35d819df25197c0be45f36ce849b994bba3b0559b76d4538b910d28f6395c00d",
 			},
 		},
 		Binaries: map[string]string{
@@ -58,28 +58,28 @@ var tools = map[Name]Tool{
 
 	// https://github.com/golangci/golangci-lint/releases/
 	GolangCI: {
-		Version:  "1.49.0",
+		Version:  "1.50.0",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.49.0/golangci-lint-1.49.0-linux-amd64.tar.gz",
-				Hash: "sha256:5badc6e9fee2003621efa07e385910d9a88c89b38f6c35aded153193c5125178",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.0/golangci-lint-1.50.0-linux-amd64.tar.gz",
+				Hash: "sha256:b4b329efcd913082c87d0e9606711ecb57415b5e6ddf233fde9e76c69d9b4e8b",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.49.0-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.50.0-linux-amd64/golangci-lint",
 				},
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.49.0/golangci-lint-1.49.0-darwin-amd64.tar.gz",
-				Hash: "sha256:20cd1215e0420db8cfa94a6cd3c9d325f7b39c07f2415a02d111568d8bc9e271",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.0/golangci-lint-1.50.0-darwin-amd64.tar.gz",
+				Hash: "sha256:7ab306b91b0f2bb741cc0a4c86f29f69506eb7b505f47e91b0e74365e4c28c4e",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.49.0-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.50.0-darwin-amd64/golangci-lint",
 				},
 			},
 			darwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.49.0/golangci-lint-1.49.0-darwin-arm64.tar.gz",
-				Hash: "sha256:cabb1a4c35fe1dadbe5a81550a00871281a331e7660cd85ae16e936a7f0f6cfc",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.0/golangci-lint-1.50.0-darwin-arm64.tar.gz",
+				Hash: "sha256:98209557973b8618086e12eb2449aa5b1187c942807b729fb40d06e0df3583c3",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.49.0-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.50.0-darwin-arm64/golangci-lint",
 				},
 			},
 		},
@@ -87,20 +87,20 @@ var tools = map[Name]Tool{
 
 	// https://github.com/ignite/cli/releases/
 	Ignite: {
-		Version:  "0.23.0",
+		Version:  "0.24.0",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_linux_amd64.tar.gz",
-				Hash: "sha256:915a96eb366fbf9c353af32d0ddb01796a30b86343ac77d613cc8a8af3dd395a",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.24.0/ignite_0.24.0_linux_amd64.tar.gz",
+				Hash: "sha256:403a0d54af1001f225f5d7da82a5410311c9ea7781b224ad67faf82798efe30f",
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_darwin_amd64.tar.gz",
-				Hash: "sha256:b9ca67a70f4d1b43609c4289a7e83dc2174754d35f30fb43f1518c0434361c4e",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.24.0/ignite_0.24.0_darwin_amd64.tar.gz",
+				Hash: "sha256:195a5ea072d9dc45caaad13ccd29fcaddd88b6d8ebc9e7330cc61206f0973f38",
 			},
 			darwinARM64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_darwin_arm64.tar.gz",
-				Hash: "sha256:daefd4ac83e3bb384cf97a2ff8cc6e81427f74e2c81c567fd0507fce647146ec",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.24.0/ignite_0.24.0_darwin_arm64.tar.gz",
+				Hash: "sha256:afab45bc54063090761802dab26a0cfea7fb74ab15b258be3b18a5bb034a242a",
 			},
 		},
 		Binaries: map[string]string{
@@ -129,19 +129,19 @@ var tools = map[Name]Tool{
 
 	// https://github.com/CosmWasm/wasmvm/releases
 	LibWASMMuslC: {
-		Version:   "v1.0.0",
+		Version:   "v1.1.1",
 		ForDocker: true,
 		Sources: Sources{
 			dockerAMD64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:6e4de7ba9bad4ae9679c7f9ecf7e283dd0160e71567c6a7be6ae47c81ebe7f32",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			dockerARM64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:7d2239e9f25e96d0d4daba982ce92367aacf0cbd95d2facb8442268f2b1cc1fc",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:9ecb037336bd56076573dc18c26631a9d2099a7f2b40dc04b6cae31ffb4c8f9a",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
 				},
