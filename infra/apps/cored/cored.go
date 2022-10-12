@@ -237,8 +237,11 @@ func (c Cored) Deployment() infra.Deployment {
 			if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
 				return errors.WithStack(err)
 			}
-
-			return errors.WithStack(os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")))
+			if err := os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")); err != nil {
+				return errors.WithStack(err)
+			}
+			return errors.WithStack(copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored-upgrade"),
+				filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755))
 		},
 		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 			return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
@@ -268,4 +271,26 @@ fi
 exec "` + c.config.BinDir + `/cored" --chain-id "` + string(c.config.Network.ChainID()) + `" --home "` + filepath.Dir(c.config.HomeDir) + `" "$@" $OPTS
 `
 	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
+}
+
+func copyFile(src, dst string, perm os.FileMode) error {
+	fr, err := os.Open(src)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer fr.Close()
+
+	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+		return err
+	}
+
+	//nolint:nosnakecase // Those constants are out of our control
+	fw, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, perm)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer fw.Close()
+
+	_, err = io.Copy(fw, fr)
+	return errors.WithStack(err)
 }

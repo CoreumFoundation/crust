@@ -2,6 +2,7 @@ package coreum
 
 import (
 	"context"
+	"path/filepath"
 
 	"golang.org/x/mod/semver"
 
@@ -55,6 +56,30 @@ func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  dockerBinaryPath,
+		Parameters:     parameters,
+		CGOEnabled:     true,
+		Tags:           []string{"muslc"},
+		LinkStatically: true,
+	})
+}
+
+func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
+	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
+
+	parameters, err := coredVersionParams(ctx)
+	if err != nil {
+		return err
+	}
+
+	// This enables fake upgrade handler used to test upgrade procedure in CI before we have real one
+	parameters["github.com/CoreumFoundation/coreum/pkg/config.EnableFakeUpgradeHandler"] = "true"
+	// We do this to be able to verify that upgraded version was started by cosmovisor.
+	// I would prefer to modify Commit instead of Version but only Version is exposed by ABCI's Info call.
+	parameters["github.com/cosmos/cosmos-sdk/version.Version"] += "-upgrade"
+
+	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
+		PackagePath:    "../coreum/cmd/cored",
+		BinOutputPath:  filepath.Join("bin/.cache/docker", binaryName+"-upgrade"),
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           []string{"muslc"},
