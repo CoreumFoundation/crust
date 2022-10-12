@@ -195,7 +195,6 @@ func (c Cored) Deployment() infra.Deployment {
 		},
 		ArgsFunc: func() []string {
 			args := []string{
-				"run",
 				"start",
 				"--home", targets.AppHomeDir,
 				"--log_level", "debug",

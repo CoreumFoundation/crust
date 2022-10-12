@@ -60,19 +60,8 @@ func TestMode(appF *apps.Factory) infra.Mode {
 
 	faucet := appF.Faucet("faucetdev", node)
 
-	_, coredUpgradeNodes, err := appF.CoredNetwork("coreupgrade", cored.Ports{
-		RPC:        46657,
-		P2P:        46656,
-		GRPC:       11090,
-		GRPCWeb:    11091,
-		PProf:      8060,
-		Prometheus: 28660,
-	}, 1, 0)
-	must.OK(err)
-
 	var mode infra.Mode
 	mode = append(mode, coredNodes...)
 	mode = append(mode, faucet)
-	mode = append(mode, coredUpgradeNodes...)
 	return mode
 }
