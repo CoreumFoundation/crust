@@ -2,7 +2,6 @@ package faucet
 
 import (
 	"context"
-	"encoding/hex"
 	"net"
 	"net/http"
 	"net/url"
@@ -15,7 +14,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -31,14 +29,13 @@ const (
 
 // Config stores faucet app config
 type Config struct {
-	Name       string
-	HomeDir    string
-	BinDir     string
-	ChainID    config.ChainID
-	AppInfo    *infra.AppInfo
-	Port       int
-	PrivateKey types.Secp256k1PrivateKey
-	Cored      cored.Cored
+	Name    string
+	HomeDir string
+	BinDir  string
+	ChainID config.ChainID
+	AppInfo *infra.AppInfo
+	Port    int
+	Cored   cored.Cored
 }
 
 // New creates new faucet app
@@ -121,12 +118,6 @@ func (f Faucet) Deployment() infra.Deployment {
 			},
 		},
 		PrepareFunc: func() error {
-			// TODO (milad): remove after faucet is updated to use mnemonic
-			err := errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "key"), []byte(hex.EncodeToString(f.config.PrivateKey)), 0o400))
-			if err != nil {
-				return err
-			}
-
 			return errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "mnemonic-key"), []byte(PrivateKeyMnemonic), 0o400))
 		},
 	}
