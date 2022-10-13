@@ -44,8 +44,7 @@ func DevMode(appF *apps.Factory) infra.Mode {
 	node, coredNodes, err := appF.CoredNetwork("coredev", cored.DefaultPorts, 1, 0)
 	must.OK(err)
 
-	faucet, err := appF.Faucet("faucet", node)
-	must.OK(err)
+	faucet := appF.Faucet("faucet", node)
 
 	var mode infra.Mode
 	mode = append(mode, coredNodes...)
@@ -59,8 +58,7 @@ func TestMode(appF *apps.Factory) infra.Mode {
 	node, coredNodes, err := appF.CoredNetwork("coredev", cored.DefaultPorts, 3, 0)
 	must.OK(err)
 
-	faucet, err := appF.Faucet("faucetdev", node)
-	must.OK(err)
+	faucet := appF.Faucet("faucetdev", node)
 
 	var mode infra.Mode
 	mode = append(mode, coredNodes...)
