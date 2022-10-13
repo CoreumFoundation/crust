@@ -104,22 +104,16 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 }
 
 // Faucet creates new faucet
-func (f *Factory) Faucet(name string, coredApp cored.Cored) (faucet.Faucet, error) {
-	privKey, err := cored.PrivateKeyFromMnemonic(faucet.PrivateKeyMnemonic)
-	if err != nil {
-		return faucet.Faucet{}, errors.WithStack(err)
-	}
-
+func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 	return faucet.New(faucet.Config{
-		Name:       name,
-		HomeDir:    filepath.Join(f.config.AppDir, name),
-		BinDir:     f.config.BinDir,
-		ChainID:    f.networkConfig.ChainID,
-		AppInfo:    f.spec.DescribeApp(faucet.AppType, name),
-		Port:       faucet.DefaultPort,
-		PrivateKey: privKey,
-		Cored:      coredApp,
-	}), nil
+		Name:    name,
+		HomeDir: filepath.Join(f.config.AppDir, name),
+		BinDir:  f.config.BinDir,
+		ChainID: f.networkConfig.ChainID,
+		AppInfo: f.spec.DescribeApp(faucet.AppType, name),
+		Port:    faucet.DefaultPort,
+		Cored:   coredApp,
+	})
 }
 
 // BlockExplorer returns set of applications required to run block explorer
