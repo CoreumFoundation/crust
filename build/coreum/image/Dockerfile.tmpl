@@ -3,4 +3,12 @@ FROM {{ .From }}
 COPY {{ .CoredBinary }} /bin/{{ .CoredBinary }}
 COPY {{ .CosmovisorBinary }} /bin/{{ .CosmovisorBinary }}
 
+{{ $cored := .CoredBinary }}
+{{ range .Networks }}
+RUN mkdir -p /app/{{ . }}/cosmovisor/genesis/bin && \
+  ln -s /bin/{{ $cored }} /app/{{ . }}/cosmovisor/genesis/bin/{{ $cored }}
+{{ end }}
+
+RUN chmod -R 777 /app
+
 ENTRYPOINT ["{{ .CosmovisorBinary }}", "run"]
