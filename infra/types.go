@@ -252,6 +252,12 @@ type EnvVar struct {
 	Value string
 }
 
+// Volume defines volume to be mounted inside container
+type Volume struct {
+	Source      string
+	Destination string
+}
+
 // Deployment represents application to be deployed
 type Deployment struct {
 	// Name of the application
@@ -283,10 +289,13 @@ type Deployment struct {
 	// EnvVarsFunc is a function defining environment variables for docker container
 	EnvVarsFunc func() []EnvVar
 
-	// MountAppDir set to true causes the app's home dir to be mounted inside the container under /app.
-	// It also implicates that container is run using uid and gid of current user. Otherwise it's impossible to remove the `znet`
-	// directory when `znet remove` is executed.
-	MountAppDir bool
+	// Volumes defines volumes to be mounted inside the container
+	Volumes []Volume
+
+	// RunAsUser set to true causes the container to be run using uid and gid of current user.
+	// It is required if container creates files inside mounted directory which is a part of app's home.
+	// Otherwise, `znet` won't be able to delete them.
+	RunAsUser bool
 }
 
 // Deploy deploys container to the target

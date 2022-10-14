@@ -22,6 +22,7 @@ func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
 		From:             docker.AlpineImage,
 		CoredBinary:      filepath.Base(dockerBinaryPath),
 		CosmovisorBinary: "cosmovisor",
+		Networks:         []string{"coreum-devnet-1"},
 	})
 	if err != nil {
 		return err
