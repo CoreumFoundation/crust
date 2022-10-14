@@ -16,7 +16,7 @@ import (
 
 // BuildCoredDockerImage builds cored docker image
 func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureCosmovisor, BuildCoredInDocker)
+	deps(ensureCosmovisor, BuildCoredInDocker, buildCoredWithFakeUpgrade)
 
 	dockerfile, err := image.Execute(image.Data{
 		From:             docker.AlpineImage,
