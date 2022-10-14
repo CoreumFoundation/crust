@@ -202,6 +202,10 @@ func (c Cored) Deployment() infra.Deployment {
 				Source:      filepath.Join(c.config.HomeDir, "data"),
 				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "data"),
 			},
+			{
+				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "cosmovisor", "upgrades"),
+			},
 		},
 		ArgsFunc: func() []string {
 			args := []string{
