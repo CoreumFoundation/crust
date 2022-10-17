@@ -14,6 +14,9 @@ import (
 	"sync"
 	"time"
 
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -21,7 +24,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	coreumstaking "github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
@@ -73,7 +76,7 @@ func New(cfg Config) Cored {
 			staking.AppModuleBasic{},
 		)).WithChainID(string(cfg.Network.ChainID()))
 
-		createValidatorTx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
+		createValidatorTx, err := coreumstaking.PrepareTxStakingCreateValidator(cfg.Network.ChainID(), clientCtx.TxConfig(), valPublicKey, stakerPrivKey, stake)
 		must.OK(err)
 		cfg.Network.AddGenesisTx(createValidatorTx)
 	}
@@ -124,9 +127,24 @@ func (c Cored) Config() Config {
 	return c.config
 }
 
-// Client creates new client for cored blockchain
-func (c Cored) Client() client.Client {
-	return client.New(c.config.Network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.RPC))
+// ClientContext creates new cored ClientContext.
+func (c Cored) ClientContext() tx.ClientContext {
+	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.RPC))
+	must.OK(err)
+
+	return tx.NewClientContext(app.ModuleBasics).
+		WithChainID(string(c.config.Network.ChainID())).
+		WithClient(rpcClient).
+		WithKeyring(keyring.NewInMemory()).
+		WithBroadcastMode(flags.BroadcastBlock)
+}
+
+// TxFactory returns factory with present values for the chain.
+func (c Cored) TxFactory(clientCtx tx.ClientContext) tx.Factory {
+	return tx.Factory{}.
+		WithKeybase(clientCtx.Keyring()).
+		WithChainID(string(c.config.Network.ChainID())).
+		WithTxConfig(clientCtx.TxConfig())
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
