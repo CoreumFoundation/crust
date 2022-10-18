@@ -15,7 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/fsnotify/fsnotify"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -240,9 +239,9 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	clientCtx := coredNode.ClientContext()
 	txf := coredNode.TxFactory(clientCtx)
 
-	aliceAddr := importMnemonic(clientCtx, cored.AliceMnemonic)
-	bobAddr := importMnemonic(clientCtx, cored.BobMnemonic)
-	charlieAddr := importMnemonic(clientCtx, cored.CharlieMnemonic)
+	aliceAddr := importMnemonic(clientCtx, "alice", cored.AliceMnemonic)
+	bobAddr := importMnemonic(clientCtx, "bob", cored.BobMnemonic)
+	charlieAddr := importMnemonic(clientCtx, "charlie", cored.CharlieMnemonic)
 
 	for {
 		if err := sendTokens(ctx, clientCtx, txf, aliceAddr, bobAddr, *coredNode.Config().Network); err != nil {
@@ -264,9 +263,9 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 }
 
 // importMnemonic imports the mnemonic into the ClientContext Keyring and returns its address.
-func importMnemonic(clientCtx tx.ClientContext, mnemonic string) sdk.AccAddress {
+func importMnemonic(clientCtx tx.ClientContext, keyName, mnemonic string) sdk.AccAddress {
 	keyInfo, err := clientCtx.Keyring().NewAccount(
-		uuid.New().String(),
+		keyName,
 		mnemonic,
 		"",
 		sdk.GetConfig().GetFullBIP44Path(),
