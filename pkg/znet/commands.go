@@ -11,7 +11,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -21,10 +23,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
-	"github.com/CoreumFoundation/coreum/pkg/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -235,34 +235,22 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 		return errors.New("no running cored app found")
 	}
 	coredNode := coredApp.(cored.Cored)
-	//nolint:contextcheck // Function `Client->New->New->NewWithClient->New$1` should pass the context parameter
-	client := coredNode.Client()
+	//nolint:contextcheck // Function `ClientContext->New->New->NewWithClient->New$1` should pass the context parameter
+	clientCtx := coredNode.ClientContext()
+	txf := coredNode.TxFactory(clientCtx)
 
-	alicePrivKey, err := cored.PrivateKeyFromMnemonic(cored.AliceMnemonic)
-	if err != nil {
-		return err
-	}
-	bobPrivKey, err := cored.PrivateKeyFromMnemonic(cored.BobMnemonic)
-	if err != nil {
-		return err
-	}
-	charliePrivKey, err := cored.PrivateKeyFromMnemonic(cored.CharlieMnemonic)
-	if err != nil {
-		return err
-	}
-
-	alice := types.Wallet{Name: "alice", Key: alicePrivKey}
-	bob := types.Wallet{Name: "bob", Key: bobPrivKey}
-	charlie := types.Wallet{Name: "charlie", Key: charliePrivKey}
+	aliceAddr := importMnemonic(clientCtx, "alice", cored.AliceMnemonic)
+	bobAddr := importMnemonic(clientCtx, "bob", cored.BobMnemonic)
+	charlieAddr := importMnemonic(clientCtx, "charlie", cored.CharlieMnemonic)
 
 	for {
-		if err := sendTokens(ctx, client, alice, bob, *coredNode.Config().Network); err != nil {
+		if err := sendTokens(ctx, clientCtx, txf, aliceAddr, bobAddr, *coredNode.Config().Network); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, bob, charlie, *coredNode.Config().Network); err != nil {
+		if err := sendTokens(ctx, clientCtx, txf, bobAddr, charlieAddr, *coredNode.Config().Network); err != nil {
 			return err
 		}
-		if err := sendTokens(ctx, client, charlie, alice, *coredNode.Config().Network); err != nil {
+		if err := sendTokens(ctx, clientCtx, txf, charlieAddr, aliceAddr, *coredNode.Config().Network); err != nil {
 			return err
 		}
 
@@ -274,43 +262,60 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 	}
 }
 
-func sendTokens(ctx context.Context, coredClient client.Client, from, to types.Wallet, network config.Network) error {
+// importMnemonic imports the mnemonic into the ClientContext Keyring and returns its address.
+func importMnemonic(clientCtx tx.ClientContext, keyName, mnemonic string) sdk.AccAddress {
+	keyInfo, err := clientCtx.Keyring().NewAccount(
+		keyName,
+		mnemonic,
+		"",
+		sdk.GetConfig().GetFullBIP44Path(),
+		hd.Secp256k1,
+	)
+	must.OK(err)
+
+	return keyInfo.GetAddress()
+}
+
+func sendTokens(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, from, to sdk.AccAddress, network config.Network) error {
 	log := logger.Get(ctx)
 
 	amount := sdk.NewCoin(network.TokenSymbol(), sdk.OneInt())
-	gasPrice := sdk.NewDecCoinFromDec(network.TokenSymbol(), network.FeeModel().Params().InitialGasPrice)
-	txBytes, err := coredClient.PrepareTxBankSend(ctx, client.TxBankSendInput{
-		Base: tx.BaseInput{
-			Signer:   from,
-			GasLimit: network.DeterministicGas().BankSend,
-			GasPrice: gasPrice,
-		},
-		Sender:   from,
-		Receiver: to,
-		Amount:   amount})
-	if err != nil {
-		return err
+	txf = txf.WithSimulateAndExecute(true)
+
+	msg := &banktypes.MsgSend{
+		FromAddress: from.String(),
+		ToAddress:   to.String(),
+		Amount:      sdk.NewCoins(amount),
 	}
-	result, err := coredClient.Broadcast(ctx, txBytes)
+
+	res, err := tx.BroadcastTx(ctx, clientCtx, txf, msg)
 	if err != nil {
 		return err
 	}
 
 	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
-		zap.Stringer("amount", amount), zap.String("txHash", result.TxHash),
-		zap.Uint64("gasUsed", result.GasUsed))
+		zap.Stringer("amount", amount), zap.String("txHash", res.TxHash),
+		zap.Int64("gasUsed", res.GasUsed))
 
-	fromBalance, err := coredClient.QueryBankBalances(ctx, from)
+	bankClient := banktypes.NewQueryClient(clientCtx)
+
+	fromBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: from.String(),
+		Denom:   amount.Denom,
+	})
 	if err != nil {
 		return err
 	}
-	toBalance, err := coredClient.QueryBankBalances(ctx, to)
+	toBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: to.String(),
+		Denom:   amount.Denom,
+	})
 	if err != nil {
 		return err
 	}
 
-	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance[network.TokenSymbol()]))
-	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance[network.TokenSymbol()]))
+	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance.Balance))
+	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance.Balance))
 
 	return nil
 }

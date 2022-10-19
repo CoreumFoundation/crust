@@ -14,16 +14,24 @@ import (
 	"sync"
 	"time"
 
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	coreumstaking "github.com/CoreumFoundation/coreum/pkg/staking"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -69,11 +77,9 @@ func New(cfg Config) Cored {
 
 		must.OK(cfg.Network.FundAccount(stakerPubKey, stake.Add(additionalBalance).String()))
 
-		clientCtx := tx.NewClientContext(module.NewBasicManager(
-			staking.AppModuleBasic{},
-		)).WithChainID(string(cfg.Network.ChainID()))
+		clientCtx := tx.NewClientContext(newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
 
-		createValidatorTx, err := coreumstaking.PrepareTxStakingCreateValidator(clientCtx, valPublicKey, stakerPrivKey, stake.String())
+		createValidatorTx, err := prepareTxStakingCreateValidator(cfg.Network.ChainID(), clientCtx.TxConfig(), valPublicKey, stakerPrivKey, stake)
 		must.OK(err)
 		cfg.Network.AddGenesisTx(createValidatorTx)
 	}
@@ -86,6 +92,62 @@ func New(cfg Config) Cored {
 		mu:                  &sync.RWMutex{},
 		importedMnemonics:   cfg.ImportedMnemonics,
 	}
+}
+
+// prepareTxStakingCreateValidator generates transaction of type MsgCreateValidator
+func prepareTxStakingCreateValidator(
+	chainID config.ChainID,
+	txConfig cosmosclient.TxConfig,
+	validatorPublicKey ed25519.PublicKey,
+	stakerPrivateKey cosmossecp256k1.PrivKey,
+	stakedBalance sdk.Coin,
+) ([]byte, error) {
+	// the passphrase here is the trick to import the private key into the keyring
+	const passphrase = "tmp"
+
+	commission := stakingtypes.CommissionRates{
+		Rate:          sdk.MustNewDecFromStr("0.1"),
+		MaxRate:       sdk.MustNewDecFromStr("0.2"),
+		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+	}
+
+	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
+	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), &cosmosed25519.PubKey{Key: validatorPublicKey}, stakedBalance, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
+	if err != nil {
+		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
+	}
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
+	}
+
+	inMemKeyring := keyring.NewInMemory()
+
+	armor := crypto.EncryptArmorPrivKey(&stakerPrivateKey, passphrase, string(hd.Secp256k1Type))
+	if err := inMemKeyring.ImportPrivKey(stakerAddress.String(), armor, passphrase); err != nil {
+		return nil, errors.Wrap(err, "not able to import private key into new in memory keyring")
+	}
+
+	txf := tx.Factory{}.
+		WithChainID(string(chainID)).
+		WithKeybase(inMemKeyring).
+		WithTxConfig(txConfig)
+
+	txBuilder, err := txf.BuildUnsignedTx(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Sign(txf, stakerAddress.String(), txBuilder, true); err != nil {
+		return nil, err
+	}
+
+	txBytes, err := txConfig.TxJSONEncoder()(txBuilder.GetTx())
+	if err != nil {
+		return nil, err
+	}
+
+	return txBytes, nil
 }
 
 // Cored represents cored
@@ -124,9 +186,24 @@ func (c Cored) Config() Config {
 	return c.config
 }
 
-// Client creates new client for cored blockchain
-func (c Cored) Client() client.Client {
-	return client.New(c.config.Network.ChainID(), infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.RPC))
+// ClientContext creates new cored ClientContext.
+func (c Cored) ClientContext() tx.ClientContext {
+	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.RPC))
+	must.OK(err)
+
+	return tx.NewClientContext(newBasicManager()).
+		WithChainID(string(c.config.Network.ChainID())).
+		WithClient(rpcClient).
+		WithKeyring(keyring.NewInMemory()).
+		WithBroadcastMode(flags.BroadcastBlock)
+}
+
+// TxFactory returns factory with present values for the chain.
+func (c Cored) TxFactory(clientCtx tx.ClientContext) tx.Factory {
+	return tx.Factory{}.
+		WithKeybase(clientCtx.Keyring()).
+		WithChainID(string(c.config.Network.ChainID())).
+		WithTxConfig(clientCtx.TxConfig())
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions
@@ -269,6 +346,14 @@ func (c Cored) Deployment() infra.Deployment {
 		}
 	}
 	return deployment
+}
+
+func newBasicManager() module.BasicManager {
+	return module.NewBasicManager(
+		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		staking.AppModuleBasic{},
+	)
 }
 
 func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
