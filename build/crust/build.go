@@ -27,6 +27,7 @@ func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 	return golang.BuildLocally(ctx, golang.BinaryBuildConfig{
 		PackagePath:   "cmd/znet",
 		BinOutputPath: "bin/.cache/znet",
+		CGOEnabled:    true,
 	})
 }
 
