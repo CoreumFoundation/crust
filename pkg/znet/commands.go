@@ -119,7 +119,11 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr e
 	}
 
 	target := targets.NewDocker(config, spec)
-	appF := apps.NewFactory(config, spec, coreumtesting.NetworkConfig)
+	networkConfig, err := coreumtesting.NewNetworkConfig()
+	if err != nil {
+		return err
+	}
+	appF := apps.NewFactory(config, spec, networkConfig)
 	mode, err := Mode(appF, config.ModeName)
 	if err != nil {
 		return err
@@ -178,7 +182,11 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	}
 
 	target := targets.NewDocker(config, spec)
-	appF := apps.NewFactory(config, spec, coreumtesting.NetworkConfig)
+	networkConfig, err := coreumtesting.NewNetworkConfig()
+	if err != nil {
+		return err
+	}
+	appF := apps.NewFactory(config, spec, networkConfig)
 	mode, err := Mode(appF, config.ModeName)
 	if err != nil {
 		return err
@@ -279,7 +287,7 @@ func importMnemonic(clientCtx tx.ClientContext, keyName, mnemonic string) sdk.Ac
 func sendTokens(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, from, to sdk.AccAddress, network config.Network) error {
 	log := logger.Get(ctx)
 
-	amount := sdk.NewCoin(network.TokenSymbol(), sdk.OneInt())
+	amount := sdk.NewCoin(network.BaseDenom(), sdk.OneInt())
 	txf = txf.WithSimulateAndExecute(true)
 
 	msg := &banktypes.MsgSend{

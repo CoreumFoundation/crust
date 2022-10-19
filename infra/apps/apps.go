@@ -42,7 +42,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 	}
 
 	network := config.NewNetwork(f.networkConfig)
-	initialBalance := "500000000000000" + network.TokenSymbol()
+	initialBalance := "500000000000000" + f.networkConfig.BaseDenom
 
 	for _, mnemonic := range []string{
 		cored.AliceMnemonic,

@@ -71,9 +71,9 @@ func New(cfg Config) Cored {
 		stakerPubKey := stakerPrivKey.PubKey()
 		validatorPrivateKey = valPrivateKey
 
-		stake := sdk.NewInt64Coin(cfg.Network.TokenSymbol(), 1000000000)
+		stake := sdk.NewInt64Coin(cfg.Network.BaseDenom(), 1000000000)
 		// the additional balance will be used to pay for the tx submitted from the stakers accounts
-		additionalBalance := sdk.NewInt64Coin(cfg.Network.TokenSymbol(), 1000000000)
+		additionalBalance := sdk.NewInt64Coin(cfg.Network.BaseDenom(), 1000000000)
 
 		must.OK(cfg.Network.FundAccount(stakerPubKey, stake.Add(additionalBalance).String()))
 
