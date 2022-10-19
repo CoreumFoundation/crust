@@ -22,7 +22,12 @@ func main() {
 	run.Tool("znet", func(ctx context.Context) error {
 		configF := infra.NewConfigFactory()
 		cmdF := znet.NewCmdFactory(configF)
-		config.NewNetwork(testing.NetworkConfig).SetSDKConfig()
+
+		networkConfig, err := testing.NewNetworkConfig()
+		if err != nil {
+			return err
+		}
+		config.NewNetwork(networkConfig).SetSDKConfig()
 
 		rootCmd := rootCmd(ctx, configF, cmdF)
 		rootCmd.AddCommand(startCmd(ctx, configF, cmdF))
@@ -137,14 +142,17 @@ func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cm
 }
 
 func pingPongCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) *cobra.Command {
+	networkConfig, err := testing.NewNetworkConfig()
+	must.OK(err)
+
 	return &cobra.Command{
 		Use:   "ping-pong",
 		Short: "Sends tokens back and forth to generate transactions",
 		RunE: cmdF.Cmd(func() error {
 			spec := infra.NewSpec(configF)
-			config := znet.NewConfig(configF, spec)
-			appF := apps.NewFactory(config, spec, testing.NetworkConfig)
-			mode, err := znet.Mode(appF, config.ModeName)
+			znetConfig := znet.NewConfig(configF, spec)
+			appF := apps.NewFactory(znetConfig, spec, networkConfig)
+			mode, err := znet.Mode(appF, znetConfig.ModeName)
 			if err != nil {
 				return err
 			}
