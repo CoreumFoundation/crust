@@ -60,22 +60,23 @@ func New(cfg Config) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
-	var validatorPrivateKey ed25519.PrivateKey
+	var valPrivateKey ed25519.PrivateKey
 	if cfg.IsValidator {
-		valPublicKey, valPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+		var (
+			err          error
+			valPublicKey ed25519.PublicKey
+		)
+		valPublicKey, valPrivateKey, err = ed25519.GenerateKey(rand.Reader)
 		must.OK(err)
 
 		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
 
-		stakerPubKey := stakerPrivKey.PubKey()
-		validatorPrivateKey = valPrivateKey
-
 		stake := sdk.NewInt64Coin(cfg.Network.BaseDenom(), 1000000000)
 		// the additional balance will be used to pay for the tx submitted from the stakers accounts
 		additionalBalance := sdk.NewInt64Coin(cfg.Network.BaseDenom(), 1000000000)
 
-		must.OK(cfg.Network.FundAccount(stakerPubKey, stake.Add(additionalBalance).String()))
+		must.OK(cfg.Network.FundAccount(sdk.AccAddress(stakerPrivKey.PubKey().Address()), sdk.NewCoins(stake.Add(additionalBalance))))
 
 		clientCtx := tx.NewClientContext(newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
 
@@ -88,7 +89,7 @@ func New(cfg Config) Cored {
 		config:              cfg,
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
-		validatorPrivateKey: validatorPrivateKey,
+		validatorPrivateKey: valPrivateKey,
 		mu:                  &sync.RWMutex{},
 		importedMnemonics:   cfg.ImportedMnemonics,
 	}
