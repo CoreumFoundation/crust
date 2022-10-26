@@ -7,8 +7,7 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
-// SaveConfig sets specific tendermint config and saves it alongside private keys
-func SaveConfig(nodeConfig config.NodeConfig, homeDir string) {
+func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
 	err := nodeConfig.SavePrivateKeys(homeDir)
 	must.OK(err)
 	cfg := nodeConfig.TendermintNodeConfig(nil)
