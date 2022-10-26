@@ -58,28 +58,28 @@ var tools = map[Name]Tool{
 
 	// https://github.com/golangci/golangci-lint/releases/
 	GolangCI: {
-		Version:  "1.50.0",
+		Version:  "1.50.1",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.0/golangci-lint-1.50.0-linux-amd64.tar.gz",
-				Hash: "sha256:b4b329efcd913082c87d0e9606711ecb57415b5e6ddf233fde9e76c69d9b4e8b",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.1/golangci-lint-1.50.1-linux-amd64.tar.gz",
+				Hash: "sha256:4ba1dc9dbdf05b7bdc6f0e04bdfe6f63aa70576f51817be1b2540bbce017b69a",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.50.0-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.50.1-linux-amd64/golangci-lint",
 				},
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.0/golangci-lint-1.50.0-darwin-amd64.tar.gz",
-				Hash: "sha256:7ab306b91b0f2bb741cc0a4c86f29f69506eb7b505f47e91b0e74365e4c28c4e",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.1/golangci-lint-1.50.1-darwin-amd64.tar.gz",
+				Hash: "sha256:0f615fb8c364f6e4a213f2ed2ff7aa1fc2b208addf29511e89c03534067bbf57",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.50.0-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.50.1-darwin-amd64/golangci-lint",
 				},
 			},
 			darwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.0/golangci-lint-1.50.0-darwin-arm64.tar.gz",
-				Hash: "sha256:98209557973b8618086e12eb2449aa5b1187c942807b729fb40d06e0df3583c3",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.1/golangci-lint-1.50.1-darwin-arm64.tar.gz",
+				Hash: "sha256:3ca9753d7804b34f9165427fbe339dbea69bd80be8a10e3f02c6037393b2e1c4",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.50.0-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.50.1-darwin-arm64/golangci-lint",
 				},
 			},
 		},
@@ -87,20 +87,20 @@ var tools = map[Name]Tool{
 
 	// https://github.com/ignite/cli/releases/
 	Ignite: {
-		Version:  "0.24.0",
+		Version:  "0.25.1",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.24.0/ignite_0.24.0_linux_amd64.tar.gz",
-				Hash: "sha256:403a0d54af1001f225f5d7da82a5410311c9ea7781b224ad67faf82798efe30f",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.25.1/ignite_0.25.1_linux_amd64.tar.gz",
+				Hash: "sha256:21a95ad447891e88398f2929ffb855004a604960e21fc24ddc47d3bf4cc5adb0",
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.24.0/ignite_0.24.0_darwin_amd64.tar.gz",
-				Hash: "sha256:195a5ea072d9dc45caaad13ccd29fcaddd88b6d8ebc9e7330cc61206f0973f38",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.25.1/ignite_0.25.1_darwin_amd64.tar.gz",
+				Hash: "sha256:7b366d858c9db93d4e8aa4aa89a8298868c1a60be2c676310334bdf96287bedb",
 			},
 			darwinARM64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.24.0/ignite_0.24.0_darwin_arm64.tar.gz",
-				Hash: "sha256:afab45bc54063090761802dab26a0cfea7fb74ab15b258be3b18a5bb034a242a",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.25.1/ignite_0.25.1_darwin_arm64.tar.gz",
+				Hash: "sha256:d61bcff93c68770dca79eb8b7f2789bcc6a364baf4433d70344e63da821f5103",
 			},
 		},
 		Binaries: map[string]string{
@@ -109,6 +109,9 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/cosmos/cosmos-sdk/releases
+	// There is 1.4.0, but it is a dummy release without changes as described here:
+	// https://github.com/cosmos/cosmos-sdk/issues/13654
+	// and they didn't even provide compiled binaries for it.
 	Cosmovisor: {
 		Version:   "1.3.0",
 		ForDocker: true,
@@ -128,6 +131,7 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/CosmWasm/wasmvm/releases
+	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	LibWASMMuslC: {
 		Version:   "v1.1.1",
 		ForDocker: true,

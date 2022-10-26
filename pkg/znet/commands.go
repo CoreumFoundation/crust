@@ -243,7 +243,6 @@ func PingPong(ctx context.Context, mode infra.Mode) error {
 		return errors.New("no running cored app found")
 	}
 	coredNode := coredApp.(cored.Cored)
-	//nolint:contextcheck // Function `ClientContext->New->New->NewWithClient->New$1` should pass the context parameter
 	clientCtx := coredNode.ClientContext()
 	txf := coredNode.TxFactory(clientCtx)
 
