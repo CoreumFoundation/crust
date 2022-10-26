@@ -77,6 +77,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 				P2P:        firstPorts.P2P + portDelta,
 				GRPC:       firstPorts.GRPC + portDelta,
 				GRPCWeb:    firstPorts.GRPCWeb + portDelta,
+				API:        firstPorts.API + portDelta,
 				PProf:      firstPorts.PProf + portDelta,
 				Prometheus: firstPorts.Prometheus + portDelta,
 			},

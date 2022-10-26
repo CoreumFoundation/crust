@@ -6,6 +6,7 @@ type Ports struct {
 	P2P        int `json:"p2p"`
 	GRPC       int `json:"grpc"`
 	GRPCWeb    int `json:"grpcWeb"`
+	API        int `json:"api"`
 	PProf      int `json:"pprof"`
 	Prometheus int `json:"prometheus"`
 }
@@ -16,6 +17,7 @@ var DefaultPorts = Ports{
 	P2P:        26656,
 	GRPC:       9090,
 	GRPCWeb:    9091,
+	API:        1317,
 	PProf:      6060,
 	Prometheus: 26660,
 }

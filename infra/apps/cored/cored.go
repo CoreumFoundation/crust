@@ -21,6 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -310,13 +311,23 @@ func (c Cored) Deployment() infra.Deployment {
 			c.mu.RLock()
 			defer c.mu.RUnlock()
 
-			nodeConfig := config.NodeConfig{
+			saveTendermintConfig(config.NodeConfig{
 				Name:           c.config.Name,
 				PrometheusPort: c.config.Ports.Prometheus,
 				NodeKey:        c.nodePrivateKey,
 				ValidatorKey:   c.validatorPrivateKey,
-			}
-			SaveConfig(nodeConfig, c.config.HomeDir)
+			}, c.config.HomeDir)
+
+			appCfg := srvconfig.DefaultConfig()
+			appCfg.API.Enable = true
+			appCfg.API.Swagger = true
+			appCfg.API.EnableUnsafeCORS = true
+			appCfg.API.Address = infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.API)
+			appCfg.GRPC.Enable = true
+			appCfg.GRPCWeb.Enable = true
+			appCfg.GRPCWeb.EnableUnsafeCORS = true
+			appCfg.Telemetry.Enabled = true
+			srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
 
 			importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
 
