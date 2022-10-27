@@ -21,6 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -306,34 +307,8 @@ func (c Cored) Deployment() infra.Deployment {
 
 			return args
 		},
-		Ports: infra.PortsToMap(c.config.Ports),
-		PrepareFunc: func() error {
-			c.mu.RLock()
-			defer c.mu.RUnlock()
-
-			nodeConfig := config.NodeConfig{
-				Name:           c.config.Name,
-				PrometheusPort: c.config.Ports.Prometheus,
-				NodeKey:        c.nodePrivateKey,
-				ValidatorKey:   c.validatorPrivateKey,
-			}
-			SaveConfig(nodeConfig, c.config.HomeDir)
-
-			importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
-
-			if err := c.config.Network.SaveGenesis(c.config.HomeDir); err != nil {
-				return err
-			}
-
-			if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
-				return errors.WithStack(err)
-			}
-			if err := os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")); err != nil {
-				return errors.WithStack(err)
-			}
-			return errors.WithStack(copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored-upgrade"),
-				filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755))
-		},
+		Ports:       infra.PortsToMap(c.config.Ports),
+		PrepareFunc: c.prepare,
 		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
 			return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
 		},
@@ -349,12 +324,42 @@ func (c Cored) Deployment() infra.Deployment {
 	return deployment
 }
 
-func newBasicManager() module.BasicManager {
-	return module.NewBasicManager(
-		auth.AppModuleBasic{},
-		bank.AppModuleBasic{},
-		staking.AppModuleBasic{},
-	)
+func (c Cored) prepare() error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	saveTendermintConfig(config.NodeConfig{
+		Name:           c.config.Name,
+		PrometheusPort: c.config.Ports.Prometheus,
+		NodeKey:        c.nodePrivateKey,
+		ValidatorKey:   c.validatorPrivateKey,
+	}, c.config.HomeDir)
+
+	appCfg := srvconfig.DefaultConfig()
+	appCfg.API.Enable = true
+	appCfg.API.Swagger = true
+	appCfg.API.EnableUnsafeCORS = true
+	appCfg.API.Address = infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.API)
+	appCfg.GRPC.Enable = true
+	appCfg.GRPCWeb.Enable = true
+	appCfg.GRPCWeb.EnableUnsafeCORS = true
+	appCfg.Telemetry.Enabled = true
+	srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
+
+	importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
+
+	if err := c.config.Network.SaveGenesis(c.config.HomeDir); err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+	if err := os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")); err != nil {
+		return errors.WithStack(err)
+	}
+	return errors.WithStack(copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored-upgrade"),
+		filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755))
 }
 
 func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
@@ -370,6 +375,14 @@ fi
 exec "` + c.config.BinDir + `/cored" --chain-id "` + string(c.config.Network.ChainID()) + `" --home "` + filepath.Dir(c.config.HomeDir) + `" "$@" $OPTS
 `
 	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
+}
+
+func newBasicManager() module.BasicManager {
+	return module.NewBasicManager(
+		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		staking.AppModuleBasic{},
+	)
 }
 
 func copyFile(src, dst string, perm os.FileMode) error {
