@@ -8,7 +8,7 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-20221024110009-64ad8b391783
+	github.com/CoreumFoundation/coreum v0.0.0-dev-0.0.20221027062731-97b6e496da76
 	github.com/CoreumFoundation/coreum-tools v0.3.0
 	github.com/cosmos/cosmos-sdk v0.45.9
 	github.com/fsnotify/fsnotify v1.5.4
