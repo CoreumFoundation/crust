@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
@@ -42,7 +43,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 	}
 
 	network := config.NewNetwork(f.networkConfig)
-	initialBalance := "500000000000000" + f.networkConfig.BaseDenom
+	initialBalance := sdk.NewCoins(sdk.NewInt64Coin(f.networkConfig.BaseDenom, 500_000_000_000_000))
 
 	for _, mnemonic := range []string{
 		cored.AliceMnemonic,
@@ -55,7 +56,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 		if err != nil {
 			return cored.Cored{}, nil, errors.WithStack(err)
 		}
-		must.OK(network.FundAccount(privKey.PubKey(), initialBalance))
+		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), initialBalance))
 	}
 
 	nodes := make(infra.Mode, 0, validatorsCount+sentriesCount)
