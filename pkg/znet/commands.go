@@ -286,7 +286,7 @@ func importMnemonic(clientCtx tx.ClientContext, keyName, mnemonic string) sdk.Ac
 func sendTokens(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, from, to sdk.AccAddress, network config.Network) error {
 	log := logger.Get(ctx)
 
-	amount := sdk.NewCoin(network.BaseDenom(), sdk.OneInt())
+	amount := sdk.NewCoin(network.Denom(), sdk.OneInt())
 	txf = txf.WithSimulateAndExecute(true)
 
 	msg := &banktypes.MsgSend{

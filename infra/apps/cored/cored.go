@@ -73,9 +73,9 @@ func New(cfg Config) Cored {
 		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
 
-		stake := sdk.NewInt64Coin(cfg.Network.BaseDenom(), 1000000000)
+		stake := sdk.NewInt64Coin(cfg.Network.Denom(), 1000000000)
 		// the additional balance will be used to pay for the tx submitted from the stakers accounts
-		additionalBalance := sdk.NewInt64Coin(cfg.Network.BaseDenom(), 1000000000)
+		additionalBalance := sdk.NewInt64Coin(cfg.Network.Denom(), 1000000000)
 
 		must.OK(cfg.Network.FundAccount(sdk.AccAddress(stakerPrivKey.PubKey().Address()), sdk.NewCoins(stake.Add(additionalBalance))))
 
