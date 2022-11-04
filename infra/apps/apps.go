@@ -43,7 +43,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 	}
 
 	network := config.NewNetwork(f.networkConfig)
-	initialBalance := sdk.NewCoins(sdk.NewInt64Coin(f.networkConfig.BaseDenom, 500_000_000_000_000))
+	initialBalance := sdk.NewCoins(sdk.NewInt64Coin(f.networkConfig.Denom, 500_000_000_000_000))
 
 	for _, mnemonic := range []string{
 		cored.AliceMnemonic,
