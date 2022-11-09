@@ -15,9 +15,10 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
+	"github.com/CoreumFoundation/crust/infra/apps/gaia"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
-	"github.com/CoreumFoundation/crust/infra/testing"
+	"github.com/CoreumFoundation/crust/infra/apps/relayer"
 )
 
 // NewFactory creates new app factory
@@ -49,8 +50,9 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 		cored.AliceMnemonic,
 		cored.BobMnemonic,
 		cored.CharlieMnemonic,
-		faucet.PrivateKeyMnemonic,
-		testing.FundingMnemonic,
+		cored.FaucetMnemonic,
+		cored.FundingMnemonic,
+		cored.RelayerMnemonic,
 	} {
 		privKey, err := cored.PrivateKeyFromMnemonic(mnemonic)
 		if err != nil {
@@ -95,6 +97,9 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 				"bob":     cored.BobMnemonic,
 				"charlie": cored.CharlieMnemonic,
 			},
+			FundingMnemonic: cored.FundingMnemonic,
+			FaucetMnemonic:  cored.FaucetMnemonic,
+			RelayerMnemonic: cored.RelayerMnemonic,
 		})
 		if node0 == nil {
 			node0 = &node
@@ -161,4 +166,29 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 		bdjunoApp,
 		bigDipperApp,
 	}
+}
+
+// Gaia creates new gaia.
+func (f *Factory) Gaia(name string) gaia.Gaia {
+	return gaia.New(gaia.Config{
+		Name:            name,
+		HomeDir:         filepath.Join(f.config.AppDir, name),
+		ChainID:         gaia.DefaultChainID,
+		AccountPrefix:   gaia.DefaultAccountPrefix,
+		AppInfo:         f.spec.DescribeApp(gaia.AppType, name),
+		Ports:           gaia.DefaultPorts,
+		RelayerMnemonic: gaia.RelayerMnemonic,
+	})
+}
+
+// Relayer creates new relayer.
+func (f *Factory) Relayer(name string, coredApp cored.Cored, gaiaApp gaia.Gaia) relayer.Relayer {
+	return relayer.New(relayer.Config{
+		Name:      name,
+		HomeDir:   filepath.Join(f.config.AppDir, name),
+		AppInfo:   f.spec.DescribeApp(relayer.AppType, name),
+		DebugPort: relayer.DefaultDebugPort,
+		Cored:     coredApp,
+		Gaia:      gaiaApp,
+	})
 }

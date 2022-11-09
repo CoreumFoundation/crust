@@ -1,0 +1,39 @@
+#!/bin/sh
+
+export HOME="{{ .HomePath }}"
+
+CHAIN_ID_FLAGS="--chain-id {{ .ChainID }}"
+KEYRING_FLAGS="--keyring-backend test --keyring-dir $HOME"
+
+RELAYER_MNEMONIC="{{ .RelayerMnemonic }}"
+
+# init the chain
+gaiad init moniker $CHAIN_ID_FLAGS
+
+# add chain validator
+gaiad keys add validator $KEYRING_FLAGS
+
+# import the relayer mnemonic
+echo $RELAYER_MNEMONIC | gaiad keys add relayer --recover $KEYRING_FLAGS
+echo "relayer address: $(gaiad keys show relayer -a $KEYRING_FLAGS)"
+
+# fund the validator and relayer accounts
+gaiad add-genesis-account $(gaiad keys show validator -a $KEYRING_FLAGS) 100000000000stake
+gaiad add-genesis-account $(gaiad keys show relayer -a $KEYRING_FLAGS) 100000000000stake
+
+# create validator gentx
+gaiad gentx validator 100000000stake $CHAIN_ID_FLAGS $KEYRING_FLAGS
+
+# Add the gentx to the genesis file.
+gaiad collect-gentxs
+
+# Start the node
+gaiad start \
+--log_level debug \
+--trace \
+--rpc.laddr {{ .RPCLaddr }} \
+--p2p.laddr {{ .P2PLaddr }} \
+--grpc.address {{ .GRPCAddress }} \
+--grpc-web.address {{ .GRPCWebAddress }} \
+--rpc.pprof_laddr {{ .RPCPprofLaddr }} \
+$HOME_FLAGS

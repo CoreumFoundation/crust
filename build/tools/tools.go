@@ -29,6 +29,8 @@ const (
 	Ignite       Name = "ignite"
 	Cosmovisor   Name = "cosmovisor"
 	LibWASMMuslC Name = "libwasmvm_muslc"
+	Gaia         Name = "gaia"
+	Relayer      Name = "relayer"
 )
 
 var tools = map[Name]Tool{
@@ -148,6 +150,50 @@ var tools = map[Name]Tool{
 				Hash: "sha256:9ecb037336bd56076573dc18c26631a9d2099a7f2b40dc04b6cae31ffb4c8f9a",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
+				},
+			},
+		},
+	},
+
+	// https://github.com/cosmos/gaia/releases
+	Gaia: {
+		Version:   "v7.0.0",
+		ForDocker: true,
+		Sources: Sources{
+			dockerAMD64: {
+				URL:  "https://github.com/cosmos/gaia/releases/download/v7.0.0/gaiad-v7.0.0-linux-amd64",
+				Hash: "sha256:dc0e5b6690a55f0f1c41ad96f068049e25d9e85d53c0587284b7f1a1f9a51545",
+				Binaries: map[string]string{
+					"bin/gaiad": "gaiad-v7.0.0-linux-amd64",
+				},
+			},
+			dockerARM64: {
+				URL:  "https://github.com/cosmos/gaia/releases/download/v7.0.0/gaiad-v7.0.0-linux-arm64",
+				Hash: "sha256:994f67ec8134504ae032a1ae58caf769b5a9a1581a38705efd94ab654a7f6173",
+				Binaries: map[string]string{
+					"bin/gaiad": "gaiad-v7.0.0-linux-arm64",
+				},
+			},
+		},
+	},
+
+	// https://github.com/cosmos/relayer/releases
+	Relayer: {
+		Version:   "v2.1.0",
+		ForDocker: true,
+		Sources: Sources{
+			dockerAMD64: {
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.1.0/Cosmos.Relayer_2.1.0_linux_amd64.tar.gz",
+				Hash: "sha256:893537acd7fa5b5b9f0814f06ce6c26ba3f944262d7a43f5790216350d8399a9",
+				Binaries: map[string]string{
+					"bin/relayer": "Cosmos Relayer",
+				},
+			},
+			dockerARM64: {
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.1.0/Cosmos.Relayer_2.1.0_linux_arm64.tar.gz",
+				Hash: "sha256:e6dddf04c03254e86a32d9c74b35514f8c46399f1e33e17f1ae29aaac4d1f1f1",
+				Binaries: map[string]string{
+					"bin/relayer": "Cosmos Relayer",
 				},
 			},
 		},
@@ -332,6 +378,7 @@ func install(ctx context.Context, name Name, info Tool, platform Platform) (retE
 			must.OK(os.Symlink(srcPath, dstPath))
 		}
 		must.Any(filepath.EvalSymlinks(dstPath))
+		log.Info("Tool installed to path", zap.String("path", dstPath))
 	}
 
 	log.Info("Tool installed")
@@ -484,6 +531,48 @@ func ByName(name Name) Tool {
 	return tools[name]
 }
 
+// CopyToolBinaries moves the tools artifacts form docker cache to the target local location.
+// In case the binPath doesn't exist the method will create it.
+func CopyToolBinaries(tool Name, path string) []string {
+	binaries := make(map[string]string)
+	for key, val := range ByName(tool).Binaries {
+		binaries[key] = val
+	}
+	for key, val := range ByName(tool).Sources[DockerPlatform].Binaries {
+		binaries[key] = val
+	}
+
+	if len(binaries) == 0 {
+		panic(errors.Errorf("tool %s doesn't have binaries for platform %s", tool, DockerPlatform))
+	}
+
+	artifactNames := make([]string, 0)
+	for binaryDockerPath := range binaries {
+		pathDocker := PathDocker(binaryDockerPath)
+		absPath, err := filepath.EvalSymlinks(pathDocker)
+		must.OK(err)
+
+		fr, err := os.Open(absPath)
+		must.OK(err)
+		defer fr.Close()
+
+		err = os.MkdirAll(path, os.ModePerm)
+		must.OK(err)
+
+		artifactName := filepath.Base(pathDocker)
+		artifactNames = append(artifactNames, artifactName)
+
+		fw, err := os.OpenFile(filepath.Join(path, artifactName), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755) //nolint:nosnakecase // os constants
+		must.OK(err)
+		defer fw.Close()
+
+		_, err = io.Copy(fw, fr)
+		must.OK(err)
+	}
+
+	return artifactNames
+}
+
 // PathLocal returns path to locally installed tool
 func PathLocal(tool string) string {
 	return must.String(filepath.Abs(filepath.Join("bin", tool)))
@@ -491,5 +580,5 @@ func PathLocal(tool string) string {
 
 // PathDocker returns path to docker-installed tool
 func PathDocker(tool string) string {
-	return must.String(filepath.Abs(filepath.Join(CacheDir(), DockerPlatform.String(), "bin", tool)))
+	return must.String(filepath.Abs(filepath.Join(CacheDir(), DockerPlatform.String(), tool)))
 }

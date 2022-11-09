@@ -4,11 +4,8 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
-	"encoding/json"
 	"io"
 	"net"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
@@ -31,10 +28,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps/health"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -52,6 +49,9 @@ type Config struct {
 	Ports             Ports
 	IsValidator       bool
 	StakerMnemonic    string
+	FundingMnemonic   string
+	FaucetMnemonic    string
+	RelayerMnemonic   string
 	RootNode          *Cored
 	ImportedMnemonics map[string]string
 }
@@ -210,47 +210,7 @@ func (c Cored) TxFactory(clientCtx tx.ClientContext) tx.Factory {
 
 // HealthCheck checks if cored chain is ready to accept transactions
 func (c Cored) HealthCheck(ctx context.Context) error {
-	if c.config.AppInfo.Info().Status != infra.AppStatusRunning {
-		return retry.Retryable(errors.Errorf("cored chain hasn't started yet"))
-	}
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", c.Info().HostFromHost, c.config.Ports.RPC), Path: "/status"}
-	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return retry.Retryable(errors.WithStack(err))
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return retry.Retryable(errors.WithStack(err))
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return retry.Retryable(errors.Errorf("health check failed, status code: %d, response: %s", resp.StatusCode, body))
-	}
-
-	data := struct {
-		Result struct {
-			SyncInfo struct {
-				LatestBlockHash string `json:"latest_block_hash"` //nolint: tagliatelle
-			} `json:"sync_info"` //nolint: tagliatelle
-		} `json:"result"`
-	}{}
-
-	if err := json.Unmarshal(body, &data); err != nil {
-		return retry.Retryable(errors.WithStack(err))
-	}
-
-	if data.Result.SyncInfo.LatestBlockHash == "" {
-		return retry.Retryable(errors.New("genesis block hasn't been mined yet"))
-	}
-
-	return nil
+	return health.CheckCosmosNodeHealth(ctx, c.Info(), c.config.Ports.RPC)
 }
 
 // Deployment returns deployment of cored
@@ -346,10 +306,12 @@ func (c Cored) prepare() error {
 	appCfg.Telemetry.Enabled = true
 	srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
 
-	importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics)
+	if err := importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics); err != nil {
+		return errors.WithStack(err)
+	}
 
 	if err := c.config.Network.SaveGenesis(c.config.HomeDir); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
@@ -358,8 +320,13 @@ func (c Cored) prepare() error {
 	if err := os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")); err != nil {
 		return errors.WithStack(err)
 	}
-	return errors.WithStack(copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored-upgrade"),
-		filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755))
+
+	if err := copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored", "cored-upgrade"),
+		filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }
 
 func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {

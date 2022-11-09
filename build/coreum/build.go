@@ -79,7 +79,7 @@ func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
 
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
-		BinOutputPath:  filepath.Join("bin/.cache/docker", binaryName+"-upgrade"),
+		BinOutputPath:  filepath.Join("bin/.cache/docker/cored", binaryName+"-upgrade"),
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           []string{"muslc"},

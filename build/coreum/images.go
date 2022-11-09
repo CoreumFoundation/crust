@@ -2,11 +2,8 @@ package coreum
 
 import (
 	"context"
-	"io"
-	"os"
+	"path"
 	"path/filepath"
-
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/coreum/image"
@@ -40,28 +37,8 @@ func ensureCosmovisor(ctx context.Context, deps build.DepsFunc) error {
 	if err := tools.EnsureDocker(ctx, tools.Cosmovisor); err != nil {
 		return err
 	}
+	cosmovisorLocalPath := tools.PathLocal(path.Join(".cache", "docker", "cored"))
+	tools.CopyToolBinaries(tools.Cosmovisor, cosmovisorLocalPath)
 
-	absPath, err := filepath.EvalSymlinks(tools.PathDocker("cosmovisor"))
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	fr, err := os.Open(absPath)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer fr.Close()
-
-	if err := os.MkdirAll("bin/.cache/docker/cored", 0o700); err != nil {
-		return err
-	}
-
-	//nolint:nosnakecase // Those constants are out of our control
-	fw, err := os.OpenFile("bin/.cache/docker/cored/cosmovisor", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer fw.Close()
-
-	_, err = io.Copy(fw, fr)
-	return errors.WithStack(err)
+	return nil
 }
