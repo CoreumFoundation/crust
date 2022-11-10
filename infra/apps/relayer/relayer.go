@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/prometheus/common/expfmt"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
@@ -71,11 +72,6 @@ func (r Relayer) Name() string {
 	return r.config.Name
 }
 
-// Port returns port used by the application.
-func (r Relayer) Port() int {
-	return r.config.DebugPort
-}
-
 // Info returns deployment info.
 func (r Relayer) Info() infra.DeploymentInfo {
 	return r.config.AppInfo.Info()
@@ -83,6 +79,8 @@ func (r Relayer) Info() infra.DeploymentInfo {
 
 // HealthCheck checks if relayer is operating.
 func (r Relayer) HealthCheck(ctx context.Context) error {
+	const cosmosHeightMetricName = "cosmos_relayer_chain_latest_height"
+
 	if r.config.AppInfo.Info().Status != infra.AppStatusRunning {
 		return retry.Retryable(errors.Errorf("realyer hasn't started yet"))
 	}
@@ -93,11 +91,48 @@ func (r Relayer) HealthCheck(ctx context.Context) error {
 	if err != nil {
 		return retry.Retryable(errors.WithStack(err))
 	}
-	_ = resp.Body.Close()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return retry.Retryable(errors.Errorf("health check failed, status code: %d", resp.StatusCode))
 	}
+
+	var parser expfmt.TextParser
+	mf, err := parser.TextToMetricFamilies(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "unexpected metrics response in the health check")
+	}
+	cosmosHeightMF, ok := mf[cosmosHeightMetricName]
+	if !ok {
+		return retry.Retryable(errors.Errorf("health check failed, no %q metric in the response", cosmosHeightMetricName))
+	}
+
+	chainIDs := map[string]struct{}{
+		r.config.Gaia.Config().ChainID:                    {},
+		string(r.config.Cored.Config().Network.ChainID()): {},
+	}
+
+	for _, metricItem := range cosmosHeightMF.Metric {
+		for _, label := range metricItem.Label {
+			if label.Value == nil {
+				continue
+			}
+			if _, found := chainIDs[*label.Value]; found {
+				metricGauge := metricItem.Gauge
+				if metricGauge.Value == nil {
+					continue
+				}
+				if *metricGauge.Value > 0 {
+					delete(chainIDs, *label.Value)
+				}
+			}
+		}
+	}
+
+	if len(chainIDs) != 0 {
+		return errors.Wrapf(err, "the relayer chains %v are still syncing", chainIDs)
+	}
+
 	return nil
 }
 
@@ -115,7 +150,7 @@ func (r Relayer) Deployment() infra.Deployment {
 			},
 		},
 		Ports: map[string]int{
-			"server": r.config.DebugPort,
+			"debug": r.config.DebugPort,
 		},
 		Requires: infra.Prerequisites{
 			Timeout: 20 * time.Second,
@@ -129,25 +164,23 @@ func (r Relayer) Deployment() infra.Deployment {
 	}
 }
 
-type runScriptArgs struct {
-	HomePath string
-
-	CoreumChanID          string
-	CoreumRPCUrl          string
-	CoreumAccountPrefix   string
-	CoreumRelayerMnemonic string
-	CoreumRelayerCoinType uint32
-
-	GaiaChanID          string
-	GaiaRPCUrl          string
-	GaiaAccountPrefix   string
-	GaiaRelayerMnemonic string
-
-	DebugPort int
-}
-
 func (r Relayer) prepare() error {
-	args := runScriptArgs{
+	args := struct {
+		HomePath string
+
+		CoreumChanID          string
+		CoreumRPCUrl          string
+		CoreumAccountPrefix   string
+		CoreumRelayerMnemonic string
+		CoreumRelayerCoinType uint32
+
+		GaiaChanID          string
+		GaiaRPCUrl          string
+		GaiaAccountPrefix   string
+		GaiaRelayerMnemonic string
+
+		DebugPort int
+	}{
 		HomePath: targets.AppHomeDir,
 
 		CoreumChanID:          string(r.config.Cored.Config().Network.ChainID()),
@@ -166,7 +199,7 @@ func (r Relayer) prepare() error {
 
 	buf := &bytes.Buffer{}
 	if err := runScriptTemplate.Execute(buf, args); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	err := os.WriteFile(path.Join(r.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o700)

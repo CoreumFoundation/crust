@@ -78,8 +78,9 @@ func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
 	parameters["github.com/cosmos/cosmos-sdk/version.Version"] += "-upgrade"
 
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
-		PackagePath:    "../coreum/cmd/cored",
-		BinOutputPath:  filepath.Join("bin/.cache/docker/cored", binaryName+"-upgrade"),
+		PackagePath: "../coreum/cmd/cored",
+		// we build the cored-upgrade to its own directory since the cored will be used for the release but upgrade for tests only.
+		BinOutputPath:  filepath.Join("bin/.cache/docker/cored-upgrade", binaryName+"-upgrade"),
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           []string{"muslc"},

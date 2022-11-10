@@ -13,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps/health"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -97,7 +96,7 @@ func (g Gaia) Info() infra.DeploymentInfo {
 
 // HealthCheck checks if chain is ready.
 func (g Gaia) HealthCheck(ctx context.Context) error {
-	return health.CheckCosmosNodeHealth(ctx, g.Info(), g.config.Ports.RPC)
+	return infra.CheckCosmosNodeHealth(ctx, g.Info(), g.config.Ports.RPC)
 }
 
 // Deployment returns deployment.
@@ -124,19 +123,17 @@ func (g Gaia) Config() Config {
 	return g.config
 }
 
-type runScriptArgs struct {
-	HomePath        string
-	ChainID         string
-	RelayerMnemonic string
-	RPCLaddr        string
-	P2PLaddr        string
-	GRPCAddress     string
-	GRPCWebAddress  string
-	RPCPprofLaddr   string
-}
-
 func (g Gaia) prepare() error {
-	args := runScriptArgs{
+	args := struct {
+		HomePath        string
+		ChainID         string
+		RelayerMnemonic string
+		RPCLaddr        string
+		P2PLaddr        string
+		GRPCAddress     string
+		GRPCWebAddress  string
+		RPCPprofLaddr   string
+	}{
 		HomePath:        targets.AppHomeDir,
 		ChainID:         g.config.ChainID,
 		RelayerMnemonic: RelayerMnemonic,
@@ -149,7 +146,7 @@ func (g Gaia) prepare() error {
 
 	buf := &bytes.Buffer{}
 	if err := runScriptTemplate.Execute(buf, args); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	err := os.WriteFile(path.Join(g.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o700)

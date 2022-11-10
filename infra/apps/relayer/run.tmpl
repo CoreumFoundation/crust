@@ -2,6 +2,10 @@
 
 export HOME="{{ .HomePath }}"
 
+RELAYER_CONFIG_PATH="$HOME/.relayer/config/config.yaml"
+
+if [ ! -f "$RELAYER_CONFIG_PATH" ]; then
+
 # Init the relayer and set the templated config
 relayer config init
 
@@ -42,7 +46,7 @@ chains:
             timeout: 20s
             output-format: json
             sign-mode: direct
-paths: {}" | tee $HOME/.relayer/config/config.yaml
+paths: {}" > $RELAYER_CONFIG_PATH
 
 # import the relayer mnemonic
 relayer keys restore znet znet-key "{{ .CoreumRelayerMnemonic }}" --coin-type={{ .CoreumRelayerCoinType }}
@@ -57,6 +61,8 @@ relayer paths new {{ .CoreumChanID }} {{ .GaiaChanID }} ibc-path
 
 # init relayer path
 relayer transact link ibc-path
+
+fi
 
 # start the relayer
 relayer start ibc-path --debug-addr "0.0.0.0:{{ .DebugPort }}"

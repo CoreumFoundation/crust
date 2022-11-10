@@ -38,7 +38,6 @@ func ensureCosmovisor(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 	cosmovisorLocalPath := tools.PathLocal(path.Join(".cache", "docker", "cored"))
-	tools.CopyToolBinaries(tools.Cosmovisor, cosmovisorLocalPath)
 
-	return nil
+	return tools.CopyToolBinaries(tools.Cosmovisor, cosmovisorLocalPath, "cosmovisor")
 }

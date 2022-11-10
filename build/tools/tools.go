@@ -533,44 +533,68 @@ func ByName(name Name) Tool {
 
 // CopyToolBinaries moves the tools artifacts form docker cache to the target local location.
 // In case the binPath doesn't exist the method will create it.
-func CopyToolBinaries(tool Name, path string) []string {
-	binaries := make(map[string]string)
+func CopyToolBinaries(tool Name, path string, binaryNames ...string) error {
+	if len(binaryNames) == 0 {
+		return nil
+	}
+
+	storedBinaries := make(map[string]string)
+	// combine binaries
 	for key, val := range ByName(tool).Binaries {
-		binaries[key] = val
+		storedBinaries[key] = val
 	}
 	for key, val := range ByName(tool).Sources[DockerPlatform].Binaries {
-		binaries[key] = val
+		storedBinaries[key] = val
 	}
 
-	if len(binaries) == 0 {
-		panic(errors.Errorf("tool %s doesn't have binaries for platform %s", tool, DockerPlatform))
+	requestedBinaryNames := make(map[string]struct{})
+	for _, binaryName := range binaryNames {
+		requestedBinaryNames[binaryName] = struct{}{}
 	}
 
-	artifactNames := make([]string, 0)
-	for binaryDockerPath := range binaries {
-		pathDocker := PathDocker(binaryDockerPath)
+	// validate binaries
+	for storedBinaryPath := range storedBinaries {
+		storedBinaryName := filepath.Base(PathDocker(storedBinaryPath))
+		if _, ok := requestedBinaryNames[storedBinaryName]; !ok {
+			return errors.Errorf("The binary %q doesn't exists for the reqiestd tool %q", storedBinaryName, tool)
+		}
+	}
+
+	// create dir from path
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	for storedBinaryPath := range storedBinaries {
+		pathDocker := PathDocker(storedBinaryPath)
+		binaryName := filepath.Base(pathDocker)
+		// skip none requested binaries
+		if _, ok := requestedBinaryNames[binaryName]; !ok {
+			continue
+		}
+
+		// copy the file we need
 		absPath, err := filepath.EvalSymlinks(pathDocker)
-		must.OK(err)
-
+		if err != nil {
+			return errors.WithStack(err)
+		}
 		fr, err := os.Open(absPath)
-		must.OK(err)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 		defer fr.Close()
-
-		err = os.MkdirAll(path, os.ModePerm)
-		must.OK(err)
-
-		artifactName := filepath.Base(pathDocker)
-		artifactNames = append(artifactNames, artifactName)
-
-		fw, err := os.OpenFile(filepath.Join(path, artifactName), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755) //nolint:nosnakecase // os constants
-		must.OK(err)
+		fw, err := os.OpenFile(filepath.Join(path, binaryName), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755) //nolint:nosnakecase // os constants
+		if err != nil {
+			return errors.WithStack(err)
+		}
 		defer fw.Close()
-
-		_, err = io.Copy(fw, fr)
-		must.OK(err)
+		if _, err = io.Copy(fw, fr); err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
-	return artifactNames
+	return nil
 }
 
 // PathLocal returns path to locally installed tool

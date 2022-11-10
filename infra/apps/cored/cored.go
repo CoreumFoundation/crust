@@ -31,7 +31,6 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps/health"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -210,7 +209,7 @@ func (c Cored) TxFactory(clientCtx tx.ClientContext) tx.Factory {
 
 // HealthCheck checks if cored chain is ready to accept transactions
 func (c Cored) HealthCheck(ctx context.Context) error {
-	return health.CheckCosmosNodeHealth(ctx, c.Info(), c.config.Ports.RPC)
+	return infra.CheckCosmosNodeHealth(ctx, c.Info(), c.config.Ports.RPC)
 }
 
 // Deployment returns deployment of cored
@@ -307,7 +306,7 @@ func (c Cored) prepare() error {
 	srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
 
 	if err := importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics); err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	if err := c.config.Network.SaveGenesis(c.config.HomeDir); err != nil {
@@ -321,12 +320,8 @@ func (c Cored) prepare() error {
 		return errors.WithStack(err)
 	}
 
-	if err := copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored", "cored-upgrade"),
-		filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755); err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
+	return copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored-upgrade", "cored-upgrade"),
+		filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755)
 }
 
 func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
@@ -360,7 +355,7 @@ func copyFile(src, dst string, perm os.FileMode) error {
 	defer fr.Close()
 
 	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	//nolint:nosnakecase // Those constants are out of our control
@@ -370,6 +365,9 @@ func copyFile(src, dst string, perm os.FileMode) error {
 	}
 	defer fw.Close()
 
-	_, err = io.Copy(fw, fr)
-	return errors.WithStack(err)
+	if _, err = io.Copy(fw, fr); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }

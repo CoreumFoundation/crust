@@ -4,8 +4,6 @@ import (
 	"context"
 	"path"
 
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/docker/basic"
@@ -14,20 +12,21 @@ import (
 
 // BuildDockerImage builds docker image of the ibc relayer.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
+	const binaryName = "relayer"
+
 	relayerLocalPath := tools.PathLocal(path.Join(".cache", "docker", "relayer"))
 
-	deps(func(ctx context.Context, deps build.DepsFunc) error {
-		return tools.EnsureDocker(ctx, tools.Relayer)
-	})
+	if err := tools.EnsureDocker(ctx, tools.Relayer); err != nil {
+		return err
+	}
 
-	artifactNames := tools.CopyToolBinaries(tools.Relayer, relayerLocalPath)
-	if len(artifactNames) != 1 {
-		return errors.New("Unexpected number of artifacts is returned")
+	if err := tools.CopyToolBinaries(tools.Relayer, relayerLocalPath, binaryName); err != nil {
+		return err
 	}
 
 	dockerfile, err := basic.Execute(basic.Data{
 		From:   docker.AlpineImage,
-		Binary: artifactNames[0],
+		Binary: binaryName,
 	})
 	if err != nil {
 		return err
@@ -35,7 +34,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
 		ContextDir: relayerLocalPath,
-		ImageName:  artifactNames[0],
+		ImageName:  binaryName,
 		Dockerfile: dockerfile,
 	})
 }

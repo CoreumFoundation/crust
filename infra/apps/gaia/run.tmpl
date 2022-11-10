@@ -7,6 +7,10 @@ KEYRING_FLAGS="--keyring-backend test --keyring-dir $HOME"
 
 RELAYER_MNEMONIC="{{ .RelayerMnemonic }}"
 
+GAIA_GENESIS_PATH="$HOME/.gaia/config/genesis.json"
+
+if [ ! -f "$GAIA_GENESIS_PATH" ]; then
+
 # init the chain
 gaiad init moniker $CHAIN_ID_FLAGS
 
@@ -26,6 +30,8 @@ gaiad gentx validator 100000000stake $CHAIN_ID_FLAGS $KEYRING_FLAGS
 
 # Add the gentx to the genesis file.
 gaiad collect-gentxs
+
+fi
 
 # Start the node
 gaiad start \

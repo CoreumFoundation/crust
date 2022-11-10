@@ -14,6 +14,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/common v0.37.0
 	github.com/samber/lo v1.28.0
 	github.com/spf13/cobra v1.5.0
 	github.com/tendermint/tendermint v0.34.21
@@ -108,7 +109,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.13.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rakyll/statik v0.1.7 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect

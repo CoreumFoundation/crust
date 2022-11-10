@@ -7,18 +7,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
 )
 
 // importMnemonicsToKeyring adds keys to local keystore
 func importMnemonicsToKeyring(homeDir string, mnemonics map[string]string) error {
 	kr, err := keyring.New("cored", "test", homeDir, nil)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	for name, mnemonic := range mnemonics {
 		if _, err := kr.NewAccount(name, mnemonic, "", sdk.GetConfig().GetFullBIP44Path(), hd.Secp256k1); err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 
