@@ -2,22 +2,26 @@ run:
   timeout: 10m
   build-tags:
     - codeanalysis
-    - simulation # used for "unit tests| which are used to generate some sample data
-    - integration # used by integrstion tests
+    - simulation # used for unit tests which are used to generate some sample data
+    - integration # used by integration tests
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   # disable some excludes that golangci-lint has by default. see https://github.com/golangci/golangci-lint
   exclude-use-default: false
+  # many golangci linters enforce stupid rules, so we will add more to the list soon
   exclude-rules:
-    # many golangci linters enforce stupid rules, so we will add more to the list soon
     - linters:
       - errcheck
       text: "Error return value of `.*\\.Close` is not checked"
     - linters:
       - stylecheck
       text: "at least one file in a package should have a package comment"
+    # Exclude some linters from running on integration tests.
+    - path: integration-tests/*
+      linters:
+        - funlen
 
 linters:
   enable-all: true
