@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"fmt"
 	"net"
 	"os"
 	"path"
+	"path/filepath"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -114,7 +114,7 @@ func (g Gaia) Deployment() infra.Deployment {
 		},
 		Ports:       infra.PortsToMap(g.config.Ports),
 		PrepareFunc: g.prepare,
-		Entrypoint:  fmt.Sprintf(".%s/%s", targets.AppHomeDir, dockerEntrypoint),
+		Entrypoint:  filepath.Join(".", targets.AppHomeDir, dockerEntrypoint),
 	}
 }
 

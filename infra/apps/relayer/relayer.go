@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"text/template"
 	"time"
 
@@ -160,7 +160,7 @@ func (r Relayer) Deployment() infra.Deployment {
 			},
 		},
 		PrepareFunc: r.prepare,
-		Entrypoint:  fmt.Sprintf(".%s/%s", targets.AppHomeDir, dockerEntrypoint),
+		Entrypoint:  filepath.Join(".", targets.AppHomeDir, dockerEntrypoint),
 	}
 }
 

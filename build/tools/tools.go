@@ -538,25 +538,20 @@ func CopyToolBinaries(tool Name, path string, binaryNames ...string) error {
 		return nil
 	}
 
-	storedBinaries := make(map[string]string)
+	// map[name]path
+	storedBinaryNames := make(map[string]string)
 	// combine binaries
-	for key, val := range ByName(tool).Binaries {
-		storedBinaries[key] = val
+	for key := range ByName(tool).Binaries {
+		storedBinaryNames[filepath.Base(PathDocker(key))] = key
 	}
-	for key, val := range ByName(tool).Sources[DockerPlatform].Binaries {
-		storedBinaries[key] = val
+	for key := range ByName(tool).Sources[DockerPlatform].Binaries {
+		storedBinaryNames[filepath.Base(PathDocker(key))] = key
 	}
 
-	requestedBinaryNames := make(map[string]struct{})
+	// initial validation to check that we have all binaries
 	for _, binaryName := range binaryNames {
-		requestedBinaryNames[binaryName] = struct{}{}
-	}
-
-	// validate binaries
-	for storedBinaryPath := range storedBinaries {
-		storedBinaryName := filepath.Base(PathDocker(storedBinaryPath))
-		if _, ok := requestedBinaryNames[storedBinaryName]; !ok {
-			return errors.Errorf("The binary %q doesn't exists for the reqiestd tool %q", storedBinaryName, tool)
+		if _, ok := storedBinaryNames[binaryName]; !ok {
+			return errors.Errorf("the binary %q doesn't exists for the requested tool %q", binaryName, tool)
 		}
 	}
 
@@ -566,13 +561,9 @@ func CopyToolBinaries(tool Name, path string, binaryNames ...string) error {
 		return errors.WithStack(err)
 	}
 
-	for storedBinaryPath := range storedBinaries {
+	for _, binaryName := range binaryNames {
+		storedBinaryPath := storedBinaryNames[binaryName]
 		pathDocker := PathDocker(storedBinaryPath)
-		binaryName := filepath.Base(pathDocker)
-		// skip none requested binaries
-		if _, ok := requestedBinaryNames[binaryName]; !ok {
-			continue
-		}
 
 		// copy the file we need
 		absPath, err := filepath.EvalSymlinks(pathDocker)
