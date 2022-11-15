@@ -531,7 +531,7 @@ func ByName(name Name) Tool {
 	return tools[name]
 }
 
-// CopyToolBinaries moves the tools artifacts form docker cache to the target local location.
+// CopyToolBinaries moves the tools artifacts form the local cache to the target local location.
 // In case the binPath doesn't exist the method will create it.
 func CopyToolBinaries(tool Name, path string, binaryNames ...string) error {
 	if len(binaryNames) == 0 {

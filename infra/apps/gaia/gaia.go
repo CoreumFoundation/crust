@@ -24,7 +24,7 @@ var (
 
 const (
 	// AppType is the type of gaia application.
-	AppType infra.AppType = "gaia"
+	AppType infra.AppType = "gaiad"
 	// DefaultChainID is the gaia's default chain id.
 	DefaultChainID = "gaia-localnet-1"
 	// DefaultAccountPrefix is the account prefix used in the gaia.
@@ -114,7 +114,7 @@ func (g Gaia) Deployment() infra.Deployment {
 		},
 		Ports:       infra.PortsToMap(g.config.Ports),
 		PrepareFunc: g.prepare,
-		Entrypoint:  filepath.Join(".", targets.AppHomeDir, dockerEntrypoint),
+		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
 	}
 }
 

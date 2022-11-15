@@ -160,7 +160,7 @@ func (r Relayer) Deployment() infra.Deployment {
 			},
 		},
 		PrepareFunc: r.prepare,
-		Entrypoint:  filepath.Join(".", targets.AppHomeDir, dockerEntrypoint),
+		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
 	}
 }
 

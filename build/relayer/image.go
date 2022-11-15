@@ -6,7 +6,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/docker"
-	"github.com/CoreumFoundation/crust/build/docker/basic"
+	dockerbasic "github.com/CoreumFoundation/crust/build/docker/basic"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -14,7 +14,7 @@ import (
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	const binaryName = "relayer"
 
-	relayerLocalPath := tools.PathLocal(path.Join(".cache", "docker", "relayer"))
+	relayerLocalPath := path.Join("bin", ".cache", "docker", "relayer")
 
 	if err := tools.EnsureDocker(ctx, tools.Relayer); err != nil {
 		return err
@@ -24,7 +24,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	dockerfile, err := basic.Execute(basic.Data{
+	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
 		From:   docker.AlpineImage,
 		Binary: binaryName,
 	})

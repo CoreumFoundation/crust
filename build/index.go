@@ -23,7 +23,7 @@ var Commands = map[string]build.CommandFunc{
 	"images":                  buildDockerImages,
 	"images/cored":            coreum.BuildCoredDockerImage,
 	"images/faucet":           faucet.BuildDockerImage,
-	"images/gaia":             gaia.BuildDockerImage,
+	"images/gaiad":            gaia.BuildDockerImage,
 	"images/relayer":          relayer.BuildDockerImage,
 	"lint":                    lint,
 	"lint/coreum":             coreum.Lint,

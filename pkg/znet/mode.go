@@ -44,7 +44,7 @@ func DevMode(appF *apps.Factory) infra.Mode {
 	coredApp, coredNodes, err := appF.CoredNetwork("coredev", cored.DefaultPorts, 1, 0)
 	must.OK(err)
 
-	gaiaApp := appF.Gaia("gaia")
+	gaiaApp := appF.Gaia("gaiad")
 
 	var mode infra.Mode
 	mode = append(mode, coredNodes...)
@@ -61,7 +61,7 @@ func TestMode(appF *apps.Factory) infra.Mode {
 	coredApp, coredNodes, err := appF.CoredNetwork("coredev", cored.DefaultPorts, 3, 0)
 	must.OK(err)
 
-	gaiaApp := appF.Gaia("gaia")
+	gaiaApp := appF.Gaia("gaiad")
 
 	var mode infra.Mode
 	mode = append(mode, coredNodes...)
