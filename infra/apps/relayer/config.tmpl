@@ -1,0 +1,37 @@
+global:
+    api-listen-addr: :5183
+    timeout: 10s
+    memo:
+    light-cache-size: 20
+chains:
+    coreum:
+        type: cosmos
+        value:
+            key: coreum-key
+            chain-id: {{ .CoreumChanID }}
+            rpc-addr: {{ .CoreumRPCUrl }}
+            account-prefix: {{ .CoreumAccountPrefix }}
+            keyring-backend: test
+            gas-adjustment: 1.2
+            gas-prices: 0.0625ducore # initial gas price
+            min-gas-amount: 0
+            debug: true
+            timeout: 20s
+            output-format: json
+            sign-mode: direct
+    gaia:
+        type: cosmos
+        value:
+            key: gaia-key
+            chain-id: {{ .GaiaChanID }}
+            rpc-addr: {{ .GaiaRPCUrl }}
+            account-prefix: {{ .GaiaAccountPrefix }}
+            keyring-backend: test
+            gas-adjustment: 1.2
+            gas-prices: 0.01stake
+            min-gas-amount: 0
+            debug: true
+            timeout: 20s
+            output-format: json
+            sign-mode: direct
+paths: {}

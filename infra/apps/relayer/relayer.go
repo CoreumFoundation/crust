@@ -26,8 +26,12 @@ import (
 
 var (
 	//go:embed run.tmpl
-	tmpl              string
-	runScriptTemplate = template.Must(template.New("").Parse(tmpl))
+	scriptTmpl        string
+	runScriptTemplate = template.Must(template.New("").Parse(scriptTmpl))
+
+	//go:embed config.tmpl
+	configTmpl     string
+	configTemplate = template.Must(template.New("").Parse(configTmpl))
 )
 
 const (
@@ -165,18 +169,61 @@ func (r Relayer) Deployment() infra.Deployment {
 }
 
 func (r Relayer) prepare() error {
-	args := struct {
+	err := r.saveConfigFile()
+	if err != nil {
+		return err
+	}
+
+	return r.saveRunScriptFile(err)
+}
+
+func (r Relayer) saveConfigFile() error {
+	configArgs := struct {
+		CoreumChanID        string
+		CoreumRPCUrl        string
+		CoreumAccountPrefix string
+
+		GaiaChanID        string
+		GaiaRPCUrl        string
+		GaiaAccountPrefix string
+	}{
+		CoreumChanID:        string(r.config.Cored.Config().Network.ChainID()),
+		CoreumRPCUrl:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
+		CoreumAccountPrefix: r.config.Cored.Config().Network.AddressPrefix(),
+
+		GaiaChanID:        r.config.Gaia.Config().ChainID,
+		GaiaRPCUrl:        infra.JoinNetAddr("http", r.config.Gaia.Info().HostFromContainer, r.config.Gaia.Config().Ports.RPC),
+		GaiaAccountPrefix: r.config.Gaia.Config().AccountPrefix,
+	}
+
+	buf := &bytes.Buffer{}
+	if err := configTemplate.Execute(buf, configArgs); err != nil {
+		return errors.WithStack(err)
+	}
+
+	configFolderPath := path.Join(r.config.HomeDir, ".relayer", "config")
+	err := os.MkdirAll(configFolderPath, os.ModePerm)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = os.WriteFile(path.Join(configFolderPath, "config.yaml"), buf.Bytes(), 0o700)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+func (r Relayer) saveRunScriptFile(err error) error {
+	scriptArgs := struct {
 		HomePath string
 
 		CoreumChanID          string
-		CoreumRPCUrl          string
-		CoreumAccountPrefix   string
 		CoreumRelayerMnemonic string
 		CoreumRelayerCoinType uint32
 
 		GaiaChanID          string
-		GaiaRPCUrl          string
-		GaiaAccountPrefix   string
 		GaiaRelayerMnemonic string
 
 		DebugPort int
@@ -184,25 +231,21 @@ func (r Relayer) prepare() error {
 		HomePath: targets.AppHomeDir,
 
 		CoreumChanID:          string(r.config.Cored.Config().Network.ChainID()),
-		CoreumRPCUrl:          infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
-		CoreumAccountPrefix:   r.config.Cored.Config().Network.AddressPrefix(),
 		CoreumRelayerMnemonic: r.config.Cored.Config().RelayerMnemonic,
 		CoreumRelayerCoinType: coreumconfig.CoinType,
 
 		GaiaChanID:          r.config.Gaia.Config().ChainID,
-		GaiaRPCUrl:          infra.JoinNetAddr("http", r.config.Gaia.Info().HostFromContainer, r.config.Gaia.Config().Ports.RPC),
-		GaiaAccountPrefix:   r.config.Gaia.Config().AccountPrefix,
 		GaiaRelayerMnemonic: r.config.Gaia.Config().RelayerMnemonic,
 
 		DebugPort: r.config.DebugPort,
 	}
 
 	buf := &bytes.Buffer{}
-	if err := runScriptTemplate.Execute(buf, args); err != nil {
+	if err := runScriptTemplate.Execute(buf, scriptArgs); err != nil {
 		return errors.WithStack(err)
 	}
 
-	err := os.WriteFile(path.Join(r.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o700)
+	err = os.WriteFile(path.Join(r.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o700)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -2,67 +2,26 @@
 
 export HOME="{{ .HomePath }}"
 
-RELAYER_CONFIG_PATH="$HOME/.relayer/config/config.yaml"
+RELAYER_KEYS_PATH="$HOME/.relayer/config/keys"
 
-if [ ! -f "$RELAYER_CONFIG_PATH" ]; then
+# The indicator to understand that relayer isn't initialized.
+if [ ! -d "$RELAYER_KEYS_PATH" ]; then
 
-# Init the relayer and set the templated config
-relayer config init
-
-echo \
-"global:
-    api-listen-addr: :5183
-    timeout: 10s
-    memo:
-    light-cache-size: 20
-chains:
-    coreum:
-        type: cosmos
-        value:
-            key: coreum-key
-            chain-id: {{ .CoreumChanID }}
-            rpc-addr: {{ .CoreumRPCUrl }}
-            account-prefix: {{ .CoreumAccountPrefix }}
-            keyring-backend: test
-            gas-adjustment: 1.2
-            gas-prices: 0.0625ducore # initial gas price
-            min-gas-amount: 0
-            debug: true
-            timeout: 20s
-            output-format: json
-            sign-mode: direct
-    gaia:
-        type: cosmos
-        value:
-            key: gaia-key
-            chain-id: {{ .GaiaChanID }}
-            rpc-addr: {{ .GaiaRPCUrl }}
-            account-prefix: {{ .GaiaAccountPrefix }}
-            keyring-backend: test
-            gas-adjustment: 1.2
-            gas-prices: 0.01stake
-            min-gas-amount: 0
-            debug: true
-            timeout: 20s
-            output-format: json
-            sign-mode: direct
-paths: {}" > $RELAYER_CONFIG_PATH
-
-# import the relayer mnemonic
+echo "Importing the relayer mnemonics."
 relayer keys restore coreum coreum-key "{{ .CoreumRelayerMnemonic }}" --coin-type={{ .CoreumRelayerCoinType }}
 relayer keys restore gaia gaia-key "{{ .GaiaRelayerMnemonic }}"
 
-# query balances
+echo "Relayer balances:"
 relayer q balance coreum
 relayer q balance gaia
 
-# add relayer path
+echo  "Adding relayer paths."
 relayer paths new {{ .CoreumChanID }} {{ .GaiaChanID }} ibc-path
 
-# init relayer path
+echo "Connecting the chains."
 relayer transact link ibc-path
 
 fi
 
-# start the relayer
+echo "Starting the relayer."
 relayer start ibc-path --debug-addr "0.0.0.0:{{ .DebugPort }}"
