@@ -186,6 +186,7 @@ var tools = map[Name]Tool{
 				URL:  "https://github.com/cosmos/relayer/releases/download/v2.1.0/Cosmos.Relayer_2.1.0_linux_amd64.tar.gz",
 				Hash: "sha256:893537acd7fa5b5b9f0814f06ce6c26ba3f944262d7a43f5790216350d8399a9",
 				Binaries: map[string]string{
+					// "Cosmos Relayer" is the binary name in the archive
 					"bin/relayer": "Cosmos Relayer",
 				},
 			},
@@ -193,6 +194,7 @@ var tools = map[Name]Tool{
 				URL:  "https://github.com/cosmos/relayer/releases/download/v2.1.0/Cosmos.Relayer_2.1.0_linux_arm64.tar.gz",
 				Hash: "sha256:e6dddf04c03254e86a32d9c74b35514f8c46399f1e33e17f1ae29aaac4d1f1f1",
 				Binaries: map[string]string{
+					// "Cosmos Relayer" is the binary name in the archive
 					"bin/relayer": "Cosmos Relayer",
 				},
 			},

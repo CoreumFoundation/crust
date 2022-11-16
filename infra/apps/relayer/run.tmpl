@@ -16,10 +16,10 @@ echo \
     memo:
     light-cache-size: 20
 chains:
-    znet:
+    coreum:
         type: cosmos
         value:
-            key: znet-key
+            key: coreum-key
             chain-id: {{ .CoreumChanID }}
             rpc-addr: {{ .CoreumRPCUrl }}
             account-prefix: {{ .CoreumAccountPrefix }}
@@ -49,11 +49,11 @@ chains:
 paths: {}" > $RELAYER_CONFIG_PATH
 
 # import the relayer mnemonic
-relayer keys restore znet znet-key "{{ .CoreumRelayerMnemonic }}" --coin-type={{ .CoreumRelayerCoinType }}
+relayer keys restore coreum coreum-key "{{ .CoreumRelayerMnemonic }}" --coin-type={{ .CoreumRelayerCoinType }}
 relayer keys restore gaia gaia-key "{{ .GaiaRelayerMnemonic }}"
 
 # query balances
-relayer q balance znet
+relayer q balance coreum
 relayer q balance gaia
 
 # add relayer path
