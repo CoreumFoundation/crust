@@ -169,12 +169,11 @@ func (r Relayer) Deployment() infra.Deployment {
 }
 
 func (r Relayer) prepare() error {
-	err := r.saveConfigFile()
-	if err != nil {
+	if err := r.saveConfigFile(); err != nil {
 		return err
 	}
 
-	return r.saveRunScriptFile(err)
+	return r.saveRunScriptFile()
 }
 
 func (r Relayer) saveConfigFile() error {
@@ -215,7 +214,7 @@ func (r Relayer) saveConfigFile() error {
 	return nil
 }
 
-func (r Relayer) saveRunScriptFile(err error) error {
+func (r Relayer) saveRunScriptFile() error {
 	scriptArgs := struct {
 		HomePath string
 
@@ -245,7 +244,7 @@ func (r Relayer) saveRunScriptFile(err error) error {
 		return errors.WithStack(err)
 	}
 
-	err = os.WriteFile(path.Join(r.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o700)
+	err := os.WriteFile(path.Join(r.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o700)
 	if err != nil {
 		return errors.WithStack(err)
 	}
