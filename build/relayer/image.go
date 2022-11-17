@@ -2,7 +2,7 @@ package relayer
 
 import (
 	"context"
-	"path"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/docker"
@@ -14,7 +14,7 @@ import (
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	const binaryName = "relayer"
 
-	relayerLocalPath := path.Join("bin", ".cache", "docker", "relayer")
+	relayerLocalPath := filepath.Join("bin", ".cache", "docker", "relayer")
 
 	if err := tools.EnsureDocker(ctx, tools.Relayer); err != nil {
 		return err

@@ -200,13 +200,13 @@ func (r Relayer) saveConfigFile() error {
 		return errors.WithStack(err)
 	}
 
-	configFolderPath := path.Join(r.config.HomeDir, ".relayer", "config")
+	configFolderPath := filepath.Join(r.config.HomeDir, ".relayer", "config")
 	err := os.MkdirAll(configFolderPath, os.ModePerm)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = os.WriteFile(path.Join(configFolderPath, "config.yaml"), buf.Bytes(), 0o700)
+	err = os.WriteFile(filepath.Join(configFolderPath, "config.yaml"), buf.Bytes(), 0o700)
 	if err != nil {
 		return errors.WithStack(err)
 	}

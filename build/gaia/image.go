@@ -2,7 +2,7 @@ package gaia
 
 import (
 	"context"
-	"path"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/docker"
@@ -14,7 +14,7 @@ import (
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	const binaryName = "gaiad"
 
-	gaiaLocalPath := path.Join("bin", ".cache", "docker", "gaia")
+	gaiaLocalPath := filepath.Join("bin", ".cache", "docker", "gaia")
 	if err := tools.EnsureDocker(ctx, tools.Gaia); err != nil {
 		return err
 	}

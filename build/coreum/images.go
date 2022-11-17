@@ -2,7 +2,6 @@ package coreum
 
 import (
 	"context"
-	"path"
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
@@ -37,7 +36,7 @@ func ensureCosmovisor(ctx context.Context, deps build.DepsFunc) error {
 	if err := tools.EnsureDocker(ctx, tools.Cosmovisor); err != nil {
 		return err
 	}
-	cosmovisorLocalPath := path.Join("bin", ".cache", "docker", "cored")
+	cosmovisorLocalPath := filepath.Join("bin", ".cache", "docker", "cored")
 
 	return tools.CopyToolBinaries(tools.Cosmovisor, cosmovisorLocalPath, "cosmovisor")
 }
