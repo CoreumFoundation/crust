@@ -15,7 +15,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
-	"github.com/CoreumFoundation/crust/infra/apps/gaia"
+	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/relayer"
@@ -169,20 +169,20 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 }
 
 // Gaia creates new gaia.
-func (f *Factory) Gaia(name string) gaia.Gaia {
-	return gaia.New(gaia.Config{
+func (f *Factory) Gaia(name string) gaiad.Gaia {
+	return gaiad.New(gaiad.Config{
 		Name:            name,
 		HomeDir:         filepath.Join(f.config.AppDir, name),
-		ChainID:         gaia.DefaultChainID,
-		AccountPrefix:   gaia.DefaultAccountPrefix,
-		AppInfo:         f.spec.DescribeApp(gaia.AppType, name),
-		Ports:           gaia.DefaultPorts,
-		RelayerMnemonic: gaia.RelayerMnemonic,
+		ChainID:         gaiad.DefaultChainID,
+		AccountPrefix:   gaiad.DefaultAccountPrefix,
+		AppInfo:         f.spec.DescribeApp(gaiad.AppType, name),
+		Ports:           gaiad.DefaultPorts,
+		RelayerMnemonic: gaiad.RelayerMnemonic,
 	})
 }
 
 // Relayer creates new relayer.
-func (f *Factory) Relayer(name string, coredApp cored.Cored, gaiaApp gaia.Gaia) relayer.Relayer {
+func (f *Factory) Relayer(name string, coredApp cored.Cored, gaiaApp gaiad.Gaia) relayer.Relayer {
 	return relayer.New(relayer.Config{
 		Name:      name,
 		HomeDir:   filepath.Join(f.config.AppDir, name),

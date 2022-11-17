@@ -20,7 +20,7 @@ import (
 	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
-	"github.com/CoreumFoundation/crust/infra/apps/gaia"
+	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -51,7 +51,7 @@ type Config struct {
 	AppInfo   *infra.AppInfo
 	DebugPort int
 	Cored     cored.Cored
-	Gaia      gaia.Gaia
+	Gaia      gaiad.Gaia
 }
 
 // New creates new relayer app.
