@@ -244,7 +244,7 @@ func (r Relayer) saveRunScriptFile() error {
 		return errors.WithStack(err)
 	}
 
-	err := os.WriteFile(path.Join(r.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o700)
+	err := os.WriteFile(path.Join(r.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o777)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -573,7 +573,7 @@ func CopyToolBinaries(tool Name, path string, binaryNames ...string) error {
 			return errors.WithStack(err)
 		}
 		defer fr.Close()
-		fw, err := os.OpenFile(filepath.Join(path, binaryName), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o755) //nolint:nosnakecase // os constants
+		fw, err := os.OpenFile(filepath.Join(path, binaryName), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o777) //nolint:nosnakecase // os constants
 		if err != nil {
 			return errors.WithStack(err)
 		}
