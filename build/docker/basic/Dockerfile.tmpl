@@ -1,5 +1,8 @@
 FROM {{ .From }}
 
+# gaiad is compiled with glibc
+RUN apk add --no-cache gcompat
+
 COPY {{ .Binary }} /bin/{{ .Binary }}
 
 ENTRYPOINT ["{{ .Binary }}"]
