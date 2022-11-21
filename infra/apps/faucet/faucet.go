@@ -108,8 +108,6 @@ func (f Faucet) Deployment() infra.Deployment {
 				"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
 				"--chain-id", string(f.config.ChainID),
 				"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
-				// TODO (milad): remove after faucet is updated to use mnemonic
-				"--key-path", filepath.Join(targets.AppHomeDir, "key"),
 				"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Config().Ports.RPC),
 				"--log-format", "yaml",
 			}
@@ -124,7 +122,7 @@ func (f Faucet) Deployment() infra.Deployment {
 			},
 		},
 		PrepareFunc: func() error {
-			return errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "mnemonic-key"), []byte(PrivateKeyMnemonic), 0o400))
+			return errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "mnemonic-key"), []byte(f.config.Cored.Config().FaucetMnemonic), 0o400))
 		},
 	}
 }

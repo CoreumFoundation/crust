@@ -296,6 +296,9 @@ type Deployment struct {
 	// It is required if container creates files inside mounted directory which is a part of app's home.
 	// Otherwise, `znet` won't be able to delete them.
 	RunAsUser bool
+
+	// Entrypoint is the custom entrypoint for the container.
+	Entrypoint string
 }
 
 // Deploy deploys container to the target

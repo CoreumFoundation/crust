@@ -145,28 +145,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (inf
 	if id != "" {
 		startCmd = exec.Docker("start", id)
 	} else {
-		runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
-			"--label", labelApp + "=" + app.Name, "--network", d.config.EnvName}
-		if app.RunAsUser {
-			runArgs = append(runArgs, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))
-		}
-		for _, port := range app.Ports {
-			portStr := strconv.Itoa(port)
-			runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
-		}
-		for _, v := range app.Volumes {
-			runArgs = append(runArgs, "-v", v.Source+":"+v.Destination)
-		}
-		if app.EnvVarsFunc != nil {
-			for _, env := range app.EnvVarsFunc() {
-				runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
-			}
-		}
-		runArgs = append(runArgs, app.Image)
-		if app.ArgsFunc != nil {
-			runArgs = append(runArgs, app.ArgsFunc()...)
-		}
-
+		runArgs := d.prepareRunArgs(name, app)
 		startCmd = exec.Docker(runArgs...)
 	}
 	idBuf := &bytes.Buffer{}
@@ -186,6 +165,36 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (inf
 		HostFromContainer: name,
 		Ports:             app.Ports,
 	}, nil
+}
+
+func (d *Docker) prepareRunArgs(name string, app infra.Deployment) []string {
+	runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
+		"--label", labelApp + "=" + app.Name, "--network", d.config.EnvName}
+	if app.RunAsUser {
+		runArgs = append(runArgs, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))
+	}
+	for _, port := range app.Ports {
+		portStr := strconv.Itoa(port)
+		runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
+	}
+	for _, v := range app.Volumes {
+		runArgs = append(runArgs, "-v", v.Source+":"+v.Destination)
+	}
+	if app.EnvVarsFunc != nil {
+		for _, env := range app.EnvVarsFunc() {
+			runArgs = append(runArgs, "-e", env.Name+"="+env.Value)
+		}
+	}
+	if app.Entrypoint != "" {
+		runArgs = append(runArgs, "--entrypoint", app.Entrypoint)
+	}
+
+	runArgs = append(runArgs, app.Image)
+	if app.ArgsFunc != nil {
+		runArgs = append(runArgs, app.ArgsFunc()...)
+	}
+
+	return runArgs
 }
 
 func (d *Docker) ensureNetwork(ctx context.Context, network string) error {

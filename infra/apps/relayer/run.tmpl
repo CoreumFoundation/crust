@@ -1,0 +1,27 @@
+#!/bin/sh
+
+export HOME="{{ .HomePath }}"
+
+RELAYER_KEYS_PATH="$HOME/.relayer/config/keys"
+
+# The indicator to understand that relayer isn't initialized.
+if [ ! -d "$RELAYER_KEYS_PATH" ]; then
+
+echo "Importing the relayer mnemonics."
+relayer keys restore coreum coreum-key "{{ .CoreumRelayerMnemonic }}" --coin-type={{ .CoreumRelayerCoinType }}
+relayer keys restore gaia gaia-key "{{ .GaiaRelayerMnemonic }}"
+
+echo "Relayer balances:"
+relayer q balance coreum
+relayer q balance gaia
+
+echo  "Adding relayer paths."
+relayer paths new {{ .CoreumChanID }} {{ .GaiaChanID }} ibc-path
+
+echo "Connecting the chains."
+relayer transact link ibc-path
+
+fi
+
+echo "Starting the relayer."
+relayer start ibc-path --debug-addr "0.0.0.0:{{ .DebugPort }}"

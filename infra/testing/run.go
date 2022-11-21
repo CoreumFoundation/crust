@@ -35,7 +35,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 
 	log := logger.Get(ctx)
 	log.Info("Waiting until all applications start...")
-	waitCtx, waitCancel := context.WithTimeout(ctx, 20*time.Second)
+	waitCtx, waitCancel := context.WithTimeout(ctx, time.Minute)
 	defer waitCancel()
 	if err := infra.WaitUntilHealthy(waitCtx, buildWaitForApps(mode)...); err != nil {
 		return err
@@ -77,7 +77,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 		case "coreum":
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
-				"-funding-mnemonic", FundingMnemonic,
+				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
 			)
 
 			for _, m := range mode {
