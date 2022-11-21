@@ -67,7 +67,7 @@ func TestMode(appF *apps.Factory) infra.Mode {
 	mode = append(mode, coredNodes...)
 	mode = append(mode, gaiaApp)
 	mode = append(mode, appF.Relayer("relayer", coredApp, gaiaApp))
-	mode = append(mode, appF.Faucet("faucet", coredApp))
+	mode = append(mode, appF.Faucet("faucetdev", coredApp))
 
 	return mode
 }
