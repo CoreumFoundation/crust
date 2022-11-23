@@ -36,20 +36,20 @@ const (
 var tools = map[Name]Tool{
 	// https://go.dev/dl/
 	Go: {
-		Version:  "1.19.2",
+		Version:  "1.19.3",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://go.dev/dl/go1.19.2.linux-amd64.tar.gz",
-				Hash: "sha256:5e8c5a74fe6470dd7e055a461acda8bb4050ead8c2df70f227e3ff7d8eb7eeb6",
+				URL:  "https://go.dev/dl/go1.19.3.linux-amd64.tar.gz",
+				Hash: "sha256:74b9640724fd4e6bb0ed2a1bc44ae813a03f1e72a4c76253e2d5c015494430ba",
 			},
 			darwinAMD64: {
-				URL:  "https://go.dev/dl/go1.19.2.darwin-amd64.tar.gz",
-				Hash: "sha256:16f8047d7b627699b3773680098fbaf7cc962b7db02b3e02726f78c4db26dfde",
+				URL:  "https://go.dev/dl/go1.19.3.darwin-amd64.tar.gz",
+				Hash: "sha256:7fa09a9a34cb6f794e61e9ada1d6d18796f936a2b35f22724906cad71396e590",
 			},
 			darwinARM64: {
-				URL:  "https://go.dev/dl/go1.19.2.darwin-arm64.tar.gz",
-				Hash: "sha256:35d819df25197c0be45f36ce849b994bba3b0559b76d4538b910d28f6395c00d",
+				URL:  "https://go.dev/dl/go1.19.3.darwin-arm64.tar.gz",
+				Hash: "sha256:49e394ab92bc6fa3df3d27298ddf3e4491f99477bee9dd4934525a526f3a391c",
 			},
 		},
 		Binaries: map[string]string{
@@ -89,20 +89,20 @@ var tools = map[Name]Tool{
 
 	// https://github.com/ignite/cli/releases/
 	Ignite: {
-		Version:  "0.25.1",
+		Version:  "0.25.2",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.25.1/ignite_0.25.1_linux_amd64.tar.gz",
-				Hash: "sha256:21a95ad447891e88398f2929ffb855004a604960e21fc24ddc47d3bf4cc5adb0",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.25.2/ignite_0.25.2_linux_amd64.tar.gz",
+				Hash: "sha256:62b6e223acc2fe0d60764ed2769b938e834f20e7517d78cc8c40c9c962f98253",
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.25.1/ignite_0.25.1_darwin_amd64.tar.gz",
-				Hash: "sha256:7b366d858c9db93d4e8aa4aa89a8298868c1a60be2c676310334bdf96287bedb",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.25.2/ignite_0.25.2_darwin_amd64.tar.gz",
+				Hash: "sha256:2077da0203c00b8632e78ef491a87c022187fccb1cfe4147d8d29d138e44d060",
 			},
 			darwinARM64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.25.1/ignite_0.25.1_darwin_arm64.tar.gz",
-				Hash: "sha256:d61bcff93c68770dca79eb8b7f2789bcc6a364baf4433d70344e63da821f5103",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.25.2/ignite_0.25.2_darwin_arm64.tar.gz",
+				Hash: "sha256:96376a4f807d7e2bd12add25e038f0f2c043cb181762876dc7039b3acdeeb96f",
 			},
 		},
 		Binaries: map[string]string{
@@ -157,27 +157,28 @@ var tools = map[Name]Tool{
 
 	// https://github.com/cosmos/gaia/releases
 	Gaia: {
-		Version:   "v7.0.0",
+		Version:   "v7.1.0",
 		ForDocker: true,
 		Sources: Sources{
 			dockerAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v7.0.0/gaiad-v7.0.0-linux-amd64",
-				Hash: "sha256:dc0e5b6690a55f0f1c41ad96f068049e25d9e85d53c0587284b7f1a1f9a51545",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v7.1.0/gaiad-v7.1.0-linux-amd64",
+				Hash: "sha256:7a24fd361b0259878a5aeb1f890ca0df20be1a875e7fc94aaef36eec4edf99c4",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v7.0.0-linux-amd64",
+					"bin/gaiad": "gaiad-v7.1.0-linux-amd64",
 				},
 			},
 			dockerARM64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v7.0.0/gaiad-v7.0.0-linux-arm64",
-				Hash: "sha256:994f67ec8134504ae032a1ae58caf769b5a9a1581a38705efd94ab654a7f6173",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v7.1.0/gaiad-v7.1.0-linux-arm64",
+				Hash: "sha256:4ac73edab3a967af4af2549d48ff8c7600f73e103766dc97f2eeff35fd6b8c50",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v7.0.0-linux-arm64",
+					"bin/gaiad": "gaiad-v7.1.0-linux-arm64",
 				},
 			},
 		},
 	},
 
 	// https://github.com/cosmos/relayer/releases
+	// There is v2.1.2 but it doesn't expose prometheus metrics we use to detect that relayer is ready
 	Relayer: {
 		Version:   "v2.1.0",
 		ForDocker: true,
