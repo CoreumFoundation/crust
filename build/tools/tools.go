@@ -88,21 +88,22 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/ignite/cli/releases/
+	// v0.23.0 is the last version based on Cosmos v0.45.x
 	Ignite: {
-		Version:  "0.25.2",
+		Version:  "0.23.0",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.25.2/ignite_0.25.2_linux_amd64.tar.gz",
-				Hash: "sha256:62b6e223acc2fe0d60764ed2769b938e834f20e7517d78cc8c40c9c962f98253",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_linux_amd64.tar.gz",
+				Hash: "sha256:915a96eb366fbf9c353af32d0ddb01796a30b86343ac77d613cc8a8af3dd395a",
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.25.2/ignite_0.25.2_darwin_amd64.tar.gz",
-				Hash: "sha256:2077da0203c00b8632e78ef491a87c022187fccb1cfe4147d8d29d138e44d060",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_darwin_amd64.tar.gz",
+				Hash: "sha256:b9ca67a70f4d1b43609c4289a7e83dc2174754d35f30fb43f1518c0434361c4e",
 			},
 			darwinARM64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.25.2/ignite_0.25.2_darwin_arm64.tar.gz",
-				Hash: "sha256:96376a4f807d7e2bd12add25e038f0f2c043cb181762876dc7039b3acdeeb96f",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_darwin_arm64.tar.gz",
+				Hash: "sha256:daefd4ac83e3bb384cf97a2ff8cc6e81427f74e2c81c567fd0507fce647146ec",
 			},
 		},
 		Binaries: map[string]string{
@@ -156,6 +157,7 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/cosmos/gaia/releases
+	// Before upgrading verify in go.mod that they use the same version of IBC
 	Gaia: {
 		Version:   "v7.1.0",
 		ForDocker: true,
