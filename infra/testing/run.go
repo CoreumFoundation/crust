@@ -35,7 +35,7 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 
 	log := logger.Get(ctx)
 	log.Info("Waiting until all applications start...")
-	waitCtx, waitCancel := context.WithTimeout(ctx, time.Minute)
+	waitCtx, waitCancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer waitCancel()
 	if err := infra.WaitUntilHealthy(waitCtx, buildWaitForApps(mode)...); err != nil {
 		return err
