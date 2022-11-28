@@ -10,16 +10,24 @@ To use `crust` you need:
 Install them manually before continuing.
 
 ## Building
-
-Build all the required binaries and docker images by running:
-
+1. Clone repo to your `$HOME` directory:
 ```
-./bin/crust build images
+cd $HOME
+git clone https://github.com/CoreumFoundation/crust
 ```
 
-Or you can add `./bin/` directory to path to run it from any place by `crust build images`
+2. Not required but recommended: Add `$HOME/crust/bin` to your `PATH` environment variable:
+```
+export PATH="$HOME/crust/bin:$PATH"
+```
 
-NOTE: crust works only in its directory, don't move it.
+3. Compile all the required binaries and docker images:
+```
+$HOME/crust/bin/crust build images
+```
+
+After the command completes you may find executable `$HOME/crust/bin/cored`, being both blockchain node and client.
+
 
 ## Executing `znet`
 
