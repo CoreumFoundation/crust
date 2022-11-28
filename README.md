@@ -4,7 +4,7 @@
 ## Prerequisites
 To use `crust` you need:
 - `go 1.18` or newer
-- `tmux`
+- `tmux` - terminal multiplexer
 - `docker`
 
 Install them manually before continuing.
@@ -14,8 +14,12 @@ Install them manually before continuing.
 Build all the required binaries and docker images by running:
 
 ```
-$ crust build images
+./bin/crust build images
 ```
+
+Or you can add `./bin/` directory to path to run it from any place by `crust build images`
+
+NOTE: crust works only in its directory, don't move it.
 
 ## Executing `znet`
 
