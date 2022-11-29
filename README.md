@@ -4,18 +4,30 @@
 ## Prerequisites
 To use `crust` you need:
 - `go 1.18` or newer
-- `tmux`
+- `tmux` - terminal multiplexer
 - `docker`
 
 Install them manually before continuing.
 
 ## Building
-
-Build all the required binaries and docker images by running:
-
+1. Clone repo to your `$HOME` directory:
 ```
-$ crust build images
+cd $HOME
+git clone https://github.com/CoreumFoundation/crust
 ```
+
+2. Not required but recommended: Add `$HOME/crust/bin` to your `PATH` environment variable:
+```
+export PATH="$HOME/crust/bin:$PATH"
+```
+
+3. Compile all the required binaries and docker images:
+```
+$HOME/crust/bin/crust build images
+```
+
+After the command completes you may find executable `$HOME/crust/bin/cored`, being both blockchain node and client.
+
 
 ## Executing `znet`
 
