@@ -17,7 +17,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
+	coreumconstant "github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
@@ -231,7 +231,7 @@ func (r Relayer) saveRunScriptFile() error {
 
 		CoreumChanID:          string(r.config.Cored.Config().Network.ChainID()),
 		CoreumRelayerMnemonic: r.config.Cored.Config().RelayerMnemonic,
-		CoreumRelayerCoinType: coreumconfig.CoinType,
+		CoreumRelayerCoinType: coreumconstant.CoinType,
 
 		GaiaChanID:          r.config.Gaia.Config().ChainID,
 		GaiaRelayerMnemonic: r.config.Gaia.Config().RelayerMnemonic,

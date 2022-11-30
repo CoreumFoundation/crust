@@ -8,14 +8,14 @@ replace (
 )
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.0-dev-0.0.20221117233941-0c608b1896c7
+	github.com/CoreumFoundation/coreum v0.0.1-dev.0.20221129141708-2ce705c23498
 	github.com/CoreumFoundation/coreum-tools v0.3.0
 	github.com/cosmos/cosmos-sdk v0.45.9
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.37.0
-	github.com/samber/lo v1.28.0
+	github.com/samber/lo v1.35.0
 	github.com/spf13/cobra v1.5.0
 	github.com/tendermint/tendermint v0.34.21
 	go.uber.org/zap v1.21.0
