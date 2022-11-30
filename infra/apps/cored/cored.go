@@ -72,15 +72,17 @@ func New(cfg Config) Cored {
 		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
 
-		stake := sdk.NewInt64Coin(cfg.Network.Denom(), 1000000000)
+		// we must have the balance significantly more than the balance of the global validator min_self_delegation
+		// in order not to halt the chain after the new validator creation with the min_self_delegation amount
+		stake := sdk.NewInt64Coin(cfg.Network.Denom(), 1_000_000_000_000) // 1m
 		// the additional balance will be used to pay for the tx submitted from the stakers accounts
-		additionalBalance := sdk.NewInt64Coin(cfg.Network.Denom(), 1000000000)
+		additionalBalance := sdk.NewInt64Coin(cfg.Network.Denom(), 1_000_000_000) // 1k core
 
 		must.OK(cfg.Network.FundAccount(sdk.AccAddress(stakerPrivKey.PubKey().Address()), sdk.NewCoins(stake.Add(additionalBalance))))
 
 		clientCtx := tx.NewClientContext(newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
 
-		createValidatorTx, err := prepareTxStakingCreateValidator(cfg.Network.ChainID(), clientCtx.TxConfig(), valPublicKey, stakerPrivKey, stake)
+		createValidatorTx, err := prepareTxStakingCreateValidator(cfg.Network.ChainID(), clientCtx.TxConfig(), valPublicKey, stakerPrivKey, stake, stake.Amount)
 		must.OK(err)
 		cfg.Network.AddGenesisTx(createValidatorTx)
 	}
@@ -102,6 +104,7 @@ func prepareTxStakingCreateValidator(
 	validatorPublicKey ed25519.PublicKey,
 	stakerPrivateKey cosmossecp256k1.PrivKey,
 	stakedBalance sdk.Coin,
+	selfDelegation sdk.Int,
 ) ([]byte, error) {
 	// the passphrase here is the trick to import the private key into the keyring
 	const passphrase = "tmp"
@@ -113,7 +116,7 @@ func prepareTxStakingCreateValidator(
 	}
 
 	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
-	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), &cosmosed25519.PubKey{Key: validatorPublicKey}, stakedBalance, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, sdk.OneInt())
+	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), &cosmosed25519.PubKey{Key: validatorPublicKey}, stakedBalance, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, selfDelegation)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
 	}
