@@ -38,7 +38,7 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCount int, sentriesCount int) (cored.Cored, infra.Mode, error) {
+func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCount int, sentriesCount int) (cored.Cored, infra.AppSet, error) {
 	if validatorsCount > len(cored.StakerMnemonics) {
 		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, len(cored.StakerMnemonics))
 	}
@@ -61,7 +61,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), initialBalance))
 	}
 
-	nodes := make(infra.Mode, 0, validatorsCount+sentriesCount)
+	nodes := make(infra.AppSet, 0, validatorsCount+sentriesCount)
 	var node0 *cored.Cored
 	var lastNode cored.Cored
 	for i := 0; i < cap(nodes); i++ {
@@ -124,7 +124,7 @@ func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 }
 
 // BlockExplorer returns set of applications required to run block explorer
-func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
+func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet {
 	namePostgres := name + "-postgres"
 	nameHasura := name + "-hasura"
 	nameBDJuno := name + "-bdjuno"
@@ -160,7 +160,7 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.Mode {
 		Hasura:  hasuraApp,
 	})
 
-	return infra.Mode{
+	return infra.AppSet{
 		postgresApp,
 		hasuraApp,
 		bdjunoApp,

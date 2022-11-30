@@ -64,9 +64,15 @@ to see what the default values are.
 Defines name of the environment, it is visible in brackets on the left.
 Each environment is independent, you may create many of them and work with them in parallel.
 
-### --mode
+### --profiles
 
-Defines the list of applications to run. You may see their definitions in [crust/pkg/znet/mode.go](crust/pkg/znet/mode.go).
+Defines the list of available application profiles to run. Available profiles:
+- 1cored - runs one cored validator (default one)
+- 3cored - runs three cored validators (1cored and 3cored are mutually exclusive)
+- faucet - runs faucet
+- explorer - runs block explorer
+- ibc - runs setup for testing IBC with coreum, gaia and relayer between them
+- integration-tests - runs setup required by integration tests (3cored, faucet and ibc)
 
 ## Commands
 
@@ -120,7 +126,7 @@ $ crust znet
 it is possible to use `logs` wrapper to tail logs from an application:
 
 ```
-(znet) [znet] $ logs coredev-00
+(znet) [znet] $ logs cored-00
 ```
 
 ## Playing with the blockchain manually
@@ -128,14 +134,14 @@ it is possible to use `logs` wrapper to tail logs from an application:
 For each `cored` instance started by `znet` wrapper script named after the name of the node is created, so you may call the client manually.
 There are also three standard keys: `alice`, `bob` and `charlie` added to the keystore of each instance.
 
-If you start `znet` using `--mode=dev` there is one `cored` application called `coredev-00`.
-To use the client you may use `coredev-00` wrapper:
+If you start `znet` using default `--profiles=1cored` there is one `cored` application called `cored-00`.
+To use the client you may use `cored-00` wrapper:
 
 ```
-(znet) [znet] $ coredev-00 keys list
-(znet) [znet] $ coredev-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
-(znet) [znet] $ coredev-00 tx bank send bob devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky 10core
-(znet) [znet] $ coredev-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
+(znet) [znet] $ cored-00 keys list
+(znet) [znet] $ cored-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
+(znet) [znet] $ cored-00 tx bank send bob devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky 10core
+(znet) [znet] $ cored-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
 ```
 
 ## Integration tests
@@ -148,12 +154,12 @@ You may run tests directly:
 $ crust znet test
 ```
 
-Tests run on top `--mode=test`.
+Tests run on top of `--profiles=integration-tests`.
 
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ crust znet --mode=test
+$ crust znet --profiles=integration-tests
 (znet) [znet] $ tests
 
 # Remember to clean everything

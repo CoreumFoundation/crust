@@ -22,14 +22,14 @@ import (
 )
 
 // Run deploys testing environment and runs tests there
-func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra.Config, onlyRepos ...string) error {
+func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config infra.Config, onlyRepos ...string) error {
 	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
 	files, err := os.ReadDir(testDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if err := target.Deploy(ctx, mode); err != nil {
+	if err := target.Deploy(ctx, appSet); err != nil {
 		return err
 	}
 
@@ -37,12 +37,12 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	log.Info("Waiting until all applications start...")
 	waitCtx, waitCancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer waitCancel()
-	if err := infra.WaitUntilHealthy(waitCtx, buildWaitForApps(mode)...); err != nil {
+	if err := infra.WaitUntilHealthy(waitCtx, buildWaitForApps(appSet)...); err != nil {
 		return err
 	}
 
 	log.Info("All the applications are ready")
-	coredApp := mode.FindRunningApp(cored.AppType, "coredev-00")
+	coredApp := appSet.FindRunningApp(cored.AppType, "cored-00")
 	if coredApp == nil {
 		return errors.New("no running cored app found")
 	}
@@ -80,14 +80,14 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
 			)
 
-			for _, m := range mode {
+			for _, m := range appSet {
 				coredApp, ok := m.(cored.Cored)
-				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "coredev-") {
+				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "cored-") {
 					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
 				}
 			}
 		case "faucet":
-			faucetApp := mode.FindRunningApp(faucet.AppType, "faucetdev")
+			faucetApp := appSet.FindRunningApp(faucet.AppType, "faucet")
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
 			}
@@ -114,9 +114,9 @@ func Run(ctx context.Context, target infra.Target, mode infra.Mode, config infra
 	return nil
 }
 
-func buildWaitForApps(mode infra.Mode) []infra.HealthCheckCapable {
-	waitForApps := make([]infra.HealthCheckCapable, 0, len(mode))
-	for _, app := range mode {
+func buildWaitForApps(appSet infra.AppSet) []infra.HealthCheckCapable {
+	waitForApps := make([]infra.HealthCheckCapable, 0, len(appSet))
+	for _, app := range appSet {
 		withHealthCheck, ok := app.(infra.HealthCheckCapable)
 		if !ok {
 			withHealthCheck = infra.IsRunning(app)

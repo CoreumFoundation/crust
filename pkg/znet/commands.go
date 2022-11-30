@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -66,7 +67,7 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 	shellCmd.Env = append(os.Environ(),
 		"PATH="+config.WrapperDir+":"+os.Getenv("PATH"),
 		"CRUST_ZNET_ENV="+configF.EnvName,
-		"CRUST_ZNET_MODE="+configF.ModeName,
+		"CRUST_ZNET_PROFILES="+strings.Join(configF.Profiles, ","),
 		"CRUST_ZNET_HOME="+configF.HomeDir,
 		"CRUST_ZNET_BIN_DIR="+configF.BinDir,
 		"CRUST_ZNET_FILTER="+configF.TestFilter,
@@ -124,12 +125,12 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr e
 		return err
 	}
 	appF := apps.NewFactory(config, spec, networkConfig)
-	mode, err := Mode(appF, config.ModeName)
+	appSet, err := apps.BuildAppSet(appF, config.Profiles)
 	if err != nil {
 		return err
 	}
 
-	return target.Deploy(ctx, mode)
+	return target.Deploy(ctx, appSet)
 }
 
 // Stop stops environment
@@ -187,12 +188,12 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		return err
 	}
 	appF := apps.NewFactory(config, spec, networkConfig)
-	mode, err := Mode(appF, config.ModeName)
+	appSet, err := apps.BuildAppSet(appF, config.Profiles)
 	if err != nil {
 		return err
 	}
 
-	return testing.Run(ctx, target, mode, config, config.TestRepos...)
+	return testing.Run(ctx, target, appSet, config, config.TestRepos...)
 }
 
 // Spec prints specification of running environment
@@ -237,8 +238,8 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 
 // PingPong connects to cored node and sends transactions back and forth from one account to another to generate
 // transactions on the blockchain
-func PingPong(ctx context.Context, mode infra.Mode) error {
-	coredApp := mode.FindRunningApp(cored.AppType, "coredev-00")
+func PingPong(ctx context.Context, appSet infra.AppSet) error {
+	coredApp := appSet.FindRunningApp(cored.AppType, "cored-00")
 	if coredApp == nil {
 		return errors.New("no running cored app found")
 	}
