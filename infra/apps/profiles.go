@@ -14,7 +14,6 @@ var availableProfiles = map[string]bool{
 	"3cored":            true,
 	"faucet":            true,
 	"explorer":          true,
-	"ibc":               true,
 	"integration-tests": true,
 }
 
@@ -66,9 +65,10 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 			return nil, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored")
 		}
 		pMap["3cored"] = true
+		pMap["faucet"] = true
 	}
 
-	if (pMap["faucet"] || pMap["explorer"] || pMap["ibc"]) && !pMap["3cored"] {
+	if (pMap["faucet"] || pMap["explorer"]) && !pMap["3cored"] {
 		pMap["1cored"] = true
 	}
 
@@ -93,18 +93,12 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 		appSet = append(appSet, coredNodes...)
 	}
 
-	if pMap["faucet"] || pMap["integration-tests"] {
+	if pMap["faucet"] {
 		appSet = append(appSet, appF.Faucet("faucet", coredApp))
 	}
 
 	if pMap["explorer"] {
 		appSet = append(appSet, appF.BlockExplorer("explorer", coredApp)...)
-	}
-
-	if pMap["ibc"] || pMap["integration-tests"] {
-		gaiaApp := appF.Gaia("gaiad")
-		relayer := appF.Relayer("relayer", coredApp, gaiaApp)
-		appSet = append(appSet, gaiaApp, relayer)
 	}
 
 	return appSet, nil
