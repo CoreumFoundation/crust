@@ -9,17 +9,25 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
+const (
+	profile1Cored           = "1cored"
+	profile3Cored           = "3cored"
+	profileFaucet           = "faucet"
+	profileExplorer         = "explorer"
+	profileIntgerationTests = "integration-tests"
+)
+
 var availableProfiles = map[string]bool{
-	"1cored":            true,
-	"3cored":            true,
-	"faucet":            true,
-	"explorer":          true,
-	"integration-tests": true,
+	profile1Cored:           true,
+	profile3Cored:           true,
+	profileFaucet:           true,
+	profileExplorer:         true,
+	profileIntgerationTests: true,
 }
 
 var (
-	defaultProfiles          = []string{"1cored"}
-	integrationTestsProfiles = []string{"integration-tests"}
+	defaultProfiles          = []string{profile1Cored}
+	integrationTestsProfiles = []string{profileIntgerationTests}
 )
 
 var profileList = func() []string {
@@ -56,27 +64,27 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 		pMap[p] = true
 	}
 
-	if pMap["3cored"] && pMap["1cored"] {
+	if pMap[profile3Cored] && pMap[profile1Cored] {
 		return nil, errors.Errorf("profiles 1cored and 3cored are mutually exclusive")
 	}
 
-	if pMap["integration-tests"] {
-		if pMap["1cored"] {
+	if pMap[profileIntgerationTests] {
+		if pMap[profile1Cored] {
 			return nil, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored")
 		}
-		pMap["3cored"] = true
-		pMap["faucet"] = true
+		pMap[profile3Cored] = true
+		pMap[profileFaucet] = true
 	}
 
-	if (pMap["faucet"] || pMap["explorer"]) && !pMap["3cored"] {
-		pMap["1cored"] = true
+	if (pMap[profileFaucet] || pMap[profileExplorer]) && !pMap[profile3Cored] {
+		pMap[profile1Cored] = true
 	}
 
 	var numOfCoredValidators int
 	switch {
-	case pMap["1cored"]:
+	case pMap[profile1Cored]:
 		numOfCoredValidators = 1
-	case pMap["3cored"]:
+	case pMap[profile3Cored]:
 		numOfCoredValidators = 3
 	}
 
@@ -93,11 +101,11 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 		appSet = append(appSet, coredNodes...)
 	}
 
-	if pMap["faucet"] {
+	if pMap[profileFaucet] {
 		appSet = append(appSet, appF.Faucet("faucet", coredApp))
 	}
 
-	if pMap["explorer"] {
+	if pMap[profileExplorer] {
 		appSet = append(appSet, appF.BlockExplorer("explorer", coredApp)...)
 	}
 

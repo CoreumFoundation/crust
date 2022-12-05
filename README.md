@@ -71,8 +71,13 @@ Defines the list of available application profiles to run. Available profiles:
 - 3cored - runs three cored validators (1cored and 3cored are mutually exclusive)
 - faucet - runs faucet
 - explorer - runs block explorer
-- ibc - runs setup for testing IBC with coreum, gaia and relayer between them
-- integration-tests - runs setup required by integration tests (3cored, faucet and ibc)
+- integration-tests - runs setup required by integration tests (3cored and faucet)
+
+To start fully-featured set you may run:
+
+```
+$ crust znet start --profiles=3cored,faucet,explorer
+```
 
 ## Commands
 
