@@ -57,7 +57,7 @@ func rootCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 	rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("CRUST_ZNET_ENV", "znet"), "Name of the environment to run in")
 	rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("CRUST_ZNET_HOME", must.String(os.UserCacheDir())+"/crust/znet"), "Directory where all files created automatically by znet are stored")
 	addBinDirFlag(rootCmd, configF)
-	addModeFlag(rootCmd, configF)
+	addProfileFlag(rootCmd, configF)
 	addFilterFlag(rootCmd, configF)
 	return rootCmd
 }
@@ -73,7 +73,7 @@ func startCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdF
 		}),
 	}
 	addBinDirFlag(startCmd, configF)
-	addModeFlag(startCmd, configF)
+	addProfileFlag(startCmd, configF)
 	return startCmd
 }
 
@@ -106,7 +106,7 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		Use:   "test",
 		Short: "Runs integration tests for all repos",
 		RunE: cmdF.Cmd(func() error {
-			configF.ModeName = "test"
+			configF.Profiles = apps.IntegrationTestsProfiles()
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
 			return znet.Test(ctx, config, spec)
@@ -152,11 +152,11 @@ func pingPongCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.C
 			spec := infra.NewSpec(configF)
 			znetConfig := znet.NewConfig(configF, spec)
 			appF := apps.NewFactory(znetConfig, spec, networkConfig)
-			mode, err := znet.Mode(appF, znetConfig.ModeName)
+			appSet, err := apps.BuildAppSet(appF, znetConfig.Profiles)
 			if err != nil {
 				return err
 			}
-			return znet.PingPong(ctx, mode)
+			return znet.PingPong(ctx, appSet)
 		}),
 	}
 }
@@ -176,8 +176,8 @@ func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 		"Path to directory where executables exist")
 }
 
-func addModeFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.ModeName, "mode", defaultString("CRUST_ZNET_MODE", "dev"), "List of applications to deploy: "+strings.Join(znet.Modes(), " | "))
+func addProfileFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
+	cmd.Flags().StringSliceVar(&configF.Profiles, "profiles", defaultStrings("CRUST_ZNET_PROFILES", apps.DefaultProfiles()), "List of application profiles to deploy: "+strings.Join(apps.Profiles(), " | "))
 }
 
 func addFilterFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
@@ -190,4 +190,20 @@ func defaultString(env, def string) string {
 		val = def
 	}
 	return val
+}
+
+func defaultStrings(env string, def []string) []string {
+	val := os.Getenv(env)
+	if val == "" {
+		return def
+	}
+
+	parts := strings.Split(val, ",")
+	def = make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			def = append(def, p)
+		}
+	}
+	return def
 }
