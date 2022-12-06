@@ -1,8 +1,6 @@
 package apps
 
 import (
-	"sort"
-
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/crust/infra"
@@ -12,17 +10,19 @@ import (
 const (
 	profile1Cored           = "1cored"
 	profile3Cored           = "3cored"
+	profile5Cored           = "5cored"
 	profileFaucet           = "faucet"
 	profileExplorer         = "explorer"
 	profileIntgerationTests = "integration-tests"
 )
 
-var availableProfiles = map[string]bool{
-	profile1Cored:           true,
-	profile3Cored:           true,
-	profileFaucet:           true,
-	profileExplorer:         true,
-	profileIntgerationTests: true,
+var profiles = []string{
+	profile1Cored,
+	profile3Cored,
+	profile5Cored,
+	profileFaucet,
+	profileExplorer,
+	profileIntgerationTests,
 }
 
 var (
@@ -30,18 +30,17 @@ var (
 	integrationTestsProfiles = []string{profileIntgerationTests}
 )
 
-var profileList = func() []string {
-	keys := make([]string, 0, len(availableProfiles))
-	for p := range availableProfiles {
-		keys = append(keys, p)
+var availableProfiles = func() map[string]struct{} {
+	v := map[string]struct{}{}
+	for _, p := range profiles {
+		v[p] = struct{}{}
 	}
-	sort.Strings(keys)
-	return keys
+	return v
 }()
 
 // Profiles returns the list of available profiles
 func Profiles() []string {
-	return profileList
+	return profiles
 }
 
 // DefaultProfiles returns the list of default profiles started if user didn't provide anything else
@@ -57,26 +56,31 @@ func IntegrationTestsProfiles() []string {
 // BuildAppSet builds the application set to deploy based on provided profiles
 func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 	pMap := map[string]bool{}
+	var coredProfilePresent bool
 	for _, p := range profiles {
-		if !availableProfiles[p] {
+		if _, ok := availableProfiles[p]; !ok {
 			return nil, errors.Errorf("profile %s does not exist", p)
+		}
+		if p == profile1Cored || p == profile3Cored || p == profile5Cored {
+			if coredProfilePresent {
+				return nil, errors.Errorf("profiles 1cored, 3cored and 5cored are mutually exclusive")
+			}
+			coredProfilePresent = true
 		}
 		pMap[p] = true
 	}
 
-	if pMap[profile3Cored] && pMap[profile1Cored] {
-		return nil, errors.Errorf("profiles 1cored and 3cored are mutually exclusive")
-	}
-
 	if pMap[profileIntgerationTests] {
 		if pMap[profile1Cored] {
-			return nil, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored")
+			return nil, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored or 5cored")
 		}
-		pMap[profile3Cored] = true
+		if !pMap[profile5Cored] {
+			pMap[profile3Cored] = true
+		}
 		pMap[profileFaucet] = true
 	}
 
-	if (pMap[profileFaucet] || pMap[profileExplorer]) && !pMap[profile3Cored] {
+	if (pMap[profileFaucet] || pMap[profileExplorer]) && !pMap[profile3Cored] && !pMap[profile5Cored] {
 		pMap[profile1Cored] = true
 	}
 
@@ -86,6 +90,8 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 		numOfCoredValidators = 1
 	case pMap[profile3Cored]:
 		numOfCoredValidators = 3
+	case pMap[profile5Cored]:
+		numOfCoredValidators = 5
 	}
 
 	var coredApp cored.Cored
