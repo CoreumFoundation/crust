@@ -56,7 +56,7 @@ func IntegrationTestsProfiles() []string {
 // BuildAppSet builds the application set to deploy based on provided profiles
 func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 	pMap := map[string]bool{}
-	var coredProfilePresent bool
+	coredProfilePresent := false
 	for _, p := range profiles {
 		if _, ok := availableProfiles[p]; !ok {
 			return nil, errors.Errorf("profile %s does not exist", p)
@@ -97,15 +97,13 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 	var coredApp cored.Cored
 	var appSet infra.AppSet
 
-	if numOfCoredValidators > 0 {
-		var err error
-		var coredNodes infra.AppSet
-		coredApp, coredNodes, err = appF.CoredNetwork("cored", cored.DefaultPorts, numOfCoredValidators, 0)
-		if err != nil {
-			return nil, err
-		}
-		appSet = append(appSet, coredNodes...)
+	var err error
+	var coredNodes infra.AppSet
+	coredApp, coredNodes, err = appF.CoredNetwork("cored", cored.DefaultPorts, numOfCoredValidators, 0)
+	if err != nil {
+		return nil, err
 	}
+	appSet = append(appSet, coredNodes...)
 
 	if pMap[profileFaucet] {
 		appSet = append(appSet, appF.Faucet("faucet", coredApp))
