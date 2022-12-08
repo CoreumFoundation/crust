@@ -25,7 +25,7 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
-const goAlpineVersion = "3.16"
+const goAlpineVersion = "3.17"
 
 // BinaryBuildConfig is the configuration for `go build`
 type BinaryBuildConfig struct {
