@@ -15,7 +15,7 @@ import (
 )
 
 // AlpineImage contains tag of alpine image used to build dockerfiles
-const AlpineImage = "alpine:3.16.0"
+const AlpineImage = "alpine:3.17.0"
 
 // BuildImageConfig contains the configuration required to build docker image
 type BuildImageConfig struct {

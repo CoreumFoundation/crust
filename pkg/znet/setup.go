@@ -42,7 +42,7 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 
 	config := infra.Config{
 		EnvName:        configF.EnvName,
-		ModeName:       spec.Mode,
+		Profiles:       spec.Profiles,
 		HomeDir:        homeDir,
 		AppDir:         homeDir + "/app",
 		WrapperDir:     homeDir + "/bin",

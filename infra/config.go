@@ -5,8 +5,8 @@ type Config struct {
 	// EnvName is the name of created environment
 	EnvName string
 
-	// ModeName is the name of the mode
-	ModeName string
+	// Profiles defines the list of application profiles to run
+	Profiles []string
 
 	// HomeDir is the path where all the files are kept
 	HomeDir string

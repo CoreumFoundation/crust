@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,11 +39,11 @@ type App interface {
 	Deployment() Deployment
 }
 
-// Mode is the list of applications to deploy
-type Mode []App
+// AppSet is the list of applications to deploy
+type AppSet []App
 
 // Deploy deploys app in environment to the target
-func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
+func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		deploymentSlots := make(chan struct{}, runtime.NumCPU())
 		for i := 0; i < cap(deploymentSlots); i++ {
@@ -142,8 +143,8 @@ func (m Mode) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec
 	return spec.Save()
 }
 
-// FindRunningApp returns running app of particular type and name available in mode
-func (m Mode) FindRunningApp(appType AppType, appName string) App {
+// FindRunningApp returns running app of particular type and name available in app set
+func (m AppSet) FindRunningApp(appType AppType, appName string) App {
 	for _, app := range m {
 		if app.Type() == appType && app.Info().Status == AppStatusRunning && app.Name() == appName {
 			return app
@@ -221,13 +222,13 @@ type DeploymentInfo struct {
 
 // Target represents target of deployment from the perspective of znet
 type Target interface {
-	// Deploy deploys mode to the target
-	Deploy(ctx context.Context, mode Mode) error
+	// Deploy deploys app set to the target
+	Deploy(ctx context.Context, appSet AppSet) error
 
-	// Stop stops apps in the mode
+	// Stop stops apps in the app set
 	Stop(ctx context.Context) error
 
-	// Remove removes apps in the mode
+	// Remove removes apps in the app set
 	Remove(ctx context.Context) error
 }
 
@@ -358,8 +359,8 @@ type ConfigFactory struct {
 	// EnvName is the name of created environment
 	EnvName string
 
-	// ModeName is the name of the mode
-	ModeName string
+	// Profiles defines the list of application profiles to run
+	Profiles []string
 
 	// HomeDir is the path where all the files are kept
 	HomeDir string
@@ -401,9 +402,9 @@ func NewSpec(configF *ConfigFactory) *Spec {
 		specFile: specFile,
 		configF:  configF,
 
-		Mode: configF.ModeName,
-		Env:  configF.EnvName,
-		Apps: map[string]*AppInfo{},
+		Profiles: configF.Profiles,
+		Env:      configF.EnvName,
+		Apps:     map[string]*AppInfo{},
 	}
 	return spec
 }
@@ -413,8 +414,8 @@ type Spec struct {
 	specFile string
 	configF  *ConfigFactory
 
-	// Mode is the name of mode
-	Mode string `json:"mode"`
+	// Profiles is the list of deployed application profiles
+	Profiles []string `json:"profiles"`
 
 	// Env is the name of env
 	Env string `json:"env"`
@@ -425,13 +426,13 @@ type Spec struct {
 	Apps map[string]*AppInfo `json:"apps"`
 }
 
-// Verify verifies that env and mode in config matches the ones in spec
+// Verify verifies that env and profiles in config matches the ones in spec
 func (s *Spec) Verify() error {
 	if s.Env != s.configF.EnvName {
 		return errors.Errorf("env mismatch, spec: %s, config: %s", s.Env, s.configF.EnvName)
 	}
-	if s.Mode != s.configF.ModeName {
-		return errors.Errorf("mode mismatch, spec: %s, config: %s", s.Mode, s.configF.ModeName)
+	if !profilesCompare(s.Profiles, s.configF.Profiles) {
+		return errors.Errorf("profile mismatch, spec: %s, config: %s", strings.Join(s.Profiles, ","), strings.Join(s.configF.Profiles, ","))
 	}
 	return nil
 }
@@ -526,4 +527,21 @@ func (ai *AppInfo) UnmarshalJSON(data []byte) error {
 	defer ai.mu.Unlock()
 
 	return json.Unmarshal(data, &ai.data)
+}
+
+func profilesCompare(p1, p2 []string) bool {
+	if len(p1) != len(p2) {
+		return false
+	}
+
+	profiles := map[string]bool{}
+	for _, p := range p1 {
+		profiles[p] = true
+	}
+	for _, p := range p2 {
+		if !profiles[p] {
+			return false
+		}
+	}
+	return true
 }
