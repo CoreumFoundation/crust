@@ -85,6 +85,7 @@ linters-settings:
     custom-order: true
 
   revive:
+    confidence: 0.1
     rules:
       - name: blank-imports
       - name: context-as-argument
@@ -93,6 +94,9 @@ linters-settings:
       - name: error-naming
       - name: error-return
       - name: error-strings
+        arguments:
+          - "sdkerrors.Wrap"
+          - "sdkerrors.Wrapf"
       - name: errorf
       - name: exported
       - name: if-return
