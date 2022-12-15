@@ -306,6 +306,7 @@ func (c Cored) prepare() error {
 	appCfg.GRPCWeb.Enable = true
 	appCfg.GRPCWeb.EnableUnsafeCORS = true
 	appCfg.Telemetry.Enabled = true
+	appCfg.Telemetry.PrometheusRetentionTime = 600
 	srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
 
 	if err := importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics); err != nil {
