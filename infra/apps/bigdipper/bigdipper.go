@@ -1,7 +1,6 @@
 package bigdipper
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/crust/infra"
@@ -56,42 +55,9 @@ func (bd BigDipper) Info() infra.DeploymentInfo {
 // Deployment returns deployment of big dipper
 func (bd BigDipper) Deployment() infra.Deployment {
 	return infra.Deployment{
-		// TODO: Get image from docker hub once it's there
-		Image: "gcr.io/coreum-devnet-1/big-dipper-ui:latest-dev",
-		EnvVarsFunc: func() []infra.EnvVar {
-			return []infra.EnvVar{
-				{
-					Name:  "PORT",
-					Value: strconv.Itoa(bd.config.Port),
-				},
-				{
-					Name:  "NEXT_PUBLIC_URL",
-					Value: infra.JoinNetAddr("http", "localhost", bd.config.Port),
-				},
-				{
-					Name:  "NEXT_PUBLIC_RPC_WEBSOCKET",
-					Value: infra.JoinNetAddr("ws", bd.config.Cored.Info().HostFromHost, bd.config.Cored.Config().Ports.RPC) + "/websocket",
-				},
-				{
-					Name:  "NEXT_PUBLIC_GRAPHQL_URL",
-					Value: infra.JoinNetAddr("http", bd.config.Hasura.Info().HostFromHost, bd.config.Hasura.Port()) + "/v1/graphql",
-				},
-				{
-					Name:  "NEXT_PUBLIC_GRAPHQL_WS",
-					Value: infra.JoinNetAddr("ws", bd.config.Hasura.Info().HostFromHost, bd.config.Hasura.Port()) + "/v1/graphql",
-				},
-				{
-					Name:  "NODE_ENV",
-					Value: "development",
-				},
-				{
-					Name:  "NEXT_PUBLIC_CHAIN_TYPE",
-					Value: string(bd.config.Cored.Config().Network.ChainID()),
-				},
-			}
-		},
-		Name: bd.Name(),
-		Info: bd.config.AppInfo,
+		Image: "coreumfoundation/big-dipper-ui:znet-latest",
+		Name:  bd.Name(),
+		Info:  bd.config.AppInfo,
 		Ports: map[string]int{
 			"web": bd.config.Port,
 		},
