@@ -32,7 +32,7 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	return golang.BuildTests(ctx, golang.TestBuildConfig{
 		PackagePath:   "../faucet/integration-tests",
 		BinOutputPath: testBinaryPath,
-		Tags:          []string{"integration"},
+		Tags:          []string{"integrationtests"},
 	})
 }
 

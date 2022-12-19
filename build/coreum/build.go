@@ -12,13 +12,14 @@ import (
 )
 
 const (
-	blockchainName   = "coreum"
-	binaryName       = "cored"
-	repoURL          = "https://github.com/CoreumFoundation/coreum.git"
-	repoPath         = "../coreum"
-	localBinaryPath  = "bin/" + binaryName
-	dockerBinaryPath = "bin/.cache/docker/cored/" + binaryName
-	testBinaryPath   = "bin/.cache/integration-tests/coreum"
+	blockchainName        = "coreum"
+	binaryName            = "cored"
+	repoURL               = "https://github.com/CoreumFoundation/coreum.git"
+	repoPath              = "../coreum"
+	localBinaryPath       = "bin/" + binaryName
+	dockerBinaryPath      = "bin/.cache/docker/cored/" + binaryName
+	testBinaryModulePath  = "bin/.cache/integration-tests/coreum-modules"
+	testBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
 )
 
 // BuildCored builds all the versions of cored binary
@@ -92,10 +93,19 @@ func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
 func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
+	err := golang.BuildTests(ctx, golang.TestBuildConfig{
+		PackagePath:   "../coreum/integration-tests/modules",
+		BinOutputPath: testBinaryModulePath,
+		Tags:          []string{"integrationtests"},
+	})
+	if err != nil {
+		return err
+	}
+
 	return golang.BuildTests(ctx, golang.TestBuildConfig{
-		PackagePath:   "../coreum/integration-tests",
-		BinOutputPath: testBinaryPath,
-		Tags:          []string{"integration"},
+		PackagePath:   "../coreum/integration-tests/upgrade",
+		BinOutputPath: testBinaryUpgradePath,
+		Tags:          []string{"integrationtests"},
 	})
 }
 
