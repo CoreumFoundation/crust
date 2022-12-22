@@ -74,7 +74,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
 		switch f.Name() {
-		case "coreum":
+		case "coreum-modules", "coreum-upgrade":
+
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
 				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
@@ -99,7 +100,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		}
 
 		binPath := filepath.Join(testDir, f.Name())
-		log := log.With(zap.String("binary", binPath))
+		log := log.With(zap.String("binary", binPath), zap.Strings("args", fullArgs))
 		log.Info("Running tests")
 
 		if err := libexec.Exec(ctx, exec.Command(binPath, fullArgs...)); err != nil {

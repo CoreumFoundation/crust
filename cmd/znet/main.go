@@ -11,8 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-	"github.com/CoreumFoundation/coreum/integration-tests/testing"
-	"github.com/CoreumFoundation/coreum/pkg/config"
+	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/pkg/znet"
@@ -22,12 +21,6 @@ func main() {
 	run.Tool("znet", func(ctx context.Context) error {
 		configF := infra.NewConfigFactory()
 		cmdF := znet.NewCmdFactory(configF)
-
-		networkConfig, err := testing.NewNetworkConfig()
-		if err != nil {
-			return err
-		}
-		config.NewNetwork(networkConfig).SetSDKConfig()
 
 		rootCmd := rootCmd(ctx, configF, cmdF)
 		rootCmd.AddCommand(startCmd(ctx, configF, cmdF))
@@ -142,7 +135,7 @@ func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cm
 }
 
 func pingPongCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) *cobra.Command {
-	networkConfig, err := testing.NewNetworkConfig()
+	networkConfig, err := integrationtests.NewNetworkConfig()
 	must.OK(err)
 
 	return &cobra.Command{

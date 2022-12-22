@@ -3,7 +3,7 @@ run:
   build-tags:
     - codeanalysis
     - simulation # used for unit tests which are used to generate some sample data
-    - integration # used by integration tests
+    - integrationtests # used by integration tests
 
 issues:
   max-issues-per-linter: 0

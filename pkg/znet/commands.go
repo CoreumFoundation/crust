@@ -23,7 +23,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	coreumtesting "github.com/CoreumFoundation/coreum/integration-tests/testing"
+	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/crust/infra"
@@ -120,7 +120,7 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr e
 	}
 
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := coreumtesting.NewNetworkConfig()
+	networkConfig, err := integrationtests.NewNetworkConfig()
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	}
 
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := coreumtesting.NewNetworkConfig()
+	networkConfig, err := integrationtests.NewNetworkConfig()
 	if err != nil {
 		return err
 	}
