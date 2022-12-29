@@ -1,0 +1,60 @@
+groups:
+  - name: Cosmos Monitoring
+    rules:
+
+    - alert: InstanceDown
+      # Condition for alerting
+      expr: up == 0
+      for: 3m
+      # Annotation - additional informational labels to store more information
+      annotations:
+        title: 'Instance {{ $labels.instance }} down'
+        description: '{{ $labels.job }} on {{ $labels.instance }} has been down for more than 3 minutes'
+      # Labels - additional labels to be attached to the alert
+      labels:
+        severity: 'critical'
+
+    - alert: DegradedSyncing
+      expr: rate(tendermint_consensus_latest_block_height{job="cosmos"}[5m]) < 0.1
+      for: 5m
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'Degraded syncing on {{ $labels.instance }}'
+
+    - alert: TooFewPeers
+      expr: tendermint_p2p_peers{job="cosmos"} < 3
+      for: 5m
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'P2P Peers on {{ $labels.instance }} is lower than threshold (3)'
+    
+    - alert: NodeStall
+      expr: (tendermint_consensus_height{chain_id="$chain_id", instance="$instance"} == bool tendermint_consensus_latest_block_height{chain_id="$chain_id",instance="$instance"}) == 1
+      for: 5m
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'Syncing appears to be stalled on {{ $labels.instance }}'
+    
+    - alert: ChainHalt
+      expr: rate(tendermint_consensus_height{job="cosmos"}[5m]) == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: cosmos-monitoring
+      annotations:
+        description: 'Chain appears to be halted'
+
+    - alert: ValidatorMissing
+      expr: tendermint_consensus_missing_validators{job="cosmos"} > 0
+      for: 5m
+      labels:
+        severity: critical
+        service: cosmos-monitoring
+      annotations:
+        description: 'Validator is missing'

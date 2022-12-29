@@ -18,7 +18,7 @@ func Attach(ctx context.Context, sessionName string) error {
 }
 
 // ShowContainerLogs adds new window to tmux session presenting logs from docker container
-func ShowContainerLogs(ctx context.Context, sessionName string, windowName string, container string) error {
+func ShowContainerLogs(ctx context.Context, sessionName, windowName, container string) error {
 	hasSession, err := sessionExists(ctx, sessionName)
 	if err != nil {
 		return err

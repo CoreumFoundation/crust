@@ -213,7 +213,7 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	return image, nil
 }
 
-func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args []string, envs []string) {
+func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []string) {
 	ldFlags := []string{"-w", "-s"}
 	if config.LinkStatically {
 		ldFlags = append(ldFlags, "-extldflags=-static")

@@ -516,7 +516,7 @@ func ensureDir(file string) error {
 }
 
 // FIXME (wojciech): once build uses go 1.18 replace `combine` with https://github.com/samber/lo#assign
-func combine(m1 map[string]string, m2 map[string]string) map[string]string {
+func combine(m1, m2 map[string]string) map[string]string {
 	m := make(map[string]string, len(m1)+len(m2))
 	for k, v := range m1 {
 		m[k] = v

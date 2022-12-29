@@ -328,7 +328,7 @@ func (c Cored) prepare() error {
 		filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755)
 }
 
-func (c Cored) saveClientWrapper(wrapperDir string, hostname string) error {
+func (c Cored) saveClientWrapper(wrapperDir, hostname string) error {
 	client := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
