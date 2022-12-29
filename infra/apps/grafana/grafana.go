@@ -78,9 +78,10 @@ func (g Grafana) Info() infra.DeploymentInfo {
 // Deployment returns deployment of grafana
 func (g Grafana) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image: "grafana/grafana:9.3.2",
-		Name:  g.Name(),
-		Info:  g.config.AppInfo,
+		Image:     "grafana/grafana:9.3.2",
+		RunAsUser: true,
+		Name:      g.Name(),
+		Info:      g.config.AppInfo,
 		Volumes: []infra.Volume{
 			{
 				Source:      filepath.Join(g.config.HomeDir, datasourceFileName),
