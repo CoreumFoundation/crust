@@ -113,6 +113,10 @@ func (p Prometheus) Deployment() infra.Deployment {
 				Source:      p.config.HomeDir,
 				Destination: "/etc/prometheus",
 			},
+			{
+				Source:      filepath.Join(p.config.HomeDir, "data"),
+				Destination: "/prometheus",
+			},
 		},
 		Ports: map[string]int{
 			"metrics": p.config.Port,
@@ -131,10 +135,9 @@ func (p Prometheus) Deployment() infra.Deployment {
 		PrepareFunc: p.saveConfigFile,
 		ArgsFunc: func() []string {
 			return []string{
-				"--web.listen-address",
-				fmt.Sprintf("0.0.0.0:%d", p.config.Port),
-				"--config.file",
-				"/etc/prometheus/prometheus.yml",
+				"--web.listen-address", fmt.Sprintf("0.0.0.0:%d", p.config.Port),
+				"--config.file", "/etc/prometheus/prometheus.yml",
+				"--storage.tsdb.path", "prometheus",
 			}
 		},
 	}

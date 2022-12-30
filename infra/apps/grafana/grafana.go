@@ -131,13 +131,13 @@ func (g Grafana) saveConfigFiles() error {
 		return errors.WithStack(err)
 	}
 
-	err := os.WriteFile(filepath.Join(g.config.HomeDir, datasourceFileName), buf.Bytes(), 0o700)
+	err := os.WriteFile(filepath.Join(g.config.HomeDir, datasourceFileName), buf.Bytes(), 0o600)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// create dashboards dir
-	err = os.MkdirAll(filepath.Join(g.config.HomeDir, dashboardsFolder), os.ModePerm)
+	err = os.MkdirAll(filepath.Join(g.config.HomeDir, dashboardsFolder), 0o700)
 	if err != nil {
 		return errors.WithMessage(err, "can't create Home dashboards dir")
 	}
@@ -150,21 +150,22 @@ func (g Grafana) saveConfigFiles() error {
 			return nil
 		}
 
-		file, err := dashboards.Open(path)
+		source, err := dashboards.Open(path)
 		if err != nil {
 			return errors.WithMessagef(err, "can't open file %q from dashboards", path)
 		}
-		defer file.Close()
+		defer source.Close()
 
-		fileBytes, err := io.ReadAll(file)
+		destination, err := os.OpenFile(filepath.Join(g.config.HomeDir, dashboardsFolder, d.Name()), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o777) //nolint:nosnakecase // os constants
 		if err != nil {
-			panic(fmt.Sprintf("can't read file %+v from dashboards FS", file))
+			return errors.WithMessagef(err, "can't create file %q file", d.Name())
 		}
+		defer destination.Close()
 
-		err = os.WriteFile(filepath.Join(g.config.HomeDir, dashboardsFolder, d.Name()), fileBytes, 0o700)
-		if err != nil {
+		if _, err = io.Copy(destination, source); err != nil {
 			return errors.WithMessagef(err, "can't copy file %q from dashboards to %q folder", path, dashboardsFolder)
 		}
+
 		return nil
 	}); err != nil {
 		return errors.WithStack(err)
