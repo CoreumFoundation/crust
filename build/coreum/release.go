@@ -2,6 +2,9 @@ package coreum
 
 import (
 	"context"
+	"runtime"
+
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/golang"
@@ -14,6 +17,10 @@ const (
 
 // ReleaseCored releases cored binary for amd64 and arm64 to be published inside the release
 func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
+	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
+		return errors.New("this task can be executed on linux/amd64 machine only")
+	}
+
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
 
 	parameters, err := coredVersionParams(ctx)
