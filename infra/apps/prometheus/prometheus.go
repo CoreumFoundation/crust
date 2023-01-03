@@ -150,6 +150,10 @@ func (p Prometheus) saveConfigFile() error {
 		Name string
 	}
 
+	if err := os.MkdirAll(filepath.Join(p.config.HomeDir, "data"), 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+
 	nodesConfig := make([]nodesConfigArgs, 0, len(p.config.CoredNodes))
 	for _, node := range p.config.CoredNodes {
 		nodesConfig = append(nodesConfig, nodesConfigArgs{
