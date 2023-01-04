@@ -1,9 +1,12 @@
 package docker
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
 func TestGetTagsForDockerImage(t *testing.T) {
@@ -37,11 +40,22 @@ func TestGetTagsForDockerImage(t *testing.T) {
 		},
 	}
 
+	ctx := logger.WithLogger(context.Background(), logger.New(logger.Config{
+		Format:  logger.FormatJSON,
+		Verbose: true,
+	}))
+
 	var tags []string
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tags = getDockerBuildParams("my-image", "/app/", tc.tagFromCommit, tc.tagsFromGit, tc.tagForZnet) //nolint: scopelint
-			assert.Equal(t, tc.expectedBuildParams, tags)                                                     //nolint: scopelint
+			tags = getDockerBuildParams(ctx, getDockerBuildParamsInput{
+				imageName:     "my-image",
+				contextDir:    "/app/",
+				tagFromCommit: tc.tagFromCommit, //nolint: scopelint
+				tagsFromGit:   tc.tagsFromGit,   //nolint: scopelint
+				tagForZnet:    tc.tagForZnet,    //nolint: scopelint
+			})
+			assert.Equal(t, tc.expectedBuildParams, tags) //nolint: scopelint
 		})
 	}
 }
