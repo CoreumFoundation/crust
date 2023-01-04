@@ -34,13 +34,12 @@ type BuildImageConfig struct {
 	Dockerfile []byte
 }
 
-// getDockerBuildParamsInput is used to omit telescope antipattern
-type getDockerBuildParamsInput struct {
-	imageName     string
-	contextDir    string
-	tagFromCommit string
-	tagsFromGit   []string
-	tagForZnet    bool
+// dockerBuildParamsInput is used to omit telescope antipattern
+type dockerBuildParamsInput struct {
+	imageName  string
+	contextDir string
+	commitHash string
+	tags       []string
 }
 
 // BuildImage builds docker image
@@ -53,7 +52,7 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 		return errors.WithStack(err)
 	}
 
-	tagFromCommit, err := git.DirtyHeadHash(ctx, config.RepoPath)
+	commitHash, err := git.DirtyHeadHash(ctx, config.RepoPath)
 	if err != nil {
 		return err
 	}
@@ -63,12 +62,11 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 		return err
 	}
 
-	buildParams := getDockerBuildParams(ctx, getDockerBuildParamsInput{
-		imageName:     config.ImageName,
-		contextDir:    contextDir,
-		tagFromCommit: tagFromCommit,
-		tagsFromGit:   tagsFromGit,
-		tagForZnet:    true,
+	buildParams := getDockerBuildParams(ctx, dockerBuildParamsInput{
+		imageName:  config.ImageName,
+		contextDir: contextDir,
+		commitHash: commitHash,
+		tags:       tagsFromGit,
 	})
 
 	logger.Get(ctx).Info("Building docker images", zap.Any("build params", buildParams))
@@ -79,25 +77,23 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 }
 
 // getTagsForDockerImage returns params for further use in "docker build" command
-func getDockerBuildParams(ctx context.Context, input getDockerBuildParamsInput) (tags []string) {
-	tags = []string{"build", "-f", "-", input.contextDir}
+func getDockerBuildParams(ctx context.Context, input dockerBuildParamsInput) []string {
+	params := []string{"build", "-t", fmt.Sprintf("%s:znet", input.imageName)}
 
-	if input.tagForZnet {
-		tags = append(tags, []string{"-t", fmt.Sprintf("%s:znet", input.imageName)}...)
+	if input.commitHash != "" {
+		params = append(params, []string{"-t", fmt.Sprintf("%s:%s", input.imageName, input.commitHash[:7])}...)
 	}
 
-	if input.tagFromCommit != "" {
-		tags = append(tags, []string{"-t", fmt.Sprintf("%s:%s", input.imageName, input.tagFromCommit[:7])}...)
-	}
-
-	for _, singleGitTag := range input.tagsFromGit {
-		r := regexp.MustCompile(`^v(\d+\.)(\d+\.)(\*|\d+)(-rc(\d+)?)?$`) // v1.1.1 || v0.0.1-rc1 etc
-		if r.MatchString(singleGitTag) {
-			tags = append(tags, []string{"-t", fmt.Sprintf("%s:%s", input.imageName, singleGitTag)}...)
+	r := regexp.MustCompile(`^v(\d+\.)(\d+\.)(\*|\d+)(-rc(\d+)?)?$`) // v1.1.1 || v0.0.1-rc1 etc
+	for _, tag := range input.tags {
+		if r.MatchString(tag) {
+			params = append(params, []string{"-t", fmt.Sprintf("%s:%s", input.imageName, tag)}...)
 		} else {
-			logger.Get(ctx).Info("skipped HEAD tag because it doesn't fit regex", zap.String("tag", singleGitTag))
+			logger.Get(ctx).Info("Skipped HEAD tag because it doesn't fit regex", zap.String("tag", tag))
 		}
 	}
 
-	return tags
+	params = append(params, []string{"-f", "-", input.contextDir}...)
+
+	return params
 }
