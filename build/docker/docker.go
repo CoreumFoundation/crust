@@ -3,8 +3,10 @@ package docker
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -42,17 +44,42 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 		return errors.WithStack(err)
 	}
 
-	hash, err := git.DirtyHeadHash(ctx, config.RepoPath)
+	tagFromCommit, err := git.DirtyHeadHash(ctx, config.RepoPath)
 	if err != nil {
 		return err
 	}
-	tagZNet := config.ImageName + ":znet"
-	tag := config.ImageName + ":" + hash[:7]
 
-	logger.Get(ctx).Info("Building docker image", zap.String("image", tag))
+	tagsFromGit, err := git.HeadTags(ctx, config.RepoPath)
+	if err != nil {
+		return err
+	}
 
-	buildCmd := exec.Command("docker", "build", "-t", tag, "-t", tagZNet, "-f", "-", contextDir)
+	buildParams := getDockerBuildParams(config.ImageName, contextDir, tagFromCommit, tagsFromGit, true)
+	logger.Get(ctx).Info("Building docker images", zap.Any("build params", buildParams))
+	buildCmd := exec.Command("docker", buildParams...)
 	buildCmd.Stdin = bytes.NewReader(config.Dockerfile)
 
 	return libexec.Exec(ctx, buildCmd)
+}
+
+// getTagsForDockerImage returns params for further use in "docker build" command
+func getDockerBuildParams(imageName, contextDir, tagFromCommit string, tagsFromGit []string, tagForZnet bool) (tags []string) {
+	tags = []string{"build", "-f", "-", contextDir}
+
+	if tagForZnet {
+		tags = append(tags, []string{"-t", fmt.Sprintf("%s:znet", imageName)}...)
+	}
+
+	if tagFromCommit != "" {
+		tags = append(tags, []string{"-t", fmt.Sprintf("%s:%s", imageName, tagFromCommit[:7])}...)
+	}
+
+	for _, singleGitTag := range tagsFromGit {
+		r := regexp.MustCompile(`^v(\d+\.)(\d+\.)(\*|\d+)(-rc(\d+)?)?$`) // v1.1.1 || v0.0.1-rc1 etc
+		if r.MatchString(singleGitTag) {
+			tags = append(tags, []string{"-t", fmt.Sprintf("%s:%s", imageName, singleGitTag)}...)
+		}
+	}
+
+	return tags
 }
