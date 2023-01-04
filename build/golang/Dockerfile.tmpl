@@ -1,5 +1,15 @@
 FROM golang:{{ .GOVersion }}-alpine{{ .AlpineVersion }}
 
-RUN apk add --no-cache gcc libc-dev
+WORKDIR /
+
+RUN apk add --no-cache gcc libc-dev && \
+# install musl cross-compiler building arm64 binaries on amd64 machines
+    wget http://musl.cc/aarch64-linux-musl-cross.tgz && \
+    tar -xzf aarch64-linux-musl-cross.tgz && \
+    rm aarch64-linux-musl-cross.tgz && \
+# install arm64 version of libwasmvm library (required by cored)
+    wget https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a && \
+    chmod 777 libwasmvm_muslc.aarch64.a && \
+    mv libwasmvm_muslc.aarch64.a aarch64-linux-musl-cross/aarch64-linux-musl/lib/libwasmvm_muslc.a
 
 ENTRYPOINT ["go"]

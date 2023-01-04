@@ -325,7 +325,7 @@ func install(ctx context.Context, name Name, info Tool, platform Platform) (retE
 		panic(errors.Errorf("tool %s is not configured for platform %s", name, platform))
 	}
 	ctx = logger.With(ctx, zap.String("name", string(name)), zap.String("version", info.Version),
-		zap.String("url", source.URL))
+		zap.String("url", source.URL), zap.Stringer("platform", platform))
 	log := logger.Get(ctx)
 	log.Info("Installing tool")
 
