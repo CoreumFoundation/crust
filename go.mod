@@ -3,13 +3,12 @@ module github.com/CoreumFoundation/crust
 go 1.19
 
 replace (
-	github.com/CoreumFoundation/coreum => ../coreum
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
 
 require (
-	github.com/CoreumFoundation/coreum v0.0.2-dev
+	github.com/CoreumFoundation/coreum v0.0.2
 	github.com/CoreumFoundation/coreum-tools v0.3.0
 	github.com/cosmos/cosmos-sdk v0.45.11
 	github.com/fsnotify/fsnotify v1.6.0
