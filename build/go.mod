@@ -7,8 +7,8 @@ go 1.18
 require (
 	github.com/CoreumFoundation/coreum-tools v0.3.0
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.0
 	github.com/samber/lo v1.37.0
+	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.21.0
 	golang.org/x/mod v0.6.0-dev.0.20211013180041-c96bc1413d57
 )
