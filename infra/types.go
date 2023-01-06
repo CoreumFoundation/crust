@@ -153,7 +153,7 @@ func (m AppSet) FindRunningApp(appType AppType, appName string) App {
 	return nil
 }
 
-func ensureDockerImage(ctx context.Context, image string, slots chan struct{}, readyCh chan struct{}) error {
+func ensureDockerImage(ctx context.Context, image string, slots, readyCh chan struct{}) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

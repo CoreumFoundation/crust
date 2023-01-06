@@ -1,0 +1,17 @@
+# global configuration
+global:
+  scrape_interval: 5s # Set the scrape interval to every 5 seconds. Default is every 1 minute.
+  evaluation_interval: 5s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+rule_files:
+  - "alert.rules"
+
+scrape_configs:
+  - job_name: 'cosmos'
+    static_configs:
+{{range .Nodes}}
+      - targets: [ "{{.Host}}:{{.Port}}" ]
+        labels:
+          environment: znet
+          instance: "{{.Name}}"
+{{end}}

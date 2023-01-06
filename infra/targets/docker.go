@@ -168,8 +168,10 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (inf
 }
 
 func (d *Docker) prepareRunArgs(name string, app infra.Deployment) []string {
-	runArgs := []string{"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
-		"--label", labelApp + "=" + app.Name, "--network", d.config.EnvName}
+	runArgs := []string{
+		"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
+		"--label", labelApp + "=" + app.Name, "--network", d.config.EnvName,
+	}
 	if app.RunAsUser {
 		runArgs = append(runArgs, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))
 	}

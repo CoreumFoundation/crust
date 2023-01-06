@@ -16,8 +16,10 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
+	"github.com/CoreumFoundation/crust/infra/apps/grafana"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
+	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
 	"github.com/CoreumFoundation/crust/infra/apps/relayer"
 )
 
@@ -38,7 +40,7 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes
-func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCount int, sentriesCount int) (cored.Cored, infra.AppSet, error) {
+func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCount, sentriesCount int) (cored.Cored, []cored.Cored, error) {
 	if validatorsCount > len(cored.StakerMnemonics) {
 		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, len(cored.StakerMnemonics))
 	}
@@ -61,7 +63,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), initialBalance))
 	}
 
-	nodes := make(infra.AppSet, 0, validatorsCount+sentriesCount)
+	nodes := make([]cored.Cored, 0, validatorsCount+sentriesCount)
 	var node0 *cored.Cored
 	var lastNode cored.Cored
 	for i := 0; i < cap(nodes); i++ {
@@ -191,4 +193,32 @@ func (f *Factory) Relayer(name string, coredApp cored.Cored, gaiaApp gaiad.Gaia)
 		Cored:     coredApp,
 		Gaia:      gaiaApp,
 	})
+}
+
+// Monitoring returns set of applications required to run monitoring
+func (f *Factory) Monitoring(name string, coredNodes []cored.Cored) infra.AppSet {
+	namePrometheus := name + "-prometheus"
+	nameGrafana := name + "-grafana"
+
+	prometheusApp := prometheus.New(prometheus.Config{
+		Name:       namePrometheus,
+		HomeDir:    filepath.Join(f.config.AppDir, namePrometheus),
+		Port:       prometheus.DefaultPort,
+		AppInfo:    f.spec.DescribeApp(prometheus.AppType, namePrometheus),
+		CoredNodes: coredNodes,
+	})
+
+	grafanaApp := grafana.New(grafana.Config{
+		Name:       nameGrafana,
+		HomeDir:    filepath.Join(f.config.AppDir, nameGrafana),
+		AppInfo:    f.spec.DescribeApp(grafana.AppType, nameGrafana),
+		CoredNodes: coredNodes,
+		Port:       grafana.DefaultPort,
+		Prometheus: prometheusApp,
+	})
+
+	return infra.AppSet{
+		prometheusApp,
+		grafanaApp,
+	}
 }

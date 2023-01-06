@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
@@ -288,7 +289,7 @@ func ensurePlatform(ctx context.Context, tool Name, platform Platform) error {
 	}
 
 	toolDir := toolDir(tool, platform)
-	for dst, src := range combine(info.Binaries, source.Binaries) {
+	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
 		srcPath, err := filepath.Abs(toolDir + "/" + src)
 		if err != nil {
 			return install(ctx, tool, info, platform)
@@ -364,7 +365,7 @@ func install(ctx context.Context, name Name, info Tool, platform Platform) (retE
 	if platform.OS == dockerOS {
 		dstDir = filepath.Join(CacheDir(), platform.String())
 	}
-	for dst, src := range combine(info.Binaries, source.Binaries) {
+	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
 		dstPath := dstDir + "/" + dst
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
@@ -513,18 +514,6 @@ func ensureDir(file string) error {
 		return errors.WithStack(err)
 	}
 	return nil
-}
-
-// FIXME (wojciech): once build uses go 1.18 replace `combine` with https://github.com/samber/lo#assign
-func combine(m1 map[string]string, m2 map[string]string) map[string]string {
-	m := make(map[string]string, len(m1)+len(m2))
-	for k, v := range m1 {
-		m[k] = v
-	}
-	for k, v := range m2 {
-		m[k] = v
-	}
-	return m
 }
 
 // ByName returns tool definition by its name

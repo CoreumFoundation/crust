@@ -71,12 +71,13 @@ Defines the list of available application profiles to run. Available profiles:
 - 3cored - runs three cored validators (1cored and 3cored are mutually exclusive)
 - faucet - runs faucet
 - explorer - runs block explorer
+- monitoring - runs the monitoring stack
 - integration-tests - runs setup required by integration tests (3cored and faucet)
 
 To start fully-featured set you may run:
 
 ```
-$ crust znet start --profiles=3cored,faucet,explorer
+$ crust znet start --profiles=3cored,faucet,explorer,monitoring
 ```
 
 ## Commands
@@ -191,3 +192,8 @@ You will see logs reporting that tokens are constantly transferred.
 If you want to manually remove all the data created by `znet` do this:
 - use `docker ps -a`, `docker stop <container-id>` and `docker rm <container-id>` to delete related running containers
 - run `rm -rf ~/.cache/crust/znet` to remove all the files created by `znet`
+
+## Monitoring
+
+If you use the `monitoring` profile to start the `znet` you can open `http://localhost:3001` to access the Grafana UI (`admin`/`admin` credentials). 
+Or use `http://localhost:9092` to access the prometheus UI.

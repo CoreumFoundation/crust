@@ -13,7 +13,8 @@ const (
 	profile5Cored           = "5cored"
 	profileFaucet           = "faucet"
 	profileExplorer         = "explorer"
-	profileIntgerationTests = "integration-tests"
+	profileMonitoring       = "monitoring"
+	profileIntegrationTests = "integration-tests"
 )
 
 var profiles = []string{
@@ -22,12 +23,13 @@ var profiles = []string{
 	profile5Cored,
 	profileFaucet,
 	profileExplorer,
-	profileIntgerationTests,
+	profileMonitoring,
+	profileIntegrationTests,
 }
 
 var (
 	defaultProfiles          = []string{profile1Cored}
-	integrationTestsProfiles = []string{profileIntgerationTests}
+	integrationTestsProfiles = []string{profileIntegrationTests}
 )
 
 var availableProfiles = func() map[string]struct{} {
@@ -70,7 +72,7 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 		pMap[p] = true
 	}
 
-	if pMap[profileIntgerationTests] {
+	if pMap[profileIntegrationTests] {
 		if pMap[profile1Cored] {
 			return nil, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored or 5cored")
 		}
@@ -80,7 +82,7 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 		pMap[profileFaucet] = true
 	}
 
-	if (pMap[profileFaucet] || pMap[profileExplorer]) && !pMap[profile3Cored] && !pMap[profile5Cored] {
+	if (pMap[profileFaucet] || pMap[profileExplorer] || pMap[profileMonitoring]) && !pMap[profile3Cored] && !pMap[profile5Cored] {
 		pMap[profile1Cored] = true
 	}
 
@@ -98,12 +100,13 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 	var appSet infra.AppSet
 
 	var err error
-	var coredNodes infra.AppSet
-	coredApp, coredNodes, err = appF.CoredNetwork("cored", cored.DefaultPorts, numOfCoredValidators, 0)
+	coredApp, coredNodes, err := appF.CoredNetwork("cored", cored.DefaultPorts, numOfCoredValidators, 0)
 	if err != nil {
 		return nil, err
 	}
-	appSet = append(appSet, coredNodes...)
+	for _, coredNode := range coredNodes {
+		appSet = append(appSet, coredNode)
+	}
 
 	if pMap[profileFaucet] {
 		appSet = append(appSet, appF.Faucet("faucet", coredApp))
@@ -111,6 +114,10 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 
 	if pMap[profileExplorer] {
 		appSet = append(appSet, appF.BlockExplorer("explorer", coredApp)...)
+	}
+
+	if pMap[profileMonitoring] {
+		appSet = append(appSet, appF.Monitoring("monitoring", coredNodes)...)
 	}
 
 	return appSet, nil
