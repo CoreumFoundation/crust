@@ -46,6 +46,9 @@ type BinaryBuildConfig struct {
 
 	// Parameters is the set of values passed to -X flags of `go build`
 	Parameters map[string]string
+
+	// CrosscompileARM64 if true cross-compiles for ARM64
+	CrosscompileARM64 bool
 }
 
 // TestBuildConfig is the configuration for `go test -c`
@@ -239,6 +242,9 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 		cgoEnabled = "1"
 	}
 	envs = append(envs, "CGO_ENABLED="+cgoEnabled)
+	if config.CrosscompileARM64 {
+		envs = append(envs, "GOARCH=arm64", "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
+	}
 
 	return args, envs
 }
