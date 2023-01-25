@@ -362,7 +362,6 @@ func copyFile(src, dst string, perm os.FileMode) error {
 		return errors.WithStack(err)
 	}
 
-	//nolint:nosnakecase // Those constants are out of our control
 	fw, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, perm)
 	if err != nil {
 		return errors.WithStack(err)
