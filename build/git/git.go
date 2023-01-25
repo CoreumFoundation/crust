@@ -15,7 +15,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
-// HeadHash returns hash of the latest commit in the repository
+// HeadHash returns hash of the latest commit in the repository.
 func HeadHash(ctx context.Context, repoPath string) (string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "rev-parse", "HEAD")
@@ -27,7 +27,7 @@ func HeadHash(ctx context.Context, repoPath string) (string, error) {
 	return strings.TrimSuffix(buf.String(), "\n"), nil
 }
 
-// DirtyHeadHash returns hash of the latest commit in the repository, adding "-dirty" suffix if there are uncommitted changes
+// DirtyHeadHash returns hash of the latest commit in the repository, adding "-dirty" suffix if there are uncommitted changes.
 func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
 	hash, err := HeadHash(ctx, repoPath)
 	if err != nil {
@@ -45,7 +45,7 @@ func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
 	return hash, nil
 }
 
-// HeadTags returns the list of tags applied to the latest commit
+// HeadTags returns the list of tags applied to the latest commit.
 func HeadTags(ctx context.Context, repoPath string) ([]string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "tag", "--points-at", "HEAD")
@@ -57,7 +57,7 @@ func HeadTags(ctx context.Context, repoPath string) ([]string, error) {
 	return strings.Split(strings.TrimSuffix(buf.String(), "\n"), "\n"), nil
 }
 
-// StatusClean checks that there are no uncommitted files in the repo
+// StatusClean checks that there are no uncommitted files in the repo.
 func StatusClean(ctx context.Context, repoPath string) (bool, string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "status", "-s")
@@ -72,7 +72,7 @@ func StatusClean(ctx context.Context, repoPath string) (bool, string, error) {
 	return true, "", nil
 }
 
-// EnsureRepo ensures that repository is cloned
+// EnsureRepo ensures that repository is cloned.
 func EnsureRepo(ctx context.Context, repoURL string) error {
 	repoName := strings.TrimSuffix(filepath.Base(repoURL), ".git")
 	info, err := os.Stat("../" + repoName)

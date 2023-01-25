@@ -12,7 +12,7 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
-// Commands is a definition of commands available in build system
+// Commands is a definition of commands available in build system.
 var Commands = map[string]build.CommandFunc{
 	"build":                   buildBinaries,
 	"build/crust":             crust.BuildCrust,

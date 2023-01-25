@@ -23,7 +23,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/relayer"
 )
 
-// NewFactory creates new app factory
+// NewFactory creates new app factory.
 func NewFactory(config infra.Config, spec *infra.Spec, networkConfig config.NetworkConfig) *Factory {
 	return &Factory{
 		config:        config,
@@ -32,14 +32,14 @@ func NewFactory(config infra.Config, spec *infra.Spec, networkConfig config.Netw
 	}
 }
 
-// Factory produces apps from config
+// Factory produces apps from config.
 type Factory struct {
 	config        infra.Config
 	spec          *infra.Spec
 	networkConfig config.NetworkConfig
 }
 
-// CoredNetwork creates new network of cored nodes
+// CoredNetwork creates new network of cored nodes.
 func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCount, sentriesCount int) (cored.Cored, []cored.Cored, error) {
 	if validatorsCount > len(cored.StakerMnemonics) {
 		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, len(cored.StakerMnemonics))
@@ -112,7 +112,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 	return lastNode, nodes, nil
 }
 
-// Faucet creates new faucet
+// Faucet creates new faucet.
 func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 	return faucet.New(faucet.Config{
 		Name:    name,
@@ -125,7 +125,7 @@ func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 	})
 }
 
-// BlockExplorer returns set of applications required to run block explorer
+// BlockExplorer returns set of applications required to run block explorer.
 func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet {
 	namePostgres := name + "-postgres"
 	nameHasura := name + "-hasura"
@@ -195,7 +195,7 @@ func (f *Factory) Relayer(name string, coredApp cored.Cored, gaiaApp gaiad.Gaia)
 	})
 }
 
-// Monitoring returns set of applications required to run monitoring
+// Monitoring returns set of applications required to run monitoring.
 func (f *Factory) Monitoring(name string, coredNodes []cored.Cored) infra.AppSet {
 	namePrometheus := name + "-prometheus"
 	nameGrafana := name + "-grafana"

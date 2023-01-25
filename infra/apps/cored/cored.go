@@ -34,10 +34,10 @@ import (
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
-// AppType is the type of cored application
+// AppType is the type of cored application.
 const AppType infra.AppType = "cored"
 
-// Config stores cored app config
+// Config stores cored app config.
 type Config struct {
 	Name              string
 	HomeDir           string
@@ -55,7 +55,7 @@ type Config struct {
 	ImportedMnemonics map[string]string
 }
 
-// New creates new cored app
+// New creates new cored app.
 func New(cfg Config) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
@@ -97,7 +97,7 @@ func New(cfg Config) Cored {
 	}
 }
 
-// prepareTxStakingCreateValidator generates transaction of type MsgCreateValidator
+// prepareTxStakingCreateValidator generates transaction of type MsgCreateValidator.
 func prepareTxStakingCreateValidator(
 	chainID config.ChainID,
 	txConfig cosmosclient.TxConfig,
@@ -154,7 +154,7 @@ func prepareTxStakingCreateValidator(
 	return txBytes, nil
 }
 
-// Cored represents cored
+// Cored represents cored.
 type Cored struct {
 	config              Config
 	nodeID              string
@@ -165,22 +165,22 @@ type Cored struct {
 	importedMnemonics map[string]string
 }
 
-// Type returns type of application
+// Type returns type of application.
 func (c Cored) Type() infra.AppType {
 	return AppType
 }
 
-// Name returns name of app
+// Name returns name of app.
 func (c Cored) Name() string {
 	return c.config.Name
 }
 
-// Info returns deployment info
+// Info returns deployment info.
 func (c Cored) Info() infra.DeploymentInfo {
 	return c.config.AppInfo.Info()
 }
 
-// NodeID returns node ID
+// NodeID returns node ID.
 func (c Cored) NodeID() string {
 	return c.nodeID
 }
@@ -210,12 +210,12 @@ func (c Cored) TxFactory(clientCtx tx.ClientContext) tx.Factory {
 		WithTxConfig(clientCtx.TxConfig())
 }
 
-// HealthCheck checks if cored chain is ready to accept transactions
+// HealthCheck checks if cored chain is ready to accept transactions.
 func (c Cored) HealthCheck(ctx context.Context) error {
 	return infra.CheckCosmosNodeHealth(ctx, c.Info(), c.config.Ports.RPC)
 }
 
-// Deployment returns deployment of cored
+// Deployment returns deployment of cored.
 func (c Cored) Deployment() infra.Deployment {
 	deployment := infra.Deployment{
 		RunAsUser: true,

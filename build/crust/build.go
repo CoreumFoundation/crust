@@ -12,7 +12,7 @@ import (
 
 const repoPath = "."
 
-// BuildCrust builds crust
+// BuildCrust builds crust.
 func BuildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
 	return golang.BuildLocally(ctx, golang.BinaryBuildConfig{
@@ -21,7 +21,7 @@ func BuildCrust(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-// BuildZNet builds znet
+// BuildZNet builds znet.
 func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
 	return golang.BuildLocally(ctx, golang.BinaryBuildConfig{
@@ -31,17 +31,17 @@ func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-// Tidy runs `go mod tidy` for crust repo
+// Tidy runs `go mod tidy` for crust repo.
 func Tidy(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Tidy(ctx, repoPath, deps)
 }
 
-// Lint lints crust repo
+// Lint lints crust repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Lint(ctx, repoPath, deps)
 }
 
-// Test run unit tests in crust repo
+// Test run unit tests in crust repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
 }

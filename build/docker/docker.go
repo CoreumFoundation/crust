@@ -16,10 +16,10 @@ import (
 	"github.com/CoreumFoundation/crust/build/git"
 )
 
-// AlpineImage contains tag of alpine image used to build dockerfiles
+// AlpineImage contains tag of alpine image used to build dockerfiles.
 const AlpineImage = "alpine:3.17.0"
 
-// BuildImageConfig contains the configuration required to build docker image
+// BuildImageConfig contains the configuration required to build docker image.
 type BuildImageConfig struct {
 	// RepoPath is the path to the repo where binary comes from
 	RepoPath string
@@ -34,7 +34,7 @@ type BuildImageConfig struct {
 	Dockerfile []byte
 }
 
-// dockerBuildParamsInput is used to omit telescope antipattern
+// dockerBuildParamsInput is used to omit telescope antipattern.
 type dockerBuildParamsInput struct {
 	imageName  string
 	contextDir string
@@ -42,7 +42,7 @@ type dockerBuildParamsInput struct {
 	tags       []string
 }
 
-// BuildImage builds docker image
+// BuildImage builds docker image.
 func BuildImage(ctx context.Context, config BuildImageConfig) error {
 	if _, err := exec.LookPath("docker"); err != nil {
 		return errors.Wrap(err, "docker command is not available in PATH")
@@ -76,7 +76,7 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 	return libexec.Exec(ctx, buildCmd)
 }
 
-// getTagsForDockerImage returns params for further use in "docker build" command
+// getTagsForDockerImage returns params for further use in "docker build" command.
 func getDockerBuildParams(ctx context.Context, input dockerBuildParamsInput) []string {
 	params := []string{"build", "-t", fmt.Sprintf("%s:znet", input.imageName)}
 

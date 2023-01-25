@@ -7,7 +7,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 )
 
-// DefaultPorts are the default ports applications building block explorer listen on
+// DefaultPorts are the default ports applications building block explorer listen on.
 var DefaultPorts = Ports{
 	Postgres:  postgres.DefaultPort,
 	Hasura:    hasura.DefaultPort,

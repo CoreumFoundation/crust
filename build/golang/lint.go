@@ -26,7 +26,7 @@ var (
 	lintNewLinesSkipFilesRegexps = []string{`\.iml$`, `\.wasm$`, `\.png$`}
 )
 
-// Lint runs linters and check that git status is clean
+// Lint runs linters and check that git status is clean.
 func Lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	if err := lint(ctx, repoPath, deps); err != nil {
 		return err

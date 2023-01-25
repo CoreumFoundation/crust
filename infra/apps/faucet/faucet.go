@@ -20,14 +20,14 @@ import (
 )
 
 const (
-	// AppType is the type of faucet application
+	// AppType is the type of faucet application.
 	AppType infra.AppType = "faucet"
 
-	// DefaultPort is the default port faucet listens on for client connections
+	// DefaultPort is the default port faucet listens on for client connections.
 	DefaultPort = 8090
 )
 
-// Config stores faucet app config
+// Config stores faucet app config.
 type Config struct {
 	Name    string
 	HomeDir string
@@ -38,39 +38,39 @@ type Config struct {
 	Cored   cored.Cored
 }
 
-// New creates new faucet app
+// New creates new faucet app.
 func New(config Config) Faucet {
 	return Faucet{
 		config: config,
 	}
 }
 
-// Faucet represents faucet
+// Faucet represents faucet.
 type Faucet struct {
 	config Config
 }
 
-// Type returns type of application
+// Type returns type of application.
 func (f Faucet) Type() infra.AppType {
 	return AppType
 }
 
-// Name returns name of app
+// Name returns name of app.
 func (f Faucet) Name() string {
 	return f.config.Name
 }
 
-// Port returns port used by the application
+// Port returns port used by the application.
 func (f Faucet) Port() int {
 	return f.config.Port
 }
 
-// Info returns deployment info
+// Info returns deployment info.
 func (f Faucet) Info() infra.DeploymentInfo {
 	return f.config.AppInfo.Info()
 }
 
-// HealthCheck checks if cored chain is ready to accept transactions
+// HealthCheck checks if cored chain is ready to accept transactions.
 func (f Faucet) HealthCheck(ctx context.Context) error {
 	if f.config.AppInfo.Info().Status != infra.AppStatusRunning {
 		return retry.Retryable(errors.Errorf("faucet hasn't started yet"))
@@ -90,7 +90,7 @@ func (f Faucet) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// Deployment returns deployment of cored
+// Deployment returns deployment of cored.
 func (f Faucet) Deployment() infra.Deployment {
 	return infra.Deployment{
 		RunAsUser: true,

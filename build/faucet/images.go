@@ -9,7 +9,7 @@ import (
 	dockerbasic "github.com/CoreumFoundation/crust/build/docker/basic"
 )
 
-// BuildDockerImage builds docker image of the faucet
+// BuildDockerImage builds docker image of the faucet.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(Build)
 

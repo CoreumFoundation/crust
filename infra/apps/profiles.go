@@ -40,22 +40,22 @@ var availableProfiles = func() map[string]struct{} {
 	return v
 }()
 
-// Profiles returns the list of available profiles
+// Profiles returns the list of available profiles.
 func Profiles() []string {
 	return profiles
 }
 
-// DefaultProfiles returns the list of default profiles started if user didn't provide anything else
+// DefaultProfiles returns the list of default profiles started if user didn't provide anything else.
 func DefaultProfiles() []string {
 	return defaultProfiles
 }
 
-// IntegrationTestsProfiles returns the list of profiles started for integration tests
+// IntegrationTestsProfiles returns the list of profiles started for integration tests.
 func IntegrationTestsProfiles() []string {
 	return integrationTestsProfiles
 }
 
-// BuildAppSet builds the application set to deploy based on provided profiles
+// BuildAppSet builds the application set to deploy based on provided profiles.
 func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 	pMap := map[string]bool{}
 	coredProfilePresent := false
