@@ -259,6 +259,7 @@ func (c Cored) Deployment() infra.Deployment {
 				"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPC),
 				"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPCWeb),
 				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
+				"--inv-check-period", "1",
 				"--chain-id", string(c.config.Network.ChainID()),
 			}
 			if c.config.RootNode != nil {
