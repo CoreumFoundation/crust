@@ -11,19 +11,19 @@ import (
 	"github.com/CoreumFoundation/crust/infra"
 )
 
-// NewCmdFactory returns new CmdFactory
+// NewCmdFactory returns new CmdFactory.
 func NewCmdFactory(configF *infra.ConfigFactory) *CmdFactory {
 	return &CmdFactory{
 		configF: configF,
 	}
 }
 
-// CmdFactory is a wrapper around cobra RunE
+// CmdFactory is a wrapper around cobra RunE.
 type CmdFactory struct {
 	configF *infra.ConfigFactory
 }
 
-// Cmd returns function compatible with RunE
+// Cmd returns function compatible with RunE.
 func (f *CmdFactory) Cmd(cmdFunc func() error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		f.configF.VerboseLogging = cmd.Flags().Lookup("verbose").Value.String() == "true"
@@ -32,7 +32,7 @@ func (f *CmdFactory) Cmd(cmdFunc func() error) func(cmd *cobra.Command, args []s
 	}
 }
 
-// NewConfig produces final config
+// NewConfig produces final config.
 func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 	must.OK(os.MkdirAll(configF.HomeDir, 0o700))
 	homeDir := must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.HomeDir)))) + "/" + configF.EnvName

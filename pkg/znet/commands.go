@@ -36,7 +36,7 @@ import (
 
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
 
-// Activate starts preconfigured shell environment
+// Activate starts preconfigured shell environment.
 func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Config) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -113,7 +113,7 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 	})
 }
 
-// Start starts environment
+// Start starts environment.
 func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
 	if err := spec.Verify(); err != nil {
 		return err
@@ -133,7 +133,7 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr e
 	return target.Deploy(ctx, appSet)
 }
 
-// Stop stops environment
+// Stop stops environment.
 func Stop(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
 	defer func() {
 		for _, app := range spec.Apps {
@@ -148,7 +148,7 @@ func Stop(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr er
 	return target.Stop(ctx)
 }
 
-// Remove removes environment
+// Remove removes environment.
 func Remove(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
 	target := targets.NewDocker(config, spec)
 	if err := target.Remove(ctx); err != nil {
@@ -171,7 +171,7 @@ func Remove(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr 
 	return errors.WithStack(err)
 }
 
-// Test runs integration tests
+// Test runs integration tests.
 func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	if err := spec.Verify(); err != nil {
 		return err
@@ -196,13 +196,13 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	return testing.Run(ctx, target, appSet, config, config.TestRepos...)
 }
 
-// Spec prints specification of running environment
+// Spec prints specification of running environment.
 func Spec(spec *infra.Spec) error {
 	fmt.Println(spec)
 	return nil
 }
 
-// Console starts tmux session on top of running environment
+// Console starts tmux session on top of running environment.
 func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	if err := tmux.Kill(ctx, config.EnvName); err != nil {
 		return err
@@ -237,7 +237,7 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 }
 
 // PingPong connects to cored node and sends transactions back and forth from one account to another to generate
-// transactions on the blockchain
+// transactions on the blockchain.
 func PingPong(ctx context.Context, appSet infra.AppSet) error {
 	coredApp := appSet.FindRunningApp(cored.AppType, "cored-00")
 	if coredApp == nil {

@@ -21,10 +21,10 @@ import (
 	"github.com/CoreumFoundation/crust/exec"
 )
 
-// AppType represents the type of application
+// AppType represents the type of application.
 type AppType string
 
-// App is the interface exposed by application
+// App is the interface exposed by application.
 type App interface {
 	// Type returns type of application
 	Type() AppType
@@ -39,10 +39,10 @@ type App interface {
 	Deployment() Deployment
 }
 
-// AppSet is the list of applications to deploy
+// AppSet is the list of applications to deploy.
 type AppSet []App
 
-// Deploy deploys app in environment to the target
+// Deploy deploys app in environment to the target.
 func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		deploymentSlots := make(chan struct{}, runtime.NumCPU())
@@ -143,7 +143,7 @@ func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Sp
 	return spec.Save()
 }
 
-// FindRunningApp returns running app of particular type and name available in app set
+// FindRunningApp returns running app of particular type and name available in app set.
 func (m AppSet) FindRunningApp(appType AppType, appName string) App {
 	for _, app := range m {
 		if app.Type() == appType && app.Info().Status == AppStatusRunning && app.Name() == appName {
@@ -199,7 +199,7 @@ func ensureDockerImage(ctx context.Context, image string, slots, readyCh chan st
 	return nil
 }
 
-// DeploymentInfo contains info about deployed application
+// DeploymentInfo contains info about deployed application.
 type DeploymentInfo struct {
 	// Container stores the name of the docker container where app is running - present only for apps running in docker
 	Container string `json:"container,omitempty"`
@@ -220,7 +220,7 @@ type DeploymentInfo struct {
 	Ports map[string]int `json:"ports,omitempty"`
 }
 
-// Target represents target of deployment from the perspective of znet
+// Target represents target of deployment from the perspective of znet.
 type Target interface {
 	// Deploy deploys app set to the target
 	Deploy(ctx context.Context, appSet AppSet) error
@@ -232,7 +232,7 @@ type Target interface {
 	Remove(ctx context.Context) error
 }
 
-// AppTarget represents target of deployment from the perspective of application
+// AppTarget represents target of deployment from the perspective of application.
 type AppTarget interface {
 	// DeployContainer deploys container to the target
 	DeployContainer(ctx context.Context, app Deployment) (DeploymentInfo, error)
@@ -247,19 +247,19 @@ type Prerequisites struct {
 	Dependencies []HealthCheckCapable
 }
 
-// EnvVar is used to define environment variable for docker container
+// EnvVar is used to define environment variable for docker container.
 type EnvVar struct {
 	Name  string
 	Value string
 }
 
-// Volume defines volume to be mounted inside container
+// Volume defines volume to be mounted inside container.
 type Volume struct {
 	Source      string
 	Destination string
 }
 
-// Deployment represents application to be deployed
+// Deployment represents application to be deployed.
 type Deployment struct {
 	// Name of the application
 	Name string
@@ -302,7 +302,7 @@ type Deployment struct {
 	Entrypoint string
 }
 
-// Deploy deploys container to the target
+// Deploy deploys container to the target.
 func (app Deployment) Deploy(ctx context.Context, target AppTarget, config Config) (DeploymentInfo, error) {
 	if err := app.preprocess(ctx, config); err != nil {
 		return DeploymentInfo{}, err
@@ -349,12 +349,12 @@ func (app Deployment) postprocess(ctx context.Context, info DeploymentInfo) erro
 	return nil
 }
 
-// NewConfigFactory creates new ConfigFactory
+// NewConfigFactory creates new ConfigFactory.
 func NewConfigFactory() *ConfigFactory {
 	return &ConfigFactory{}
 }
 
-// ConfigFactory collects config from CLI and produces real config
+// ConfigFactory collects config from CLI and produces real config.
 type ConfigFactory struct {
 	// EnvName is the name of created environment
 	EnvName string
@@ -381,7 +381,7 @@ type ConfigFactory struct {
 	LogFormat string
 }
 
-// NewSpec returns new spec
+// NewSpec returns new spec.
 func NewSpec(configF *ConfigFactory) *Spec {
 	specFile := configF.HomeDir + "/" + configF.EnvName + "/spec.json"
 	specRaw, err := os.ReadFile(specFile)
@@ -409,7 +409,7 @@ func NewSpec(configF *ConfigFactory) *Spec {
 	return spec
 }
 
-// Spec describes running environment
+// Spec describes running environment.
 type Spec struct {
 	specFile string
 	configF  *ConfigFactory
@@ -426,7 +426,7 @@ type Spec struct {
 	Apps map[string]*AppInfo `json:"apps"`
 }
 
-// Verify verifies that env and profiles in config matches the ones in spec
+// Verify verifies that env and profiles in config matches the ones in spec.
 func (s *Spec) Verify() error {
 	if s.Env != s.configF.EnvName {
 		return errors.Errorf("env mismatch, spec: %s, config: %s", s.Env, s.configF.EnvName)
@@ -437,7 +437,7 @@ func (s *Spec) Verify() error {
 	return nil
 }
 
-// DescribeApp adds description of running app
+// DescribeApp adds description of running app.
 func (s *Spec) DescribeApp(appType AppType, name string) *AppInfo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -458,27 +458,27 @@ func (s *Spec) DescribeApp(appType AppType, name string) *AppInfo {
 	return appDesc
 }
 
-// String converts spec to json string
+// String converts spec to json string.
 func (s *Spec) String() string {
 	return string(must.Bytes(json.MarshalIndent(s, "", "  ")))
 }
 
-// Save saves spec into file
+// Save saves spec into file.
 func (s *Spec) Save() error {
 	return os.WriteFile(s.specFile, []byte(s.String()), 0o600)
 }
 
-// AppStatus describes current status of an application
+// AppStatus describes current status of an application.
 type AppStatus string
 
 const (
-	// AppStatusNotDeployed ,eans that app has been never deployed
+	// AppStatusNotDeployed ,eans that app has been never deployed.
 	AppStatusNotDeployed AppStatus = ""
 
-	// AppStatusRunning means that app is running
+	// AppStatusRunning means that app is running.
 	AppStatusRunning AppStatus = "running"
 
-	// AppStatusStopped means app was running but now is stopped
+	// AppStatusStopped means app was running but now is stopped.
 	AppStatusStopped AppStatus = "stopped"
 )
 
@@ -490,14 +490,14 @@ type appInfoData struct {
 	Info DeploymentInfo `json:"info"`
 }
 
-// AppInfo describes app running in environment
+// AppInfo describes app running in environment.
 type AppInfo struct {
 	mu sync.RWMutex
 
 	data appInfoData
 }
 
-// SetInfo sets deployment info
+// SetInfo sets deployment info.
 func (ai *AppInfo) SetInfo(info DeploymentInfo) {
 	ai.mu.Lock()
 	defer ai.mu.Unlock()
@@ -505,7 +505,7 @@ func (ai *AppInfo) SetInfo(info DeploymentInfo) {
 	ai.data.Info = info
 }
 
-// Info returns deployment info
+// Info returns deployment info.
 func (ai *AppInfo) Info() DeploymentInfo {
 	ai.mu.RLock()
 	defer ai.mu.RUnlock()
@@ -513,7 +513,7 @@ func (ai *AppInfo) Info() DeploymentInfo {
 	return ai.data.Info
 }
 
-// MarshalJSON marshals data to JSON
+// MarshalJSON marshals data to JSON.
 func (ai *AppInfo) MarshalJSON() ([]byte, error) {
 	ai.mu.RLock()
 	defer ai.mu.RUnlock()
@@ -521,7 +521,7 @@ func (ai *AppInfo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ai.data)
 }
 
-// UnmarshalJSON unmarshals data from JSON
+// UnmarshalJSON unmarshals data from JSON.
 func (ai *AppInfo) UnmarshalJSON(data []byte) error {
 	ai.mu.Lock()
 	defer ai.mu.Unlock()

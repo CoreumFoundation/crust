@@ -16,23 +16,23 @@ import (
 )
 
 const (
-	// AppType is the type of postgres application
+	// AppType is the type of postgres application.
 	AppType infra.AppType = "postgres"
 
-	// DefaultPort is the default port postgres listens on for client connections
+	// DefaultPort is the default port postgres listens on for client connections.
 	DefaultPort = 5432
 
-	// User contains the login of superuser
+	// User contains the login of superuser.
 	User = "postgres"
 
-	// DB is the name of database
+	// DB is the name of database.
 	DB = "db"
 )
 
-// SchemaLoaderFunc is the function receiving sql client and loading schema there
+// SchemaLoaderFunc is the function receiving sql client and loading schema there.
 type SchemaLoaderFunc func(ctx context.Context, db *pgx.Conn) error
 
-// Config stores configuration of postgres app
+// Config stores configuration of postgres app.
 type Config struct {
 	Name             string
 	AppInfo          *infra.AppInfo
@@ -40,39 +40,39 @@ type Config struct {
 	SchemaLoaderFunc SchemaLoaderFunc
 }
 
-// New creates new postgres app
+// New creates new postgres app.
 func New(config Config) Postgres {
 	return Postgres{
 		config: config,
 	}
 }
 
-// Postgres represents postgres
+// Postgres represents postgres.
 type Postgres struct {
 	config Config
 }
 
-// Type returns type of application
+// Type returns type of application.
 func (p Postgres) Type() infra.AppType {
 	return AppType
 }
 
-// Name returns name of app
+// Name returns name of app.
 func (p Postgres) Name() string {
 	return p.config.Name
 }
 
-// Port returns port used by postgres to accept client connections
+// Port returns port used by postgres to accept client connections.
 func (p Postgres) Port() int {
 	return p.config.Port
 }
 
-// Info returns deployment info
+// Info returns deployment info.
 func (p Postgres) Info() infra.DeploymentInfo {
 	return p.config.AppInfo.Info()
 }
 
-// HealthCheck checks if postgres is ready to accept connections
+// HealthCheck checks if postgres is ready to accept connections.
 func (p Postgres) HealthCheck(ctx context.Context) error {
 	if p.config.AppInfo.Info().Status != infra.AppStatusRunning {
 		return retry.Retryable(errors.Errorf("postgres hasn't started yet"))
@@ -96,7 +96,7 @@ func (p Postgres) HealthCheck(ctx context.Context) error {
 	return retry.Retryable(errors.WithStack(db.Close(ctx)))
 }
 
-// Deployment returns deployment of postgres
+// Deployment returns deployment of postgres.
 func (p Postgres) Deployment() infra.Deployment {
 	return infra.Deployment{
 		Image: "postgres:14.3-alpine",

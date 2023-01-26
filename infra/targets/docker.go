@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	// AppHomeDir is the path inide container where application's home directory is mounted
+	// AppHomeDir is the path inide container where application's home directory is mounted.
 	AppHomeDir = "/app"
 
 	labelEnv = "com.coreum.crust.znet.env"
@@ -32,7 +32,7 @@ const (
 
 // FIXME (wojciech): Entire logic here could be easily implemented by using docker API instead of binary execution
 
-// NewDocker creates new docker target
+// NewDocker creates new docker target.
 func NewDocker(config infra.Config, spec *infra.Spec) infra.Target {
 	return &Docker{
 		config: config,
@@ -40,7 +40,7 @@ func NewDocker(config infra.Config, spec *infra.Spec) infra.Target {
 	}
 }
 
-// Docker is the target deploying apps to docker
+// Docker is the target deploying apps to docker.
 type Docker struct {
 	config infra.Config
 	spec   *infra.Spec
@@ -49,7 +49,7 @@ type Docker struct {
 	networkExists bool
 }
 
-// Stop stops running applications
+// Stop stops running applications.
 func (d *Docker) Stop(ctx context.Context) error {
 	dependencies := map[string][]chan struct{}{}
 	readyChs := map[string]chan struct{}{}
@@ -100,7 +100,7 @@ func (d *Docker) Stop(ctx context.Context) error {
 	})
 }
 
-// Remove removes running applications
+// Remove removes running applications.
 func (d *Docker) Remove(ctx context.Context) error {
 	err := forContainer(ctx, d.config.EnvName, func(ctx context.Context, info container) error {
 		log := logger.Get(ctx).With(zap.String("id", info.ID), zap.String("name", info.Name),
@@ -120,12 +120,12 @@ func (d *Docker) Remove(ctx context.Context) error {
 	return d.deleteNetwork(ctx, d.config.EnvName)
 }
 
-// Deploy deploys environment to docker target
+// Deploy deploys environment to docker target.
 func (d *Docker) Deploy(ctx context.Context, appSet infra.AppSet) error {
 	return appSet.Deploy(ctx, d, d.config, d.spec)
 }
 
-// DeployContainer starts container in docker
+// DeployContainer starts container in docker.
 func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (infra.DeploymentInfo, error) {
 	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
 		return infra.DeploymentInfo{}, err

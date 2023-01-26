@@ -27,38 +27,38 @@ linters:
   enable-all: true
   disable:
     # many golangci linters enforce stupid rules, so we will add more to the list soon
-    - nlreturn
-    - forbidigo
-    - wrapcheck
-    - gomoddirectives
-    - godot
-    - gosec
-    - gochecknoglobals
-    - wsl
-    - goerr113
-    - gomnd
-    - varnamelen
-    - godox
-    - gocognit
-    - lll
     - cyclop
-    - gochecknoinits
+    - errchkjson
     - exhaustive
     - exhaustivestruct
-    - ireturn
-    - thelper
-    - maintidx
-    - gofumpt
-    - paralleltest
-    - testpackage
-    - prealloc
-    - nonamedreturns
     - exhaustruct
-    - errchkjson
+    - forbidigo
     - forcetypeassert
+    - gochecknoglobals
+    - goerr113
+    - gofumpt
+    - gomnd
+    - gomoddirectives
+    - gosec
+    - godox
+    - gochecknoinits
+    - gocognit
+    - ireturn
+    - lll
+    - maintidx
+    - nlreturn
+    - nonamedreturns
+    - nosnakecase
+    - paralleltest
+    - prealloc
+    - testpackage
+    - thelper
+    - varnamelen
+    - wrapcheck
+    - wsl
     # deprecated:
-    - interfacer
     - golint
+    - interfacer
     - maligned
 
 linters-settings:

@@ -21,7 +21,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 )
 
-// Run deploys testing environment and runs tests there
+// Run deploys testing environment and runs tests there.
 func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config infra.Config, onlyRepos ...string) error {
 	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
 	files, err := os.ReadDir(testDir)

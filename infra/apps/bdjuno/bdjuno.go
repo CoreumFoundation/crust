@@ -16,14 +16,14 @@ import (
 )
 
 const (
-	// AppType is the type of bdjuno application
+	// AppType is the type of bdjuno application.
 	AppType infra.AppType = "bdjuno"
 
-	// DefaultPort is the default port bdjuno listens on for client connections
+	// DefaultPort is the default port bdjuno listens on for client connections.
 	DefaultPort = 3030
 )
 
-// Config storesbdjuno app configuration
+// Config storesbdjuno app configuration.
 type Config struct {
 	Name           string
 	HomeDir        string
@@ -34,39 +34,39 @@ type Config struct {
 	Postgres       postgres.Postgres
 }
 
-// New creates new bdjuno app
+// New creates new bdjuno app.
 func New(config Config) BDJuno {
 	return BDJuno{
 		config: config,
 	}
 }
 
-// BDJuno represents bdjuno
+// BDJuno represents bdjuno.
 type BDJuno struct {
 	config Config
 }
 
-// Type returns type of application
+// Type returns type of application.
 func (j BDJuno) Type() infra.AppType {
 	return AppType
 }
 
-// Name returns name of app
+// Name returns name of app.
 func (j BDJuno) Name() string {
 	return j.config.Name
 }
 
-// Port returns port used by hasura to accept client connections
+// Port returns port used by hasura to accept client connections.
 func (j BDJuno) Port() int {
 	return j.config.Port
 }
 
-// Info returns deployment info
+// Info returns deployment info.
 func (j BDJuno) Info() infra.DeploymentInfo {
 	return j.config.AppInfo.Info()
 }
 
-// Deployment returns deployment of bdjuno
+// Deployment returns deployment of bdjuno.
 func (j BDJuno) Deployment() infra.Deployment {
 	return infra.Deployment{
 		RunAsUser: true,

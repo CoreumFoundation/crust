@@ -23,7 +23,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
-// Tool names
+// Tool names.
 const (
 	Go           Name = "go"
 	GolangCI     Name = "golangci"
@@ -202,10 +202,10 @@ var tools = map[Name]Tool{
 	},
 }
 
-// Name is the type used for defining tool names
+// Name is the type used for defining tool names.
 type Name string
 
-// Platform defines platform to install tool on
+// Platform defines platform to install tool on.
 type Platform struct {
 	OS   string
 	Arch string
@@ -225,13 +225,13 @@ var (
 	dockerARM64 = Platform{OS: dockerOS, Arch: "arm64"}
 )
 
-// DockerPlatform is the docker platform for current arch
+// DockerPlatform is the docker platform for current arch.
 var DockerPlatform = Platform{
 	OS:   dockerOS,
 	Arch: runtime.GOARCH,
 }
 
-// Tool represents tool to be installed
+// Tool represents tool to be installed.
 type Tool struct {
 	Version   string
 	ForDocker bool
@@ -240,17 +240,17 @@ type Tool struct {
 	Binaries  map[string]string
 }
 
-// Source represents source where tool is fetched from
+// Source represents source where tool is fetched from.
 type Source struct {
 	URL      string
 	Hash     string
 	Binaries map[string]string
 }
 
-// Sources is the map of sources
+// Sources is the map of sources.
 type Sources map[Platform]Source
 
-// InstallAll installs all the tools
+// InstallAll installs all the tools.
 func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 	for tool := range tools {
 		if tools[tool].ForLocal {
@@ -267,12 +267,12 @@ func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-// EnsureLocal ensures that tool is installed locally
+// EnsureLocal ensures that tool is installed locally.
 func EnsureLocal(ctx context.Context, tool Name) error {
 	return ensurePlatform(ctx, tool, Platform{OS: runtime.GOOS, Arch: runtime.GOARCH})
 }
 
-// EnsureDocker ensures that tool is installed for docker
+// EnsureDocker ensures that tool is installed for docker.
 func EnsureDocker(ctx context.Context, tool Name) error {
 	return ensurePlatform(ctx, tool, Platform{OS: dockerOS, Arch: runtime.GOARCH})
 }
@@ -416,7 +416,6 @@ func save(url string, reader io.Reader, path string) error {
 		}
 		return untar(reader, path)
 	default:
-		//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 		f, err := os.OpenFile(filepath.Join(path, filepath.Base(url)), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
 		if err != nil {
 			return errors.WithStack(err)
@@ -455,7 +454,6 @@ func untar(reader io.Reader, path string) error {
 				return err
 			}
 
-			//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 			f, err := os.OpenFile(header.Name, os.O_CREATE|os.O_WRONLY, mode)
 			if err != nil {
 				return errors.WithStack(err)
@@ -477,7 +475,6 @@ func untar(reader io.Reader, path string) error {
 				return err
 			}
 			// linked file may not exist yet, so let's create it - it will be overwritten later
-			//nolint:nosnakecase // O_* constants are delivered by the sdk and we can't change them to follow MixedCap
 			f, err := os.OpenFile(header.Linkname, os.O_CREATE|os.O_EXCL, mode)
 			if err != nil {
 				if !os.IsExist(err) {
@@ -495,7 +492,7 @@ func untar(reader io.Reader, path string) error {
 	}
 }
 
-// CacheDir returns path to cache directory
+// CacheDir returns path to cache directory.
 func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
@@ -516,7 +513,7 @@ func ensureDir(file string) error {
 	return nil
 }
 
-// ByName returns tool definition by its name
+// ByName returns tool definition by its name.
 func ByName(name Name) Tool {
 	return tools[name]
 }
@@ -565,7 +562,7 @@ func CopyToolBinaries(tool Name, path string, binaryNames ...string) error {
 			return errors.WithStack(err)
 		}
 		defer fr.Close()
-		fw, err := os.OpenFile(filepath.Join(path, binaryName), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o777) //nolint:nosnakecase // os constants
+		fw, err := os.OpenFile(filepath.Join(path, binaryName), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o777)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -578,12 +575,12 @@ func CopyToolBinaries(tool Name, path string, binaryNames ...string) error {
 	return nil
 }
 
-// PathLocal returns path to locally installed tool
+// PathLocal returns path to locally installed tool.
 func PathLocal(tool string) string {
 	return must.String(filepath.Abs(filepath.Join("bin", tool)))
 }
 
-// PathDocker returns path to docker-installed tool
+// PathDocker returns path to docker-installed tool.
 func PathDocker(tool string) string {
 	return must.String(filepath.Abs(filepath.Join(CacheDir(), DockerPlatform.String(), tool)))
 }

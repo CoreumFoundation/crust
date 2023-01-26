@@ -10,14 +10,14 @@ import (
 	"github.com/CoreumFoundation/crust/exec"
 )
 
-// Attach attaches to tmux session
+// Attach attaches to tmux session.
 func Attach(ctx context.Context, sessionName string) error {
 	cmd := exec.TMux("attach-session", "-t", sessionName)
 	cmd.Stdin = os.Stdin
 	return libexec.Exec(ctx, cmd)
 }
 
-// ShowContainerLogs adds new window to tmux session presenting logs from docker container
+// ShowContainerLogs adds new window to tmux session presenting logs from docker container.
 func ShowContainerLogs(ctx context.Context, sessionName, windowName, container string) error {
 	hasSession, err := sessionExists(ctx, sessionName)
 	if err != nil {
@@ -31,7 +31,7 @@ func ShowContainerLogs(ctx context.Context, sessionName, windowName, container s
 	return libexec.Exec(ctx, exec.TMux(append([]string{"new-session", "-d", "-s", sessionName, "-n", windowName}, cmd...)...))
 }
 
-// Kill kills tmux session
+// Kill kills tmux session.
 func Kill(ctx context.Context, sessionName string) error {
 	hasSession, err := sessionExists(ctx, sessionName)
 	if err != nil {

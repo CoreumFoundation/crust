@@ -30,7 +30,7 @@ var (
 )
 
 const (
-	// AppType is the type of prometheus application
+	// AppType is the type of prometheus application.
 	AppType infra.AppType = "prometheus"
 
 	configFileName     = "prometheus.yml"
@@ -40,7 +40,7 @@ const (
 	DefaultPort = 9092
 )
 
-// Config stores prometheus app config
+// Config stores prometheus app config.
 type Config struct {
 	Name       string
 	HomeDir    string
@@ -49,7 +49,7 @@ type Config struct {
 	CoredNodes []cored.Cored
 }
 
-// New creates new prometheus app
+// New creates new prometheus app.
 func New(config Config) Prometheus {
 	return Prometheus{
 		config: config,
@@ -76,22 +76,22 @@ func (p Prometheus) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// Prometheus represents prometheus
+// Prometheus represents prometheus.
 type Prometheus struct {
 	config Config
 }
 
-// Type returns type of application
+// Type returns type of application.
 func (p Prometheus) Type() infra.AppType {
 	return AppType
 }
 
-// Name returns name of app
+// Name returns name of app.
 func (p Prometheus) Name() string {
 	return p.config.Name
 }
 
-// Info returns deployment info
+// Info returns deployment info.
 func (p Prometheus) Info() infra.DeploymentInfo {
 	return p.config.AppInfo.Info()
 }
@@ -101,7 +101,7 @@ func (p Prometheus) DataSourcePort() int {
 	return DefaultPort
 }
 
-// Deployment returns deployment of prometheus
+// Deployment returns deployment of prometheus.
 func (p Prometheus) Deployment() infra.Deployment {
 	return infra.Deployment{
 		Image:     "prom/prometheus:v2.41.0",
