@@ -29,6 +29,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -99,7 +100,7 @@ func New(cfg Config) Cored {
 
 // prepareTxStakingCreateValidator generates transaction of type MsgCreateValidator.
 func prepareTxStakingCreateValidator(
-	chainID config.ChainID,
+	chainID constant.ChainID,
 	txConfig cosmosclient.TxConfig,
 	validatorPublicKey ed25519.PublicKey,
 	stakerPrivateKey cosmossecp256k1.PrivKey,
