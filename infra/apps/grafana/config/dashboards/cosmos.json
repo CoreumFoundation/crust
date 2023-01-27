@@ -745,7 +745,7 @@
         ]
       },
       "gridPos": {
-        "h": 5,
+        "h": 9,
         "w": 12,
         "x": 0,
         "y": 14
@@ -792,6 +792,116 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "P168AE35C7276FF55"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "hideTimeOverride": false,
+      "id": 85,
+      "links": [],
+      "options": {
+        "legend": {
+          "calcs": [
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "asc"
+        }
+      },
+      "pluginVersion": "9.3.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P168AE35C7276FF55"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "deterministic_gas_factor{quantile=\"0.9\"}",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{msg_name}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P168AE35C7276FF55"
+          },
+          "hide": false,
+          "refId": "B"
+        }
+      ],
+      "title": "Deterministic gas factor",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "datasource": {
         "type": "datasource",
@@ -801,7 +911,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 23
       },
       "id": 77,
       "panels": [],
@@ -857,7 +967,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 20
+        "y": 24
       },
       "hideTimeOverride": true,
       "id": 53,
@@ -931,7 +1041,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 20
+        "y": 24
       },
       "hideTimeOverride": true,
       "id": 56,
@@ -1000,7 +1110,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 20
+        "y": 24
       },
       "hideTimeOverride": true,
       "id": 60,
@@ -1072,7 +1182,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 20
+        "y": 24
       },
       "hideTimeOverride": true,
       "id": 61,
@@ -1206,7 +1316,7 @@
         "h": 5,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 28
       },
       "hideTimeOverride": false,
       "id": 49,
@@ -1341,7 +1451,7 @@
         "h": 5,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 28
       },
       "hideTimeOverride": false,
       "id": 50,
@@ -1477,7 +1587,7 @@
         "h": 5,
         "w": 12,
         "x": 0,
-        "y": 29
+        "y": 33
       },
       "hideTimeOverride": false,
       "id": 82,
@@ -1613,7 +1723,7 @@
         "h": 5,
         "w": 12,
         "x": 12,
-        "y": 29
+        "y": 33
       },
       "hideTimeOverride": false,
       "id": 84,
@@ -1674,7 +1784,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 38
       },
       "hiddenSeries": false,
       "id": 59,
@@ -1772,7 +1882,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 38
       },
       "hiddenSeries": false,
       "id": 58,
