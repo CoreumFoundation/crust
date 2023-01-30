@@ -155,7 +155,7 @@ func pingPongCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.C
 	}
 }
 
-// Deprecated: Use "DefaultSection" instead.
+// Deprecated: Use "addTestGroupFlag" instead.
 func addTestRepoFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringSliceVar(
 		&configF.TestGroups,
