@@ -22,13 +22,13 @@ const (
 	testBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
 )
 
-// BuildCored builds all the versions of cored binary
+// BuildCored builds all the versions of cored binary.
 func BuildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(BuildCoredLocally, BuildCoredInDocker)
 	return nil
 }
 
-// BuildCoredLocally builds cored locally
+// BuildCoredLocally builds cored locally.
 func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
@@ -45,7 +45,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-// BuildCoredInDocker builds cored in docker
+// BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
 
@@ -89,7 +89,7 @@ func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-// BuildIntegrationTests builds coreum integration tests
+// BuildIntegrationTests builds coreum integration tests.
 func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
@@ -109,19 +109,19 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-// Tidy runs `go mod tidy` for coreum repo
+// Tidy runs `go mod tidy` for coreum repo.
 func Tidy(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
 	return golang.Tidy(ctx, repoPath, deps)
 }
 
-// Lint lints coreum repo
+// Lint lints coreum repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
 	return golang.Lint(ctx, repoPath, deps)
 }
 
-// Test run unit tests in coreum repo
+// Test run unit tests in coreum repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
 	return golang.Test(ctx, repoPath, deps)

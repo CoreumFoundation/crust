@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	// AppType is the type of hasura application
+	// AppType is the type of hasura application.
 	AppType infra.AppType = "hasura"
 
-	// DefaultPort is the default port hasura listens on for client connections
+	// DefaultPort is the default port hasura listens on for client connections.
 	DefaultPort = 8080
 )
 
-// Config stores hasura app config
+// Config stores hasura app config.
 type Config struct {
 	Name     string
 	AppInfo  *infra.AppInfo
@@ -27,39 +27,39 @@ type Config struct {
 	BDJuno   bdjuno.BDJuno
 }
 
-// New creates new hasura app
+// New creates new hasura app.
 func New(config Config) Hasura {
 	return Hasura{
 		config: config,
 	}
 }
 
-// Hasura represents hasura
+// Hasura represents hasura.
 type Hasura struct {
 	config Config
 }
 
-// Type returns type of application
+// Type returns type of application.
 func (h Hasura) Type() infra.AppType {
 	return AppType
 }
 
-// Name returns name of app
+// Name returns name of app.
 func (h Hasura) Name() string {
 	return h.config.Name
 }
 
-// Port returns port used by hasura to accept client connections
+// Port returns port used by hasura to accept client connections.
 func (h Hasura) Port() int {
 	return h.config.Port
 }
 
-// Info returns deployment info
+// Info returns deployment info.
 func (h Hasura) Info() infra.DeploymentInfo {
 	return h.config.AppInfo.Info()
 }
 
-// Deployment returns deployment of hasura
+// Deployment returns deployment of hasura.
 func (h Hasura) Deployment() infra.Deployment {
 	return infra.Deployment{
 		Image: "coreumfoundation/hasura:latest",

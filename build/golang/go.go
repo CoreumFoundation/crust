@@ -27,7 +27,7 @@ import (
 
 const goAlpineVersion = "3.17"
 
-// BinaryBuildConfig is the configuration for `go build`
+// BinaryBuildConfig is the configuration for `go build`.
 type BinaryBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
@@ -51,7 +51,7 @@ type BinaryBuildConfig struct {
 	CrosscompileARM64 bool
 }
 
-// TestBuildConfig is the configuration for `go test -c`
+// TestBuildConfig is the configuration for `go test -c`.
 type TestBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
@@ -63,22 +63,22 @@ type TestBuildConfig struct {
 	Tags []string
 }
 
-// EnsureGo ensures that go is available
+// EnsureGo ensures that go is available.
 func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureLocal(ctx, tools.Go)
 }
 
-// EnsureGolangCI ensures that go linter is available
+// EnsureGolangCI ensures that go linter is available.
 func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureLocal(ctx, tools.GolangCI)
 }
 
-// EnsureLibWASMVMMuslC ensures that libwasmvm_muslc is installed
+// EnsureLibWASMVMMuslC ensures that libwasmvm_muslc is installed.
 func EnsureLibWASMVMMuslC(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureDocker(ctx, tools.LibWASMMuslC)
 }
 
-// BuildLocally builds binary locally
+// BuildLocally builds binary locally.
 func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
 		zap.String("binary", config.BinOutputPath))
@@ -97,7 +97,7 @@ func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	return nil
 }
 
-// BuildInDocker builds binary inside docker container
+// BuildInDocker builds binary inside docker container.
 func BuildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	// FIXME (wojciech): use docker API instead of docker executable
 
@@ -153,7 +153,7 @@ func BuildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	return nil
 }
 
-// BuildTests builds tests
+// BuildTests builds tests.
 func BuildTests(ctx context.Context, config TestBuildConfig) error {
 	logger.Get(ctx).Info("Building go tests", zap.String("package", config.PackagePath),
 		zap.String("binary", config.BinOutputPath))
@@ -249,7 +249,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	return args, envs
 }
 
-// Test runs go tests in repository
+// Test runs go tests in repository.
 func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
@@ -273,7 +273,7 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	})
 }
 
-// Tidy runs go mod tidy in repository
+// Tidy runs go mod tidy in repository.
 func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)

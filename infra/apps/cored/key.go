@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// importMnemonicsToKeyring adds keys to local keystore
+// importMnemonicsToKeyring adds keys to local keystore.
 func importMnemonicsToKeyring(homeDir string, mnemonics map[string]string) error {
 	kr, err := keyring.New("cored", "test", homeDir, nil)
 	if err != nil {
@@ -26,7 +26,7 @@ func importMnemonicsToKeyring(homeDir string, mnemonics map[string]string) error
 	return nil
 }
 
-// PrivateKeyFromMnemonic generates private key from mnemonic
+// PrivateKeyFromMnemonic generates private key from mnemonic.
 func PrivateKeyFromMnemonic(mnemonic string) (cosmossecp256k1.PrivKey, error) {
 	kr := keyring.NewUnsafe(keyring.NewInMemory())
 

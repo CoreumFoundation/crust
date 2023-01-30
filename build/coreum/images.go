@@ -10,7 +10,7 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
-// BuildCoredDockerImage builds cored docker image
+// BuildCoredDockerImage builds cored docker image.
 func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureCosmovisor, BuildCoredInDocker, buildCoredWithFakeUpgrade)
 

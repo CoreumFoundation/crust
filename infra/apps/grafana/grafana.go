@@ -28,7 +28,7 @@ var (
 )
 
 const (
-	// AppType is the type of grafana application
+	// AppType is the type of grafana application.
 	AppType infra.AppType = "grafana"
 
 	datasourceFileName = "datasource.yml"
@@ -38,7 +38,7 @@ const (
 	DefaultPort = 3001
 )
 
-// Config stores grafana app config
+// Config stores grafana app config.
 type Config struct {
 	Name       string
 	HomeDir    string
@@ -48,34 +48,34 @@ type Config struct {
 	Prometheus prometheus.Prometheus
 }
 
-// New creates new grafana app
+// New creates new grafana app.
 func New(config Config) Grafana {
 	return Grafana{
 		config: config,
 	}
 }
 
-// Grafana represents grafana
+// Grafana represents grafana.
 type Grafana struct {
 	config Config
 }
 
-// Type returns type of application
+// Type returns type of application.
 func (g Grafana) Type() infra.AppType {
 	return AppType
 }
 
-// Name returns name of app
+// Name returns name of app.
 func (g Grafana) Name() string {
 	return g.config.Name
 }
 
-// Info returns deployment info
+// Info returns deployment info.
 func (g Grafana) Info() infra.DeploymentInfo {
 	return g.config.AppInfo.Info()
 }
 
-// Deployment returns deployment of grafana
+// Deployment returns deployment of grafana.
 func (g Grafana) Deployment() infra.Deployment {
 	return infra.Deployment{
 		Image:     "grafana/grafana:9.3.2",
@@ -156,7 +156,7 @@ func (g Grafana) saveConfigFiles() error {
 		}
 		defer source.Close()
 
-		destination, err := os.OpenFile(filepath.Join(g.config.HomeDir, dashboardsFolder, d.Name()), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600) //nolint:nosnakecase // os constants
+		destination, err := os.OpenFile(filepath.Join(g.config.HomeDir, dashboardsFolder, d.Name()), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 		if err != nil {
 			return errors.WithMessagef(err, "can't create file %q file", d.Name())
 		}

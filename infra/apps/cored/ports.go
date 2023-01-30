@@ -1,6 +1,6 @@
 package cored
 
-// Ports defines ports used by cored application
+// Ports defines ports used by cored application.
 type Ports struct {
 	RPC        int `json:"rpc"`
 	P2P        int `json:"p2p"`
@@ -11,7 +11,7 @@ type Ports struct {
 	Prometheus int `json:"prometheus"`
 }
 
-// DefaultPorts are the default ports cored listens on
+// DefaultPorts are the default ports cored listens on.
 var DefaultPorts = Ports{
 	RPC:        26657,
 	P2P:        26656,

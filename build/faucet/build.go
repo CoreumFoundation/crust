@@ -15,7 +15,7 @@ const (
 	testBinaryPath   = "bin/.cache/integration-tests/faucet"
 )
 
-// Build builds faucet in docker
+// Build builds faucet in docker.
 func Build(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
@@ -25,7 +25,7 @@ func Build(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-// BuildIntegrationTests builds faucet integration tests
+// BuildIntegrationTests builds faucet integration tests.
 func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
@@ -36,19 +36,19 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-// Tidy runs `go mod tidy` for faucet repo
+// Tidy runs `go mod tidy` for faucet repo.
 func Tidy(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
 	return golang.Tidy(ctx, repoPath, deps)
 }
 
-// Lint lints faucet repo
+// Lint lints faucet repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
 	return golang.Lint(ctx, repoPath, deps)
 }
 
-// Test run unit tests in faucet repo
+// Test run unit tests in faucet repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
 	return golang.Test(ctx, repoPath, deps)

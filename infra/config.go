@@ -1,6 +1,6 @@
 package infra
 
-// Config stores configuration
+// Config stores configuration.
 type Config struct {
 	// EnvName is the name of created environment
 	EnvName string
