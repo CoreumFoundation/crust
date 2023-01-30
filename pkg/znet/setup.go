@@ -53,7 +53,7 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 	}
 
 	// we use append to make a copy of the original list, so it is not passed by reference
-	config.TestRepos = append([]string{}, configF.TestRepos...)
+	config.TestGroups = append([]string{}, configF.TestGroups...)
 
 	createDirs(config)
 
