@@ -22,7 +22,7 @@ import (
 )
 
 // Run deploys testing environment and runs tests there.
-func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config infra.Config, onlyRepos ...string) error {
+func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config infra.Config, onlyTestGroups ...string) error {
 	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
 	files, err := os.ReadDir(testDir)
 	if err != nil {
@@ -67,7 +67,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		if f.IsDir() {
 			continue
 		}
-		if len(onlyRepos) > 0 && !lo.Contains(onlyRepos, f.Name()) {
+		if len(onlyTestGroups) > 0 && !lo.Contains(onlyTestGroups, f.Name()) {
 			continue
 		}
 		// copy is not used here, since the linter complains in the next line that using append with pre-allocated

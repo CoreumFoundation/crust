@@ -106,6 +106,7 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		}),
 	}
 	addTestRepoFlag(testCmd, configF)
+	addTestGroupFlag(testCmd, configF)
 	addBinDirFlag(testCmd, configF)
 	addFilterFlag(testCmd, configF)
 	return testCmd
@@ -154,12 +155,22 @@ func pingPongCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.C
 	}
 }
 
+// Deprecated: Use "addTestGroupFlag" instead.
 func addTestRepoFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringSliceVar(
-		&configF.TestRepos,
+		&configF.TestGroups,
 		"repos",
 		[]string{},
 		"Repositories to run integration test for,empty means all repositories,e.g. --repos=faucet,coreum or --repos=faucet --repos=coreum",
+	)
+}
+
+func addTestGroupFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
+	cmd.Flags().StringSliceVar(
+		&configF.TestGroups,
+		"test-groups",
+		[]string{},
+		"Test groups in supported repositories to run integration test for,empty means all repositories all test groups ,e.g. --test-groups=faucet,coreum-modules or --test-groups=faucet --test-groups=coreum-modules",
 	)
 }
 
