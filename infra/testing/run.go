@@ -56,7 +56,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
-		args = append(args, "-filter", config.TestFilter)
+		args = append(args, "-test.run", config.TestFilter)
 	}
 	if config.VerboseLogging {
 		args = append(args, "-test.v")
