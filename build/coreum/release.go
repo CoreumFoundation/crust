@@ -28,6 +28,13 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
+	if parameters.Version() == parameters.Commit() {
+		return errors.New("no version present on released commit")
+	}
+	if parameters.IsDirty() {
+		return errors.New("released commit contains uncommitted changes")
+	}
+
 	config := golang.BinaryBuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  releaseAMD64BinaryPath,
