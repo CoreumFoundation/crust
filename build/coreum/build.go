@@ -3,6 +3,7 @@ package coreum
 import (
 	"context"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/mod/semver"
 
@@ -131,7 +132,21 @@ func ensureRepo(ctx context.Context, deps build.DepsFunc) error {
 	return git.EnsureRepo(ctx, repoURL)
 }
 
-func coredVersionParams(ctx context.Context) (map[string]string, error) {
+type params map[string]string
+
+func (p params) Version() string {
+	return p["github.com/cosmos/cosmos-sdk/version.Version"]
+}
+
+func (p params) Commit() string {
+	return p["github.com/cosmos/cosmos-sdk/version.Commit"]
+}
+
+func (p params) IsDirty() bool {
+	return strings.HasSuffix(p["github.com/cosmos/cosmos-sdk/version.Commit"], "-dirty")
+}
+
+func coredVersionParams(ctx context.Context) (params, error) {
 	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
 		return nil, err
@@ -141,10 +156,14 @@ func coredVersionParams(ctx context.Context) (map[string]string, error) {
 		return nil, err
 	}
 
-	return map[string]string{
+	version := firstVersionTag(tags)
+	if version == "" {
+		version = hash
+	}
+	return params{
 		"github.com/cosmos/cosmos-sdk/version.Name":    blockchainName,
 		"github.com/cosmos/cosmos-sdk/version.AppName": binaryName,
-		"github.com/cosmos/cosmos-sdk/version.Version": firstVersionTag(tags),
+		"github.com/cosmos/cosmos-sdk/version.Version": version,
 		"github.com/cosmos/cosmos-sdk/version.Commit":  hash,
 	}, nil
 }
