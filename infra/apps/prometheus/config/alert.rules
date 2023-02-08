@@ -58,3 +58,12 @@ groups:
         service: cosmos-monitoring
       annotations:
         description: 'Validator is missing'
+
+    - alert: UnknownDeterministicGasMessage
+      expr: deterministic_gas_unknown_message{job="cosmos"} > 0
+      for: 1m
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'Unknown deterministic gas message'
