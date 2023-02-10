@@ -20,7 +20,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
-	"github.com/CoreumFoundation/crust/infra/apps/relayer"
+	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
 )
 
 // NewFactory creates new app factory.
@@ -185,11 +185,11 @@ func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 		RelayerMnemonic: gaiad.RelayerMnemonic,
 	})
 
-	relayerCosmosApp := relayer.New(relayer.Config{
+	relayerCosmosApp := relayercosmos.New(relayercosmos.Config{
 		Name:      nameRelayerCosmos,
 		HomeDir:   filepath.Join(f.config.AppDir, nameRelayerCosmos),
-		AppInfo:   f.spec.DescribeApp(relayer.AppType, nameRelayerCosmos),
-		DebugPort: relayer.DefaultDebugPort,
+		AppInfo:   f.spec.DescribeApp(relayercosmos.AppType, nameRelayerCosmos),
+		DebugPort: relayercosmos.DefaultDebugPort,
 		Cored:     coredApp,
 		Gaia:      gaiaApp,
 	})
