@@ -170,29 +170,34 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet 
 	}
 }
 
-// Gaia creates new gaia.
-func (f *Factory) Gaia(name string) gaiad.Gaia {
-	return gaiad.New(gaiad.Config{
-		Name:            name,
-		HomeDir:         filepath.Join(f.config.AppDir, name),
+// IBC creates set of applications required to test IBC.
+func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
+	nameGaia := name + "-gaia"
+	nameRelayerCosmos := name + "-relayer-cosmos"
+
+	gaiaApp := gaiad.New(gaiad.Config{
+		Name:            nameGaia,
+		HomeDir:         filepath.Join(f.config.AppDir, nameGaia),
 		ChainID:         gaiad.DefaultChainID,
 		AccountPrefix:   gaiad.DefaultAccountPrefix,
-		AppInfo:         f.spec.DescribeApp(gaiad.AppType, name),
+		AppInfo:         f.spec.DescribeApp(gaiad.AppType, nameGaia),
 		Ports:           gaiad.DefaultPorts,
 		RelayerMnemonic: gaiad.RelayerMnemonic,
 	})
-}
 
-// Relayer creates new relayer.
-func (f *Factory) Relayer(name string, coredApp cored.Cored, gaiaApp gaiad.Gaia) relayer.Relayer {
-	return relayer.New(relayer.Config{
-		Name:      name,
-		HomeDir:   filepath.Join(f.config.AppDir, name),
-		AppInfo:   f.spec.DescribeApp(relayer.AppType, name),
+	relayerCosmosApp := relayer.New(relayer.Config{
+		Name:      nameRelayerCosmos,
+		HomeDir:   filepath.Join(f.config.AppDir, nameRelayerCosmos),
+		AppInfo:   f.spec.DescribeApp(relayer.AppType, nameRelayerCosmos),
 		DebugPort: relayer.DefaultDebugPort,
 		Cored:     coredApp,
 		Gaia:      gaiaApp,
 	})
+
+	return infra.AppSet{
+		gaiaApp,
+		relayerCosmosApp,
+	}
 }
 
 // Monitoring returns set of applications required to run monitoring.
