@@ -18,6 +18,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 	"github.com/CoreumFoundation/crust/infra/apps/grafana"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
+	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
 	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
@@ -173,6 +174,7 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet 
 // IBC creates set of applications required to test IBC.
 func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 	nameGaia := name + "-gaia"
+	nameOsmosis := name + "-osmosis"
 	nameRelayerCosmos := name + "-relayer-cosmos"
 
 	gaiaApp := gaiad.New(gaiad.Config{
@@ -183,6 +185,16 @@ func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 		AppInfo:         f.spec.DescribeApp(gaiad.AppType, nameGaia),
 		Ports:           gaiad.DefaultPorts,
 		RelayerMnemonic: gaiad.RelayerMnemonic,
+	})
+
+	osmosisApp := osmosis.New(osmosis.Config{
+		Name:            nameOsmosis,
+		HomeDir:         filepath.Join(f.config.AppDir, nameOsmosis),
+		ChainID:         osmosis.DefaultChainID,
+		AccountPrefix:   osmosis.DefaultAccountPrefix,
+		AppInfo:         f.spec.DescribeApp(osmosis.AppType, nameOsmosis),
+		Ports:           osmosis.DefaultPorts,
+		RelayerMnemonic: osmosis.RelayerMnemonic,
 	})
 
 	relayerCosmosApp := relayercosmos.New(relayercosmos.Config{
@@ -196,6 +208,7 @@ func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 
 	return infra.AppSet{
 		gaiaApp,
+		osmosisApp,
 		relayerCosmosApp,
 	}
 }

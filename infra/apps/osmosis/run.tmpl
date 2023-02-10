@@ -1,0 +1,45 @@
+#!/bin/sh
+
+export HOME="{{ .HomePath }}"
+
+CHAIN_ID_FLAGS="--chain-id {{ .ChainID }}"
+KEYRING_FLAGS="--keyring-backend test --keyring-dir $HOME"
+
+RELAYER_MNEMONIC="{{ .RelayerMnemonic }}"
+
+GENESIS_PATH="$HOME/.osmosis/config/genesis.json"
+
+if [ ! -f "$GENESIS_PATH" ]; then
+
+# init the chain
+osmosisd init moniker $CHAIN_ID_FLAGS
+
+# add chain validator
+osmosisd keys add validator $KEYRING_FLAGS
+
+# import the relayer mnemonic
+echo $RELAYER_MNEMONIC | osmosisd keys add relayer --recover $KEYRING_FLAGS
+echo "relayer address: $(osmosisd keys show relayer -a $KEYRING_FLAGS)"
+
+# fund the validator and relayer accounts
+osmosisd add-genesis-account $(osmosisd keys show validator -a $KEYRING_FLAGS) 100000000000stake
+osmosisd add-genesis-account $(osmosisd keys show relayer -a $KEYRING_FLAGS) 100000000000stake
+
+# create validator gentx
+osmosisd gentx validator 100000000stake $CHAIN_ID_FLAGS $KEYRING_FLAGS
+
+# Add the gentx to the genesis file.
+osmosisd collect-gentxs
+
+fi
+
+# Start the node
+osmosisd start \
+--log_level debug \
+--trace \
+--rpc.laddr {{ .RPCLaddr }} \
+--p2p.laddr {{ .P2PLaddr }} \
+--grpc.address {{ .GRPCAddress }} \
+--grpc-web.address {{ .GRPCWebAddress }} \
+--rpc.pprof_laddr {{ .RPCPprofLaddr }} \
+$HOME_FLAGS
