@@ -204,6 +204,7 @@ func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 		DebugPort: relayercosmos.DefaultDebugPort,
 		Cored:     coredApp,
 		Gaia:      gaiaApp,
+		Osmosis:   osmosisApp,
 	})
 
 	return infra.AppSet{

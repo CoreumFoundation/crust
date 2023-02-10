@@ -21,6 +21,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
+	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -52,6 +53,7 @@ type Config struct {
 	DebugPort int
 	Cored     cored.Cored
 	Gaia      gaiad.Gaia
+	Osmosis   osmosis.Osmosis
 }
 
 // New creates new relayer app.
@@ -89,7 +91,7 @@ func (r Relayer) HealthCheck(ctx context.Context) error {
 		return retry.Retryable(errors.Errorf("realyer hasn't started yet"))
 	}
 
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", r.Info().HostFromHost, r.config.DebugPort), Path: "/metrics"}
+	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", r.Info().HostFromHost, r.config.DebugPort), Path: "/relayer/metrics"}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -113,6 +115,7 @@ func (r Relayer) HealthCheck(ctx context.Context) error {
 
 	chainIDs := map[string]struct{}{
 		r.config.Gaia.Config().ChainID:                    {},
+		r.config.Osmosis.Config().ChainID:                 {},
 		string(r.config.Cored.Config().Network.ChainID()): {},
 	}
 
@@ -185,6 +188,10 @@ func (r Relayer) saveConfigFile() error {
 		GaiaChanID        string
 		GaiaRPCUrl        string
 		GaiaAccountPrefix string
+
+		OsmosisChanID        string
+		OsmosisRPCUrl        string
+		OsmosisAccountPrefix string
 	}{
 		CoreumChanID:        string(r.config.Cored.Config().Network.ChainID()),
 		CoreumRPCUrl:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
@@ -193,6 +200,10 @@ func (r Relayer) saveConfigFile() error {
 		GaiaChanID:        r.config.Gaia.Config().ChainID,
 		GaiaRPCUrl:        infra.JoinNetAddr("http", r.config.Gaia.Info().HostFromContainer, r.config.Gaia.Config().Ports.RPC),
 		GaiaAccountPrefix: r.config.Gaia.Config().AccountPrefix,
+
+		OsmosisChanID:        r.config.Osmosis.Config().ChainID,
+		OsmosisRPCUrl:        infra.JoinNetAddr("http", r.config.Osmosis.Info().HostFromContainer, r.config.Osmosis.Config().Ports.RPC),
+		OsmosisAccountPrefix: r.config.Osmosis.Config().AccountPrefix,
 	}
 
 	buf := &bytes.Buffer{}
@@ -225,6 +236,9 @@ func (r Relayer) saveRunScriptFile() error {
 		GaiaChanID          string
 		GaiaRelayerMnemonic string
 
+		OsmosisChanID          string
+		OsmosisRelayerMnemonic string
+
 		DebugPort int
 	}{
 		HomePath: targets.AppHomeDir,
@@ -235,6 +249,9 @@ func (r Relayer) saveRunScriptFile() error {
 
 		GaiaChanID:          r.config.Gaia.Config().ChainID,
 		GaiaRelayerMnemonic: r.config.Gaia.Config().RelayerMnemonic,
+
+		OsmosisChanID:          r.config.Osmosis.Config().ChainID,
+		OsmosisRelayerMnemonic: r.config.Osmosis.Config().RelayerMnemonic,
 
 		DebugPort: r.config.DebugPort,
 	}

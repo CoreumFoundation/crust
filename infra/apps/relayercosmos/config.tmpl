@@ -34,4 +34,19 @@ chains:
             timeout: 20s
             output-format: json
             sign-mode: direct
+    osmosis:
+        type: cosmos
+        value:
+            key: osmosis-key
+            chain-id: {{ .OsmosisChanID }}
+            rpc-addr: {{ .OsmosisRPCUrl }}
+            account-prefix: {{ .OsmosisAccountPrefix }}
+            keyring-backend: test
+            gas-adjustment: 1.2
+            gas-prices: 0.01stake
+            min-gas-amount: 0
+            debug: true
+            timeout: 20s
+            output-format: json
+            sign-mode: direct
 paths: {}
