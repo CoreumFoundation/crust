@@ -52,7 +52,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
-		"-cored-address", infra.JoinNetAddr("tcp", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC),
+		"-cored-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
