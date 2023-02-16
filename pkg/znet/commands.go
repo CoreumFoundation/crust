@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -24,8 +25,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -120,7 +122,7 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr e
 	}
 
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := integrationtests.NewNetworkConfig()
+	networkConfig, err := integrationtests.NewNetworkConfig(constant.ChainIDDev)
 	if err != nil {
 		return err
 	}
@@ -183,7 +185,7 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	}
 
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := integrationtests.NewNetworkConfig()
+	networkConfig, err := integrationtests.NewNetworkConfig(constant.ChainIDDev)
 	if err != nil {
 		return err
 	}
@@ -271,7 +273,7 @@ func PingPong(ctx context.Context, appSet infra.AppSet) error {
 }
 
 // importMnemonic imports the mnemonic into the ClientContext Keyring and returns its address.
-func importMnemonic(clientCtx tx.ClientContext, keyName, mnemonic string) sdk.AccAddress {
+func importMnemonic(clientCtx client.Context, keyName, mnemonic string) sdk.AccAddress {
 	keyInfo, err := clientCtx.Keyring().NewAccount(
 		keyName,
 		mnemonic,
@@ -284,7 +286,7 @@ func importMnemonic(clientCtx tx.ClientContext, keyName, mnemonic string) sdk.Ac
 	return keyInfo.GetAddress()
 }
 
-func sendTokens(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory, from, to sdk.AccAddress, network config.Network) error {
+func sendTokens(ctx context.Context, clientCtx client.Context, txf tx.Factory, from, to sdk.AccAddress, network config.Network) error {
 	log := logger.Get(ctx)
 
 	amount := sdk.NewCoin(network.Denom(), sdk.OneInt())
@@ -296,7 +298,7 @@ func sendTokens(ctx context.Context, clientCtx tx.ClientContext, txf tx.Factory,
 		Amount:      sdk.NewCoins(amount),
 	}
 
-	res, err := tx.BroadcastTx(ctx, clientCtx, txf, msg)
+	res, err := client.BroadcastTx(ctx, clientCtx, txf, msg)
 	if err != nil {
 		return err
 	}

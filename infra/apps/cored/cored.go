@@ -13,6 +13,7 @@ import (
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -26,11 +27,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
-	"github.com/CoreumFoundation/coreum/pkg/tx"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
@@ -81,7 +83,7 @@ func New(cfg Config) Cored {
 
 		must.OK(cfg.Network.FundAccount(sdk.AccAddress(stakerPrivKey.PubKey().Address()), sdk.NewCoins(stake.Add(additionalBalance))))
 
-		clientCtx := tx.NewClientContext(newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
+		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
 
 		createValidatorTx, err := prepareTxStakingCreateValidator(cfg.Network.ChainID(), clientCtx.TxConfig(), valPublicKey, stakerPrivKey, stake, stake.Amount)
 		must.OK(err)
@@ -192,19 +194,23 @@ func (c Cored) Config() Config {
 }
 
 // ClientContext creates new cored ClientContext.
-func (c Cored) ClientContext() tx.ClientContext {
-	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.RPC))
+func (c Cored) ClientContext() client.Context {
+	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
-	return tx.NewClientContext(newBasicManager()).
+	grpcClient, err := grpc.Dial(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.GRPC), grpc.WithInsecure())
+	must.OK(err)
+
+	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
 		WithChainID(string(c.config.Network.ChainID())).
-		WithClient(rpcClient).
+		WithRPCClient(rpcClient).
+		WithGRPCClient(grpcClient).
 		WithKeyring(keyring.NewInMemory()).
 		WithBroadcastMode(flags.BroadcastBlock)
 }
 
 // TxFactory returns factory with present values for the chain.
-func (c Cored) TxFactory(clientCtx tx.ClientContext) tx.Factory {
+func (c Cored) TxFactory(clientCtx client.Context) tx.Factory {
 	return tx.Factory{}.
 		WithKeybase(clientCtx.Keyring()).
 		WithChainID(string(c.config.Network.ChainID())).
@@ -213,7 +219,7 @@ func (c Cored) TxFactory(clientCtx tx.ClientContext) tx.Factory {
 
 // HealthCheck checks if cored chain is ready to accept transactions.
 func (c Cored) HealthCheck(ctx context.Context) error {
-	return infra.CheckCosmosNodeHealth(ctx, c.Info(), c.config.Ports.RPC)
+	return infra.CheckCosmosNodeHealth(ctx, c.ClientContext(), c.Info())
 }
 
 // Deployment returns deployment of cored.

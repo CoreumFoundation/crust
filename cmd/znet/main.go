@@ -12,6 +12,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/pkg/znet"
@@ -135,7 +136,7 @@ func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cm
 }
 
 func pingPongCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) *cobra.Command {
-	networkConfig, err := integrationtests.NewNetworkConfig()
+	networkConfig, err := integrationtests.NewNetworkConfig(constant.ChainIDDev)
 	must.OK(err)
 
 	return &cobra.Command{

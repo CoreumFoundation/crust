@@ -3,19 +3,18 @@ package infra
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net"
-	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 )
 
 // HealthCheckCapable represents application exposing health check endpoint.
@@ -98,45 +97,28 @@ func PortsToMap(ports interface{}) map[string]int {
 }
 
 // CheckCosmosNodeHealth check the health of the running cosmos based node.
-func CheckCosmosNodeHealth(ctx context.Context, appInfo DeploymentInfo, grpcPort int) error {
+func CheckCosmosNodeHealth(ctx context.Context, clientCtx client.Context, appInfo DeploymentInfo) error {
 	if appInfo.Status != AppStatusRunning {
-		return retry.Retryable(errors.Errorf("chain hasn't started yet"))
+		return retry.Retryable(errors.New("chain hasn't started yet"))
 	}
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	statusURL := url.URL{Scheme: "http", Host: JoinNetAddr("", appInfo.HostFromHost, grpcPort), Path: "/status"}
-	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+	// Test RPC endpoint
+	status, err := clientCtx.RPCClient().Status(ctx)
 	if err != nil {
-		return retry.Retryable(errors.WithStack(err))
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return retry.Retryable(errors.WithStack(err))
+		return retry.Retryable(errors.Wrap(err, "retrieving node status failed"))
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return retry.Retryable(errors.Errorf("health check failed, status code: %d, response: %s", resp.StatusCode, body))
-	}
-
-	data := struct {
-		Result struct {
-			SyncInfo struct {
-				LatestBlockHash string `json:"latest_block_hash"` //nolint: tagliatelle
-			} `json:"sync_info"` //nolint: tagliatelle
-		} `json:"result"`
-	}{}
-
-	if err := json.Unmarshal(body, &data); err != nil {
-		return retry.Retryable(errors.WithStack(err))
-	}
-
-	if data.Result.SyncInfo.LatestBlockHash == "" {
+	if status.SyncInfo.LatestBlockHeight == 0 {
 		return retry.Retryable(errors.New("genesis block hasn't been mined yet"))
+	}
+
+	// Test GRPC endpoint
+	tmClient := tmservice.NewServiceClient(clientCtx)
+	_, err = tmClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	if err != nil {
+		return retry.Retryable(errors.Wrap(err, "grpc endpoint is not ready yet"))
 	}
 
 	return nil
