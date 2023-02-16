@@ -113,7 +113,7 @@ func (g Gaia) ClientContext() client.Context {
 	must.OK(err)
 
 	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
-		WithChainID(string(g.config.ChainID)).
+		WithChainID(g.config.ChainID).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient).
 		WithKeyring(keyring.NewInMemory()).
