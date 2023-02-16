@@ -110,7 +110,7 @@ func CheckCosmosNodeHealth(ctx context.Context, clientCtx client.Context, appInf
 		return retry.Retryable(errors.Wrap(err, "retrieving node status failed"))
 	}
 
-	if len(status.SyncInfo.LatestBlockHash) == 0 {
+	if status.SyncInfo.LatestBlockHeight == 0 {
 		return retry.Retryable(errors.New("genesis block hasn't been mined yet"))
 	}
 
