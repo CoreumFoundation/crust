@@ -108,7 +108,7 @@ func (f Faucet) Deployment() infra.Deployment {
 				"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
 				"--chain-id", string(f.config.ChainID),
 				"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
-				"--node", infra.JoinNetAddr("tcp", f.config.Cored.Info().HostFromContainer, f.config.Cored.Config().Ports.RPC),
+				"--node", infra.JoinNetAddr("", f.config.Cored.Info().HostFromContainer, f.config.Cored.Config().Ports.GRPC),
 				"--log-format", "yaml",
 			}
 		},
