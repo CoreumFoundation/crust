@@ -161,10 +161,11 @@ func coredVersionParams(ctx context.Context) (params, error) {
 		version = hash
 	}
 	return params{
-		"github.com/cosmos/cosmos-sdk/version.Name":    blockchainName,
-		"github.com/cosmos/cosmos-sdk/version.AppName": binaryName,
-		"github.com/cosmos/cosmos-sdk/version.Version": version,
-		"github.com/cosmos/cosmos-sdk/version.Commit":  hash,
+		"github.com/cosmos/cosmos-sdk/version.Name":      blockchainName,
+		"github.com/cosmos/cosmos-sdk/version.AppName":   binaryName,
+		"github.com/cosmos/cosmos-sdk/version.Version":   version,
+		"github.com/cosmos/cosmos-sdk/version.Commit":    hash,
+		"github.com/cosmos/cosmos-sdk/version.BuildTags": "netgo,ledger",
 	}, nil
 }
 

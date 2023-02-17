@@ -80,13 +80,15 @@ func EnsureLibWASMVMMuslC(ctx context.Context, deps build.DepsFunc) error {
 
 // BuildLocally builds binary locally.
 func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
-	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
-		zap.String("binary", config.BinOutputPath))
 
 	args, envs := buildArgsAndEnvs(config, filepath.Join(tools.CacheDir(), "lib"))
+	args = append(args, "-tags=netgo,ledger")
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
-
+	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
+		zap.String("binary", config.BinOutputPath),
+		zap.Strings("envs", envs),
+		zap.Strings("args", args))
 	cmd := exec.Command(tools.PathLocal("go"), args...)
 	cmd.Dir = config.PackagePath
 	cmd.Env = envs
@@ -235,6 +237,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
+		"LEDGER_ENABLED=true",
 	}
 
 	cgoEnabled := "0"
