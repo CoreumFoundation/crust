@@ -37,20 +37,20 @@ const (
 var tools = map[Name]Tool{
 	// https://go.dev/dl/
 	Go: {
-		Version:  "1.19.4",
+		Version:  "1.20.1",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://go.dev/dl/go1.19.4.linux-amd64.tar.gz",
-				Hash: "sha256:c9c08f783325c4cf840a94333159cc937f05f75d36a8b307951d5bd959cf2ab8",
+				URL:  "https://go.dev/dl/go1.20.1.linux-amd64.tar.gz",
+				Hash: "sha256:000a5b1fca4f75895f78befeb2eecf10bfff3c428597f3f1e69133b63b911b02",
 			},
 			darwinAMD64: {
-				URL:  "https://go.dev/dl/go1.19.4.darwin-amd64.tar.gz",
-				Hash: "sha256:44894862d996eec96ef2a39878e4e1fce4d05423fc18bdc1cbba745ebfa41253",
+				URL:  "https://go.dev/dl/go1.20.1.darwin-amd64.tar.gz",
+				Hash: "sha256:a300a45e801ab459f3008aae5bb9efbe9a6de9bcd12388f5ca9bbd14f70236de",
 			},
 			darwinARM64: {
-				URL:  "https://go.dev/dl/go1.19.4.darwin-arm64.tar.gz",
-				Hash: "sha256:bb3bc5d7655b9637cfe2b5e90055dee93b0ead50e2ffd091df320d1af1ca853f",
+				URL:  "https://go.dev/dl/go1.20.1.darwin-arm64.tar.gz",
+				Hash: "sha256:f1a8e06c7f1ba1c008313577f3f58132eb166a41ceb95ce6e9af30bc5a3efca4",
 			},
 		},
 		Binaries: map[string]string{
@@ -61,28 +61,28 @@ var tools = map[Name]Tool{
 
 	// https://github.com/golangci/golangci-lint/releases/
 	GolangCI: {
-		Version:  "1.50.1",
+		Version:  "1.51.2",
 		ForLocal: true,
 		Sources: Sources{
 			linuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.1/golangci-lint-1.50.1-linux-amd64.tar.gz",
-				Hash: "sha256:4ba1dc9dbdf05b7bdc6f0e04bdfe6f63aa70576f51817be1b2540bbce017b69a",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.51.2/golangci-lint-1.51.2-linux-amd64.tar.gz",
+				Hash: "sha256:4de479eb9d9bc29da51aec1834e7c255b333723d38dbd56781c68e5dddc6a90b",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.50.1-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.51.2-linux-amd64/golangci-lint",
 				},
 			},
 			darwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.1/golangci-lint-1.50.1-darwin-amd64.tar.gz",
-				Hash: "sha256:0f615fb8c364f6e4a213f2ed2ff7aa1fc2b208addf29511e89c03534067bbf57",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.51.2/golangci-lint-1.51.2-darwin-amd64.tar.gz",
+				Hash: "sha256:0549cbaa2df451cf3a2011a9d73a9cb127784d26749d9cd14c9f4818af104d44",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.50.1-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.51.2-darwin-amd64/golangci-lint",
 				},
 			},
 			darwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.50.1/golangci-lint-1.50.1-darwin-arm64.tar.gz",
-				Hash: "sha256:3ca9753d7804b34f9165427fbe339dbea69bd80be8a10e3f02c6037393b2e1c4",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.51.2/golangci-lint-1.51.2-darwin-arm64.tar.gz",
+				Hash: "sha256:36e69882205a0e42a63ad57ec3015639c11051e03f0beb9cf7949c6451408960",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.50.1-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.51.2-darwin-arm64/golangci-lint",
 				},
 			},
 		},
