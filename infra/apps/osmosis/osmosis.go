@@ -10,8 +10,18 @@ import (
 	"path/filepath"
 	"text/template"
 
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
@@ -94,9 +104,25 @@ func (o Osmosis) Info() infra.DeploymentInfo {
 	return o.config.AppInfo.Info()
 }
 
+// ClientContext creates new cored ClientContext.
+func (o Osmosis) ClientContext() client.Context {
+	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", o.Info().HostFromHost, o.Config().Ports.RPC))
+	must.OK(err)
+
+	grpcClient, err := grpc.Dial(infra.JoinNetAddr("http", o.Info().HostFromHost, o.Config().Ports.GRPC), grpc.WithInsecure())
+	must.OK(err)
+
+	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
+		WithChainID(o.config.ChainID).
+		WithRPCClient(rpcClient).
+		WithGRPCClient(grpcClient).
+		WithKeyring(keyring.NewInMemory()).
+		WithBroadcastMode(flags.BroadcastBlock)
+}
+
 // HealthCheck checks if chain is ready.
 func (o Osmosis) HealthCheck(ctx context.Context) error {
-	return infra.CheckCosmosNodeHealth(ctx, o.Info(), o.config.Ports.RPC)
+	return infra.CheckCosmosNodeHealth(ctx, o.ClientContext(), o.Info())
 }
 
 // Deployment returns deployment.
@@ -155,4 +181,12 @@ func (o Osmosis) prepare() error {
 	}
 
 	return nil
+}
+
+func newBasicManager() module.BasicManager {
+	return module.NewBasicManager(
+		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		staking.AppModuleBasic{},
+	)
 }
