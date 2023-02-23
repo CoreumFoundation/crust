@@ -43,6 +43,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		BinOutputPath: localBinaryPath,
 		Parameters:    parameters,
 		CGOEnabled:    true,
+		Tags:          []string{"netgo", "ledger"},
 	})
 }
 
@@ -60,7 +61,7 @@ func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 		BinOutputPath:  dockerBinaryPath,
 		Parameters:     parameters,
 		CGOEnabled:     true,
-		Tags:           []string{"muslc"},
+		Tags:           []string{"muslc", "netgo", "ledger"},
 		LinkStatically: true,
 	})
 }

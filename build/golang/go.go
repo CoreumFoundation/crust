@@ -82,7 +82,6 @@ func EnsureLibWASMVMMuslC(ctx context.Context, deps build.DepsFunc) error {
 func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
 
 	args, envs := buildArgsAndEnvs(config, filepath.Join(tools.CacheDir(), "lib"))
-	args = append(args, "-tags=netgo,ledger")
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
@@ -195,7 +194,7 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "executing Dockerfile template failed")
 	}
-
+	logger.Get(ctx).Info(string(dockerfileBuf.Bytes()))
 	dockerfileChecksum := sha256.Sum256(dockerfileBuf.Bytes())
 	image := "crust-go-build:" + hex.EncodeToString(dockerfileChecksum[:4])
 
@@ -237,7 +236,6 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
-		"LEDGER_ENABLED=true",
 	}
 
 	cgoEnabled := "0"
