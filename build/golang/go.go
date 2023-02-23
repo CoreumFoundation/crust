@@ -194,7 +194,6 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "executing Dockerfile template failed")
 	}
-	logger.Get(ctx).Info(string(dockerfileBuf.Bytes()))
 	dockerfileChecksum := sha256.Sum256(dockerfileBuf.Bytes())
 	image := "crust-go-build:" + hex.EncodeToString(dockerfileChecksum[:4])
 
