@@ -166,7 +166,7 @@ func coredVersionParams(ctx context.Context) (params, error) {
 		"github.com/cosmos/cosmos-sdk/version.AppName":   binaryName,
 		"github.com/cosmos/cosmos-sdk/version.Version":   version,
 		"github.com/cosmos/cosmos-sdk/version.Commit":    hash,
-		"github.com/cosmos/cosmos-sdk/version.BuildTags": "netgo,ledger",
+		"github.com/cosmos/cosmos-sdk/version.BuildTags": "netgo,ledger", // TODO: Not sure if this build tags should include muslc also.
 	}, nil
 }
 
