@@ -20,8 +20,7 @@ import (
 	coreumconstant "github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
-	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
-	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
+	"github.com/CoreumFoundation/crust/infra/cosmos"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -47,13 +46,12 @@ const (
 
 // Config stores relayer app config.
 type Config struct {
-	Name      string
-	HomeDir   string
-	AppInfo   *infra.AppInfo
-	DebugPort int
-	Cored     cored.Cored
-	Gaia      gaiad.Gaia
-	Osmosis   osmosis.Osmosis
+	Name        string
+	HomeDir     string
+	AppInfo     *infra.AppInfo
+	DebugPort   int
+	Cored       cored.Cored
+	PeeredChain cosmos.BaseApp
 }
 
 // New creates new relayer app.
@@ -114,8 +112,7 @@ func (r Relayer) HealthCheck(ctx context.Context) error {
 	}
 
 	chainIDs := map[string]struct{}{
-		r.config.Gaia.Config().ChainID:                    {},
-		r.config.Osmosis.Config().ChainID:                 {},
+		r.config.PeeredChain.AppConfig().ChainID:          {},
 		string(r.config.Cored.Config().Network.ChainID()): {},
 	}
 
@@ -163,7 +160,7 @@ func (r Relayer) Deployment() infra.Deployment {
 			Timeout: 20 * time.Second,
 			Dependencies: []infra.HealthCheckCapable{
 				r.config.Cored,
-				r.config.Gaia,
+				r.config.PeeredChain,
 			},
 		},
 		PrepareFunc: r.prepare,
@@ -185,25 +182,17 @@ func (r Relayer) saveConfigFile() error {
 		CoreumRPCUrl        string
 		CoreumAccountPrefix string
 
-		GaiaChanID        string
-		GaiaRPCUrl        string
-		GaiaAccountPrefix string
-
-		OsmosisChanID        string
-		OsmosisRPCUrl        string
-		OsmosisAccountPrefix string
+		PeerChanID        string
+		PeerRPCUrl        string
+		PeerAccountPrefix string
 	}{
 		CoreumChanID:        string(r.config.Cored.Config().Network.ChainID()),
 		CoreumRPCUrl:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
 		CoreumAccountPrefix: r.config.Cored.Config().Network.AddressPrefix(),
 
-		GaiaChanID:        r.config.Gaia.Config().ChainID,
-		GaiaRPCUrl:        infra.JoinNetAddr("http", r.config.Gaia.Info().HostFromContainer, r.config.Gaia.Config().Ports.RPC),
-		GaiaAccountPrefix: r.config.Gaia.Config().AccountPrefix,
-
-		OsmosisChanID:        r.config.Osmosis.Config().ChainID,
-		OsmosisRPCUrl:        infra.JoinNetAddr("http", r.config.Osmosis.Info().HostFromContainer, r.config.Osmosis.Config().Ports.RPC),
-		OsmosisAccountPrefix: r.config.Osmosis.Config().AccountPrefix,
+		PeerChanID:        r.config.PeeredChain.AppConfig().ChainID,
+		PeerRPCUrl:        infra.JoinNetAddr("http", r.config.PeeredChain.Info().HostFromContainer, r.config.PeeredChain.AppConfig().Ports.RPC),
+		PeerAccountPrefix: r.config.PeeredChain.AppTypeConfig().AccountPrefix,
 	}
 
 	buf := &bytes.Buffer{}
@@ -233,11 +222,8 @@ func (r Relayer) saveRunScriptFile() error {
 		CoreumRelayerMnemonic string
 		CoreumRelayerCoinType uint32
 
-		GaiaChanID          string
-		GaiaRelayerMnemonic string
-
-		OsmosisChanID          string
-		OsmosisRelayerMnemonic string
+		PeerChanID          string
+		PeerRelayerMnemonic string
 
 		DebugPort int
 	}{
@@ -247,11 +233,8 @@ func (r Relayer) saveRunScriptFile() error {
 		CoreumRelayerMnemonic: r.config.Cored.Config().RelayerMnemonic,
 		CoreumRelayerCoinType: coreumconstant.CoinType,
 
-		GaiaChanID:          r.config.Gaia.Config().ChainID,
-		GaiaRelayerMnemonic: r.config.Gaia.Config().RelayerMnemonic,
-
-		OsmosisChanID:          r.config.Osmosis.Config().ChainID,
-		OsmosisRelayerMnemonic: r.config.Osmosis.Config().RelayerMnemonic,
+		PeerChanID:          r.config.PeeredChain.AppConfig().ChainID,
+		PeerRelayerMnemonic: r.config.PeeredChain.AppConfig().RelayerMnemonic,
 
 		DebugPort: r.config.DebugPort,
 	}

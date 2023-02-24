@@ -22,6 +22,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
 	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
+	"github.com/CoreumFoundation/crust/infra/cosmos"
 )
 
 // NewFactory creates new app factory.
@@ -175,42 +176,50 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet 
 func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 	nameGaia := name + "-gaia"
 	nameOsmosis := name + "-osmosis"
-	nameRelayerCosmos := name + "-relayer-cosmos"
+	nameRelayerGaia := name + "-relayer-gaia"
+	nameRelayerOsmosis := name + "-relayer-osmosis"
 
-	gaiaApp := gaiad.New(gaiad.Config{
+	gaiaApp := gaiad.New(cosmos.AppConfig{
 		Name:            nameGaia,
 		HomeDir:         filepath.Join(f.config.AppDir, nameGaia),
 		ChainID:         gaiad.DefaultChainID,
-		AccountPrefix:   gaiad.DefaultAccountPrefix,
 		AppInfo:         f.spec.DescribeApp(gaiad.AppType, nameGaia),
 		Ports:           gaiad.DefaultPorts,
 		RelayerMnemonic: gaiad.RelayerMnemonic,
 	})
 
-	osmosisApp := osmosis.New(osmosis.Config{
+	osmosisApp := osmosis.New(cosmos.AppConfig{
 		Name:            nameOsmosis,
 		HomeDir:         filepath.Join(f.config.AppDir, nameOsmosis),
 		ChainID:         osmosis.DefaultChainID,
-		AccountPrefix:   osmosis.DefaultAccountPrefix,
 		AppInfo:         f.spec.DescribeApp(osmosis.AppType, nameOsmosis),
 		Ports:           osmosis.DefaultPorts,
 		RelayerMnemonic: osmosis.RelayerMnemonic,
 	})
 
-	relayerCosmosApp := relayercosmos.New(relayercosmos.Config{
-		Name:      nameRelayerCosmos,
-		HomeDir:   filepath.Join(f.config.AppDir, nameRelayerCosmos),
-		AppInfo:   f.spec.DescribeApp(relayercosmos.AppType, nameRelayerCosmos),
-		DebugPort: relayercosmos.DefaultDebugPort,
-		Cored:     coredApp,
-		Gaia:      gaiaApp,
-		Osmosis:   osmosisApp,
+	relayerGaiaApp := relayercosmos.New(relayercosmos.Config{
+		Name:        nameRelayerGaia,
+		HomeDir:     filepath.Join(f.config.AppDir, nameRelayerGaia),
+		AppInfo:     f.spec.DescribeApp(relayercosmos.AppType, nameRelayerGaia),
+		DebugPort:   relayercosmos.DefaultDebugPort,
+		Cored:       coredApp,
+		PeeredChain: gaiaApp,
+	})
+
+	relayerOsmosisApp := relayercosmos.New(relayercosmos.Config{
+		Name:        nameRelayerOsmosis,
+		HomeDir:     filepath.Join(f.config.AppDir, nameRelayerOsmosis),
+		AppInfo:     f.spec.DescribeApp(relayercosmos.AppType, nameRelayerOsmosis),
+		DebugPort:   relayercosmos.DefaultDebugPort + 1,
+		Cored:       coredApp,
+		PeeredChain: osmosisApp,
 	})
 
 	return infra.AppSet{
 		gaiaApp,
 		osmosisApp,
-		relayerCosmosApp,
+		relayerGaiaApp,
+		relayerOsmosisApp,
 	}
 }
 
