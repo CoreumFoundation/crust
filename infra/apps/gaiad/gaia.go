@@ -2,7 +2,7 @@ package gaiad
 
 import (
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/cosmos"
+	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 )
 
 // DefaultPorts are the default ports listens on.
-var DefaultPorts = cosmos.Ports{
+var DefaultPorts = cosmoschain.Ports{
 	RPC:     26557,
 	P2P:     26556,
 	GRPC:    9080,
@@ -27,8 +27,8 @@ var DefaultPorts = cosmos.Ports{
 }
 
 // New creates new gaia blockchain.
-func New(config cosmos.AppConfig) cosmos.BaseApp {
-	return cosmos.New(cosmos.AppTypeConfig{
+func New(config cosmoschain.AppConfig) cosmoschain.BaseApp {
+	return cosmoschain.New(cosmoschain.AppTypeConfig{
 		AppType:       AppType,
 		DockerImage:   dockerImage,
 		AccountPrefix: accountPrefix,

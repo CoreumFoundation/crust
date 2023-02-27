@@ -22,7 +22,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
 	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
-	"github.com/CoreumFoundation/crust/infra/cosmos"
+	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
 // NewFactory creates new app factory.
@@ -179,7 +179,7 @@ func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 	nameRelayerGaia := name + "-relayer-gaia"
 	nameRelayerOsmosis := name + "-relayer-osmosis"
 
-	gaiaApp := gaiad.New(cosmos.AppConfig{
+	gaiaApp := gaiad.New(cosmoschain.AppConfig{
 		Name:            nameGaia,
 		HomeDir:         filepath.Join(f.config.AppDir, nameGaia),
 		ChainID:         gaiad.DefaultChainID,
@@ -188,7 +188,7 @@ func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 		RelayerMnemonic: gaiad.RelayerMnemonic,
 	})
 
-	osmosisApp := osmosis.New(cosmos.AppConfig{
+	osmosisApp := osmosis.New(cosmoschain.AppConfig{
 		Name:            nameOsmosis,
 		HomeDir:         filepath.Join(f.config.AppDir, nameOsmosis),
 		ChainID:         osmosis.DefaultChainID,
