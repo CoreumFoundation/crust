@@ -1,8 +1,6 @@
 package osmosis
 
 import (
-	_ "embed"
-
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/cosmos"
 )
@@ -28,7 +26,7 @@ var DefaultPorts = cosmos.Ports{
 	PProf:   6040,
 }
 
-// New creates new osmosis blockchain
+// New creates new osmosis blockchain.
 func New(config cosmos.AppConfig) cosmos.BaseApp {
 	return cosmos.New(cosmos.AppTypeConfig{
 		AppType:       AppType,

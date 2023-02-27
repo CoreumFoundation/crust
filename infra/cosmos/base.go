@@ -43,6 +43,7 @@ type Ports struct {
 	PProf   int `json:"pprof"`
 }
 
+// AppConfig defines configuration of the application.
 type AppConfig struct {
 	Name            string
 	HomeDir         string
@@ -52,7 +53,7 @@ type AppConfig struct {
 	RelayerMnemonic string
 }
 
-// AppTypeConfig stores gaia app appTypeConfig.
+// AppTypeConfig defines configuration of the application type.
 type AppTypeConfig struct {
 	AppType       infra.AppType
 	DockerImage   string
@@ -68,6 +69,7 @@ func New(appTypeConfig AppTypeConfig, appConfig AppConfig) BaseApp {
 	}
 }
 
+// BaseApp represents base for cosmos chain apps.
 type BaseApp struct {
 	appTypeConfig AppTypeConfig
 	appConfig     AppConfig

@@ -1,8 +1,6 @@
 package gaiad
 
 import (
-	_ "embed"
-
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/cosmos"
 )
@@ -28,7 +26,7 @@ var DefaultPorts = cosmos.Ports{
 	PProf:   6050,
 }
 
-// New creates new gaia blockchain
+// New creates new gaia blockchain.
 func New(config cosmos.AppConfig) cosmos.BaseApp {
 	return cosmos.New(cosmos.AppTypeConfig{
 		AppType:       AppType,
