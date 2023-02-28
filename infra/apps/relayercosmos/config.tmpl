@@ -19,13 +19,13 @@ chains:
             timeout: 20s
             output-format: json
             sign-mode: direct
-    gaia:
+    peer:
         type: cosmos
         value:
-            key: gaia-key
-            chain-id: {{ .GaiaChanID }}
-            rpc-addr: {{ .GaiaRPCUrl }}
-            account-prefix: {{ .GaiaAccountPrefix }}
+            key: peer-key
+            chain-id: {{ .PeerChanID }}
+            rpc-addr: {{ .PeerRPCUrl }}
+            account-prefix: {{ .PeerAccountPrefix }}
             keyring-backend: test
             gas-adjustment: 1.2
             gas-prices: 0.01stake

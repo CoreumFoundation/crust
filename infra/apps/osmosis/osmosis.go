@@ -1,4 +1,4 @@
-package gaiad
+package osmosis
 
 import (
 	"github.com/CoreumFoundation/crust/infra"
@@ -6,27 +6,27 @@ import (
 )
 
 const (
-	dockerImage   = "gaiad:znet"
-	accountPrefix = "cosmos"
-	execName      = "gaiad"
+	dockerImage   = "osmolabs/osmosis:14.0.0-alpine"
+	accountPrefix = "osmo"
+	execName      = "osmosisd"
 
-	// AppType is the type of gaia application.
-	AppType infra.AppType = "gaiad"
+	// AppType is the type of osmosis application.
+	AppType infra.AppType = "osmosis"
 
-	// DefaultChainID is the gaia's default chain id.
-	DefaultChainID = "gaia-localnet-1"
+	// DefaultChainID is the osmosis default chain id.
+	DefaultChainID = "osmosis-localnet-1"
 )
 
 // DefaultPorts are the default ports listens on.
 var DefaultPorts = cosmoschain.Ports{
-	RPC:     26557,
-	P2P:     26556,
-	GRPC:    9080,
-	GRPCWeb: 9081,
-	PProf:   6050,
+	RPC:     26457,
+	P2P:     26456,
+	GRPC:    9070,
+	GRPCWeb: 9071,
+	PProf:   6040,
 }
 
-// New creates new gaia blockchain.
+// New creates new osmosis blockchain.
 func New(config cosmoschain.AppConfig) cosmoschain.BaseApp {
 	return cosmoschain.New(cosmoschain.AppTypeConfig{
 		AppType:       AppType,

@@ -11,6 +11,7 @@ const (
 	profile1Cored           = "1cored"
 	profile3Cored           = "3cored"
 	profile5Cored           = "5cored"
+	profileIBC              = "ibc"
 	profileFaucet           = "faucet"
 	profileExplorer         = "explorer"
 	profileMonitoring       = "monitoring"
@@ -21,6 +22,7 @@ var profiles = []string{
 	profile1Cored,
 	profile3Cored,
 	profile5Cored,
+	profileIBC,
 	profileFaucet,
 	profileExplorer,
 	profileMonitoring,
@@ -79,10 +81,11 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 		if !pMap[profile5Cored] {
 			pMap[profile3Cored] = true
 		}
+		pMap[profileIBC] = true
 		pMap[profileFaucet] = true
 	}
 
-	if (pMap[profileFaucet] || pMap[profileExplorer] || pMap[profileMonitoring]) && !pMap[profile3Cored] && !pMap[profile5Cored] {
+	if (pMap[profileIBC] || pMap[profileFaucet] || pMap[profileExplorer] || pMap[profileMonitoring]) && !pMap[profile3Cored] && !pMap[profile5Cored] {
 		pMap[profile1Cored] = true
 	}
 
@@ -106,6 +109,10 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 	}
 	for _, coredNode := range coredNodes {
 		appSet = append(appSet, coredNode)
+	}
+
+	if pMap[profileIBC] {
+		appSet = append(appSet, appF.IBC("ibc", coredApp)...)
 	}
 
 	if pMap[profileFaucet] {

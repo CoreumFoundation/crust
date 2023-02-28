@@ -9,19 +9,19 @@ if [ ! -d "$RELAYER_KEYS_PATH" ]; then
 
 echo "Importing the relayer mnemonics."
 relayer keys restore coreum coreum-key "{{ .CoreumRelayerMnemonic }}" --coin-type={{ .CoreumRelayerCoinType }}
-relayer keys restore gaia gaia-key "{{ .GaiaRelayerMnemonic }}"
+relayer keys restore peer peer-key "{{ .PeerRelayerMnemonic }}"
 
 echo "Relayer balances:"
 relayer q balance coreum
-relayer q balance gaia
+relayer q balance peer
 
 echo  "Adding relayer paths."
-relayer paths new {{ .CoreumChanID }} {{ .GaiaChanID }} ibc-path
+relayer paths new {{ .CoreumChanID }} {{ .PeerChanID }} coreum-peer-ibc-path
 
 echo "Connecting the chains."
-relayer transact link ibc-path
+relayer transact link coreum-peer-ibc-path
 
 fi
 
 echo "Starting the relayer."
-relayer start ibc-path --debug-addr "0.0.0.0:{{ .DebugPort }}"
+relayer start  --debug-addr "0.0.0.0:{{ .DebugPort }}"
