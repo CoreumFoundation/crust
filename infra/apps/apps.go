@@ -18,9 +18,11 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 	"github.com/CoreumFoundation/crust/infra/apps/grafana"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
+	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
-	"github.com/CoreumFoundation/crust/infra/apps/relayer"
+	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
+	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
 // NewFactory creates new app factory.
@@ -170,29 +172,55 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet 
 	}
 }
 
-// Gaia creates new gaia.
-func (f *Factory) Gaia(name string) gaiad.Gaia {
-	return gaiad.New(gaiad.Config{
-		Name:            name,
-		HomeDir:         filepath.Join(f.config.AppDir, name),
+// IBC creates set of applications required to test IBC.
+func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
+	nameGaia := name + "-gaia"
+	nameOsmosis := name + "-osmosis"
+	nameRelayerGaia := name + "-relayer-gaia"
+	nameRelayerOsmosis := name + "-relayer-osmosis"
+
+	gaiaApp := gaiad.New(cosmoschain.AppConfig{
+		Name:            nameGaia,
+		HomeDir:         filepath.Join(f.config.AppDir, nameGaia),
 		ChainID:         gaiad.DefaultChainID,
-		AccountPrefix:   gaiad.DefaultAccountPrefix,
-		AppInfo:         f.spec.DescribeApp(gaiad.AppType, name),
+		AppInfo:         f.spec.DescribeApp(gaiad.AppType, nameGaia),
 		Ports:           gaiad.DefaultPorts,
 		RelayerMnemonic: gaiad.RelayerMnemonic,
 	})
-}
 
-// Relayer creates new relayer.
-func (f *Factory) Relayer(name string, coredApp cored.Cored, gaiaApp gaiad.Gaia) relayer.Relayer {
-	return relayer.New(relayer.Config{
-		Name:      name,
-		HomeDir:   filepath.Join(f.config.AppDir, name),
-		AppInfo:   f.spec.DescribeApp(relayer.AppType, name),
-		DebugPort: relayer.DefaultDebugPort,
-		Cored:     coredApp,
-		Gaia:      gaiaApp,
+	osmosisApp := osmosis.New(cosmoschain.AppConfig{
+		Name:            nameOsmosis,
+		HomeDir:         filepath.Join(f.config.AppDir, nameOsmosis),
+		ChainID:         osmosis.DefaultChainID,
+		AppInfo:         f.spec.DescribeApp(osmosis.AppType, nameOsmosis),
+		Ports:           osmosis.DefaultPorts,
+		RelayerMnemonic: osmosis.RelayerMnemonic,
 	})
+
+	relayerGaiaApp := relayercosmos.New(relayercosmos.Config{
+		Name:        nameRelayerGaia,
+		HomeDir:     filepath.Join(f.config.AppDir, nameRelayerGaia),
+		AppInfo:     f.spec.DescribeApp(relayercosmos.AppType, nameRelayerGaia),
+		DebugPort:   relayercosmos.DefaultDebugPort,
+		Cored:       coredApp,
+		PeeredChain: gaiaApp,
+	})
+
+	relayerOsmosisApp := relayercosmos.New(relayercosmos.Config{
+		Name:        nameRelayerOsmosis,
+		HomeDir:     filepath.Join(f.config.AppDir, nameRelayerOsmosis),
+		AppInfo:     f.spec.DescribeApp(relayercosmos.AppType, nameRelayerOsmosis),
+		DebugPort:   relayercosmos.DefaultDebugPort + 1,
+		Cored:       coredApp,
+		PeeredChain: osmosisApp,
+	})
+
+	return infra.AppSet{
+		gaiaApp,
+		osmosisApp,
+		relayerGaiaApp,
+		relayerOsmosisApp,
+	}
 }
 
 // Monitoring returns set of applications required to run monitoring.

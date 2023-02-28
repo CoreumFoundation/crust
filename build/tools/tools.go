@@ -181,23 +181,24 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/cosmos/relayer/releases
-	// There is v2.1.2 but it doesn't expose prometheus metrics we use to detect that relayer is ready
 	Relayer: {
-		Version:   "v2.1.0",
+		Version:   "v2.2.0",
 		ForDocker: true,
 		Sources: Sources{
 			dockerAMD64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.1.0/Cosmos.Relayer_2.1.0_linux_amd64.tar.gz",
-				Hash: "sha256:893537acd7fa5b5b9f0814f06ce6c26ba3f944262d7a43f5790216350d8399a9",
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.2.0/Cosmos.Relayer_2.2.0_linux_amd64.tar.gz",
+				Hash: "sha256:d0d987ee2f1eedfec3523edad5abcc282521952e438cfe4eb19999a8fff465bd",
+				Binaries: map[string]string{
+					"bin/relayer": "Cosmos Relayer_2.2.0_linux_amd64/rly",
+				},
 			},
 			dockerARM64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.1.0/Cosmos.Relayer_2.1.0_linux_arm64.tar.gz",
-				Hash: "sha256:e6dddf04c03254e86a32d9c74b35514f8c46399f1e33e17f1ae29aaac4d1f1f1",
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.2.0/Cosmos.Relayer_2.2.0_linux_arm64.tar.gz",
+				Hash: "sha256:eacdffe4499021eb444857255dd3d852d574014f98fe80c26ae54ad056056fc4",
+				Binaries: map[string]string{
+					"bin/relayer": "Cosmos Relayer_2.2.0_linux_arm64/rly",
+				},
 			},
-		},
-		Binaries: map[string]string{
-			// "Cosmos Relayer" is the binary name in the archive
-			"bin/relayer": "Cosmos Relayer",
 		},
 	},
 }
