@@ -37,8 +37,12 @@ import (
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
-// AppType is the type of cored application.
-const AppType infra.AppType = "cored"
+const (
+	// AppType is the type of cored application.
+	AppType     infra.AppType = "cored"
+	oneMillion                = 1_000_000_000_000
+	oneThousand               = 1_000_000_000
+)
 
 // Config stores cored app config.
 type Config struct {
@@ -75,17 +79,20 @@ func New(cfg Config) Cored {
 		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
 
+		minimumSelfDelegation := sdk.NewInt64Coin(cfg.Network.Denom(), oneMillion)
 		// we must have the balance significantly more than the balance of the global validator min_self_delegation
 		// in order not to halt the chain after the new validator creation with the min_self_delegation amount
-		stake := sdk.NewInt64Coin(cfg.Network.Denom(), 1_000_000_000_000) // 1m
+		// stake should be 110% of minimumSelfDelegation
+		stake := minimumSelfDelegation.Add(sdk.NewInt64Coin(cfg.Network.Denom(), oneMillion*0.1)) // 1.1m
+
 		// the additional balance will be used to pay for the tx submitted from the stakers accounts
-		additionalBalance := sdk.NewInt64Coin(cfg.Network.Denom(), 1_000_000_000) // 1k core
+		additionalBalance := sdk.NewInt64Coin(cfg.Network.Denom(), oneThousand) // 1k core
 
 		must.OK(cfg.Network.FundAccount(sdk.AccAddress(stakerPrivKey.PubKey().Address()), sdk.NewCoins(stake.Add(additionalBalance))))
 
 		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
 
-		createValidatorTx, err := prepareTxStakingCreateValidator(cfg.Network.ChainID(), clientCtx.TxConfig(), valPublicKey, stakerPrivKey, stake, stake.Amount)
+		createValidatorTx, err := prepareTxStakingCreateValidator(cfg.Network.ChainID(), clientCtx.TxConfig(), valPublicKey, stakerPrivKey, stake, minimumSelfDelegation.Amount)
 		must.OK(err)
 		cfg.Network.AddGenesisTx(createValidatorTx)
 	}
@@ -119,7 +126,14 @@ func prepareTxStakingCreateValidator(
 	}
 
 	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
-	msg, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(stakerAddress), &cosmosed25519.PubKey{Key: validatorPublicKey}, stakedBalance, stakingtypes.Description{Moniker: stakerAddress.String()}, commission, selfDelegation)
+	msg, err := stakingtypes.NewMsgCreateValidator(
+		sdk.ValAddress(stakerAddress),
+		&cosmosed25519.PubKey{Key: validatorPublicKey},
+		stakedBalance,
+		stakingtypes.Description{Moniker: stakerAddress.String()},
+		commission,
+		selfDelegation,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
 	}
