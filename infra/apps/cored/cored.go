@@ -39,10 +39,11 @@ import (
 
 const (
 	// AppType is the type of cored application.
-	AppType            infra.AppType = "cored"
-	oneMillionCore                   = 1_000_000_000_000
-	oneThousandCore                  = 1_000_000_000
-	twentyThousandCore               = 20_000_000_000
+	AppType infra.AppType = "cored"
+
+	oneMillionCore     = 1_000_000_000_000
+	oneThousandCore    = 1_000_000_000
+	twentyThousandCore = 20_000_000_000
 )
 
 // Config stores cored app config.
