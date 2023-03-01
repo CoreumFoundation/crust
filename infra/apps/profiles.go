@@ -81,7 +81,7 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 		if !pMap[profile5Cored] {
 			pMap[profile3Cored] = true
 		}
-		pMap[profileIBC] = true
+		// pMap[profileIBC] = true
 		pMap[profileFaucet] = true
 	}
 
