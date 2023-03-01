@@ -212,7 +212,7 @@ func (c Cored) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.GRPC), grpc.WithInsecure())
+	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), grpc.WithInsecure())
 	must.OK(err)
 
 	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).

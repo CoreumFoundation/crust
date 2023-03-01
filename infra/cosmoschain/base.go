@@ -110,7 +110,7 @@ func (ba BaseApp) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", ba.Info().HostFromHost, ba.appConfig.Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("http", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC), grpc.WithInsecure())
+	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC), grpc.WithInsecure())
 	must.OK(err)
 
 	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
