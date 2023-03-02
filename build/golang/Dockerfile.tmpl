@@ -2,7 +2,7 @@ FROM golang:{{ .GOVersion }}-alpine{{ .AlpineVersion }}
 
 WORKDIR /
 
-RUN apk add --no-cache gcc libc-dev libusb-dev && \
+RUN apk add --no-cache gcc libc-dev linux-headers && \
 # install musl cross-compiler building arm64 binaries on amd64 machines
     wget http://musl.cc/aarch64-linux-musl-cross.tgz && \
     tar -xzf aarch64-linux-musl-cross.tgz && \
