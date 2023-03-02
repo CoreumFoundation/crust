@@ -23,6 +23,11 @@ const (
 	testBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
 )
 
+var (
+	tagsLocal  = []string{"netgo", "ledger"}
+	tagsDocker = append([]string{"muslc"}, tagsLocal...)
+)
+
 // BuildCored builds all the versions of cored binary.
 func BuildCored(ctx context.Context, deps build.DepsFunc) error {
 	deps(BuildCoredLocally, BuildCoredInDocker)
@@ -33,7 +38,7 @@ func BuildCored(ctx context.Context, deps build.DepsFunc) error {
 func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
-	parameters, err := coredVersionParams(ctx)
+	parameters, err := coredVersionParams(ctx, tagsLocal)
 	if err != nil {
 		return err
 	}
@@ -43,6 +48,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		BinOutputPath: localBinaryPath,
 		Parameters:    parameters,
 		CGOEnabled:    true,
+		Tags:          tagsLocal,
 	})
 }
 
@@ -50,7 +56,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
 
-	parameters, err := coredVersionParams(ctx)
+	parameters, err := coredVersionParams(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
@@ -60,7 +66,7 @@ func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 		BinOutputPath:  dockerBinaryPath,
 		Parameters:     parameters,
 		CGOEnabled:     true,
-		Tags:           []string{"muslc"},
+		Tags:           tagsDocker,
 		LinkStatically: true,
 	})
 }
@@ -68,7 +74,7 @@ func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
 
-	parameters, err := coredVersionParams(ctx)
+	parameters, err := coredVersionParams(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
@@ -85,7 +91,7 @@ func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
 		BinOutputPath:  filepath.Join("bin/.cache/docker/cored-upgrade", binaryName+"-upgrade"),
 		Parameters:     parameters,
 		CGOEnabled:     true,
-		Tags:           []string{"muslc"},
+		Tags:           tagsDocker,
 		LinkStatically: true,
 	})
 }
@@ -146,7 +152,7 @@ func (p params) IsDirty() bool {
 	return strings.HasSuffix(p["github.com/cosmos/cosmos-sdk/version.Commit"], "-dirty")
 }
 
-func coredVersionParams(ctx context.Context) (params, error) {
+func coredVersionParams(ctx context.Context, buildTags []string) (params, error) {
 	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
 		return nil, err
@@ -160,12 +166,18 @@ func coredVersionParams(ctx context.Context) (params, error) {
 	if version == "" {
 		version = hash
 	}
-	return params{
+	ps := params{
 		"github.com/cosmos/cosmos-sdk/version.Name":    blockchainName,
 		"github.com/cosmos/cosmos-sdk/version.AppName": binaryName,
 		"github.com/cosmos/cosmos-sdk/version.Version": version,
 		"github.com/cosmos/cosmos-sdk/version.Commit":  hash,
-	}, nil
+	}
+
+	if len(buildTags) > 0 {
+		ps["github.com/cosmos/cosmos-sdk/version.BuildTags"] = strings.Join(buildTags, ",")
+	}
+
+	return ps, nil
 }
 
 func firstVersionTag(tags []string) string {
