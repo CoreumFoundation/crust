@@ -41,9 +41,12 @@ const (
 	// AppType is the type of cored application.
 	AppType infra.AppType = "cored"
 
-	oneMillionCore     = 1_000_000_000_000
-	oneThousandCore    = 1_000_000_000
-	twentyThousandCore = 20_000_000_000
+	// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
+	// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
+	// That's why our main validators created here must have much higher stake.
+	oneMillionCore               = 1_000_000_000_000
+	oneThousandCore              = 1_000_000_000
+	validatorSelfDelegatedAmount = 20_000_000_000
 )
 
 // Config stores cored app config.
@@ -81,10 +84,10 @@ func New(cfg Config) Cored {
 		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
 
-		minimumSelfDelegation := sdk.NewInt64Coin(cfg.Network.Denom(), twentyThousandCore) // 20k core
-		stake := sdk.NewInt64Coin(cfg.Network.Denom(), oneMillionCore)                     // 1m core
+		minimumSelfDelegation := sdk.NewInt64Coin(cfg.Network.Denom(), validatorSelfDelegatedAmount)
+		stake := sdk.NewInt64Coin(cfg.Network.Denom(), oneMillionCore)
 		// the additional balance will be used to pay for the tx submitted from the stakers accounts
-		additionalBalance := sdk.NewInt64Coin(cfg.Network.Denom(), oneThousandCore) // 1k core
+		additionalBalance := sdk.NewInt64Coin(cfg.Network.Denom(), oneThousandCore)
 
 		must.OK(cfg.Network.FundAccount(sdk.AccAddress(stakerPrivKey.PubKey().Address()), sdk.NewCoins(stake.Add(additionalBalance))))
 
