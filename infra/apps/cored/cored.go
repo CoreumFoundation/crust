@@ -37,12 +37,8 @@ import (
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
-const (
-	// AppType is the type of cored application.
-	AppType infra.AppType = "cored"
-
-	validatorSelfDelegatedAmount = 20_000_000_000
-)
+// AppType is the type of cored application.
+const AppType infra.AppType = "cored"
 
 // Config stores cored app config.
 type Config struct {
@@ -79,7 +75,7 @@ func New(cfg Config) Cored {
 		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
 
-		minimumSelfDelegation := sdk.NewInt64Coin(cfg.Network.Denom(), validatorSelfDelegatedAmount)
+		minimumSelfDelegation := sdk.NewInt64Coin(cfg.Network.Denom(), 20_000_000_000) // 20k core
 
 		// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
 		// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
