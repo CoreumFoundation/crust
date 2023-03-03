@@ -23,7 +23,7 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
 
-	parameters, err := coredVersionParams(ctx)
+	parameters, err := coredVersionParams(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 		BinOutputPath:  releaseAMD64BinaryPath,
 		Parameters:     parameters,
 		CGOEnabled:     true,
-		Tags:           []string{"muslc"},
+		Tags:           tagsDocker,
 		LinkStatically: true,
 	}
 
