@@ -354,14 +354,14 @@ func (c Cored) prepare() error {
 		return err
 	}
 
-	// prepare the upgrades for all possible scenarios
-	releases := []string{ // TODO(dhil) keep all releases in single place, now it's difficult since the `build` is independent go module
-		"dev-upgrade",
-		"v0.1.1",
+	// upgrade to binary mapping
+	upgrades := map[string]string{
+		"dev-upgrade": "cored-dev-upgrade",
+		"v1":          "cored-dev-upgrade", // TODO(dhil) update to v1.0.0 once the binary is ready
 	}
-	for _, release := range releases {
-		return copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored", "cored-"+release),
-			filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", release, "bin", "cored"), 0o755)
+	for upgrade, binary := range upgrades {
+		return copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored", binary),
+			filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", upgrade, "bin", "cored"), 0o755)
 	}
 
 	return nil
