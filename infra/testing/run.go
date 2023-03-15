@@ -22,7 +22,7 @@ import (
 )
 
 // Run deploys testing environment and runs tests there.
-func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config infra.Config, onlyTestGroups ...string) error {
+func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config infra.Config, onlyTestGroups ...string) error { //nolint:funlen
 	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
 	files, err := os.ReadDir(testDir)
 	if err != nil {
