@@ -13,14 +13,23 @@ import (
 )
 
 const (
-	blockchainName        = "coreum"
-	binaryName            = "cored"
-	repoURL               = "https://github.com/CoreumFoundation/coreum.git"
-	repoPath              = "../coreum"
-	localBinaryPath       = "bin/" + binaryName
-	dockerBinaryPath      = "bin/.cache/docker/cored/" + binaryName
-	testBinaryModulePath  = "bin/.cache/integration-tests/coreum-modules"
-	testBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
+	blockchainName  = "coreum"
+	binaryName      = "cored"
+	repoURL         = "https://github.com/CoreumFoundation/coreum.git"
+	repoPath        = "../coreum"
+	localBinaryPath = "bin/" + binaryName
+
+	cosmovisorBinaryName = "cosmovisor"
+
+	dockerImageName  = binaryName
+	dockerRootPath   = "bin/.cache/docker/cored"
+	dockerBinaryPath = dockerRootPath + "/" + binaryName
+
+	devUpgradeName       = "dev-upgrade"
+	devUpgradeBinaryName = binaryName + "-" + devUpgradeName
+
+	integrationTestBinaryModulePath  = "bin/.cache/integration-tests/coreum-modules"
+	integrationTestBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
 )
 
 var (
@@ -71,7 +80,7 @@ func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
-func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
+func buildCoredWithDevUpgrade(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
 
 	parameters, err := coredVersionParams(ctx, tagsDocker)
@@ -79,16 +88,16 @@ func buildCoredWithFakeUpgrade(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	// This enables fake upgrade handler used to test upgrade procedure in CI before we have real one
-	parameters["github.com/CoreumFoundation/coreum/pkg/config.EnableFakeUpgradeHandler"] = "true"
+	// This enables dev upgrade handler used to test upgrade procedure in CI before we have real one
+	parameters["github.com/CoreumFoundation/coreum/pkg/config.EnableDevUpgradeHandler"] = "true"
 	// We do this to be able to verify that upgraded version was started by cosmovisor.
 	// I would prefer to modify Commit instead of Version but only Version is exposed by ABCI's Info call.
-	parameters["github.com/cosmos/cosmos-sdk/version.Version"] += "-upgrade"
+	parameters["github.com/cosmos/cosmos-sdk/version.Version"] += "-" + devUpgradeName
 
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
 		PackagePath: "../coreum/cmd/cored",
-		// we build the cored-upgrade to its own directory since the cored will be used for the release but upgrade for tests only.
-		BinOutputPath:  filepath.Join("bin/.cache/docker/cored-upgrade", binaryName+"-upgrade"),
+		// we build the dev-upgrade to its own directory since the cored will be used for the release but upgrade for tests only.
+		BinOutputPath:  filepath.Join(dockerRootPath, devUpgradeBinaryName),
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsDocker,
@@ -102,7 +111,7 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 
 	err := golang.BuildTests(ctx, golang.TestBuildConfig{
 		PackagePath:   "../coreum/integration-tests/modules",
-		BinOutputPath: testBinaryModulePath,
+		BinOutputPath: integrationTestBinaryModulePath,
 		Tags:          []string{"integrationtests"},
 	})
 	if err != nil {
@@ -111,7 +120,7 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 
 	return golang.BuildTests(ctx, golang.TestBuildConfig{
 		PackagePath:   "../coreum/integration-tests/upgrade",
-		BinOutputPath: testBinaryUpgradePath,
+		BinOutputPath: integrationTestBinaryUpgradePath,
 		Tags:          []string{"integrationtests"},
 	})
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 const (
@@ -52,4 +53,10 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 	config.CrosscompileARM64 = true
 
 	return golang.BuildInDocker(ctx, config)
+}
+
+func allReleases() []tools.Name {
+	return []tools.Name{
+		tools.CoredV011,
+	}
 }

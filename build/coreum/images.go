@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/build/coreum/image"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/tools"
@@ -12,13 +13,13 @@ import (
 
 // BuildCoredDockerImage builds cored docker image.
 func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureCosmovisor, BuildCoredInDocker, buildCoredWithFakeUpgrade)
+	deps(ensureCosmovisor, BuildCoredInDocker, ensureReleasedBinaries(allReleases()), buildCoredWithDevUpgrade)
 
 	dockerfile, err := image.Execute(image.Data{
 		From:             docker.AlpineImage,
-		CoredBinary:      filepath.Base(dockerBinaryPath),
-		CosmovisorBinary: "cosmovisor",
-		Networks:         []string{"coreum-devnet-1"},
+		CoredBinary:      binaryName,
+		CosmovisorBinary: cosmovisorBinaryName,
+		Networks:         []string{string(constant.ChainIDDev), string(constant.ChainIDTest)},
 	})
 	if err != nil {
 		return err
@@ -26,8 +27,8 @@ func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
 		RepoPath:   "../coreum",
-		ContextDir: filepath.Dir(dockerBinaryPath),
-		ImageName:  filepath.Base(dockerBinaryPath),
+		ContextDir: dockerRootPath,
+		ImageName:  dockerImageName,
 		Dockerfile: dockerfile,
 	})
 }
@@ -38,5 +39,22 @@ func ensureCosmovisor(ctx context.Context, deps build.DepsFunc) error {
 	}
 	cosmovisorLocalPath := filepath.Join("bin", ".cache", "docker", "cored")
 
-	return tools.CopyToolBinaries(tools.Cosmovisor, cosmovisorLocalPath, "cosmovisor")
+	return tools.CopyToolBinaries(tools.Cosmovisor, cosmovisorLocalPath, cosmovisorBinaryName)
+}
+
+// ensureReleasedBinaries ensures that all previous cored versions are installed.
+func ensureReleasedBinaries(binaries []tools.Name) func(ctx context.Context, deps build.DepsFunc) error {
+	return func(ctx context.Context, deps build.DepsFunc) error {
+		for _, binaryTool := range binaries {
+			if err := tools.EnsureDocker(ctx, binaryTool); err != nil {
+				return err
+			}
+
+			if err := tools.CopyToolBinaries(binaryTool, dockerRootPath, string(binaryTool)); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
 }

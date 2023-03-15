@@ -80,6 +80,20 @@ To start fully-featured set you may run:
 $ crust znet start --profiles=3cored,faucet,explorer,monitoring
 ```
 
+### --cored-version
+
+The `--cored-version` allows to start the `znet` with any previously released version.
+
+```
+$ crust znet start --cored-version=v0.1.1 --profiles=3cored,faucet,explorer,monitoring
+```
+
+Also, it's possible to execute tests with any previously released version.
+
+```
+$ crust znet test --cored-version=v0.1.1 --test-groups=coreum-upgrade
+```
+
 ## Commands
 
 In the environment some wrapper scripts for `znet` are generated automatically to make your life easier.

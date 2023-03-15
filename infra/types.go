@@ -362,6 +362,9 @@ type ConfigFactory struct {
 	// Profiles defines the list of application profiles to run
 	Profiles []string
 
+	// CoredVersion defines the version of the cored to be used on start
+	CoredVersion string
+
 	// HomeDir is the path where all the files are kept
 	HomeDir string
 

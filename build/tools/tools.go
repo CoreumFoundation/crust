@@ -32,6 +32,7 @@ const (
 	LibWASMMuslC Name = "libwasmvm_muslc"
 	Gaia         Name = "gaia"
 	Relayer      Name = "relayer"
+	CoredV011    Name = "cored-v0.1.1"
 )
 
 var tools = map[Name]Tool{
@@ -197,6 +198,27 @@ var tools = map[Name]Tool{
 				Hash: "sha256:eacdffe4499021eb444857255dd3d852d574014f98fe80c26ae54ad056056fc4",
 				Binaries: map[string]string{
 					"bin/relayer": "Cosmos Relayer_2.2.0_linux_arm64/rly",
+				},
+			},
+		},
+	},
+	// https://github.com/CoreumFoundation/coreum/releases
+	CoredV011: {
+		Version:   "v0.1.1",
+		ForDocker: true,
+		Sources: Sources{
+			dockerAMD64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v0.1.1/cored-linux-amd64",
+				Hash: "sha256:21db2ea1b31d9e8202e0d11f2bee0de78d2e677c07fd75a7db1f3958bf49146c",
+				Binaries: map[string]string{
+					"bin/cored-v0.1.1": "cored-linux-amd64",
+				},
+			},
+			dockerARM64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v0.1.1/cored-linux-arm64",
+				Hash: "sha256:7d383d1a1bc9185677b25c05ebbe01cf20dd6c779ca4301065359ea6e3bcefa3",
+				Binaries: map[string]string{
+					"bin/cored-v0.1.1": "cored-linux-arm64",
 				},
 			},
 		},
