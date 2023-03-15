@@ -2,7 +2,6 @@ package coreum
 
 import (
 	"context"
-	"path/filepath"
 	"strings"
 
 	"golang.org/x/mod/semver"
@@ -24,9 +23,6 @@ const (
 	dockerImageName  = binaryName
 	dockerRootPath   = "bin/.cache/docker/cored"
 	dockerBinaryPath = dockerRootPath + "/" + binaryName
-
-	devUpgradeName       = "dev-upgrade"
-	devUpgradeBinaryName = binaryName + "-" + devUpgradeName
 
 	integrationTestBinaryModulePath  = "bin/.cache/integration-tests/coreum-modules"
 	integrationTestBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
@@ -73,31 +69,6 @@ func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  dockerBinaryPath,
-		Parameters:     parameters,
-		CGOEnabled:     true,
-		Tags:           tagsDocker,
-		LinkStatically: true,
-	})
-}
-
-func buildCoredWithDevUpgrade(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
-
-	parameters, err := coredVersionParams(ctx, tagsDocker)
-	if err != nil {
-		return err
-	}
-
-	// This enables dev upgrade handler used to test upgrade procedure in CI before we have real one
-	parameters["github.com/CoreumFoundation/coreum/pkg/config.EnableDevUpgradeHandler"] = "true"
-	// We do this to be able to verify that upgraded version was started by cosmovisor.
-	// I would prefer to modify Commit instead of Version but only Version is exposed by ABCI's Info call.
-	parameters["github.com/cosmos/cosmos-sdk/version.Version"] += "-" + devUpgradeName
-
-	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
-		PackagePath: "../coreum/cmd/cored",
-		// we build the dev-upgrade to its own directory since the cored will be used for the release but upgrade for tests only.
-		BinOutputPath:  filepath.Join(dockerRootPath, devUpgradeBinaryName),
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsDocker,
