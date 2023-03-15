@@ -28,6 +28,19 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	binaries := make([]string, 0, len(files))
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		binaries = append(binaries, f.Name())
+	}
+
+	for _, tg := range onlyTestGroups {
+		if !lo.Contains(binaries, tg) {
+			return errors.Errorf("binary does not exist for test group %q", tg)
+		}
+	}
 
 	if err := target.Deploy(ctx, appSet); err != nil {
 		return err
@@ -63,17 +76,14 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	}
 
 	var failed bool
-	for _, f := range files {
-		if f.IsDir() {
-			continue
-		}
-		if len(onlyTestGroups) > 0 && !lo.Contains(onlyTestGroups, f.Name()) {
+	for _, binary := range binaries {
+		if len(onlyTestGroups) > 0 && !lo.Contains(onlyTestGroups, binary) {
 			continue
 		}
 		// copy is not used here, since the linter complains in the next line that using append with pre-allocated
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
-		switch f.Name() {
+		switch binary {
 		case "coreum-modules", "coreum-upgrade":
 
 			fullArgs = append(fullArgs,
@@ -99,7 +109,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			)
 		}
 
-		binPath := filepath.Join(testDir, f.Name())
+		binPath := filepath.Join(testDir, binary)
 		log := log.With(zap.String("binary", binPath), zap.Strings("args", fullArgs))
 		log.Info("Running tests")
 
