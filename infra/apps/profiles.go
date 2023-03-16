@@ -58,7 +58,7 @@ func IntegrationTestsProfiles() []string {
 }
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
-func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
+func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, error) {
 	pMap := map[string]bool{}
 	coredProfilePresent := false
 	for _, p := range profiles {
@@ -103,7 +103,7 @@ func BuildAppSet(appF *Factory, profiles []string) (infra.AppSet, error) {
 	var appSet infra.AppSet
 
 	var err error
-	coredApp, coredNodes, err := appF.CoredNetwork("cored", cored.DefaultPorts, numOfCoredValidators, 0)
+	coredApp, coredNodes, err := appF.CoredNetwork("cored", cored.DefaultPorts, numOfCoredValidators, 0, coredVersion)
 	if err != nil {
 		return nil, err
 	}

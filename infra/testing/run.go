@@ -22,7 +22,7 @@ import (
 )
 
 // Run deploys testing environment and runs tests there.
-func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config infra.Config, onlyTestGroups ...string) error {
+func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config infra.Config, onlyTestGroups ...string) error { //nolint:funlen
 	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
 	files, err := os.ReadDir(testDir)
 	if err != nil {
@@ -40,6 +40,10 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		if !lo.Contains(binaries, tg) {
 			return errors.Errorf("binary does not exist for test group %q", tg)
 		}
+	}
+	// if not limitations were provided we test all binaries
+	if len(onlyTestGroups) == 0 {
+		onlyTestGroups = binaries
 	}
 
 	if err := target.Deploy(ctx, appSet); err != nil {
@@ -76,14 +80,12 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	}
 
 	var failed bool
-	for _, binary := range binaries {
-		if len(onlyTestGroups) > 0 && !lo.Contains(onlyTestGroups, binary) {
-			continue
-		}
+	// the execution order might be important
+	for _, onlyTestGroup := range onlyTestGroups {
 		// copy is not used here, since the linter complains in the next line that using append with pre-allocated
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
-		switch binary {
+		switch onlyTestGroup {
 		case "coreum-modules", "coreum-upgrade":
 
 			fullArgs = append(fullArgs,
@@ -109,7 +111,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			)
 		}
 
-		binPath := filepath.Join(testDir, binary)
+		binPath := filepath.Join(testDir, onlyTestGroup)
 		log := log.With(zap.String("binary", binPath), zap.Strings("args", fullArgs))
 		log.Info("Running tests")
 

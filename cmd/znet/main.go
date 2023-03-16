@@ -52,6 +52,7 @@ func rootCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 	rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("CRUST_ZNET_HOME", must.String(os.UserCacheDir())+"/crust/znet"), "Directory where all files created automatically by znet are stored")
 	addBinDirFlag(rootCmd, configF)
 	addProfileFlag(rootCmd, configF)
+	addCoredVersionFlag(rootCmd, configF)
 	addFilterFlag(rootCmd, configF)
 	return rootCmd
 }
@@ -68,6 +69,8 @@ func startCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdF
 	}
 	addBinDirFlag(startCmd, configF)
 	addProfileFlag(startCmd, configF)
+	addCoredVersionFlag(startCmd, configF)
+
 	return startCmd
 }
 
@@ -109,6 +112,7 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 	addTestGroupFlag(testCmd, configF)
 	addBinDirFlag(testCmd, configF)
 	addFilterFlag(testCmd, configF)
+	addCoredVersionFlag(testCmd, configF)
 	return testCmd
 }
 
@@ -146,7 +150,7 @@ func pingPongCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.C
 			spec := infra.NewSpec(configF)
 			znetConfig := znet.NewConfig(configF, spec)
 			appF := apps.NewFactory(znetConfig, spec, networkConfig)
-			appSet, err := apps.BuildAppSet(appF, znetConfig.Profiles)
+			appSet, err := apps.BuildAppSet(appF, znetConfig.Profiles, znetConfig.CoredVersion)
 			if err != nil {
 				return err
 			}
@@ -172,6 +176,10 @@ func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 
 func addProfileFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringSliceVar(&configF.Profiles, "profiles", defaultStrings("CRUST_ZNET_PROFILES", apps.DefaultProfiles()), "List of application profiles to deploy: "+strings.Join(apps.Profiles(), " | "))
+}
+
+func addCoredVersionFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
+	cmd.Flags().StringVar(&configF.CoredVersion, "cored-version", defaultString("CRUST_ZNET_CORED_VERSION", ""), "The version of the binary to be used for deployment")
 }
 
 func addFilterFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {

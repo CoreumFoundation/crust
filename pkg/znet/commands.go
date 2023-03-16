@@ -70,6 +70,7 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 		"PATH="+config.WrapperDir+":"+os.Getenv("PATH"),
 		"CRUST_ZNET_ENV="+configF.EnvName,
 		"CRUST_ZNET_PROFILES="+strings.Join(configF.Profiles, ","),
+		"CRUST_ZNET_CORED_VERSION="+configF.CoredVersion,
 		"CRUST_ZNET_HOME="+configF.HomeDir,
 		"CRUST_ZNET_BIN_DIR="+configF.BinDir,
 		"CRUST_ZNET_FILTER="+configF.TestFilter,
@@ -127,7 +128,7 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr e
 		return err
 	}
 	appF := apps.NewFactory(config, spec, networkConfig)
-	appSet, err := apps.BuildAppSet(appF, config.Profiles)
+	appSet, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
 		return err
 	}
@@ -190,7 +191,7 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		return err
 	}
 	appF := apps.NewFactory(config, spec, networkConfig)
-	appSet, err := apps.BuildAppSet(appF, config.Profiles)
+	appSet, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
 		return err
 	}

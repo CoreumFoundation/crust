@@ -56,6 +56,7 @@ type Config struct {
 	RelayerMnemonic   string
 	RootNode          *Cored
 	ImportedMnemonics map[string]string
+	BinaryVersion     string
 }
 
 // New creates new cored app.
@@ -262,6 +263,10 @@ func (c Cored) Deployment() infra.Deployment {
 				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "data"),
 			},
 			{
+				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "genesis"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "cosmovisor", "genesis"),
+			},
+			{
 				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades"),
 				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "cosmovisor", "upgrades"),
 			},
@@ -270,7 +275,7 @@ func (c Cored) Deployment() infra.Deployment {
 			args := []string{
 				"start",
 				"--home", targets.AppHomeDir,
-				"--log_level", "debug",
+				"--log_level", "info",
 				"--trace",
 				"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.RPC),
 				"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.P2P),
@@ -339,12 +344,26 @@ func (c Cored) prepare() error {
 	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	if err := os.Symlink("/bin/cored", filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored")); err != nil {
-		return errors.WithStack(err)
+
+	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
+	binaryPath := filepath.Join(c.config.BinDir, ".cache", "docker", "cored", "cored")
+	if c.Config().BinaryVersion != "" {
+		binaryPath += "-" + c.Config().BinaryVersion
+	}
+	if err := copyFile(binaryPath, filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored"), 0o755); err != nil {
+		return err
 	}
 
-	return copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored-upgrade", "cored-upgrade"),
-		filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", "upgrade", "bin", "cored"), 0o755)
+	// upgrade to binary mapping
+	upgrades := map[string]string{
+		"v1": "cored", // TODO(dhil) update to v1.0.0 once the binary is ready
+	}
+	for upgrade, binary := range upgrades {
+		return copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored", binary),
+			filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", upgrade, "bin", "cored"), 0o755)
+	}
+
+	return nil
 }
 
 func (c Cored) saveClientWrapper(wrapperDir, hostname string) error {

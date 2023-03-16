@@ -42,7 +42,12 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes.
-func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCount, sentriesCount int) (cored.Cored, []cored.Cored, error) {
+func (f *Factory) CoredNetwork(
+	name string,
+	firstPorts cored.Ports,
+	validatorsCount, sentriesCount int,
+	binaryVersion string,
+) (cored.Cored, []cored.Cored, error) {
 	if validatorsCount > len(cored.StakerMnemonics) {
 		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, len(cored.StakerMnemonics))
 	}
@@ -104,6 +109,7 @@ func (f *Factory) CoredNetwork(name string, firstPorts cored.Ports, validatorsCo
 			FundingMnemonic: cored.FundingMnemonic,
 			FaucetMnemonic:  cored.FaucetMnemonic,
 			RelayerMnemonic: cored.RelayerMnemonic,
+			BinaryVersion:   binaryVersion,
 		})
 		if node0 == nil {
 			node0 = &node
