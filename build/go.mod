@@ -4,11 +4,9 @@ module github.com/CoreumFoundation/crust/build
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
 go 1.19
 
-replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
 require (
-	github.com/CoreumFoundation/coreum v0.1.1
-	github.com/CoreumFoundation/coreum-tools v0.3.0
+	github.com/CoreumFoundation/coreum v1.0.0-rc2
+	github.com/CoreumFoundation/coreum-tools v0.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.37.0
 	github.com/stretchr/testify v1.8.1
@@ -22,6 +20,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/exp v0.0.0-20220907003533-145caa8ea1d0 // indirect
+	golang.org/x/exp v0.0.0-20221019170559-20944726eadf // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

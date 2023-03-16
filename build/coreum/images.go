@@ -13,7 +13,7 @@ import (
 
 // BuildCoredDockerImage builds cored docker image.
 func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureCosmovisor, BuildCoredInDocker, ensureReleasedBinaries(allReleases()))
+	deps(ensureCosmovisor, BuildCoredInDocker, ensureReleasedBinaries)
 
 	dockerfile, err := image.Execute(image.Data{
 		From:             docker.AlpineImage,
@@ -43,18 +43,18 @@ func ensureCosmovisor(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // ensureReleasedBinaries ensures that all previous cored versions are installed.
-func ensureReleasedBinaries(binaries []tools.Name) func(ctx context.Context, deps build.DepsFunc) error {
-	return func(ctx context.Context, deps build.DepsFunc) error {
-		for _, binaryTool := range binaries {
-			if err := tools.EnsureDocker(ctx, binaryTool); err != nil {
-				return err
-			}
-
-			if err := tools.CopyToolBinaries(binaryTool, dockerRootPath, string(binaryTool)); err != nil {
-				return err
-			}
+func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
+	for _, binaryTool := range []tools.Name{
+		tools.CoredV011,
+	} {
+		if err := tools.EnsureDocker(ctx, binaryTool); err != nil {
+			return err
 		}
 
-		return nil
+		if err := tools.CopyToolBinaries(binaryTool, dockerRootPath, string(binaryTool)); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
