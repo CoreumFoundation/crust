@@ -17,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 )
 
@@ -25,8 +26,9 @@ var (
 	configTmpl     string
 	configTemplate = template.Must(template.New("").Parse(configTmpl))
 
-	//go:embed config/alert.rules
-	alertRules string
+	//go:embed config/alert.tmpl
+	alertRules         string
+	alertRulesTemplate = template.Must(template.New("").Parse(alertRules))
 )
 
 const (
@@ -47,6 +49,7 @@ type Config struct {
 	Port       int
 	AppInfo    *infra.AppInfo
 	CoredNodes []cored.Cored
+	BDJuno     bdjuno.BDJuno
 }
 
 // New creates new prometheus app.
@@ -128,6 +131,10 @@ func (p Prometheus) Deployment() infra.Deployment {
 				for _, node := range p.config.CoredNodes {
 					containers = append(containers, node)
 				}
+				// determine whether the dbjuno was provide
+				if p.config.BDJuno.Config().Name == "" {
+					containers = append(containers, p.config.BDJuno)
+				}
 
 				return containers
 			}(),
@@ -150,6 +157,11 @@ func (p Prometheus) saveConfigFile() error {
 		Name string
 	}
 
+	type bdjunoConfig struct {
+		Host string
+		Port int
+	}
+
 	if err := os.MkdirAll(filepath.Join(p.config.HomeDir, "data"), 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -164,9 +176,14 @@ func (p Prometheus) saveConfigFile() error {
 	}
 
 	configArgs := struct {
-		Nodes []nodesConfigArgs
+		Nodes  []nodesConfigArgs
+		DBJuno bdjunoConfig
 	}{
 		Nodes: nodesConfig,
+		DBJuno: bdjunoConfig{
+			Host: p.config.BDJuno.Info().HostFromContainer,
+			Port: p.config.BDJuno.Config().TelemetryPort,
+		},
 	}
 
 	buf := &bytes.Buffer{}
@@ -179,7 +196,22 @@ func (p Prometheus) saveConfigFile() error {
 		return errors.Wrapf(err, "can't write prometheus %s file", configFileName)
 	}
 
-	err = os.WriteFile(filepath.Join(p.config.HomeDir, alertRulesFileName), []byte(alertRules), 0o700)
+	chainID := ""
+	if len(p.config.CoredNodes) > 0 {
+		chainID = string(p.config.CoredNodes[0].Config().Network.ChainID())
+	}
+	rulesArgs := struct {
+		ChainID string
+	}{
+		ChainID: chainID,
+	}
+
+	buf = &bytes.Buffer{}
+	if err := alertRulesTemplate.Execute(buf, rulesArgs); err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = os.WriteFile(filepath.Join(p.config.HomeDir, alertRulesFileName), buf.Bytes(), 0o700)
 	if err != nil {
 		return errors.Wrapf(err, "can't write prometheus %s file", alertRulesFileName)
 	}

@@ -8,8 +8,8 @@ groups:
       for: 3m
       # Annotation - additional informational labels to store more information
       annotations:
-        title: 'Instance {{ $labels.instance }} down'
-        description: '{{ $labels.job }} on {{ $labels.instance }} has been down for more than 3 minutes'
+        title: 'Instance {{ `{{ $labels.instance }}` }} down'
+        description: '{{ `{{ $labels.job }}` }} on {{ `{{ $labels.instance }}` }} has been down for more than 3 minutes'
       # Labels - additional labels to be attached to the alert
       labels:
         severity: 'critical'
@@ -21,7 +21,7 @@ groups:
         severity: major
         service: cosmos-monitoring
       annotations:
-        description: 'Degraded syncing on {{ $labels.instance }}'
+        description: 'Degraded syncing on {{ `{{ $labels.instance }}` }}'
 
     - alert: TooFewPeers
       expr: tendermint_p2p_peers{job="cosmos"} < 3
@@ -30,8 +30,8 @@ groups:
         severity: major
         service: cosmos-monitoring
       annotations:
-        description: 'P2P Peers on {{ $labels.instance }} is lower than threshold (3)'
-    
+        description: 'P2P Peers on {{ `{{ $labels.instance }}` }} is lower than threshold (3)'
+
     - alert: NodeStall
       expr: (tendermint_consensus_height{chain_id="$chain_id", instance="$instance"} == bool tendermint_consensus_latest_block_height{chain_id="$chain_id",instance="$instance"}) == 1
       for: 5m
@@ -39,8 +39,8 @@ groups:
         severity: major
         service: cosmos-monitoring
       annotations:
-        description: 'Syncing appears to be stalled on {{ $labels.instance }}'
-    
+        description: 'Syncing appears to be stalled on {{ `{{ $labels.instance }}` }}'
+
     - alert: ChainHalt
       expr: rate(tendermint_consensus_height{job="cosmos"}[5m]) == 0
       for: 1m
@@ -67,3 +67,12 @@ groups:
         service: cosmos-monitoring
       annotations:
         description: 'Unknown deterministic gas message'
+
+    - alert: DegradedBDJunoSyncing
+      expr: (max(max_over_time(tendermint_consensus_height{chain_id="{{ .ChainID }}"}[30s]) or vector(0)) - max(max_over_time(juno_last_indexed_height{chain_id="{{ .ChainID }}"}[30s]) or vector(0))) > 50
+      for: 30s
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'BDJuno {{ `{{ $labels.chain_id }}` }}  syncing is degrading by more that 50 blocks'

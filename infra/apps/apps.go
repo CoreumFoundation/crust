@@ -134,7 +134,7 @@ func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 }
 
 // BlockExplorer returns set of applications required to run block explorer.
-func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet {
+func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) blockexplorer.Explorer {
 	namePostgres := name + "-postgres"
 	nameHasura := name + "-hasura"
 	nameBDJuno := name + "-bdjuno"
@@ -151,6 +151,7 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet 
 		HomeDir:        filepath.Join(f.config.AppDir, nameBDJuno),
 		AppInfo:        f.spec.DescribeApp(bdjuno.AppType, nameBDJuno),
 		Port:           blockexplorer.DefaultPorts.BDJuno,
+		TelemetryPort:  blockexplorer.DefaultPorts.BDJunoTelemetry,
 		ConfigTemplate: blockexplorer.BDJunoConfigTemplate,
 		Cored:          coredApp,
 		Postgres:       postgresApp,
@@ -170,11 +171,11 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) infra.AppSet 
 		Hasura:  hasuraApp,
 	})
 
-	return infra.AppSet{
-		postgresApp,
-		hasuraApp,
-		bdjunoApp,
-		bigDipperApp,
+	return blockexplorer.Explorer{
+		Postgres:  postgresApp,
+		BDJuno:    bdjunoApp,
+		Hasura:    hasuraApp,
+		BigDipper: bigDipperApp,
 	}
 }
 
@@ -230,7 +231,7 @@ func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 }
 
 // Monitoring returns set of applications required to run monitoring.
-func (f *Factory) Monitoring(name string, coredNodes []cored.Cored) infra.AppSet {
+func (f *Factory) Monitoring(name string, coredNodes []cored.Cored, bdJuno bdjuno.BDJuno) infra.AppSet {
 	namePrometheus := name + "-prometheus"
 	nameGrafana := name + "-grafana"
 
@@ -240,6 +241,7 @@ func (f *Factory) Monitoring(name string, coredNodes []cored.Cored) infra.AppSet
 		Port:       prometheus.DefaultPort,
 		AppInfo:    f.spec.DescribeApp(prometheus.AppType, namePrometheus),
 		CoredNodes: coredNodes,
+		BDJuno:     bdJuno,
 	})
 
 	grafanaApp := grafana.New(grafana.Config{

@@ -119,12 +119,14 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		appSet = append(appSet, appF.Faucet("faucet", coredApp))
 	}
 
+	explorerApp := appF.BlockExplorer("explorer", coredApp)
 	if pMap[profileExplorer] {
-		appSet = append(appSet, appF.BlockExplorer("explorer", coredApp)...)
+		appSet = append(appSet, explorerApp.ToAppSet()...)
 	}
 
+	// FIXME (dhi) test what happens if explorer disabled but monitoring is enabled
 	if pMap[profileMonitoring] {
-		appSet = append(appSet, appF.Monitoring("monitoring", coredNodes)...)
+		appSet = append(appSet, appF.Monitoring("monitoring", coredNodes, explorerApp.BDJuno)...)
 	}
 
 	return appSet, nil

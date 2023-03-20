@@ -9,8 +9,9 @@ import (
 
 // DefaultPorts are the default ports applications building block explorer listen on.
 var DefaultPorts = Ports{
-	Postgres:  postgres.DefaultPort,
-	Hasura:    hasura.DefaultPort,
-	BDJuno:    bdjuno.DefaultPort,
-	BigDipper: bigdipper.DefaultPort,
+	Postgres:        postgres.DefaultPort,
+	Hasura:          hasura.DefaultPort,
+	BDJuno:          bdjuno.DefaultPort,
+	BDJunoTelemetry: bdjuno.DefaultTelemetryPort,
+	BigDipper:       bigdipper.DefaultPort,
 }

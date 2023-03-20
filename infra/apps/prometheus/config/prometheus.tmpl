@@ -15,3 +15,9 @@ scrape_configs:
           environment: znet
           instance: "{{.Name}}"
 {{end}}
+  - job_name: 'bdjuno'
+    static_configs:
+      - targets: [ "{{.DBJuno.Host}}:{{.DBJuno.Port}}" ]
+        labels:
+          environment: znet
+          instance: "bdjuno"
