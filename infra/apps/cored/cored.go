@@ -329,7 +329,7 @@ func (c Cored) prepare() error {
 	appCfg.GRPC.Enable = true
 	appCfg.GRPCWeb.Enable = true
 	appCfg.GRPCWeb.EnableUnsafeCORS = true
-	appCfg.Telemetry.Enabled = true
+	appCfg.Telemetry.Enabled = false
 	appCfg.Telemetry.PrometheusRetentionTime = 600
 	srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
 
