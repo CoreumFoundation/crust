@@ -124,7 +124,6 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		appSet = append(appSet, explorerApp.ToAppSet()...)
 	}
 
-	// FIXME (dhil) test what happens if explorer disabled but monitoring is enabled
 	if pMap[profileMonitoring] {
 		appSet = append(appSet, appF.Monitoring("monitoring", coredNodes, explorerApp.BDJuno)...)
 	}
