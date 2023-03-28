@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -44,6 +45,10 @@ type AppSet []App
 
 // Deploy deploys app in environment to the target.
 func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
+	log := logger.Get(ctx)
+	log.Info(fmt.Sprintf("Staring AppSet deployment, apps: %s", strings.Join(lo.Map(m, func(app App, _ int) string {
+		return app.Name()
+	}), ",")))
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		deploymentSlots := make(chan struct{}, runtime.NumCPU())
 		for i := 0; i < cap(deploymentSlots); i++ {
@@ -86,7 +91,6 @@ func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Sp
 			appInfo := spec.Apps[name]
 			toDeploy := toDeploy
 			spawn("deploy."+name, parallel.Continue, func(ctx context.Context) error {
-				log := logger.Get(ctx)
 				deployment := toDeploy.Deployment
 
 				log.Info("Deployment initialized")

@@ -2,13 +2,18 @@ package bdjuno
 
 import (
 	"bytes"
+	"context"
+	"net/http"
+	"net/url"
 	"os"
 	"text/template"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
@@ -21,6 +26,9 @@ const (
 
 	// DefaultPort is the default port bdjuno listens on for client connections.
 	DefaultPort = 3030
+
+	// DefaultTelemetryPort is default port use for the bdjuno telemetry.
+	DefaultTelemetryPort = 5001
 )
 
 // Config storesbdjuno app configuration.
@@ -29,6 +37,7 @@ type Config struct {
 	HomeDir        string
 	AppInfo        *infra.AppInfo
 	Port           int
+	TelemetryPort  int
 	ConfigTemplate string
 	Cored          cored.Cored
 	Postgres       postgres.Postgres
@@ -66,6 +75,11 @@ func (j BDJuno) Info() infra.DeploymentInfo {
 	return j.config.AppInfo.Info()
 }
 
+// Config returns config.
+func (j BDJuno) Config() Config {
+	return j.config
+}
+
 // Deployment returns deployment of bdjuno.
 func (j BDJuno) Deployment() infra.Deployment {
 	return infra.Deployment{
@@ -86,7 +100,8 @@ func (j BDJuno) Deployment() infra.Deployment {
 			}
 		},
 		Ports: map[string]int{
-			"actions": j.config.Port,
+			"actions":   j.config.Port,
+			"telemetry": j.config.TelemetryPort,
 		},
 		Requires: infra.Prerequisites{
 			Timeout: 20 * time.Second,
@@ -103,6 +118,27 @@ func (j BDJuno) Deployment() infra.Deployment {
 			return os.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644)
 		},
 	}
+}
+
+// HealthCheck checks if bdjuno is operating.
+func (j BDJuno) HealthCheck(ctx context.Context) error {
+	if j.config.AppInfo.Info().Status != infra.AppStatusRunning {
+		return retry.Retryable(errors.Errorf("bdjuno hasn't started yet"))
+	}
+
+	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", j.Info().HostFromHost, j.config.TelemetryPort), Path: "/metrics"}
+	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return retry.Retryable(errors.WithStack(err))
+	}
+	_ = resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return retry.Retryable(errors.Errorf("health check failed, status code: %d", resp.StatusCode))
+	}
+
+	return nil
 }
 
 func (j BDJuno) prepareConfig() []byte {

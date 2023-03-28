@@ -1,6 +1,7 @@
 chain:
   bech32_prefix: {{ .Cored.AddressPrefix }}
   modules:
+    - telemetry
     - modules
     - messages
     - auth
@@ -12,6 +13,11 @@ chain:
     - staking
     - distribution
     - actions
+    - feemodel
+    - customparams
+    - assetft
+    - assetnft
+
 node:
   type: remote
   config:
@@ -43,6 +49,9 @@ database:
   max_idle_connections: 1
   partition_size: 100000
   partition_batch: 1000
+
+telemetry:
+  port: 5001
 
 logging:
   level: debug
