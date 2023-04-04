@@ -55,7 +55,7 @@ func (bd BigDipper) Info() infra.DeploymentInfo {
 // Deployment returns deployment of big dipper.
 func (bd BigDipper) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image: "coreumfoundation/big-dipper-ui:znet-latest",
+		Image: "coreumfoundation/big-dipper-ui:latest",
 		Name:  bd.Name(),
 		Info:  bd.config.AppInfo,
 		Ports: map[string]int{
