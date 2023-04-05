@@ -1,6 +1,7 @@
 package bigdipper
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/CoreumFoundation/crust/infra"
@@ -56,8 +57,33 @@ func (bd BigDipper) Info() infra.DeploymentInfo {
 func (bd BigDipper) Deployment() infra.Deployment {
 	return infra.Deployment{
 		Image: "coreumfoundation/big-dipper-ui:latest",
-		Name:  bd.Name(),
-		Info:  bd.config.AppInfo,
+		EnvVarsFunc: func() []infra.EnvVar {
+			return []infra.EnvVar{
+				{
+					Name:  "NEXT_PUBLIC_GRAPHQL_URL",
+					Value: "http://localhost:8080/v1/graphql",
+				},
+				{
+					Name:  "NEXT_PUBLIC_GRAPHQL_WS",
+					Value: "ws://localhost:8080/v1/graphql",
+				},
+				{
+					Name:  "NEXT_PUBLIC_RPC_WEBSOCKET",
+					Value: "ws://localhost:26657/websocket",
+				},
+				{
+					Name:  "NEXT_PUBLIC_CHAIN_TYPE",
+					Value: "devnet",
+				},
+				{
+					Name:  "PORT",
+					Value: strconv.Itoa(bd.config.Port),
+				},
+			}
+		},
+
+		Name: bd.Name(),
+		Info: bd.config.AppInfo,
 		Ports: map[string]int{
 			"web": bd.config.Port,
 		},
