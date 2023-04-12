@@ -7,6 +7,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/docker"
 	dockerbasic "github.com/CoreumFoundation/crust/build/docker/basic"
+	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 // BuildDockerImage builds docker image of the faucet.
@@ -15,7 +16,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 
 	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
 		From:   docker.AlpineImage,
-		Binary: filepath.Base(dockerBinaryPath),
+		Binary: binaryPath,
 	})
 	if err != nil {
 		return err
@@ -23,8 +24,8 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
 		RepoPath:   "../faucet",
-		ContextDir: filepath.Dir(dockerBinaryPath),
-		ImageName:  filepath.Base(dockerBinaryPath),
+		ContextDir: filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String()),
+		ImageName:  binaryName,
 		Dockerfile: dockerfile,
 	})
 }

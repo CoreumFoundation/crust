@@ -2,17 +2,20 @@ package faucet
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 const (
-	repoURL          = "https://github.com/CoreumFoundation/faucet.git"
-	repoPath         = "../faucet"
-	dockerBinaryPath = "bin/.cache/docker/faucet/faucet"
-	testBinaryPath   = "bin/.cache/integration-tests/faucet"
+	repoURL        = "https://github.com/CoreumFoundation/faucet.git"
+	repoPath       = "../faucet"
+	binaryName     = "faucet"
+	binaryPath     = "bin/" + binaryName
+	testBinaryPath = "bin/.cache/integration-tests/faucet"
 )
 
 // Build builds faucet in docker.
@@ -20,9 +23,9 @@ func Build(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo, ensureRepo)
 
 	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
-		PackagePath:   "../faucet",
-		BinOutputPath: dockerBinaryPath,
-	})
+		PackagePath:   repoPath,
+		BinOutputPath: filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String(), "bin", binaryName),
+	}, tools.PlatformDockerLocal)
 }
 
 // BuildIntegrationTests builds faucet integration tests.
