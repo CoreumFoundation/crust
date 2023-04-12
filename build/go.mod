@@ -4,6 +4,12 @@ module github.com/CoreumFoundation/crust/build
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
 go 1.19
 
+replace (
+	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	google.golang.org/grpc => google.golang.org/grpc v1.33.2
+	github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.34.26
+)
+
 require (
 	github.com/CoreumFoundation/coreum v1.0.0-rc2
 	github.com/CoreumFoundation/coreum-tools v0.4.0
