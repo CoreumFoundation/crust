@@ -11,7 +11,6 @@ import (
 	"text/template"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -21,7 +20,9 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
@@ -117,8 +118,8 @@ func (ba BaseApp) ClientContext() client.Context {
 		WithChainID(ba.appConfig.ChainID).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient).
-		WithKeyring(keyring.NewInMemory()).
-		WithBroadcastMode(flags.BroadcastBlock)
+		WithKeyring(keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)).
+		WithAwaitTx(true)
 }
 
 // HealthCheck checks if chain is ready.

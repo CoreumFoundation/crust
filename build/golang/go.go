@@ -179,6 +179,8 @@ func BuildTests(ctx context.Context, config TestBuildConfig) error {
 //go:embed Dockerfile.tmpl
 var dockerfileTemplate string
 
+// FIXME add wasm vm version as argument and use different fro osmosis our chain and so on
+
 var dockerfileTemplateParsed = template.Must(template.New("Dockerfile").Parse(dockerfileTemplate))
 
 func ensureBuildDockerImage(ctx context.Context) (string, error) {

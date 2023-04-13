@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/app"
 	"github.com/CoreumFoundation/coreum/pkg/client"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
@@ -140,7 +141,7 @@ func prepareTxStakingCreateValidator(
 		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
 	}
 
-	inMemKeyring := keyring.NewInMemory()
+	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
 
 	armor := crypto.EncryptArmorPrivKey(&stakerPrivateKey, passphrase, string(hd.Secp256k1Type))
 	if err := inMemKeyring.ImportPrivKey(stakerAddress.String(), armor, passphrase); err != nil {
@@ -217,8 +218,8 @@ func (c Cored) ClientContext() client.Context {
 		WithChainID(string(c.config.Network.ChainID())).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient).
-		WithKeyring(keyring.NewInMemory()).
-		WithBroadcastMode(flags.BroadcastBlock)
+		WithKeyring(keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)).
+		WithAwaitTx(true)
 }
 
 // TxFactory returns factory with present values for the chain.
@@ -331,6 +332,7 @@ func (c Cored) prepare() error {
 	appCfg.GRPCWeb.EnableUnsafeCORS = true
 	appCfg.Telemetry.Enabled = true
 	appCfg.Telemetry.PrometheusRetentionTime = 600
+	appCfg.MinGasPrices = fmt.Sprintf("0.00000000000000001%s", c.config.Network.Denom())
 	srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
 
 	if err := importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics); err != nil {

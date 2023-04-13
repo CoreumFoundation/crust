@@ -284,7 +284,10 @@ func importMnemonic(clientCtx client.Context, keyName, mnemonic string) sdk.AccA
 	)
 	must.OK(err)
 
-	return keyInfo.GetAddress()
+	address, err := keyInfo.GetAddress()
+	must.OK(err)
+
+	return address
 }
 
 func sendTokens(ctx context.Context, clientCtx client.Context, txf tx.Factory, from, to sdk.AccAddress, network config.Network) error {
