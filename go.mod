@@ -10,7 +10,7 @@ replace (
 replace github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.34.26
 
 require (
-	github.com/CoreumFoundation/coreum v0.1.2-0.20230301133054-73acab73fba1
+	github.com/CoreumFoundation/coreum v1.0.1-0.20230413103107-4d8b6d562037
 	github.com/CoreumFoundation/coreum-tools v0.4.0
 	github.com/cosmos/cosmos-sdk v0.45.14
 	github.com/fsnotify/fsnotify v1.6.0
@@ -21,7 +21,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/tendermint/tendermint v0.34.26
 	go.uber.org/zap v1.23.0
-	google.golang.org/grpc v1.52.3
+	google.golang.org/grpc v1.53.0
 )
 
 require (
@@ -158,7 +158,7 @@ require (
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
-	google.golang.org/genproto v0.0.0-20230125152338-dcaf20b6aeaa // indirect
+	google.golang.org/genproto v0.0.0-20230223222841-637eb2293923 // indirect
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
