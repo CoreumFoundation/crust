@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -119,6 +120,7 @@ func (ba BaseApp) ClientContext() client.Context {
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient).
 		WithKeyring(keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)).
+		WithBroadcastMode(flags.BroadcastSync).
 		WithAwaitTx(true)
 }
 

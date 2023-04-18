@@ -13,6 +13,7 @@ import (
 	"time"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -219,6 +220,7 @@ func (c Cored) ClientContext() client.Context {
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient).
 		WithKeyring(keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)).
+		WithBroadcastMode(flags.BroadcastSync).
 		WithAwaitTx(true)
 }
 
