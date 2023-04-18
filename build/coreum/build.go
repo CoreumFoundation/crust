@@ -81,6 +81,8 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 	switch {
 	case platform == tools.PlatformDockerAMD64:
 	//nolint:gocritic // condition is suspicious but fine
+	// If we build on ARM64 for ARM64 no special config is required. But if we build on AMD64 for ARM64
+	// then crosscompilation must be enabled.
 	case platform == tools.PlatformDockerARM64 && platform == tools.PlatformDockerLocal:
 	case platform == tools.PlatformDockerARM64:
 		config.CrosscompileARM64 = true
