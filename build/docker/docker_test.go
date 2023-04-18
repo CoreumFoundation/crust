@@ -41,8 +41,8 @@ func TestGetTagsForDockerImage(t *testing.T) {
 			args := getDockerBuildParams(ctx, dockerBuildParamsInput{
 				imageName:  "my-image",
 				contextDir: "/app/",
-				commitHash: tc.tagFromCommit, //nolint: scopelint
-				tags:       tc.tagsFromGit,   //nolint: scopelint
+				commitHash: tc.tagFromCommit,
+				tags:       tc.tagsFromGit,
 			})
 			for i, arg := range args {
 				if arg == "-t" {
