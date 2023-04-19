@@ -1,5 +1,11 @@
 package cored
 
+import (
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/pkg/config"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // mnemonics generating well-known keys to create predictable wallets so manual operation is easier.
 const (
 	AliceMnemonic   = "mandate canyon major bargain bamboo soft fetch aisle extra confirm monster jazz atom ball summer solar tell glimpse square uniform situate body ginger protect"
@@ -16,8 +22,17 @@ const (
 	RelayerMnemonic = "notable rate tribe effort deny void security page regular spice safe prize engage version hour bless normal mother exercise velvet load cry front ordinary"
 )
 
+var namedMnemonicList = []string{
+	AliceMnemonic,
+	BobMnemonic,
+	CharlieMnemonic,
+	FaucetMnemonic,
+	FundingMnemonic,
+	RelayerMnemonic,
+}
+
 // StakerMnemonics defines the list of the stakers used by validators.
-var StakerMnemonics = []string{
+var stakerMnemonicsList = []string{
 	"biology rigid design broccoli adult hood modify tissue swallow arctic option improve quiz cliff inject soup ozone suffer fantasy layer negative eagle leader priority",
 	"enemy fix tribe swift alcohol metal salad edge episode dry tired address bless cloth error useful define rough fold swift confirm century wasp acoustic",
 	"act electric demand cancel duck invest below once obvious estate interest solution drink mango reason already clean host limit stadium smoke census pattern express",
@@ -50,4 +65,51 @@ var StakerMnemonics = []string{
 	"electric task emerge nephew follow blue friend old exhibit desert deputy mirror coast turn cause shadow alcohol field clip climb endless gown pilot equal",
 	"woman reform noodle film drift hard point dry bundle mansion key enact deal moment jewel fold debate gain muffin safe later march account gate",
 	"ice deal defy struggle foster title mushroom bronze lonely unique shallow poet energy book mosquito hidden essay child room suggest balance spirit cash hunt",
+}
+
+// Lets
+type Wallet struct {
+	// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
+	// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
+	// That's why our main validators created here must have much higher stake.
+	stakerMnemonicBalance int64
+	namedMnemonicBalance  int64
+	stakerMnemonicsList   []string
+	namedMnemonicList     []string
+}
+
+func NewFundedWallet(network config.Network) (*Wallet, error) {
+	var desiredTotalSupply int64 = 500_000_000_000_000   // 500m core
+	var stakerMnemonicBalance int64 = 10_000_000_000_000 // 10m core
+	// distribute the remaining amount among Alice, Bob, Faucet, etc
+	var namedMnemonicBalance = (desiredTotalSupply - stakerMnemonicBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicList))
+
+	w := &Wallet{
+		stakerMnemonicBalance: stakerMnemonicBalance,
+		namedMnemonicBalance:  namedMnemonicBalance,
+		stakerMnemonicsList:   stakerMnemonicsList,
+		namedMnemonicList:     namedMnemonicList,
+	}
+
+	for _, mnemonic := range w.namedMnemonicList {
+		privKey, err := PrivateKeyFromMnemonic(mnemonic)
+		must.OK(err)
+		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicBalance))))
+	}
+
+	for _, mnemonic := range w.stakerMnemonicsList {
+		privKey, err := PrivateKeyFromMnemonic(mnemonic)
+		must.OK(err)
+		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerMnemonicBalance))))
+	}
+
+	return w, nil
+}
+
+func (w Wallet) GetStakersMnemonicCount() int {
+	return len(w.stakerMnemonicsList)
+}
+
+func (w Wallet) GetStakersMnemonic() []string {
+	return w.stakerMnemonicsList
 }

@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
@@ -43,40 +41,31 @@ type Factory struct {
 
 // CoredNetwork creates new network of cored nodes.
 func (f *Factory) CoredNetwork(
-	name string,
+	namePrefix string,
 	firstPorts cored.Ports,
 	validatorsCount, sentriesCount int,
 	binaryVersion string,
 ) (cored.Cored, []cored.Cored, error) {
-	if validatorsCount > len(cored.StakerMnemonics) {
-		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, len(cored.StakerMnemonics))
+	network := config.NewNetwork(f.networkConfig)
+
+	wallet, err := cored.NewFundedWallet(network)
+	if err != nil {
+		return cored.Cored{}, nil, errors.Errorf("failed to fund account: %v", err)
 	}
 
-	network := config.NewNetwork(f.networkConfig)
-	initialBalance := sdk.NewCoins(sdk.NewInt64Coin(f.networkConfig.Denom, 500_000_000_000_000))
-
-	for _, mnemonic := range []string{
-		cored.AliceMnemonic,
-		cored.BobMnemonic,
-		cored.CharlieMnemonic,
-		cored.FaucetMnemonic,
-		cored.FundingMnemonic,
-		cored.RelayerMnemonic,
-	} {
-		privKey, err := cored.PrivateKeyFromMnemonic(mnemonic)
-		if err != nil {
-			return cored.Cored{}, nil, errors.WithStack(err)
-		}
-		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), initialBalance))
+	if validatorsCount > wallet.GetStakersMnemonicCount() {
+		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, wallet.GetStakersMnemonicCount())
 	}
 
 	nodes := make([]cored.Cored, 0, validatorsCount+sentriesCount)
 	var node0 *cored.Cored
 	var lastNode cored.Cored
+	var name string
 	for i := 0; i < cap(nodes); i++ {
-		name := name + fmt.Sprintf("-%02d", i)
+		name = namePrefix + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
 		isValidator := i < validatorsCount
+
 		node := cored.New(cored.Config{
 			Name:       name,
 			HomeDir:    filepath.Join(f.config.AppDir, name, string(network.ChainID())),
@@ -96,7 +85,7 @@ func (f *Factory) CoredNetwork(
 			IsValidator: isValidator,
 			StakerMnemonic: func() string {
 				if isValidator {
-					return cored.StakerMnemonics[i]
+					return wallet.GetStakersMnemonic()[i]
 				}
 				return ""
 			}(),
@@ -110,7 +99,7 @@ func (f *Factory) CoredNetwork(
 			FaucetMnemonic:  cored.FaucetMnemonic,
 			RelayerMnemonic: cored.RelayerMnemonic,
 			BinaryVersion:   binaryVersion,
-		})
+		}, wallet)
 		if node0 == nil {
 			node0 = &node
 		}
