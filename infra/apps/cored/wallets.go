@@ -1,11 +1,10 @@
 package cored
 
 import (
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
 )
 
 // mnemonics generating well-known keys to create predictable wallets so manual operation is easier.
@@ -69,7 +68,7 @@ var stakerMnemonicsList = []string{
 	"ice deal defy struggle foster title mushroom bronze lonely unique shallow poet energy book mosquito hidden essay child room suggest balance spirit cash hunt",
 }
 
-// Wallet holds all account that are generated and funded when its constructor is called
+// Wallet holds all predefined account.
 type Wallet struct {
 	// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
 	// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
@@ -80,6 +79,7 @@ type Wallet struct {
 	namedMnemonicList     []string
 }
 
+// NewFundedWallet creates wallet and funds all predefined accounts.
 func NewFundedWallet(network *config.Network) (*Wallet, error) {
 	var desiredTotalSupply int64 = 500_000_000_000_000   // 500m core
 	var stakerMnemonicBalance int64 = 10_000_000_000_000 // 10m core
@@ -108,10 +108,12 @@ func NewFundedWallet(network *config.Network) (*Wallet, error) {
 	return w, nil
 }
 
+// GetStakersMnemonicCount returns length of stakerMnemonicsList.
 func (w Wallet) GetStakersMnemonicCount() int {
 	return len(w.stakerMnemonicsList)
 }
 
+// GetStakersMnemonic returns staker mnemonic by index.
 func (w Wallet) GetStakersMnemonic(index int) string {
 	if len(w.stakerMnemonicsList) < index {
 		panic(errors.New("index at GetStakersMnemonic is bigger than available mnemonic number"))

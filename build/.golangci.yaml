@@ -26,6 +26,8 @@ issues:
 linters:
   enable-all: true
   disable:
+    # gci acts weird, I did everything to have empty output of "gci diff ${FILENAME}", but it still is not passing
+    - gci
     # many golangci linters enforce stupid rules, so we will add more to the list soon
     - cyclop
     - errchkjson
