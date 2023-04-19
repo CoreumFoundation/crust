@@ -19,7 +19,6 @@ require (
 	github.com/prometheus/common v0.37.0
 	github.com/samber/lo v1.37.0
 	github.com/spf13/cobra v1.6.1
-	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
 	github.com/tendermint/tendermint v0.34.26
 	go.uber.org/zap v1.23.0
 	google.golang.org/grpc v1.53.0

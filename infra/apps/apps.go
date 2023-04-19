@@ -48,7 +48,7 @@ func (f *Factory) CoredNetwork(
 ) (cored.Cored, []cored.Cored, error) {
 	network := config.NewNetwork(f.networkConfig)
 
-	wallet, err := cored.NewFundedWallet(network)
+	wallet, err := cored.NewFundedWallet(&network)
 	if err != nil {
 		return cored.Cored{}, nil, errors.Errorf("failed to fund account: %v", err)
 	}
@@ -85,7 +85,7 @@ func (f *Factory) CoredNetwork(
 			IsValidator: isValidator,
 			StakerMnemonic: func() string {
 				if isValidator {
-					return wallet.GetStakersMnemonic()[i]
+					return wallet.GetStakersMnemonic(i)
 				}
 				return ""
 			}(),
