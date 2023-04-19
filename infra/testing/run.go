@@ -91,6 +91,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
 				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
+				"-run-unsafe=true",
 			)
 
 			for _, m := range appSet {
