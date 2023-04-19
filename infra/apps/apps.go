@@ -48,13 +48,10 @@ func (f *Factory) CoredNetwork(
 ) (cored.Cored, []cored.Cored, error) {
 	network := config.NewNetwork(f.networkConfig)
 
-	wallet, err := cored.NewFundedWallet(&network)
-	if err != nil {
-		return cored.Cored{}, nil, errors.Errorf("failed to fund account: %v", err)
-	}
+	wallet := cored.NewFundedWallet(&network)
 
-	if validatorsCount > wallet.GetStakersMnemonicCount() {
-		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, wallet.GetStakersMnemonicCount())
+	if validatorsCount > wallet.GetStakersMnemonicsCount() {
+		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, wallet.GetStakersMnemonicsCount())
 	}
 
 	nodes := make([]cored.Cored, 0, validatorsCount+sentriesCount)
@@ -99,7 +96,7 @@ func (f *Factory) CoredNetwork(
 			FaucetMnemonic:  cored.FaucetMnemonic,
 			RelayerMnemonic: cored.RelayerMnemonic,
 			BinaryVersion:   binaryVersion,
-		}, wallet)
+		}, wallet.GetStakerMnemonicsBalance())
 		if node0 == nil {
 			node0 = &node
 		}

@@ -60,7 +60,7 @@ type Config struct {
 }
 
 // New creates new cored app.
-func New(cfg Config, wallet *Wallet) Cored {
+func New(cfg Config, stakerMnemonicBalance int64) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
@@ -81,7 +81,7 @@ func New(cfg Config, wallet *Wallet) Cored {
 		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
 
 		// leave 10% for slashing and commission
-		stake := sdk.NewInt64Coin(cfg.Network.Denom(), int64(float64(wallet.stakerMnemonicBalance)*0.9))
+		stake := sdk.NewInt64Coin(cfg.Network.Denom(), int64(float64(stakerMnemonicBalance)*0.9))
 
 		createValidatorTx, err := prepareTxStakingCreateValidator(
 			cfg.Network.ChainID(),

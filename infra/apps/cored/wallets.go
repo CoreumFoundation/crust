@@ -23,7 +23,7 @@ const (
 	RelayerMnemonic = "notable rate tribe effort deny void security page regular spice safe prize engage version hour bless normal mother exercise velvet load cry front ordinary"
 )
 
-var namedMnemonicList = []string{
+var namedMnemonicsList = []string{
 	AliceMnemonic,
 	BobMnemonic,
 	CharlieMnemonic,
@@ -68,49 +68,54 @@ var stakerMnemonicsList = []string{
 	"ice deal defy struggle foster title mushroom bronze lonely unique shallow poet energy book mosquito hidden essay child room suggest balance spirit cash hunt",
 }
 
-// Wallet holds all predefined account.
+// Wallet holds all predefined accounts.
 type Wallet struct {
-	// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
-	// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
-	// That's why our main validators created here must have much higher stake.
-	stakerMnemonicBalance int64
-	namedMnemonicBalance  int64
-	stakerMnemonicsList   []string
-	namedMnemonicList     []string
+	stakerMnemonicsBalance int64
+	namedMnemonicsBalance  int64
+	stakerMnemonicsList    []string
+	namedMnemonicsList     []string
 }
 
 // NewFundedWallet creates wallet and funds all predefined accounts.
-func NewFundedWallet(network *config.Network) (*Wallet, error) {
-	var desiredTotalSupply int64 = 500_000_000_000_000   // 500m core
-	var stakerMnemonicBalance int64 = 10_000_000_000_000 // 10m core
+func NewFundedWallet(network *config.Network) *Wallet {
+	var desiredTotalSupply int64 = 500_000_000_000_000    // 500m core
+	var stakerMnemonicsBalance int64 = 10_000_000_000_000 // 10m core
 	// distribute the remaining amount among Alice, Bob, Faucet, etc
-	var namedMnemonicBalance = (desiredTotalSupply - stakerMnemonicBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicList))
+	var namedMnemonicsBalance = (desiredTotalSupply - stakerMnemonicsBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicsList))
 
 	w := &Wallet{
-		stakerMnemonicBalance: stakerMnemonicBalance,
-		namedMnemonicBalance:  namedMnemonicBalance,
-		stakerMnemonicsList:   stakerMnemonicsList,
-		namedMnemonicList:     namedMnemonicList,
+		// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
+		// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
+		// That's why our main validators created here must have much higher stake.
+		stakerMnemonicsBalance: stakerMnemonicsBalance,
+		namedMnemonicsBalance:  namedMnemonicsBalance,
+		stakerMnemonicsList:    stakerMnemonicsList,
+		namedMnemonicsList:     namedMnemonicsList,
 	}
 
-	for _, mnemonic := range w.namedMnemonicList {
+	for _, mnemonic := range w.namedMnemonicsList {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
-		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicBalance))))
+		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicsBalance))))
 	}
 
 	for _, mnemonic := range w.stakerMnemonicsList {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
-		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerMnemonicBalance))))
+		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerMnemonicsBalance))))
 	}
 
-	return w, nil
+	return w
 }
 
-// GetStakersMnemonicCount returns length of stakerMnemonicsList.
-func (w Wallet) GetStakersMnemonicCount() int {
+// GetStakersMnemonicsCount returns length of stakerMnemonicsList.
+func (w Wallet) GetStakersMnemonicsCount() int {
 	return len(w.stakerMnemonicsList)
+}
+
+// GetStakerMnemonicsBalance returns balance for the single staker.
+func (w Wallet) GetStakerMnemonicsBalance() int64 {
+	return w.stakerMnemonicsBalance
 }
 
 // GetStakersMnemonic returns staker mnemonic by index.
