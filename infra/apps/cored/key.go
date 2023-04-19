@@ -28,7 +28,7 @@ func importMnemonicsToKeyring(homeDir string, mnemonics map[string]string) error
 	return nil
 }
 
-// UnsafeKeyring is kering with n ability to get private key,
+// UnsafeKeyring is keyring with an ability to get private key.
 type UnsafeKeyring interface {
 	keyring.Keyring
 	ExportPrivateKeyObject(uid string) (types.PrivKey, error)
