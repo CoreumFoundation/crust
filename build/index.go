@@ -20,6 +20,8 @@ var Commands = map[string]build.CommandFunc{
 	"build/faucet":            faucet.Build,
 	"build/znet":              crust.BuildZNet,
 	"build/integration-tests": buildIntegrationTests,
+	"generate":                generate,
+	"generate/coreum":         coreum.Generate,
 	"images":                  buildDockerImages,
 	"images/cored":            coreum.BuildCoredDockerImage,
 	"images/faucet":           faucet.BuildDockerImage,
@@ -74,5 +76,10 @@ func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
 
 func release(ctx context.Context, deps build.DepsFunc) error {
 	deps(coreum.ReleaseCored)
+	return nil
+}
+
+func generate(ctx context.Context, deps build.DepsFunc) error {
+	deps(coreum.Generate)
 	return nil
 }

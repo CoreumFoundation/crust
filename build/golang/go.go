@@ -248,6 +248,19 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	return args, envs
 }
 
+func Generate(ctx context.Context, path string, deps build.DepsFunc) error {
+	deps(EnsureGo)
+	log := logger.Get(ctx)
+	log.Info("Running go generate", zap.String("path", path))
+
+	cmd := exec.Command(tools.PathLocal("go"), "generate")
+	cmd.Dir = path
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return errors.Wrapf(err, "generation failed in package '%s'", path)
+	}
+	return nil
+}
+
 // Test runs go tests in repository.
 func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	deps(EnsureGo)
