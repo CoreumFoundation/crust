@@ -40,6 +40,11 @@ var Commands = map[string]build.CommandFunc{
 	"tidy/coreum":             coreum.Tidy,
 	"tidy/crust":              crust.Tidy,
 	"tidy/faucet":             faucet.Tidy,
+	"wasm":                    coreum.WASM,
+	"wasm/bank-send":          coreum.WASMBankSend,
+	"wasm/ft":                 coreum.WASMFT,
+	"wasm/nft":                coreum.WASMNFT,
+	"wasm/simple-state":       coreum.WASMSimpleState,
 }
 
 func tidy(ctx context.Context, deps build.DepsFunc) error {
