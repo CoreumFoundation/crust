@@ -248,6 +248,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	return args, envs
 }
 
+// Generate calls `go generate` for specific package.
 func Generate(ctx context.Context, path string, deps build.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
