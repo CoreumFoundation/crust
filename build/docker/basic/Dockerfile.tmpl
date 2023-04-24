@@ -3,6 +3,6 @@ FROM {{ .From }}
 # gaiad is compiled with glibc
 RUN apk add --no-cache gcompat
 
-COPY {{ .Binary }} /bin/{{ .Binary }}
+COPY {{ .Binary }} /{{ .Binary }}
 
-ENTRYPOINT ["{{ .Binary }}"]
+ENTRYPOINT ["/{{ .Binary }}"]
