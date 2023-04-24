@@ -10,23 +10,25 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
+const (
+	binaryName = "relayer"
+	binaryPath = "bin/" + binaryName
+)
+
 // BuildDockerImage builds docker image of the ibc relayer.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	const binaryName = "relayer"
-
-	relayerLocalPath := filepath.Join("bin", ".cache", "docker", "relayer")
-
-	if err := tools.EnsureDocker(ctx, tools.Relayer); err != nil {
+	if err := tools.EnsureBinaries(ctx, tools.Relayer, tools.PlatformDockerLocal); err != nil {
 		return err
 	}
 
-	if err := tools.CopyToolBinaries(tools.Relayer, relayerLocalPath, binaryName); err != nil {
+	relayerLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
+	if err := tools.CopyToolBinaries(tools.Relayer, tools.PlatformDockerLocal, relayerLocalPath, binaryPath); err != nil {
 		return err
 	}
 
 	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
 		From:   docker.AlpineImage,
-		Binary: binaryName,
+		Binary: binaryPath,
 	})
 	if err != nil {
 		return err

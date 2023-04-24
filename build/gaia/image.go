@@ -10,22 +10,25 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
+const (
+	binaryName = "gaiad"
+	binaryPath = "bin/" + binaryName
+)
+
 // BuildDockerImage builds docker image of the gaia.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	const binaryName = "gaiad"
-
-	gaiaLocalPath := filepath.Join("bin", ".cache", "docker", "gaia")
-	if err := tools.EnsureDocker(ctx, tools.Gaia); err != nil {
+	if err := tools.EnsureBinaries(ctx, tools.Gaia, tools.PlatformDockerLocal); err != nil {
 		return err
 	}
 
-	if err := tools.CopyToolBinaries(tools.Gaia, gaiaLocalPath, binaryName); err != nil {
+	gaiaLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
+	if err := tools.CopyToolBinaries(tools.Gaia, tools.PlatformDockerLocal, gaiaLocalPath, binaryPath); err != nil {
 		return err
 	}
 
 	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
 		From:   docker.AlpineImage,
-		Binary: binaryName,
+		Binary: binaryPath,
 	})
 	if err != nil {
 		return err

@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -346,7 +347,7 @@ func (c Cored) prepare() error {
 	}
 
 	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
-	binaryPath := filepath.Join(c.config.BinDir, ".cache", "docker", "cored", "cored")
+	binaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", "cored")
 	if c.Config().BinaryVersion != "" {
 		binaryPath += "-" + c.Config().BinaryVersion
 	}
@@ -359,7 +360,7 @@ func (c Cored) prepare() error {
 		"v1": "cored", // TODO(dhil) update to v1.0.0 once the binary is ready
 	}
 	for upgrade, binary := range upgrades {
-		return copyFile(filepath.Join(c.config.BinDir, ".cache", "docker", "cored", binary),
+		return copyFile(filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", binary),
 			filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", upgrade, "bin", "cored"), 0o755)
 	}
 
