@@ -104,7 +104,7 @@ func Tidy(ctx context.Context, deps build.DepsFunc) error {
 
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureRepo)
+	deps(ensureRepo, Generate)
 	return golang.Lint(ctx, repoPath, deps)
 }
 
