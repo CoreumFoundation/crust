@@ -254,7 +254,7 @@ func Generate(ctx context.Context, path string, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	log.Info("Running go generate", zap.String("path", path))
 
-	cmd := exec.Command(tools.PathLocal("go"), "generate")
+	cmd := exec.Command(tools.PathLocal("go"), "generate", "./...")
 	cmd.Dir = path
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "generation failed in package '%s'", path)
