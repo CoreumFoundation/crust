@@ -40,11 +40,11 @@ var Commands = map[string]build.CommandFunc{
 	"tidy/coreum":             coreum.Tidy,
 	"tidy/crust":              crust.Tidy,
 	"tidy/faucet":             faucet.Tidy,
-	"wasm":                    coreum.WASM,
-	"wasm/bank-send":          coreum.WASMBankSend,
-	"wasm/ft":                 coreum.WASMFT,
-	"wasm/nft":                coreum.WASMNFT,
-	"wasm/simple-state":       coreum.WASMSimpleState,
+	"wasm":                    coreum.CompileAllSmartContracts,
+	"wasm/bank-send":          coreum.CompileSmartContract(coreum.WASMBankSend),
+	"wasm/ft":                 coreum.CompileSmartContract(coreum.WASMFT),
+	"wasm/nft":                coreum.CompileSmartContract(coreum.WASMNFT),
+	"wasm/simple-state":       coreum.CompileSmartContract(coreum.WASMSimpleState),
 }
 
 func tidy(ctx context.Context, deps build.DepsFunc) error {
