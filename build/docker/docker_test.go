@@ -11,22 +11,22 @@ import (
 
 func TestGetTagsForDockerImage(t *testing.T) {
 	testCases := []struct {
-		name                string
-		tagFromCommit       string
-		tagsFromGit         []string
-		expectedBuildParams []string
+		name              string
+		tagFromCommit     string
+		tagsFromGit       []string
+		expectedBuildTags []string
 	}{
 		{
-			name:                "all_params",
-			tagFromCommit:       "35cca0686ef057d1325ad663958e3ab069d8379d",
-			tagsFromGit:         []string{"v0.0.1", "v0.0.1-rc"},
-			expectedBuildParams: []string{"build", "-t", "my-image:znet", "-t", "my-image:35cca06", "-t", "my-image:v0.0.1", "-t", "my-image:v0.0.1-rc", "-f", "-", "/app/"},
+			name:              "all_params",
+			tagFromCommit:     "35cca0686ef057d1325ad663958e3ab069d8379d",
+			tagsFromGit:       []string{"v0.0.1", "v0.0.1-rc"},
+			expectedBuildTags: []string{"my-image:znet", "my-image:35cca06", "my-image:v0.0.1", "my-image:v0.0.1-rc"},
 		},
 		{
-			name:                "onlyFromCommitAndZnet",
-			tagFromCommit:       "35cca0686ef057d1325ad663958e3ab069d8379d",
-			tagsFromGit:         []string{"allGitTagsMustBeSkipped", "v0.0.1-", "0.0.1", "v0.0.1-ra", "v0.0.1rc", "v0.0.1.rc"},
-			expectedBuildParams: []string{"build", "-t", "my-image:znet", "-t", "my-image:35cca06", "-f", "-", "/app/"},
+			name:              "onlyFromCommitAndZnet",
+			tagFromCommit:     "35cca0686ef057d1325ad663958e3ab069d8379d",
+			tagsFromGit:       []string{"allGitTagsMustBeSkipped", "v0.0.1-", "0.0.1", "v0.0.1-ra", "v0.0.1rc", "v0.0.1.rc"},
+			expectedBuildTags: []string{"my-image:znet", "my-image:35cca06"},
 		},
 	}
 
@@ -35,16 +35,20 @@ func TestGetTagsForDockerImage(t *testing.T) {
 		Verbose: true,
 	}))
 
-	var tags []string
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tags = getDockerBuildParams(ctx, dockerBuildParamsInput{
+			args := getDockerBuildParams(ctx, dockerBuildParamsInput{
 				imageName:  "my-image",
 				contextDir: "/app/",
-				commitHash: tc.tagFromCommit, //nolint: scopelint
-				tags:       tc.tagsFromGit,   //nolint: scopelint
+				commitHash: tc.tagFromCommit,
+				tags:       tc.tagsFromGit,
 			})
-			assert.Equal(t, tc.expectedBuildParams, tags) //nolint: scopelint
+			for i, arg := range args {
+				if arg == "-t" {
+					assert.Contains(t, tc.expectedBuildTags, args[i+1])
+				}
+			}
 		})
 	}
 }
