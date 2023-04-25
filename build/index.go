@@ -33,6 +33,8 @@ var Commands = map[string]build.CommandFunc{
 	"lint/faucet":             faucet.Lint,
 	"release":                 release,
 	"release/cored":           coreum.ReleaseCored,
+	"release/images":          releaseImages,
+	"release/images/cored":    coreum.ReleaseCoredImage,
 	"setup":                   tools.InstallAll,
 	"test":                    test,
 	"test/coreum":             coreum.Test,
@@ -76,6 +78,11 @@ func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
 
 func release(ctx context.Context, deps build.DepsFunc) error {
 	deps(coreum.ReleaseCored)
+	return nil
+}
+
+func releaseImages(ctx context.Context, deps build.DepsFunc) error {
+	deps(coreum.ReleaseCoredImage)
 	return nil
 }
 

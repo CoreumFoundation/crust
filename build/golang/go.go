@@ -65,17 +65,12 @@ type TestBuildConfig struct {
 
 // EnsureGo ensures that go is available.
 func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureLocal(ctx, tools.Go)
+	return tools.EnsureTool(ctx, tools.Go)
 }
 
 // EnsureGolangCI ensures that go linter is available.
 func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureLocal(ctx, tools.GolangCI)
-}
-
-// EnsureLibWASMVMMuslC ensures that libwasmvm_muslc is installed.
-func EnsureLibWASMVMMuslC(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureDocker(ctx, tools.LibWASMMuslC)
+	return tools.EnsureTool(ctx, tools.GolangCI)
 }
 
 // BuildLocally builds binary locally.
@@ -87,7 +82,7 @@ func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
-	cmd := exec.Command(tools.PathLocal("go"), args...)
+	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 	cmd.Env = envs
 
@@ -98,7 +93,7 @@ func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
 }
 
 // BuildInDocker builds binary inside docker container.
-func BuildInDocker(ctx context.Context, config BinaryBuildConfig) error {
+func BuildInDocker(ctx context.Context, config BinaryBuildConfig, platform tools.Platform) error {
 	// FIXME (wojciech): use docker API instead of docker executable
 
 	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath),
@@ -121,7 +116,7 @@ func BuildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	cacheDir := filepath.Join(tools.CacheDir(), tools.DockerPlatform.String())
+	cacheDir := filepath.Join(tools.CacheDir(), platform.String())
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -167,7 +162,7 @@ func BuildTests(ctx context.Context, config TestBuildConfig) error {
 		args = append(args, "-tags="+strings.Join(config.Tags, ","))
 	}
 
-	cmd := exec.Command(tools.PathLocal("go"), args...)
+	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
@@ -277,7 +272,7 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 		}
 
 		log.Info("Running go tests", zap.String("path", path))
-		cmd := exec.Command(tools.PathLocal("go"), "test", "-count=1", "-shuffle=on", "-race", "./...")
+		cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), "test", "-count=1", "-shuffle=on", "-race", "./...")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "unit tests failed in module '%s'", path)
@@ -292,7 +287,7 @@ func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
-		cmd := exec.Command(tools.PathLocal("go"), "mod", "tidy")
+		cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), "mod", "tidy")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "'go mod tidy' failed in module '%s'", path)

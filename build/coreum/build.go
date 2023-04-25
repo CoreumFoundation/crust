@@ -2,27 +2,26 @@ package coreum
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"golang.org/x/mod/semver"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 const (
-	blockchainName  = "coreum"
-	binaryName      = "cored"
-	repoURL         = "https://github.com/CoreumFoundation/coreum.git"
-	repoPath        = "../coreum"
-	localBinaryPath = "bin/" + binaryName
+	blockchainName = "coreum"
+	binaryName     = "cored"
+	repoURL        = "https://github.com/CoreumFoundation/coreum.git"
+	repoPath       = "../coreum"
+	binaryPath     = "bin/" + binaryName
 
-	cosmovisorBinaryName = "cosmovisor"
-
-	dockerImageName  = binaryName
-	dockerRootPath   = "bin/.cache/docker/cored"
-	dockerBinaryPath = dockerRootPath + "/" + binaryName
+	cosmovisorBinaryPath = "bin/cosmovisor"
 
 	integrationTestBinaryModulePath  = "bin/.cache/integration-tests/coreum-modules"
 	integrationTestBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
@@ -50,7 +49,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 
 	return golang.BuildLocally(ctx, golang.BinaryBuildConfig{
 		PackagePath:   "../coreum/cmd/cored",
-		BinOutputPath: localBinaryPath,
+		BinOutputPath: binaryPath,
 		Parameters:    parameters,
 		CGOEnabled:    true,
 		Tags:          tagsLocal,
@@ -59,21 +58,43 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 
 // BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo, golang.EnsureLibWASMVMMuslC, ensureRepo)
+	return buildCoredInDocker(ctx, deps, tools.PlatformDockerLocal)
+}
+
+func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {
+	deps(golang.EnsureGo, ensureRepo)
 
 	parameters, err := coredVersionParams(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
 
-	return golang.BuildInDocker(ctx, golang.BinaryBuildConfig{
+	config := golang.BinaryBuildConfig{
 		PackagePath:    "../coreum/cmd/cored",
-		BinOutputPath:  dockerBinaryPath,
+		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, platform.String(), "bin", binaryName),
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsDocker,
 		LinkStatically: true,
-	})
+	}
+
+	switch {
+	case platform == tools.PlatformDockerAMD64:
+	//nolint:gocritic // condition is suspicious but fine
+	// If we build on ARM64 for ARM64 no special config is required. But if we build on AMD64 for ARM64
+	// then crosscompilation must be enabled.
+	case platform == tools.PlatformDockerARM64 && platform == tools.PlatformDockerLocal:
+	case platform == tools.PlatformDockerARM64:
+		config.CrosscompileARM64 = true
+	default:
+		return errors.Errorf("releasing cored is not possible for platform %s", platform)
+	}
+
+	if err := tools.EnsureBinaries(ctx, tools.LibWASMMuslC, platform); err != nil {
+		return err
+	}
+
+	return golang.BuildInDocker(ctx, config, platform)
 }
 
 // BuildIntegrationTests builds coreum integration tests.
@@ -126,10 +147,6 @@ func (p params) Version() string {
 
 func (p params) Commit() string {
 	return p["github.com/cosmos/cosmos-sdk/version.Commit"]
-}
-
-func (p params) IsDirty() bool {
-	return strings.HasSuffix(p["github.com/cosmos/cosmos-sdk/version.Commit"], "-dirty")
 }
 
 func coredVersionParams(ctx context.Context, buildTags []string) (params, error) {
