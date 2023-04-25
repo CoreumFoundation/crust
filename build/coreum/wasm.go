@@ -27,6 +27,7 @@ const (
 
 var wasmDir = filepath.Join(repoPath, "integration-tests", "modules", "testdata", "wasm")
 
+// CompileAllSmartContracts compiles all th smart contracts.
 func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 	entries, err := os.ReadDir(wasmDir)
 	if err != nil {
@@ -50,6 +51,7 @@ func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
+// CompileSmartContract compiels smart contract.
 func CompileSmartContract(name string) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		deps(ensureRepo)
