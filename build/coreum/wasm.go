@@ -35,7 +35,6 @@ func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 
 	actions := make([]build.CommandFunc, 0, len(entries))
 	for _, e := range entries {
-		fmt.Println(e.Name())
 		if !e.IsDir() {
 			continue
 		}
