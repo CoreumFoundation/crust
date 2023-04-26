@@ -51,7 +51,7 @@ func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-// CompileSmartContract compiels smart contract.
+// CompileSmartContract returns function compiling smart contract.
 func CompileSmartContract(name string) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		deps(ensureRepo)
