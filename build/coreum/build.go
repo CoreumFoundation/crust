@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"golang.org/x/mod/semver"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/git"
@@ -154,12 +153,11 @@ func coredVersionParams(ctx context.Context, buildTags []string) (params, error)
 	if err != nil {
 		return nil, err
 	}
-	tags, err := git.HeadTags(ctx, repoPath)
+
+	version, err := git.VersionFromTag(ctx, repoPath)
 	if err != nil {
 		return nil, err
 	}
-
-	version := firstVersionTag(tags)
 	if version == "" {
 		version = hash
 	}
@@ -175,13 +173,4 @@ func coredVersionParams(ctx context.Context, buildTags []string) (params, error)
 	}
 
 	return ps, nil
-}
-
-func firstVersionTag(tags []string) string {
-	for _, tag := range tags {
-		if semver.IsValid(tag) {
-			return tag
-		}
-	}
-	return ""
 }
