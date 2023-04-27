@@ -40,11 +40,6 @@ func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 			continue
 		}
 
-		// FIXME (wojtek): Remove this once we use official sdk crate
-		if e.Name() == "sdk" {
-			continue
-		}
-
 		actions = append(actions, CompileSmartContract(e.Name()))
 	}
 	deps(actions...)
@@ -66,12 +61,6 @@ func CompileSmartContract(name string) build.CommandFunc {
 			return errors.WithStack(err)
 		}
 
-		// FIXME (wojtek): Remove this once we use official sdk crate
-		sdkPath, err := filepath.Abs(filepath.Join(repoPath, "integration-tests", "modules", "testdata", "wasm", "sdk"))
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
 		targetCachePath := filepath.Join(tools.CacheDir(), "wasm", "targets", fmt.Sprintf("%x", sha256.Sum256([]byte(path))))
 		if err := os.MkdirAll(targetCachePath, 0o700); err != nil {
 			return errors.WithStack(err)
@@ -83,7 +72,7 @@ func CompileSmartContract(name string) build.CommandFunc {
 		}
 
 		cmd := exec.Command("docker", "run", "--rm",
-			"-v", sdkPath+":/sdk", "-v", path+":/code",
+			"-v", path+":/code",
 			"-v", registryCachePath+":/usr/local/cargo/registry",
 			"-v", targetCachePath+":/code/target",
 			"-e", "HOME=/tmp",
