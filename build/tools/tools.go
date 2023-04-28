@@ -233,7 +233,8 @@ func (p Platform) String() string {
 	return p.OS + "." + p.Arch
 }
 
-const dockerOS = "docker"
+// DockerOS represents docker environment.
+const DockerOS = "docker"
 
 // Platform definitions.
 var (
@@ -241,9 +242,9 @@ var (
 	PlatformLinuxAMD64  = Platform{OS: "linux", Arch: "amd64"}
 	PlatformDarwinAMD64 = Platform{OS: "darwin", Arch: "amd64"}
 	PlatformDarwinARM64 = Platform{OS: "darwin", Arch: "arm64"}
-	PlatformDockerAMD64 = Platform{OS: dockerOS, Arch: "amd64"}
-	PlatformDockerARM64 = Platform{OS: dockerOS, Arch: "arm64"}
-	PlatformDockerLocal = Platform{OS: dockerOS, Arch: runtime.GOARCH}
+	PlatformDockerAMD64 = Platform{OS: DockerOS, Arch: "amd64"}
+	PlatformDockerARM64 = Platform{OS: DockerOS, Arch: "arm64"}
+	PlatformDockerLocal = Platform{OS: DockerOS, Arch: runtime.GOARCH}
 )
 
 // Tool represents tool to be installed.

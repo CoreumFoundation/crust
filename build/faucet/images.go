@@ -6,7 +6,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/docker"
-	dockerbasic "github.com/CoreumFoundation/crust/build/docker/basic"
+	"github.com/CoreumFoundation/crust/build/faucet/image"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -14,7 +14,11 @@ import (
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(Build)
 
-	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
+	return buildDockerImage(ctx, []tools.Platform{tools.PlatformDockerLocal}, docker.ActionLoad)
+}
+
+func buildDockerImage(ctx context.Context, platforms []tools.Platform, action docker.Action) error {
+	dockerfile, err := image.Execute(image.Data{
 		From:   docker.AlpineImage,
 		Binary: binaryPath,
 	})
@@ -23,9 +27,11 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		RepoPath:   "../faucet",
-		ContextDir: filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String()),
+		RepoPath:   repoPath,
+		ContextDir: filepath.Join("bin", ".cache", binaryName),
 		ImageName:  binaryName,
+		Platforms:  platforms,
+		Action:     action,
 		Dockerfile: dockerfile,
 	})
 }
