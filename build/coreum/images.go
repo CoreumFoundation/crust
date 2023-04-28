@@ -7,20 +7,32 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/coreum/image"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
+type imageConfig struct {
+	Platforms []tools.Platform
+	Action    docker.Action
+	Username  string
+	Tags      []string
+}
+
 // BuildCoredDockerImage builds cored docker image.
 func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(BuildCoredInDocker, ensureReleasedBinaries)
 
-	return buildCoredDockerImage(ctx, []tools.Platform{tools.PlatformDockerLocal}, docker.ActionLoad)
+	return buildCoredDockerImage(ctx, imageConfig{
+		Platforms: []tools.Platform{tools.PlatformDockerLocal},
+		Action:    docker.ActionLoad,
+		Tags:      []string{config.ZNetTag},
+	})
 }
 
-func buildCoredDockerImage(ctx context.Context, platforms []tools.Platform, action docker.Action) error {
-	for _, platform := range platforms {
+func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
+	for _, platform := range cfg.Platforms {
 		if err := ensureCosmovisor(ctx, platform); err != nil {
 			return err
 		}
@@ -42,8 +54,10 @@ func buildCoredDockerImage(ctx context.Context, platforms []tools.Platform, acti
 		RepoPath:   repoPath,
 		ContextDir: filepath.Join("bin", ".cache", binaryName),
 		ImageName:  binaryName,
-		Platforms:  platforms,
-		Action:     action,
+		Platforms:  cfg.Platforms,
+		Action:     cfg.Action,
+		Tags:       cfg.Tags,
+		Username:   cfg.Username,
 		Dockerfile: dockerfile,
 	})
 }
