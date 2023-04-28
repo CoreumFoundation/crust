@@ -132,7 +132,7 @@ func (p Prometheus) Deployment() infra.Deployment {
 					containers = append(containers, node)
 				}
 				// determine whether the dbjuno was provide
-				if p.config.BDJuno.Config().Name == "" {
+				if p.config.BDJuno.Name() != "" {
 					containers = append(containers, p.config.BDJuno)
 				}
 

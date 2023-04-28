@@ -76,3 +76,12 @@ groups:
         service: cosmos-monitoring
       annotations:
         description: 'BDJuno {{ `{{ $labels.chain_id }}` }}  syncing is degrading by more that 50 blocks'
+
+    - alert: SlowBlockTime
+      expr: bdjuno_block_time{period="hour"} > 2.0
+      for: 10s
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'Slow block time.'
