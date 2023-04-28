@@ -99,7 +99,7 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 
 // BuildIntegrationTests builds coreum integration tests.
 func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo, ensureRepo)
+	deps(golang.EnsureGo, ensureRepo, CompileAllSmartContracts)
 
 	err := golang.BuildTests(ctx, golang.TestBuildConfig{
 		PackagePath:   "../coreum/integration-tests/modules",
