@@ -55,20 +55,20 @@ type BuildImageConfig struct {
 	// Username to use in the tags
 	Username string
 
-	// Tags to add to the image, despite standard ones (commit hash, version)
-	Tags []string
+	// Versions to add to the image tags, despite standard ones (commit hash, version)
+	Versions []string
 }
 
 // dockerBuildParamsInput is used to omit telescope antipattern.
 type dockerBuildParamsInput struct {
-	imageName  string
-	contextDir string
-	commitHash string
-	gitTags    []string
-	otherTags  []string
-	username   string
-	platforms  []tools.Platform
-	action     Action
+	imageName     string
+	contextDir    string
+	commitHash    string
+	gitVersions   []string
+	otherVersions []string
+	username      string
+	platforms     []tools.Platform
+	action        Action
 }
 
 // BuildImage builds docker image.
@@ -91,20 +91,20 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 		return err
 	}
 
-	tagsFromGit, err := git.HeadTags(ctx, config.RepoPath)
+	versionsFromGit, err := git.HeadTags(ctx, config.RepoPath)
 	if err != nil {
 		return err
 	}
 
 	buildParams := getDockerBuildParams(ctx, dockerBuildParamsInput{
-		imageName:  config.ImageName,
-		contextDir: contextDir,
-		commitHash: commitHash,
-		gitTags:    tagsFromGit,
-		otherTags:  config.Tags,
-		username:   config.Username,
-		platforms:  config.Platforms,
-		action:     config.Action,
+		imageName:     config.ImageName,
+		contextDir:    contextDir,
+		commitHash:    commitHash,
+		gitVersions:   versionsFromGit,
+		otherVersions: config.Versions,
+		username:      config.Username,
+		platforms:     config.Platforms,
+		action:        config.Action,
 	})
 
 	logger.Get(ctx).Info("Building docker images", zap.Any("build params", buildParams))
@@ -131,28 +131,27 @@ func getDockerBuildParams(ctx context.Context, input dockerBuildParamsInput) []s
 		params = append(params, "--platform", fmt.Sprintf("linux/%s", platform.Arch))
 	}
 
-	tags := append([]string{}, input.otherTags...)
+	versions := append([]string{}, input.otherVersions...)
 	if input.commitHash != "" {
-		tags = append(tags, input.commitHash[:7])
+		versions = append(versions, input.commitHash[:7])
 	}
 
 	log := logger.Get(ctx)
 	r := regexp.MustCompile(`^v(\d+\.)(\d+\.)(\*|\d+)(-rc(\d+)?)?$`) // v1.1.1 || v0.0.1-rc1 etc
-	for _, tag := range input.gitTags {
-		if r.MatchString(tag) {
-			tags = append(tags, tag)
+	for _, version := range input.gitVersions {
+		if r.MatchString(version) {
+			versions = append(versions, version)
 		} else {
-			log.Info("Skipped HEAD tag because it doesn't fit regex", zap.String("tag", tag))
+			log.Info("Skipped HEAD tag because it doesn't fit regex", zap.String("tag", version))
 		}
 	}
-	for _, tag := range tags {
+	for _, version := range versions {
 		if input.username == "" {
-			params = append(params, "-t", fmt.Sprintf("%s:%s", input.imageName, tag))
+			params = append(params, "-t", fmt.Sprintf("%s:%s", input.imageName, version))
 		} else {
-			params = append(params, "-t", fmt.Sprintf("%s/%s:%s", input.username, input.imageName, tag))
+			params = append(params, "-t", fmt.Sprintf("%s/%s:%s", input.username, input.imageName, version))
 		}
 	}
-	fmt.Println(params)
 
 	params = append(params, []string{"-f", "-", input.contextDir}...)
 

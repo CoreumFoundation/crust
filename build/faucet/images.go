@@ -15,7 +15,7 @@ type imageConfig struct {
 	Platforms []tools.Platform
 	Action    docker.Action
 	Username  string
-	Tags      []string
+	Versions  []string
 }
 
 // BuildDockerImage builds docker image of the faucet.
@@ -25,7 +25,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	return buildDockerImage(ctx, imageConfig{
 		Platforms: []tools.Platform{tools.PlatformDockerLocal},
 		Action:    docker.ActionLoad,
-		Tags:      []string{config.ZNetTag},
+		Versions:  []string{config.ZNetVersion},
 	})
 }
 
@@ -44,7 +44,7 @@ func buildDockerImage(ctx context.Context, cfg imageConfig) error {
 		ImageName:  binaryName,
 		Platforms:  cfg.Platforms,
 		Action:     cfg.Action,
-		Tags:       cfg.Tags,
+		Versions:   cfg.Versions,
 		Username:   cfg.Username,
 		Dockerfile: dockerfile,
 	})

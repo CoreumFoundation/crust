@@ -39,6 +39,6 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 		ContextDir: gaiaLocalPath,
 		ImageName:  binaryName,
 		Dockerfile: dockerfile,
-		Tags:       []string{config.ZNetTag},
+		Versions:   []string{config.ZNetVersion},
 	})
 }
