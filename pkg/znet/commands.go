@@ -30,7 +30,6 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
@@ -58,7 +57,6 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 	saveWrapper(config.WrapperDir, "tests", "test")
 	saveWrapper(config.WrapperDir, "spec", "spec")
 	saveWrapper(config.WrapperDir, "console", "console")
-	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
 	saveLogsWrapper(config.WrapperDir, config.EnvName, "logs")
 
 	shell, promptVar, err := shellConfig(config.EnvName)
@@ -237,40 +235,6 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		return err
 	}
 	return tmux.Kill(ctx, config.EnvName)
-}
-
-// PingPong connects to cored node and sends transactions back and forth from one account to another to generate
-// transactions on the blockchain.
-func PingPong(ctx context.Context, appSet infra.AppSet) error {
-	coredApp := appSet.FindRunningApp(cored.AppType, "cored-00")
-	if coredApp == nil {
-		return errors.New("no running cored app found")
-	}
-	coredNode := coredApp.(cored.Cored)
-	clientCtx := coredNode.ClientContext()
-	txf := coredNode.TxFactory(clientCtx)
-
-	aliceAddr := importMnemonic(clientCtx, "alice", cored.AliceMnemonic)
-	bobAddr := importMnemonic(clientCtx, "bob", cored.BobMnemonic)
-	charlieAddr := importMnemonic(clientCtx, "charlie", cored.CharlieMnemonic)
-
-	for {
-		if err := sendTokens(ctx, clientCtx, txf, aliceAddr, bobAddr, *coredNode.Config().Network); err != nil {
-			return err
-		}
-		if err := sendTokens(ctx, clientCtx, txf, bobAddr, charlieAddr, *coredNode.Config().Network); err != nil {
-			return err
-		}
-		if err := sendTokens(ctx, clientCtx, txf, charlieAddr, aliceAddr, *coredNode.Config().Network); err != nil {
-			return err
-		}
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(time.Second):
-		}
-	}
 }
 
 // importMnemonic imports the mnemonic into the ClientContext Keyring and returns its address.

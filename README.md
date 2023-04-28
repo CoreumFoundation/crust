@@ -105,7 +105,6 @@ Available commands are:
 - `spec` - prints specification of the environment
 - `tests` - run integration tests
 - `console` - starts `tmux` session containing logs of all the running applications
-- `ping-pong` - sends transactions to generate traffic on blockchain
 
 ## Example
 
@@ -187,18 +186,6 @@ $ crust znet --profiles=integration-tests
 
 After tests complete environment is still running so if something went wrong you may inspect it manually.
 
-## Ping-pong
-
-There is `ping-pong` command available in `znet` sending transactions to generate some traffic on blockchain.
-To start it run these commands:
-
-```
-$ crust znet
-(znet) [znet] $ start
-(znet) [znet] $ ping-pong
-```
-
-You will see logs reporting that tokens are constantly transferred.
 
 ## Hard reset
 
