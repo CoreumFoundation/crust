@@ -1,10 +1,11 @@
 package cored
 
 import (
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/pkg/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/pkg/config"
 )
 
 const (
