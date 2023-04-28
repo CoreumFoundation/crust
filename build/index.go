@@ -20,6 +20,8 @@ var Commands = map[string]build.CommandFunc{
 	"build/faucet":            faucet.Build,
 	"build/znet":              crust.BuildZNet,
 	"build/integration-tests": buildIntegrationTests,
+	"generate":                generate,
+	"generate/coreum":         coreum.Generate,
 	"images":                  buildDockerImages,
 	"images/cored":            coreum.BuildCoredDockerImage,
 	"images/faucet":           faucet.BuildDockerImage,
@@ -31,8 +33,10 @@ var Commands = map[string]build.CommandFunc{
 	"lint/faucet":             faucet.Lint,
 	"release":                 release,
 	"release/cored":           coreum.ReleaseCored,
+	"release/faucet":          faucet.Release,
 	"release/images":          releaseImages,
 	"release/images/cored":    coreum.ReleaseCoredImage,
+	"release/images/faucet":   faucet.ReleaseImage,
 	"setup":                   tools.InstallAll,
 	"test":                    test,
 	"test/coreum":             coreum.Test,
@@ -42,6 +46,11 @@ var Commands = map[string]build.CommandFunc{
 	"tidy/coreum":             coreum.Tidy,
 	"tidy/crust":              crust.Tidy,
 	"tidy/faucet":             faucet.Tidy,
+	"wasm":                    coreum.CompileAllSmartContracts,
+	"wasm/bank-send":          coreum.CompileSmartContract(coreum.WASMBankSend),
+	"wasm/ft":                 coreum.CompileSmartContract(coreum.WASMFT),
+	"wasm/nft":                coreum.CompileSmartContract(coreum.WASMNFT),
+	"wasm/simple-state":       coreum.CompileSmartContract(coreum.WASMSimpleState),
 }
 
 func tidy(ctx context.Context, deps build.DepsFunc) error {
@@ -75,11 +84,16 @@ func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func release(ctx context.Context, deps build.DepsFunc) error {
-	deps(coreum.ReleaseCored)
+	deps(coreum.ReleaseCored, faucet.Release)
 	return nil
 }
 
 func releaseImages(ctx context.Context, deps build.DepsFunc) error {
-	deps(coreum.ReleaseCoredImage)
+	deps(coreum.ReleaseCoredImage, faucet.ReleaseImage)
+	return nil
+}
+
+func generate(ctx context.Context, deps build.DepsFunc) error {
+	deps(coreum.Generate)
 	return nil
 }

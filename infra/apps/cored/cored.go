@@ -52,6 +52,7 @@ type Config struct {
 	Ports             Ports
 	IsValidator       bool
 	StakerMnemonic    string
+	StakerBalance     int64
 	FundingMnemonic   string
 	FaucetMnemonic    string
 	RelayerMnemonic   string
@@ -79,19 +80,19 @@ func New(cfg Config) Cored {
 
 		minimumSelfDelegation := sdk.NewInt64Coin(cfg.Network.Denom(), 20_000_000_000) // 20k core
 
-		// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
-		// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
-		// That's why our main validators created here must have much higher stake.
-		stake := sdk.NewInt64Coin(cfg.Network.Denom(), 1_000_000_000_000) // 1m core
-
-		// the additional balance will be used to pay for the tx submitted from the stakers accounts
-		additionalBalance := sdk.NewInt64Coin(cfg.Network.Denom(), 1_000_000_000) // 1k core
-
-		must.OK(cfg.Network.FundAccount(sdk.AccAddress(stakerPrivKey.PubKey().Address()), sdk.NewCoins(stake.Add(additionalBalance))))
-
 		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
 
-		createValidatorTx, err := prepareTxStakingCreateValidator(cfg.Network.ChainID(), clientCtx.TxConfig(), valPublicKey, stakerPrivKey, stake, minimumSelfDelegation.Amount)
+		// leave 10% for slashing and commission
+		stake := sdk.NewInt64Coin(cfg.Network.Denom(), int64(float64(cfg.StakerBalance)*0.9))
+
+		createValidatorTx, err := prepareTxStakingCreateValidator(
+			cfg.Network.ChainID(),
+			clientCtx.TxConfig(),
+			valPublicKey,
+			stakerPrivKey,
+			stake,
+			minimumSelfDelegation.Amount,
+		)
 		must.OK(err)
 		cfg.Network.AddGenesisTx(createValidatorTx)
 	}

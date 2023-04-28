@@ -1,5 +1,18 @@
 package cored
 
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/pkg/config"
+)
+
+const (
+	desiredTotalSupply int64 = 500_000_000_000_000 // 500m core
+	stakerBalance      int64 = 10_000_000_000_000  // 10m core
+)
+
 // mnemonics generating well-known keys to create predictable wallets so manual operation is easier.
 const (
 	AliceMnemonic   = "mandate canyon major bargain bamboo soft fetch aisle extra confirm monster jazz atom ball summer solar tell glimpse square uniform situate body ginger protect"
@@ -16,8 +29,17 @@ const (
 	RelayerMnemonic = "notable rate tribe effort deny void security page regular spice safe prize engage version hour bless normal mother exercise velvet load cry front ordinary"
 )
 
+var namedMnemonicsList = []string{
+	AliceMnemonic,
+	BobMnemonic,
+	CharlieMnemonic,
+	FaucetMnemonic,
+	FundingMnemonic,
+	RelayerMnemonic,
+}
+
 // StakerMnemonics defines the list of the stakers used by validators.
-var StakerMnemonics = []string{
+var stakerMnemonicsList = []string{
 	"biology rigid design broccoli adult hood modify tissue swallow arctic option improve quiz cliff inject soup ozone suffer fantasy layer negative eagle leader priority",
 	"enemy fix tribe swift alcohol metal salad edge episode dry tired address bless cloth error useful define rough fold swift confirm century wasp acoustic",
 	"act electric demand cancel duck invest below once obvious estate interest solution drink mango reason already clean host limit stadium smoke census pattern express",
@@ -50,4 +72,61 @@ var StakerMnemonics = []string{
 	"electric task emerge nephew follow blue friend old exhibit desert deputy mirror coast turn cause shadow alcohol field clip climb endless gown pilot equal",
 	"woman reform noodle film drift hard point dry bundle mansion key enact deal moment jewel fold debate gain muffin safe later march account gate",
 	"ice deal defy struggle foster title mushroom bronze lonely unique shallow poet energy book mosquito hidden essay child room suggest balance spirit cash hunt",
+}
+
+// Wallet holds all predefined accounts.
+type Wallet struct {
+	stakerBalance         int64
+	namedMnemonicsBalance int64
+	stakerMnemonicsList   []string
+	namedMnemonicsList    []string
+}
+
+// NewFundedWallet creates wallet and funds all predefined accounts.
+func NewFundedWallet(network *config.Network) *Wallet {
+	// distribute the remaining after stakers amount among Alice, Bob, Faucet, etc
+	var namedMnemonicsBalance = (desiredTotalSupply - stakerBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicsList))
+
+	w := &Wallet{
+		// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
+		// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
+		// That's why our main validators created here must have much higher stake.
+		stakerBalance:         stakerBalance,
+		namedMnemonicsBalance: namedMnemonicsBalance,
+		stakerMnemonicsList:   stakerMnemonicsList,
+		namedMnemonicsList:    namedMnemonicsList,
+	}
+
+	for _, mnemonic := range w.namedMnemonicsList {
+		privKey, err := PrivateKeyFromMnemonic(mnemonic)
+		must.OK(err)
+		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicsBalance))))
+	}
+
+	for _, mnemonic := range w.stakerMnemonicsList {
+		privKey, err := PrivateKeyFromMnemonic(mnemonic)
+		must.OK(err)
+		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerBalance))))
+	}
+
+	return w
+}
+
+// GetStakersMnemonicsCount returns length of stakerMnemonicsList.
+func (w Wallet) GetStakersMnemonicsCount() int {
+	return len(w.stakerMnemonicsList)
+}
+
+// GetStakerMnemonicsBalance returns balance for the single staker.
+func (w Wallet) GetStakerMnemonicsBalance() int64 {
+	return w.stakerBalance
+}
+
+// GetStakersMnemonic returns staker mnemonic by index.
+func (w Wallet) GetStakersMnemonic(index int) string {
+	if len(w.stakerMnemonicsList) < index {
+		panic(errors.New("index at GetStakersMnemonic is bigger than available mnemonic number"))
+	}
+
+	return w.stakerMnemonicsList[index]
 }

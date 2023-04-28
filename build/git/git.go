@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/mod/semver"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -92,4 +93,19 @@ func EnsureRepo(ctx context.Context, repoURL string) error {
 		return errors.Errorf("path '%s' is not a directory, while repository is expected", repoURL)
 	}
 	return nil
+}
+
+// VersionFromTag returns version taken from tag present in the commit.
+func VersionFromTag(ctx context.Context, repoPath string) (string, error) {
+	tags, err := HeadTags(ctx, repoPath)
+	if err != nil {
+		return "", err
+	}
+
+	for _, tag := range tags {
+		if semver.IsValid(tag) {
+			return tag, nil
+		}
+	}
+	return "", nil
 }
