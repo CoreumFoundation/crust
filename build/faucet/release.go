@@ -13,10 +13,6 @@ import (
 
 // Release releases faucet binary for amd64 and arm64 to be published inside the release.
 func Release(ctx context.Context, deps build.DepsFunc) error {
-	if tools.PlatformLocal != tools.PlatformLinuxAMD64 {
-		return errors.New("this task can be executed on linux/amd64 machine only")
-	}
-
 	clean, _, err := git.StatusClean(ctx, repoPath)
 	if err != nil {
 		return err

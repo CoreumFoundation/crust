@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
@@ -46,7 +44,8 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	return golang.BuildLocally(ctx, golang.BinaryBuildConfig{
+	return golang.Build(ctx, golang.BinaryBuildConfig{
+		Platform:      tools.PlatformLocal,
 		PackagePath:   "../coreum/cmd/cored",
 		BinOutputPath: binaryPath,
 		Parameters:    parameters,
@@ -68,32 +67,19 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 		return err
 	}
 
-	config := golang.BinaryBuildConfig{
+	if err := tools.EnsureBinaries(ctx, tools.LibWASMMuslC, platform); err != nil {
+		return err
+	}
+
+	return golang.Build(ctx, golang.BinaryBuildConfig{
+		Platform:       platform,
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, platform.String(), "bin", binaryName),
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsDocker,
 		LinkStatically: true,
-	}
-
-	switch {
-	case platform == tools.PlatformDockerAMD64:
-	//nolint:gocritic // condition is suspicious but fine
-	// If we build on ARM64 for ARM64 no special config is required. But if we build on AMD64 for ARM64
-	// then crosscompilation must be enabled.
-	case platform == tools.PlatformDockerARM64 && platform == tools.PlatformDockerLocal:
-	case platform == tools.PlatformDockerARM64:
-		config.CrosscompileARM64 = true
-	default:
-		return errors.Errorf("releasing cored is not possible for platform %s", platform)
-	}
-
-	if err := tools.EnsureBinaries(ctx, tools.LibWASMMuslC, platform); err != nil {
-		return err
-	}
-
-	return golang.BuildInDocker(ctx, config, platform)
+	})
 }
 
 // BuildIntegrationTests builds coreum integration tests.

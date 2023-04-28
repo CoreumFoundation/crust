@@ -29,6 +29,9 @@ const goAlpineVersion = "3.17"
 
 // BinaryBuildConfig is the configuration for `go build`.
 type BinaryBuildConfig struct {
+	// Platform is the platform to build the binary for
+	Platform tools.Platform
+
 	// PackagePath is the path to package to build
 	PackagePath string
 
@@ -46,9 +49,6 @@ type BinaryBuildConfig struct {
 
 	// Parameters is the set of values passed to -X flags of `go build`
 	Parameters map[string]string
-
-	// CrosscompileARM64 if true cross-compiles for ARM64
-	CrosscompileARM64 bool
 }
 
 // TestBuildConfig is the configuration for `go test -c`.
@@ -73,12 +73,27 @@ func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureTool(ctx, tools.GolangCI)
 }
 
-// BuildLocally builds binary locally.
-func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
+// Build builds go binary.
+func Build(ctx context.Context, config BinaryBuildConfig) error {
+	if config.Platform.OS == tools.DockerOS {
+		return buildInDocker(ctx, config)
+	}
+	return buildLocally(ctx, config)
+}
+
+func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
 		zap.String("binary", config.BinOutputPath))
 
-	args, envs := buildArgsAndEnvs(config, filepath.Join(tools.CacheDir(), "lib"))
+	if config.Platform != tools.PlatformLocal {
+		return errors.Errorf("building requested for platform %s while only %s is supported",
+			config.Platform, tools.PlatformLocal)
+	}
+
+	args, envs, err := buildArgsAndEnvs(config, filepath.Join(tools.CacheDir(), "lib"))
+	if err != nil {
+		return err
+	}
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
@@ -92,8 +107,7 @@ func BuildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	return nil
 }
 
-// BuildInDocker builds binary inside docker container.
-func BuildInDocker(ctx context.Context, config BinaryBuildConfig, platform tools.Platform) error {
+func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	// FIXME (wojciech): use docker API instead of docker executable
 
 	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath),
@@ -116,7 +130,7 @@ func BuildInDocker(ctx context.Context, config BinaryBuildConfig, platform tools
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	cacheDir := filepath.Join(tools.CacheDir(), platform.String())
+	cacheDir := filepath.Join(tools.CacheDir(), config.Platform.String())
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -124,7 +138,10 @@ func BuildInDocker(ctx context.Context, config BinaryBuildConfig, platform tools
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
-	args, envs := buildArgsAndEnvs(config, "/crust-cache/lib")
+	args, envs, err := buildArgsAndEnvs(config, "/crust-cache/lib")
+	if err != nil {
+		return err
+	}
 	runArgs := []string{
 		"run", "--rm",
 		"-v", srcDir + ":/src",
@@ -210,7 +227,20 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	return image, nil
 }
 
-func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []string) {
+func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []string, err error) {
+	var crossCompileARM64 bool
+	switch config.Platform {
+	case tools.PlatformLocal:
+	case tools.PlatformDockerLocal:
+	case tools.PlatformDockerARM64:
+		if tools.PlatformLocal != tools.PlatformLinuxAMD64 {
+			return nil, nil, errors.Errorf("crosscompiling for %s is possible only on platform %s", config.Platform, tools.PlatformLinuxAMD64)
+		}
+		crossCompileARM64 = true
+	default:
+		return nil, nil, errors.Errorf("building is not possible for platform %s on platform %s", config.Platform, tools.PlatformLocal)
+	}
+
 	ldFlags := []string{"-w", "-s"}
 	if config.LinkStatically {
 		ldFlags = append(ldFlags, "-extldflags=-static")
@@ -236,11 +266,11 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 		cgoEnabled = "1"
 	}
 	envs = append(envs, "CGO_ENABLED="+cgoEnabled)
-	if config.CrosscompileARM64 {
+	if crossCompileARM64 {
 		envs = append(envs, "GOARCH=arm64", "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
 	}
 
-	return args, envs
+	return args, envs, nil
 }
 
 // Generate calls `go generate` for specific package.

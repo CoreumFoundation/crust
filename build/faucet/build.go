@@ -4,8 +4,6 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
@@ -28,24 +26,11 @@ func Build(ctx context.Context, deps build.DepsFunc) error {
 func buildFaucet(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {
 	deps(golang.EnsureGo, ensureRepo)
 
-	config := golang.BinaryBuildConfig{
+	return golang.Build(ctx, golang.BinaryBuildConfig{
+		Platform:      platform,
 		PackagePath:   repoPath,
 		BinOutputPath: filepath.Join("bin", ".cache", binaryName, platform.String(), "bin", binaryName),
-	}
-
-	switch {
-	case platform == tools.PlatformDockerAMD64:
-	//nolint:gocritic // condition is suspicious but fine
-	// If we build on ARM64 for ARM64 no special config is required. But if we build on AMD64 for ARM64
-	// then crosscompilation must be enabled.
-	case platform == tools.PlatformDockerARM64 && platform == tools.PlatformDockerLocal:
-	case platform == tools.PlatformDockerARM64:
-		config.CrosscompileARM64 = true
-	default:
-		return errors.Errorf("releasing cored is not possible for platform %s", platform)
-	}
-
-	return golang.BuildInDocker(ctx, config, platform)
+	})
 }
 
 // BuildIntegrationTests builds faucet integration tests.
