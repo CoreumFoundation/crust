@@ -52,6 +52,7 @@ type Config struct {
 	Ports             Ports
 	IsValidator       bool
 	StakerMnemonic    string
+	StakerBalance     int64
 	FundingMnemonic   string
 	FaucetMnemonic    string
 	RelayerMnemonic   string
@@ -61,7 +62,7 @@ type Config struct {
 }
 
 // New creates new cored app.
-func New(cfg Config, stakerMnemonicBalance int64) Cored {
+func New(cfg Config) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
@@ -82,7 +83,7 @@ func New(cfg Config, stakerMnemonicBalance int64) Cored {
 		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
 
 		// leave 10% for slashing and commission
-		stake := sdk.NewInt64Coin(cfg.Network.Denom(), int64(float64(stakerMnemonicBalance)*0.9))
+		stake := sdk.NewInt64Coin(cfg.Network.Denom(), int64(float64(cfg.StakerBalance)*0.9))
 
 		createValidatorTx, err := prepareTxStakingCreateValidator(
 			cfg.Network.ChainID(),

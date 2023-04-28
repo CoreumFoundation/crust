@@ -86,7 +86,8 @@ func (f *Factory) CoredNetwork(
 				}
 				return ""
 			}(),
-			RootNode: node0,
+			StakerBalance: wallet.GetStakerMnemonicsBalance(),
+			RootNode:      node0,
 			ImportedMnemonics: map[string]string{
 				"alice":   cored.AliceMnemonic,
 				"bob":     cored.BobMnemonic,
@@ -96,7 +97,7 @@ func (f *Factory) CoredNetwork(
 			FaucetMnemonic:  cored.FaucetMnemonic,
 			RelayerMnemonic: cored.RelayerMnemonic,
 			BinaryVersion:   binaryVersion,
-		}, wallet.GetStakerMnemonicsBalance())
+		})
 		if node0 == nil {
 			node0 = &node
 		}
