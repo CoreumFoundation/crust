@@ -1,4 +1,4 @@
-package coreum
+package faucet
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
-// ReleaseCored releases cored binary for amd64 and arm64 to be published inside the release.
-func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
+// Release releases faucet binary for amd64 and arm64 to be published inside the release.
+func Release(ctx context.Context, deps build.DepsFunc) error {
 	clean, _, err := git.StatusClean(ctx, repoPath)
 	if err != nil {
 		return err
@@ -29,17 +29,17 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 		return errors.New("no version present on released commit")
 	}
 
-	if err := buildCoredInDocker(ctx, deps, tools.PlatformDockerAMD64); err != nil {
+	if err := buildFaucet(ctx, deps, tools.PlatformDockerAMD64); err != nil {
 		return err
 	}
-	return buildCoredInDocker(ctx, deps, tools.PlatformDockerARM64)
+	return buildFaucet(ctx, deps, tools.PlatformDockerARM64)
 }
 
-// ReleaseCoredImage releases cored docker images for amd64 and arm64.
-func ReleaseCoredImage(ctx context.Context, deps build.DepsFunc) error {
-	deps(ReleaseCored)
+// ReleaseImage releases faucet docker images for amd64 and arm64.
+func ReleaseImage(ctx context.Context, deps build.DepsFunc) error {
+	deps(Release)
 
-	return buildCoredDockerImage(ctx,
+	return buildDockerImage(ctx,
 		[]tools.Platform{tools.PlatformDockerAMD64, tools.PlatformDockerARM64},
 		docker.ActionPush,
 	)
