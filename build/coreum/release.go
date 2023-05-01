@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
@@ -39,8 +40,9 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 func ReleaseCoredImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(ReleaseCored)
 
-	return buildCoredDockerImage(ctx,
-		[]tools.Platform{tools.PlatformDockerAMD64, tools.PlatformDockerARM64},
-		docker.ActionPush,
-	)
+	return buildCoredDockerImage(ctx, imageConfig{
+		Platforms: []tools.Platform{tools.PlatformDockerAMD64, tools.PlatformDockerARM64},
+		Action:    docker.ActionPush,
+		Username:  config.DockerHubUsername,
+	})
 }
