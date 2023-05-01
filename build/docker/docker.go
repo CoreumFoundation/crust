@@ -51,16 +51,24 @@ type BuildImageConfig struct {
 
 	// Action is the action to take after building the image
 	Action Action
+
+	// Username to use in the tags
+	Username string
+
+	// Versions to add to the image tags, despite standard ones (commit hash, version)
+	Versions []string
 }
 
 // dockerBuildParamsInput is used to omit telescope antipattern.
 type dockerBuildParamsInput struct {
-	imageName  string
-	contextDir string
-	commitHash string
-	tags       []string
-	platforms  []tools.Platform
-	action     Action
+	imageName     string
+	contextDir    string
+	commitHash    string
+	gitVersions   []string
+	otherVersions []string
+	username      string
+	platforms     []tools.Platform
+	action        Action
 }
 
 // BuildImage builds docker image.
@@ -83,18 +91,20 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 		return err
 	}
 
-	tagsFromGit, err := git.HeadTags(ctx, config.RepoPath)
+	versionsFromGit, err := git.HeadTags(ctx, config.RepoPath)
 	if err != nil {
 		return err
 	}
 
 	buildParams := getDockerBuildParams(ctx, dockerBuildParamsInput{
-		imageName:  config.ImageName,
-		contextDir: contextDir,
-		commitHash: commitHash,
-		tags:       tagsFromGit,
-		platforms:  config.Platforms,
-		action:     config.Action,
+		imageName:     config.ImageName,
+		contextDir:    contextDir,
+		commitHash:    commitHash,
+		gitVersions:   versionsFromGit,
+		otherVersions: config.Versions,
+		username:      config.Username,
+		platforms:     config.Platforms,
+		action:        config.Action,
 	})
 
 	logger.Get(ctx).Info("Building docker images", zap.Any("build params", buildParams))
@@ -106,7 +116,7 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 
 // getTagsForDockerImage returns params for further use in "docker build" command.
 func getDockerBuildParams(ctx context.Context, input dockerBuildParamsInput) []string {
-	params := []string{"buildx", "build", "--builder", "crust", "-t", fmt.Sprintf("%s:znet", input.imageName)}
+	params := []string{"buildx", "build", "--builder", "crust"}
 
 	switch input.action {
 	case ActionLoad:
@@ -121,16 +131,25 @@ func getDockerBuildParams(ctx context.Context, input dockerBuildParamsInput) []s
 		params = append(params, "--platform", fmt.Sprintf("linux/%s", platform.Arch))
 	}
 
+	versions := append([]string{}, input.otherVersions...)
 	if input.commitHash != "" {
-		params = append(params, []string{"-t", fmt.Sprintf("%s:%s", input.imageName, input.commitHash[:7])}...)
+		versions = append(versions, input.commitHash[:7])
 	}
 
+	log := logger.Get(ctx)
 	r := regexp.MustCompile(`^v(\d+\.)(\d+\.)(\*|\d+)(-rc(\d+)?)?$`) // v1.1.1 || v0.0.1-rc1 etc
-	for _, tag := range input.tags {
-		if r.MatchString(tag) {
-			params = append(params, []string{"-t", fmt.Sprintf("%s:%s", input.imageName, tag)}...)
+	for _, version := range input.gitVersions {
+		if r.MatchString(version) {
+			versions = append(versions, version)
 		} else {
-			logger.Get(ctx).Info("Skipped HEAD tag because it doesn't fit regex", zap.String("tag", tag))
+			log.Info("Skipped HEAD tag because it doesn't fit regex", zap.String("tag", version))
+		}
+	}
+	for _, version := range versions {
+		if input.username == "" {
+			params = append(params, "-t", fmt.Sprintf("%s:%s", input.imageName, version))
+		} else {
+			params = append(params, "-t", fmt.Sprintf("%s/%s:%s", input.username, input.imageName, version))
 		}
 	}
 
