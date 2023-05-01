@@ -156,17 +156,24 @@ If you start `znet` using default `--profiles=1cored` there is one `cored` appli
 To use the client you may use `cored-00` wrapper:
 
 ```
-(znet) [znet] $ cored-00 keys list
-(znet) [znet] $ cored-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
-(znet) [znet] $ cored-00 tx bank send bob devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky 10core
-(znet) [znet] $ cored-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
+(znet) [znet] $ start 
+```
+
+Generate a wallet to transfer funds to
+```
+(znet) [znet] $ cored-00 keys add {YOUR_WALLET_NAME}
+```
+Take the address the out put of the command above, you will use it in the next commands.
+
+```
+(znet) [znet] $ cored-00 query bank balances {YOUR_GENERATED_ADDRESS}
+(znet) [znet] $ cored-00 tx bank send bob {YOUR_GENERATED_ADDRESS} 10udevcore
+(znet) [znet] $ cored-00 query bank balances {YOUR_GENERATED_ADDRESS}
 ```
 
 ## Integration tests
 
-Tests are defined in [crust/tests/index.go](crust/tests/index.go)
-
-You may run tests directly:
+You may run integration tests directly:
 
 ```
 $ crust znet test
@@ -177,7 +184,8 @@ Tests run on top of `--profiles=integration-tests`.
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ crust znet --profiles=integration-tests
+$ crust znet 
+(znet) [znet] $ start --profiles=integration-tests
 (znet) [znet] $ tests
 
 # Remember to clean everything
