@@ -76,6 +76,11 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         if: ${{ matrix.docker-cache }}
         continue-on-error: true
+      - name: Checkout coreum
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/coreum
+          path: coreum
       - name: Checkout crust
         uses: actions/checkout@v3
         with:
