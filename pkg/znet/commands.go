@@ -12,25 +12,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
-	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
@@ -58,7 +50,6 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 	saveWrapper(config.WrapperDir, "tests", "test")
 	saveWrapper(config.WrapperDir, "spec", "spec")
 	saveWrapper(config.WrapperDir, "console", "console")
-	saveWrapper(config.WrapperDir, "ping-pong", "ping-pong")
 	saveLogsWrapper(config.WrapperDir, config.EnvName, "logs")
 
 	shell, promptVar, err := shellConfig(config.EnvName)
@@ -237,98 +228,6 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		return err
 	}
 	return tmux.Kill(ctx, config.EnvName)
-}
-
-// PingPong connects to cored node and sends transactions back and forth from one account to another to generate
-// transactions on the blockchain.
-func PingPong(ctx context.Context, appSet infra.AppSet) error {
-	coredApp := appSet.FindRunningApp(cored.AppType, "cored-00")
-	if coredApp == nil {
-		return errors.New("no running cored app found")
-	}
-	coredNode := coredApp.(cored.Cored)
-	clientCtx := coredNode.ClientContext()
-	txf := coredNode.TxFactory(clientCtx)
-
-	aliceAddr := importMnemonic(clientCtx, "alice", cored.AliceMnemonic)
-	bobAddr := importMnemonic(clientCtx, "bob", cored.BobMnemonic)
-	charlieAddr := importMnemonic(clientCtx, "charlie", cored.CharlieMnemonic)
-
-	for {
-		if err := sendTokens(ctx, clientCtx, txf, aliceAddr, bobAddr, *coredNode.Config().Network); err != nil {
-			return err
-		}
-		if err := sendTokens(ctx, clientCtx, txf, bobAddr, charlieAddr, *coredNode.Config().Network); err != nil {
-			return err
-		}
-		if err := sendTokens(ctx, clientCtx, txf, charlieAddr, aliceAddr, *coredNode.Config().Network); err != nil {
-			return err
-		}
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(time.Second):
-		}
-	}
-}
-
-// importMnemonic imports the mnemonic into the ClientContext Keyring and returns its address.
-func importMnemonic(clientCtx client.Context, keyName, mnemonic string) sdk.AccAddress {
-	keyInfo, err := clientCtx.Keyring().NewAccount(
-		keyName,
-		mnemonic,
-		"",
-		sdk.GetConfig().GetFullBIP44Path(),
-		hd.Secp256k1,
-	)
-	must.OK(err)
-
-	return keyInfo.GetAddress()
-}
-
-func sendTokens(ctx context.Context, clientCtx client.Context, txf tx.Factory, from, to sdk.AccAddress, network config.Network) error {
-	log := logger.Get(ctx)
-
-	amount := sdk.NewCoin(network.Denom(), sdk.OneInt())
-	txf = txf.WithSimulateAndExecute(true)
-
-	msg := &banktypes.MsgSend{
-		FromAddress: from.String(),
-		ToAddress:   to.String(),
-		Amount:      sdk.NewCoins(amount),
-	}
-
-	res, err := client.BroadcastTx(ctx, clientCtx, txf, msg)
-	if err != nil {
-		return err
-	}
-
-	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
-		zap.Stringer("amount", amount), zap.String("txHash", res.TxHash),
-		zap.Int64("gasUsed", res.GasUsed))
-
-	bankClient := banktypes.NewQueryClient(clientCtx)
-
-	fromBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: from.String(),
-		Denom:   amount.Denom,
-	})
-	if err != nil {
-		return err
-	}
-	toBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: to.String(),
-		Denom:   amount.Denom,
-	})
-	if err != nil {
-		return err
-	}
-
-	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance.Balance))
-	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance.Balance))
-
-	return nil
 }
 
 func saveWrapper(dir, file, command string) {
