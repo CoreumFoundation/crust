@@ -107,7 +107,6 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			}
 			faucetNode := faucetApp.(faucet.Faucet)
 			fullArgs = append(fullArgs,
-				"-transfer-amount", "1000000",
 				"-faucet-address", infra.JoinNetAddr("http", faucetNode.Info().HostFromHost, faucetNode.Port()),
 			)
 		}
