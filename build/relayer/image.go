@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
 	dockerbasic "github.com/CoreumFoundation/crust/build/docker/basic"
 	"github.com/CoreumFoundation/crust/build/tools"
@@ -38,5 +39,6 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 		ContextDir: relayerLocalPath,
 		ImageName:  binaryName,
 		Dockerfile: dockerfile,
+		Versions:   []string{config.ZNetVersion},
 	})
 }

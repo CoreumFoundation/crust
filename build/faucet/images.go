@@ -5,19 +5,31 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/faucet/image"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
+type imageConfig struct {
+	Platforms []tools.Platform
+	Action    docker.Action
+	Username  string
+	Versions  []string
+}
+
 // BuildDockerImage builds docker image of the faucet.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(Build)
 
-	return buildDockerImage(ctx, []tools.Platform{tools.PlatformDockerLocal}, docker.ActionLoad)
+	return buildDockerImage(ctx, imageConfig{
+		Platforms: []tools.Platform{tools.PlatformDockerLocal},
+		Action:    docker.ActionLoad,
+		Versions:  []string{config.ZNetVersion},
+	})
 }
 
-func buildDockerImage(ctx context.Context, platforms []tools.Platform, action docker.Action) error {
+func buildDockerImage(ctx context.Context, cfg imageConfig) error {
 	dockerfile, err := image.Execute(image.Data{
 		From:   docker.AlpineImage,
 		Binary: binaryPath,
@@ -30,8 +42,10 @@ func buildDockerImage(ctx context.Context, platforms []tools.Platform, action do
 		RepoPath:   repoPath,
 		ContextDir: filepath.Join("bin", ".cache", binaryName),
 		ImageName:  binaryName,
-		Platforms:  platforms,
-		Action:     action,
+		Platforms:  cfg.Platforms,
+		Action:     cfg.Action,
+		Versions:   cfg.Versions,
+		Username:   cfg.Username,
 		Dockerfile: dockerfile,
 	})
 }
