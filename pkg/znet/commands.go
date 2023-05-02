@@ -12,21 +12,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/client"
-	"github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
@@ -235,64 +228,6 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		return err
 	}
 	return tmux.Kill(ctx, config.EnvName)
-}
-
-// importMnemonic imports the mnemonic into the ClientContext Keyring and returns its address.
-func importMnemonic(clientCtx client.Context, keyName, mnemonic string) sdk.AccAddress {
-	keyInfo, err := clientCtx.Keyring().NewAccount(
-		keyName,
-		mnemonic,
-		"",
-		sdk.GetConfig().GetFullBIP44Path(),
-		hd.Secp256k1,
-	)
-	must.OK(err)
-
-	return keyInfo.GetAddress()
-}
-
-func sendTokens(ctx context.Context, clientCtx client.Context, txf tx.Factory, from, to sdk.AccAddress, network config.Network) error {
-	log := logger.Get(ctx)
-
-	amount := sdk.NewCoin(network.Denom(), sdk.OneInt())
-	txf = txf.WithSimulateAndExecute(true)
-
-	msg := &banktypes.MsgSend{
-		FromAddress: from.String(),
-		ToAddress:   to.String(),
-		Amount:      sdk.NewCoins(amount),
-	}
-
-	res, err := client.BroadcastTx(ctx, clientCtx, txf, msg)
-	if err != nil {
-		return err
-	}
-
-	log.Info("Sent tokens", zap.Stringer("from", from), zap.Stringer("to", to),
-		zap.Stringer("amount", amount), zap.String("txHash", res.TxHash),
-		zap.Int64("gasUsed", res.GasUsed))
-
-	bankClient := banktypes.NewQueryClient(clientCtx)
-
-	fromBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: from.String(),
-		Denom:   amount.Denom,
-	})
-	if err != nil {
-		return err
-	}
-	toBalance, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-		Address: to.String(),
-		Denom:   amount.Denom,
-	})
-	if err != nil {
-		return err
-	}
-
-	log.Info("Current balance", zap.Stringer("wallet", from), zap.Stringer("balance", fromBalance.Balance))
-	log.Info("Current balance", zap.Stringer("wallet", to), zap.Stringer("balance", toBalance.Balance))
-
-	return nil
 }
 
 func saveWrapper(dir, file, command string) {
