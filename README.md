@@ -78,6 +78,9 @@ To start fully-featured set you may run:
 ```
 $ crust znet start --profiles=3cored,faucet,explorer,monitoring
 ```
+**NOTE**: Notice from here on out, if you already have a znet env started with a set profiles,
+and you want to start znet with a different set of profiles, you need to remove previous znet env
+with `crust znet remove` and only then you can start the new env. 
 
 ### --cored-version
 
@@ -86,6 +89,8 @@ The `--cored-version` allows to start the `znet` with any previously released ve
 ```
 $ crust znet start --cored-version=v0.1.1 --profiles=3cored,faucet,explorer,monitoring
 ```
+**NOTE**: if you already have a znet env started with different profiles, you need to remove it 
+with `crust znet remove` so you can start a new environment.
 
 Also, it's possible to execute tests with any previously released version.
 
