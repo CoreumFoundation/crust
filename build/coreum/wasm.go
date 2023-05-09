@@ -29,6 +29,7 @@ var wasmDir = filepath.Join(repoPath, "integration-tests", "modules", "testdata"
 
 // CompileAllSmartContracts compiles all th smart contracts.
 func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
+	deps(ensureRepo)
 	entries, err := os.ReadDir(wasmDir)
 	if err != nil {
 		return errors.WithStack(err)

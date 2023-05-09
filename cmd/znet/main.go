@@ -11,8 +11,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/pkg/znet"
@@ -30,7 +28,6 @@ func main() {
 		rootCmd.AddCommand(testCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(specCmd(configF, cmdF))
 		rootCmd.AddCommand(consoleCmd(ctx, configF, cmdF))
-		rootCmd.AddCommand(pingPongCmd(ctx, configF, cmdF))
 
 		return rootCmd.Execute()
 	})
@@ -135,26 +132,6 @@ func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cm
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
 			return znet.Console(ctx, config, spec)
-		}),
-	}
-}
-
-func pingPongCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) *cobra.Command {
-	networkConfig, err := integrationtests.NewNetworkConfig(constant.ChainIDDev)
-	must.OK(err)
-
-	return &cobra.Command{
-		Use:   "ping-pong",
-		Short: "Sends tokens back and forth to generate transactions",
-		RunE: cmdF.Cmd(func() error {
-			spec := infra.NewSpec(configF)
-			znetConfig := znet.NewConfig(configF, spec)
-			appF := apps.NewFactory(znetConfig, spec, networkConfig)
-			appSet, err := apps.BuildAppSet(appF, znetConfig.Profiles, znetConfig.CoredVersion)
-			if err != nil {
-				return err
-			}
-			return znet.PingPong(ctx, appSet)
 		}),
 	}
 }

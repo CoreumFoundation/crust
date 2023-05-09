@@ -78,6 +78,9 @@ To start fully-featured set you may run:
 ```
 $ crust znet start --profiles=3cored,faucet,explorer,monitoring
 ```
+**NOTE**: Notice from here on out, if you already have a znet env started with a set profiles,
+and you want to start znet with a different set of profiles, you need to remove previous znet env
+with `crust znet remove` and only then you can start the new env. 
 
 ### --cored-version
 
@@ -86,6 +89,8 @@ The `--cored-version` allows to start the `znet` with any previously released ve
 ```
 $ crust znet start --cored-version=v0.1.1 --profiles=3cored,faucet,explorer,monitoring
 ```
+**NOTE**: if you already have a znet env started with different profiles, you need to remove it 
+with `crust znet remove` so you can start a new environment.
 
 Also, it's possible to execute tests with any previously released version.
 
@@ -105,7 +110,6 @@ Available commands are:
 - `spec` - prints specification of the environment
 - `tests` - run integration tests
 - `console` - starts `tmux` session containing logs of all the running applications
-- `ping-pong` - sends transactions to generate traffic on blockchain
 
 ## Example
 
@@ -157,17 +161,24 @@ If you start `znet` using default `--profiles=1cored` there is one `cored` appli
 To use the client you may use `cored-00` wrapper:
 
 ```
-(znet) [znet] $ cored-00 keys list
-(znet) [znet] $ cored-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
-(znet) [znet] $ cored-00 tx bank send bob devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky 10core
-(znet) [znet] $ cored-00 query bank balances devcore1x645ym2yz4gckqjtpwr8yddqzkkzdpkt8nypky
+(znet) [znet] $ start 
+```
+
+Generate a wallet to transfer funds to
+```
+(znet) [znet] $ cored-00 keys add {YOUR_WALLET_NAME}
+```
+Take the address the out put of the command above, you will use it in the next commands.
+
+```
+(znet) [znet] $ cored-00 query bank balances {YOUR_GENERATED_ADDRESS}
+(znet) [znet] $ cored-00 tx bank send bob {YOUR_GENERATED_ADDRESS} 10udevcore
+(znet) [znet] $ cored-00 query bank balances {YOUR_GENERATED_ADDRESS}
 ```
 
 ## Integration tests
 
-Tests are defined in [crust/tests/index.go](crust/tests/index.go)
-
-You may run tests directly:
+You may run integration tests directly:
 
 ```
 $ crust znet test
@@ -178,7 +189,8 @@ Tests run on top of `--profiles=integration-tests`.
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ crust znet --profiles=integration-tests
+$ crust znet 
+(znet) [znet] $ start --profiles=integration-tests
 (znet) [znet] $ tests
 
 # Remember to clean everything
@@ -187,18 +199,6 @@ $ crust znet --profiles=integration-tests
 
 After tests complete environment is still running so if something went wrong you may inspect it manually.
 
-## Ping-pong
-
-There is `ping-pong` command available in `znet` sending transactions to generate some traffic on blockchain.
-To start it run these commands:
-
-```
-$ crust znet
-(znet) [znet] $ start
-(znet) [znet] $ ping-pong
-```
-
-You will see logs reporting that tokens are constantly transferred.
 
 ## Hard reset
 
