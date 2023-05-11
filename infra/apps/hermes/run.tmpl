@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+export HOME="{{ .HomePath }}"
+
+RELAYER_KEYS_PATH="$HOME/.hermes/keys"
+
+# The indicator to understand that relayer isn't initialized.
+if [ ! -d "$RELAYER_KEYS_PATH" ]; then
+
+echo "Importing the relayer mnemonics."
+echo "{{ .CoreumRelayerMnemonic }}" > "$HOME/coreum-mnemonic"
+echo "{{ .PeerRelayerMnemonic }}" > "$HOME/peer-mnemonic"
+hermes keys add --chain {{ .CoreumChanID }} --hd-path "m/44'/{{ .CoreumRelayerCoinType }}'/0'/0/0" --mnemonic-file "$HOME/coreum-mnemonic"
+hermes keys add --chain {{ .PeerChanID }} --mnemonic-file "$HOME/peer-mnemonic"
+
+echo "Connecting the chains."
+hermes create channel --a-chain {{ .CoreumChanID }} --b-chain {{ .PeerChanID }} --a-port transfer --b-port transfer --new-client-connection --yes
+
+fi
+
+echo "Starting the relayer."
+hermes start

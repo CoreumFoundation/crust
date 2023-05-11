@@ -18,6 +18,7 @@ jobs:
           "test",
           "build",
           "integration tests coreum-modules",
+          "integration tests coreum-ibc",
 #          "integration tests coreum-upgrade",
           "integration tests faucet",
         ]
@@ -42,6 +43,12 @@ jobs:
             docker-cache: true
           - ci_step: "integration tests coreum-modules"
             command: "crust wasm build/integration-tests images --log-format=yaml && crust znet test --test-groups=coreum-modules --log-format=yaml"
+            go-cache: true
+            wasm-cache: true
+            linter-cache: false
+            docker-cache: true
+          - ci_step: "integration tests coreum-ibc"
+            command: "crust wasm build/integration-tests images --log-format=yaml && crust znet test --test-groups=coreum-ibc --log-format=yaml"
             go-cache: true
             wasm-cache: true
             linter-cache: false

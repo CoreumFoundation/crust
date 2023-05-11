@@ -46,12 +46,13 @@ const (
 
 // Config stores relayer app config.
 type Config struct {
-	Name        string
-	HomeDir     string
-	AppInfo     *infra.AppInfo
-	DebugPort   int
-	Cored       cored.Cored
-	PeeredChain cosmoschain.BaseApp
+	Name                  string
+	HomeDir               string
+	AppInfo               *infra.AppInfo
+	DebugPort             int
+	Cored                 cored.Cored
+	CoreumRelayerMnemonic string
+	PeeredChain           cosmoschain.BaseApp
 }
 
 // New creates new relayer app.
@@ -230,7 +231,7 @@ func (r Relayer) saveRunScriptFile() error {
 		HomePath: targets.AppHomeDir,
 
 		CoreumChanID:          string(r.config.Cored.Config().Network.ChainID()),
-		CoreumRelayerMnemonic: r.config.Cored.Config().RelayerMnemonic,
+		CoreumRelayerMnemonic: r.config.CoreumRelayerMnemonic,
 		CoreumRelayerCoinType: coreumconstant.CoinType,
 
 		PeerChanID:          r.config.PeeredChain.AppConfig().ChainID,

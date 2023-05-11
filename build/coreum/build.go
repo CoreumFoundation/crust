@@ -21,6 +21,7 @@ const (
 	cosmovisorBinaryPath = "bin/cosmovisor"
 
 	integrationTestBinaryModulePath  = "bin/.cache/integration-tests/coreum-modules"
+	integrationTestBinaryIBCPath     = "bin/.cache/integration-tests/coreum-ibc"
 	integrationTestBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
 )
 
@@ -89,6 +90,15 @@ func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 	err := golang.BuildTests(ctx, golang.TestBuildConfig{
 		PackagePath:   "../coreum/integration-tests/modules",
 		BinOutputPath: integrationTestBinaryModulePath,
+		Tags:          []string{"integrationtests"},
+	})
+	if err != nil {
+		return err
+	}
+
+	err = golang.BuildTests(ctx, golang.TestBuildConfig{
+		PackagePath:   "../coreum/integration-tests/ibc",
+		BinOutputPath: integrationTestBinaryIBCPath,
 		Tags:          []string{"integrationtests"},
 	})
 	if err != nil {

@@ -25,8 +25,10 @@ const (
 	FaucetMnemonic = "pitch basic bundle cause toe sound warm love town crucial divorce shell olympic convince scene middle garment glimpse narrow during fix fruit suffer honey"
 	// FundingMnemonic is mnemonic of used by integration testing framework to fund accounts required by integration tests.
 	FundingMnemonic = "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake"
-	// RelayerMnemonic is mnemonic used be the relayer.
-	RelayerMnemonic = "notable rate tribe effort deny void security page regular spice safe prize engage version hour bless normal mother exercise velvet load cry front ordinary"
+	// RelayerMnemonicGaia is mnemonic used by the gaia relayer.
+	RelayerMnemonicGaia = "notable rate tribe effort deny void security page regular spice safe prize engage version hour bless normal mother exercise velvet load cry front ordinary"
+	// RelayerMnemonicOsmosis is mnemonic used by the osmosis relayer.
+	RelayerMnemonicOsmosis = "possible barely tip truck blame regular success attend nasty range seat gun feature conduct blush wash certain nothing order have amused bring that canvas"
 )
 
 var namedMnemonicsList = []string{
@@ -35,7 +37,8 @@ var namedMnemonicsList = []string{
 	CharlieMnemonic,
 	FaucetMnemonic,
 	FundingMnemonic,
-	RelayerMnemonic,
+	RelayerMnemonicGaia,
+	RelayerMnemonicOsmosis,
 }
 
 // StakerMnemonics defines the list of the stakers used by validators.

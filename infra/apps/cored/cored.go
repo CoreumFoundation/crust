@@ -55,7 +55,6 @@ type Config struct {
 	StakerBalance     int64
 	FundingMnemonic   string
 	FaucetMnemonic    string
-	RelayerMnemonic   string
 	RootNode          *Cored
 	ImportedMnemonics map[string]string
 	BinaryVersion     string
