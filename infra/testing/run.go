@@ -80,6 +80,13 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		args = append(args, "-test.v")
 	}
 
+	const (
+		testGroupCoreumModules = "coreum-modules"
+		testGroupCoreumUpgrade = "coreum-upgrade"
+		testGroupCoreumIBC     = "coreum-ibc"
+		testGroupFaucet        = "faucet"
+	)
+
 	var failed bool
 	// the execution order might be important
 	for _, onlyTestGroup := range onlyTestGroups {
@@ -87,7 +94,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
 		switch onlyTestGroup {
-		case "coreum-modules", "coreum-upgrade", "coreum-ibc":
+		case testGroupCoreumModules, testGroupCoreumUpgrade, testGroupCoreumIBC:
 
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
@@ -101,14 +108,18 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 					fullArgs = append(fullArgs, "-coreum-staker-mnemonic", coredApp.Config().StakerMnemonic)
 				}
 
-				gaiadApp, ok := m.(gaiad.Gaiad)
-				if ok {
-					fullArgs = append(fullArgs, "-gaia-address", infra.JoinNetAddr("", gaiadApp.Info().HostFromHost, gaiadApp.Ports().GRPC))
-					fullArgs = append(fullArgs, "-gaia-funding-mnemonic", gaiadApp.AppConfig().FundingMnemonic)
+				if onlyTestGroup == testGroupCoreumIBC {
+					gaiadApp, ok := m.(gaiad.Gaiad)
+					if ok {
+						fullArgs = append(fullArgs,
+							"-gaia-address", infra.JoinNetAddr("", gaiadApp.Info().HostFromHost, gaiadApp.Ports().GRPC),
+							"-gaia-funding-mnemonic", gaiadApp.AppConfig().FundingMnemonic,
+						)
+					}
 				}
 			}
 
-		case "faucet":
+		case testGroupFaucet:
 			faucetApp := appSet.FindRunningApp(faucet.AppType, "faucet")
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")

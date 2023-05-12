@@ -19,11 +19,11 @@ if [ ! -f "$GENESIS_PATH" ]; then
 {{ .ExecName }} keys add validator $KEYRING_FLAGS
 
 # import the relayer mnemonic
-echo $RELAYER_MNEMONIC | {{ .ExecName }} keys add relayer --recover $KEYRING_FLAGS
+echo "$RELAYER_MNEMONIC" | {{ .ExecName }} keys add relayer --recover $KEYRING_FLAGS
 echo "relayer address: $({{ .ExecName }} keys show relayer -a $KEYRING_FLAGS)"
 
 # import the funding mnemonic
-echo $FUNDING_MNEMONIC | {{ .ExecName }} keys add funding --recover $KEYRING_FLAGS
+echo "$FUNDING_MNEMONIC" | {{ .ExecName }} keys add funding --recover $KEYRING_FLAGS
 echo "funding address: $({{ .ExecName }} keys show funding -a $KEYRING_FLAGS)"
 
 # fund the validator, relayer and funding accounts
