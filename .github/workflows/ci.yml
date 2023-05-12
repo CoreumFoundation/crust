@@ -80,7 +80,7 @@ jobs:
         with:
           repository: CoreumFoundation/coreum
           path: coreum
-          ref: dzmitryhil/add-ibc-tests # FIXME restore once we merge it to master
+          ref: dzmitryhil/ibc-way-tests # FIXME restore once we merge it to master
       - name: Checkout faucet
         uses: actions/checkout@v3
         with:
