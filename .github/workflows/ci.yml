@@ -86,6 +86,7 @@ jobs:
         with:
           repository: CoreumFoundation/faucet
           path: faucet
+          ref: dzmitryhil/update-integration-test-args  # FIXME restore once we merge it to master
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
