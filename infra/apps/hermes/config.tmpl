@@ -106,9 +106,9 @@ port = {{ .DebugPort }}
 
 [[chains]]
 id = '{{ .CoreumChanID }}'
-rpc_addr = '{{ .CoreumRPCUrl }}'
-grpc_addr = '{{ .CoreumGRPCUrl }}'
-websocket_addr = '{{ .CoreumWebsocketUrl }}'
+rpc_addr = '{{ .CoreumRPCURL }}'
+grpc_addr = '{{ .CoreumGRPCURL }}'
+websocket_addr = '{{ .CoreumWebsocketURL }}'
 rpc_timeout = '10s'
 account_prefix = '{{ .CoreumAccountPrefix }}'
 key_name = 'coreum-key'
@@ -127,9 +127,9 @@ address_type = { derivation = 'cosmos' }
 
 [[chains]]
 id = '{{ .PeerChanID }}'
-rpc_addr = '{{ .PeerRPCUrl }}'
-grpc_addr = '{{ .PeerGRPCUrl }}'
-websocket_addr = '{{ .PeerWebsocketUrl }}'
+rpc_addr = '{{ .PeerRPCURL }}'
+grpc_addr = '{{ .PeerGRPCURL }}'
+websocket_addr = '{{ .PeerWebsocketURL }}'
 rpc_timeout = '10s'
 account_prefix = '{{ .PeerAccountPrefix }}'
 key_name = 'peer-key'
