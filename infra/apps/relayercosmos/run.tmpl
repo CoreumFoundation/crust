@@ -18,10 +18,14 @@ relayer q balance peer
 echo  "Adding relayer paths."
 relayer paths new {{ .CoreumChanID }} {{ .PeerChanID }} coreum-peer-ibc-path
 
-echo "Connecting the chains."
-relayer transact link coreum-peer-ibc-path
-
 fi
+
+if [ $(relayer query channels coreum --home /app/.relayer/ | wc -l) -eq 0 ]
+then
+    echo "Connecting the chains."
+    relayer transact link coreum-peer-ibc-path
+fi
+
 
 echo "Starting the relayer."
 relayer start  --debug-addr "0.0.0.0:{{ .DebugPort }}"
