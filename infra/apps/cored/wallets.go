@@ -85,7 +85,7 @@ type Wallet struct {
 // NewFundedWallet creates wallet and funds all predefined accounts.
 func NewFundedWallet(network *config.Network) *Wallet {
 	// distribute the remaining after stakers amount among Alice, Bob, Faucet, etc
-	var namedMnemonicsBalance = (desiredTotalSupply - stakerBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicsList))
+	namedMnemonicsBalance := (desiredTotalSupply - stakerBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicsList))
 
 	w := &Wallet{
 		// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.

@@ -26,12 +26,19 @@ var DefaultPorts = cosmoschain.Ports{
 	PProf:   6050,
 }
 
+// Gaiad represents gaiad.
+type Gaiad struct {
+	cosmoschain.BaseApp
+}
+
 // New creates new gaia blockchain.
-func New(config cosmoschain.AppConfig) cosmoschain.BaseApp {
-	return cosmoschain.New(cosmoschain.AppTypeConfig{
-		AppType:       AppType,
-		DockerImage:   dockerImage,
-		AccountPrefix: accountPrefix,
-		ExecName:      execName,
-	}, config)
+func New(config cosmoschain.AppConfig) Gaiad {
+	return Gaiad{
+		BaseApp: cosmoschain.New(cosmoschain.AppTypeConfig{
+			AppType:       AppType,
+			DockerImage:   dockerImage,
+			AccountPrefix: accountPrefix,
+			ExecName:      execName,
+		}, config),
+	}
 }

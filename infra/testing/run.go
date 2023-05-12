@@ -19,6 +19,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
+	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 )
 
 // Run deploys testing environment and runs tests there.
@@ -69,7 +70,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
-		"-cored-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
+		"-coreum-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
@@ -86,20 +87,27 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
 		switch onlyTestGroup {
-		case "coreum-modules", "coreum-upgrade":
+		case "coreum-modules", "coreum-upgrade", "coreum-ibc":
 
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
-				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
 				"-run-unsafe=true",
+				"-coreum-funding-mnemonic", coredNode.Config().FundingMnemonic,
 			)
 
 			for _, m := range appSet {
 				coredApp, ok := m.(cored.Cored)
 				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "cored-") {
-					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
+					fullArgs = append(fullArgs, "-coreum-staker-mnemonic", coredApp.Config().StakerMnemonic)
+				}
+
+				gaiadApp, ok := m.(gaiad.Gaiad)
+				if ok {
+					fullArgs = append(fullArgs, "-gaia-address", infra.JoinNetAddr("", gaiadApp.Info().HostFromHost, gaiadApp.Ports().GRPC))
+					fullArgs = append(fullArgs, "-gaia-funding-mnemonic", gaiadApp.AppConfig().FundingMnemonic)
 				}
 			}
+
 		case "faucet":
 			faucetApp := appSet.FindRunningApp(faucet.AppType, "faucet")
 			if faucetApp == nil {
