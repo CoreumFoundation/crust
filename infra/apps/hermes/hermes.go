@@ -183,32 +183,32 @@ func (h Hermes) saveConfigFile() error {
 		DebugPort int
 
 		CoreumChanID        string
-		CoreumRPCUrl        string
-		CoreumGRPCUrl       string
-		CoreumWebsocketUrl  string
+		CoreumRPCURL        string
+		CoreumGRPCURL       string
+		CoreumWebsocketURL  string
 		CoreumAccountPrefix string
 		CoreumGasPrice      sdk.DecCoin
 
 		PeerChanID        string
-		PeerRPCUrl        string
-		PeerGRPCUrl       string
-		PeerWebsocketUrl  string
+		PeerRPCURL        string
+		PeerGRPCURL       string
+		PeerWebsocketURL  string
 		PeerAccountPrefix string
 		PeerGasPrice      sdk.DecCoin
 	}{
 		DebugPort: h.config.DebugPort,
 
 		CoreumChanID:        string(h.config.Cored.Config().Network.ChainID()),
-		CoreumRPCUrl:        infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
-		CoreumGRPCUrl:       infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.GRPC),
-		CoreumWebsocketUrl:  infra.JoinNetAddr("ws", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC) + "/websocket",
+		CoreumRPCURL:        infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
+		CoreumGRPCURL:       infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.GRPC),
+		CoreumWebsocketURL:  infra.JoinNetAddr("ws", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC) + "/websocket",
 		CoreumAccountPrefix: h.config.Cored.Config().Network.AddressPrefix(),
 		CoreumGasPrice:      sdk.NewDecCoinFromDec("udevcore", sdk.MustNewDecFromStr("0.1")),
 
 		PeerChanID:        h.config.PeeredChain.AppConfig().ChainID,
-		PeerRPCUrl:        infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC),
-		PeerGRPCUrl:       infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.GRPC),
-		PeerWebsocketUrl:  infra.JoinNetAddr("ws", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC) + "/websocket",
+		PeerRPCURL:        infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC),
+		PeerGRPCURL:       infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.GRPC),
+		PeerWebsocketURL:  infra.JoinNetAddr("ws", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC) + "/websocket",
 		PeerAccountPrefix: h.config.PeeredChain.AppTypeConfig().AccountPrefix,
 		PeerGasPrice:      sdk.NewDecCoinFromDec("stake", sdk.MustNewDecFromStr("0.1")),
 	}

@@ -180,19 +180,19 @@ func (r Relayer) prepare() error {
 func (r Relayer) saveConfigFile() error {
 	configArgs := struct {
 		CoreumChanID        string
-		CoreumRPCUrl        string
+		CoreumRPCURL        string
 		CoreumAccountPrefix string
 
 		PeerChanID        string
-		PeerRPCUrl        string
+		PeerRPCURL        string
 		PeerAccountPrefix string
 	}{
 		CoreumChanID:        string(r.config.Cored.Config().Network.ChainID()),
-		CoreumRPCUrl:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
+		CoreumRPCURL:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
 		CoreumAccountPrefix: r.config.Cored.Config().Network.AddressPrefix(),
 
 		PeerChanID:        r.config.PeeredChain.AppConfig().ChainID,
-		PeerRPCUrl:        infra.JoinNetAddr("http", r.config.PeeredChain.Info().HostFromContainer, r.config.PeeredChain.AppConfig().Ports.RPC),
+		PeerRPCURL:        infra.JoinNetAddr("http", r.config.PeeredChain.Info().HostFromContainer, r.config.PeeredChain.AppConfig().Ports.RPC),
 		PeerAccountPrefix: r.config.PeeredChain.AppTypeConfig().AccountPrefix,
 	}
 
