@@ -247,7 +247,7 @@ func (f *Factory) Monitoring(prefix string, coredNodes []cored.Cored, bdJuno bdj
 	}
 }
 
-// BuildPrefixedAppName build the app name based on its prefix and name.
+// BuildPrefixedAppName builds the app name based on its prefix and name.
 func BuildPrefixedAppName(prefix string, names ...string) string {
 	return strings.Join(append([]string{prefix}, names...), "-")
 }
