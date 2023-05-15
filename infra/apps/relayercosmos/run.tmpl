@@ -20,7 +20,7 @@ if [ ! -d "$RELAYER_KEYS_PATH" ]; then
 fi
 
 # TODO move it back to the prev if once we add the relayer healthcheck back.
-if [ $(relayer query channels coreum --home "$HOME" | wc -l) -eq 0 ]; then
+if [ $(relayer query channels coreum | wc -l) -eq 0 ]; then
   echo "Connecting the chains."
   relayer transact link coreum-peer-ibc-path
 fi

@@ -1,11 +1,11 @@
 package apps
 
 import (
-	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 )
 
 // AppPrefix constants are the prefixes used in the app factories.
