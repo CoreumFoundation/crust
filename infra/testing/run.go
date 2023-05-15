@@ -17,8 +17,11 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
+	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
+	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
 // Run deploys testing environment and runs tests there.
@@ -87,11 +90,31 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		fullArgs := append([]string{}, args...)
 		switch onlyTestGroup {
 		case "coreum-modules", "coreum-upgrade":
+			fullArgs = append(fullArgs,
+				"-log-format", config.LogFormat,
+				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
+				"-run-unsafe=true",
+			)
+
+			for _, m := range appSet {
+				coredApp, ok := m.(cored.Cored)
+				if ok && coredApp.Config().IsValidator && strings.HasPrefix(m.Name(), apps.AppPrefixCored) {
+					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
+				}
+			}
+		case "coreum-ibc":
+			gaiaNode := appSet.FindRunningApp(gaiad.AppType, apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
+			if gaiaNode == nil {
+				return errors.New("no running ibc gaia app found")
+			}
+
+			gaiaApp := gaiaNode.(cosmoschain.BaseApp)
 
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
 				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
 				"-run-unsafe=true",
+				"-gaia-chain-id", gaiaApp.AppConfig().ChainID,
 			)
 
 			for _, m := range appSet {

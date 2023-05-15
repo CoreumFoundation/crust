@@ -3,6 +3,7 @@ package apps
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -121,11 +122,11 @@ func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 }
 
 // BlockExplorer returns set of applications required to run block explorer.
-func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) blockexplorer.Explorer {
-	namePostgres := name + "-postgres"
-	nameHasura := name + "-hasura"
-	nameBDJuno := name + "-bdjuno"
-	nameBigDipper := name + "-bigdipper"
+func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplorer.Explorer {
+	namePostgres := BuildPrefixedAppName(prefix, string(postgres.AppType))
+	nameHasura := BuildPrefixedAppName(prefix, string(hasura.AppType))
+	nameBDJuno := BuildPrefixedAppName(prefix, string(bdjuno.AppType))
+	nameBigDipper := BuildPrefixedAppName(prefix, string(bigdipper.AppType))
 
 	postgresApp := postgres.New(postgres.Config{
 		Name:             namePostgres,
@@ -167,11 +168,11 @@ func (f *Factory) BlockExplorer(name string, coredApp cored.Cored) blockexplorer
 }
 
 // IBC creates set of applications required to test IBC.
-func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
-	nameGaia := name + "-gaia"
-	nameOsmosis := name + "-osmosis"
-	nameRelayerGaia := name + "-relayer-gaia"
-	nameRelayerOsmosis := name + "-relayer-osmosis"
+func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
+	nameGaia := BuildPrefixedAppName(prefix, string(gaiad.AppType))
+	nameOsmosis := BuildPrefixedAppName(prefix, string(osmosis.AppType))
+	nameRelayerGaia := BuildPrefixedAppName(prefix, string(relayercosmos.AppType), string(gaiad.AppType))
+	nameRelayerOsmosis := BuildPrefixedAppName(prefix, string(relayercosmos.AppType), string(osmosis.AppType))
 
 	gaiaApp := gaiad.New(cosmoschain.AppConfig{
 		Name:            nameGaia,
@@ -218,9 +219,9 @@ func (f *Factory) IBC(name string, coredApp cored.Cored) infra.AppSet {
 }
 
 // Monitoring returns set of applications required to run monitoring.
-func (f *Factory) Monitoring(name string, coredNodes []cored.Cored, bdJuno bdjuno.BDJuno) infra.AppSet {
-	namePrometheus := name + "-prometheus"
-	nameGrafana := name + "-grafana"
+func (f *Factory) Monitoring(prefix string, coredNodes []cored.Cored, bdJuno bdjuno.BDJuno) infra.AppSet {
+	namePrometheus := prefix + "-prometheus"
+	nameGrafana := prefix + "-grafana"
 
 	prometheusApp := prometheus.New(prometheus.Config{
 		Name:       namePrometheus,
@@ -244,4 +245,9 @@ func (f *Factory) Monitoring(name string, coredNodes []cored.Cored, bdJuno bdjun
 		prometheusApp,
 		grafanaApp,
 	}
+}
+
+// BuildPrefixedAppName builds the app name based on its prefix and name.
+func BuildPrefixedAppName(prefix string, names ...string) string {
+	return strings.Join(append([]string{prefix}, names...), "-")
 }
