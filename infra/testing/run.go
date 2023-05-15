@@ -97,7 +97,6 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			)
 
 			for _, m := range appSet {
-				m.Type()
 				coredApp, ok := m.(cored.Cored)
 				if ok && coredApp.Config().IsValidator && strings.HasPrefix(m.Name(), apps.AppPrefixCored) {
 					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
