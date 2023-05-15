@@ -2,6 +2,9 @@ package testing
 
 import (
 	"context"
+	"github.com/CoreumFoundation/crust/infra/apps"
+	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
+	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,12 +20,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
-	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
-	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
-	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
 // Run deploys testing environment and runs tests there.
@@ -107,23 +106,25 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 
 			for _, m := range appSet {
 				coredApp, ok := m.(cored.Cored)
-				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "cored-") {
+				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), string(cored.AppType)) {
 					fullArgs = append(fullArgs, "-coreum-staker-mnemonic", coredApp.Config().StakerMnemonic)
-				}
-
-				if onlyTestGroup == testGroupCoreumIBC {
-					gaiadApp, ok := m.(gaiad.Gaiad)
-					if ok {
-						fullArgs = append(fullArgs,
-							"-gaia-address", infra.JoinNetAddr("", gaiadApp.Info().HostFromHost, gaiadApp.Ports().GRPC),
-							"-gaia-funding-mnemonic", gaiadApp.AppConfig().FundingMnemonic,
-						)
-					}
 				}
 			}
 
+			if onlyTestGroup == testGroupCoreumIBC {
+				gaiaNode := appSet.FindRunningApp(gaiad.AppType, apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
+				if gaiaNode == nil {
+					return errors.New("no running ibc gaia app found")
+				}
+				gaiaApp := gaiaNode.(cosmoschain.BaseApp)
+
+				fullArgs = append(fullArgs,
+					"-gaia-address", infra.JoinNetAddr("", gaiaApp.Info().HostFromHost, gaiaApp.Ports().GRPC),
+					"-gaia-funding-mnemonic", gaiaApp.AppConfig().FundingMnemonic,
+				)
+			}
 		case testGroupFaucet:
-			faucetApp := appSet.FindRunningApp(faucet.AppType, "faucet")
+			faucetApp := appSet.FindRunningApp(faucet.AppType, string(faucet.AppType))
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
 			}

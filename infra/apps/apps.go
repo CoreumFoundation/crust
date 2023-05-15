@@ -200,7 +200,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		AppInfo:     f.spec.DescribeApp(relayercosmos.AppType, nameRelayerGaia),
 		DebugPort:   relayercosmos.DefaultDebugPort,
 		Cored:       coredApp,
-		PeeredChain: gaiaApp.BaseApp,
+		PeeredChain: gaiaApp,
 	})
 
 	relayerOsmosisApp := relayercosmos.New(relayercosmos.Config{
