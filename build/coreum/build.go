@@ -15,14 +15,13 @@ const (
 	blockchainName = "coreum"
 	binaryName     = "cored"
 	repoURL        = "https://github.com/CoreumFoundation/coreum.git"
-	repoPath       = "../coreum"
+	repoName       = "coreum"
+	repoPath       = "../" + repoName
 	binaryPath     = "bin/" + binaryName
+	testsDir       = repoPath + "/integration-tests"
+	testsBinDir    = "bin/.cache/integration-tests"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
-
-	integrationTestBinaryIBCPath     = "bin/.cache/integration-tests/coreum-ibc"
-	integrationTestBinaryModulePath  = "bin/.cache/integration-tests/coreum-modules"
-	integrationTestBinaryUpgradePath = "bin/.cache/integration-tests/coreum-upgrade"
 )
 
 var (
@@ -80,35 +79,6 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 		CGOEnabled:     true,
 		Tags:           tagsDocker,
 		LinkStatically: true,
-	})
-}
-
-// BuildIntegrationTests builds coreum integration tests.
-func BuildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo, ensureRepo)
-
-	err := golang.BuildTests(ctx, golang.TestBuildConfig{
-		PackagePath:   "../coreum/integration-tests/ibc",
-		BinOutputPath: integrationTestBinaryIBCPath,
-		Tags:          []string{"integrationtests"},
-	})
-	if err != nil {
-		return err
-	}
-
-	err = golang.BuildTests(ctx, golang.TestBuildConfig{
-		PackagePath:   "../coreum/integration-tests/modules",
-		BinOutputPath: integrationTestBinaryModulePath,
-		Tags:          []string{"integrationtests"},
-	})
-	if err != nil {
-		return err
-	}
-
-	return golang.BuildTests(ctx, golang.TestBuildConfig{
-		PackagePath:   "../coreum/integration-tests/upgrade",
-		BinOutputPath: integrationTestBinaryUpgradePath,
-		Tags:          []string{"integrationtests"},
 	})
 }
 

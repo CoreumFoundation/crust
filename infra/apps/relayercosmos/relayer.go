@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,10 +11,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/prometheus/common/expfmt"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	coreumconstant "github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -83,60 +78,10 @@ func (r Relayer) Info() infra.DeploymentInfo {
 
 // HealthCheck checks if relayer is operating.
 func (r Relayer) HealthCheck(ctx context.Context) error {
-	const cosmosHeightMetricName = "cosmos_relayer_chain_latest_height"
-
-	if r.config.AppInfo.Info().Status != infra.AppStatusRunning {
-		return retry.Retryable(errors.Errorf("realyer hasn't started yet"))
-	}
-
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", r.Info().HostFromHost, r.config.DebugPort), Path: "/relayer/metrics"}
-	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return retry.Retryable(errors.WithStack(err))
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return retry.Retryable(errors.Errorf("health check failed, status code: %d", resp.StatusCode))
-	}
-
-	var parser expfmt.TextParser
-	mf, err := parser.TextToMetricFamilies(resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "unexpected metrics response in the health check")
-	}
-	cosmosHeightMF, ok := mf[cosmosHeightMetricName]
-	if !ok {
-		return retry.Retryable(errors.Errorf("health check failed, no %q metric in the response", cosmosHeightMetricName))
-	}
-
-	chainIDs := map[string]struct{}{
-		r.config.PeeredChain.AppConfig().ChainID:          {},
-		string(r.config.Cored.Config().Network.ChainID()): {},
-	}
-
-	for _, metricItem := range cosmosHeightMF.Metric {
-		for _, label := range metricItem.Label {
-			if label.Value == nil {
-				continue
-			}
-			if _, found := chainIDs[*label.Value]; found {
-				metricGauge := metricItem.Gauge
-				if metricGauge.Value == nil {
-					continue
-				}
-				if *metricGauge.Value > 0 {
-					delete(chainIDs, *label.Value)
-				}
-			}
-		}
-	}
-
-	if len(chainIDs) != 0 {
-		return errors.Wrapf(err, "the relayer chains %v are still syncing", chainIDs)
-	}
-
+	// TODO: bring back health check once we don't have any upgrade test which introduces ibc.
+	// In upgrade tests, we are start from older versions that don't have ibc module. so
+	// the health check will fail. we need to introduce back health check once all the binaries used
+	// have ibc module enabled.
 	return nil
 }
 
@@ -165,6 +110,9 @@ func (r Relayer) Deployment() infra.Deployment {
 		},
 		PrepareFunc: r.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
+		DockerArgs: []string{
+			"--restart", "on-failure:1000", // TODO: remove after we enable health check
+		},
 	}
 }
 

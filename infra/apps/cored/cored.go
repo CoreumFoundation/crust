@@ -358,11 +358,14 @@ func (c Cored) prepare() error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		"v1": "cored", // TODO(dhil) update to v1.0.0 once the binary is ready
+		"v2": "cored", // TODO update to next version once the binary is ready
 	}
 	for upgrade, binary := range upgrades {
-		return copyFile(filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", binary),
+		err := copyFile(filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", binary),
 			filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", upgrade, "bin", "cored"), 0o755)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
