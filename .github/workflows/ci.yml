@@ -80,7 +80,6 @@ jobs:
         with:
           repository: CoreumFoundation/coreum
           path: coreum
-          ref: milad/add-v2-upgrade # FIXME remove once we merge the branch to master
       - name: Checkout faucet
         uses: actions/checkout@v3
         with:
