@@ -80,12 +80,13 @@ jobs:
         with:
           repository: CoreumFoundation/coreum
           path: coreum
-          ref: milad/add-v2-upgrade # FIXME remove once we merge the branch to master
+          ref: dzmitryhil/ibc-way-tests # FIXME remove once we merge the branch to master
       - name: Checkout faucet
         uses: actions/checkout@v3
         with:
           repository: CoreumFoundation/faucet
           path: faucet
+          ref: dzmitryhil/update-integration-test-args # FIXME remove once we merge the branch to master
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache

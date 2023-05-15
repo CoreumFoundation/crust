@@ -6,6 +6,7 @@ CHAIN_ID_FLAGS="--chain-id {{ .ChainID }}"
 KEYRING_FLAGS="--keyring-backend test --keyring-dir $HOME"
 
 RELAYER_MNEMONIC="{{ .RelayerMnemonic }}"
+FUNDING_MNEMONIC="{{ .FundingMnemonic }}"
 
 GENESIS_PATH="$HOME/.gaia/config/genesis.json"
 
@@ -18,12 +19,17 @@ if [ ! -f "$GENESIS_PATH" ]; then
 {{ .ExecName }} keys add validator $KEYRING_FLAGS
 
 # import the relayer mnemonic
-echo $RELAYER_MNEMONIC | {{ .ExecName }} keys add relayer --recover $KEYRING_FLAGS
+echo "$RELAYER_MNEMONIC" | {{ .ExecName }} keys add relayer --recover $KEYRING_FLAGS
 echo "relayer address: $({{ .ExecName }} keys show relayer -a $KEYRING_FLAGS)"
 
-# fund the validator and relayer accounts
-{{ .ExecName }} add-genesis-account $({{ .ExecName }} keys show validator -a $KEYRING_FLAGS) 100000000000stake
-{{ .ExecName }} add-genesis-account $({{ .ExecName }} keys show relayer -a $KEYRING_FLAGS) 100000000000stake
+# import the funding mnemonic
+echo "$FUNDING_MNEMONIC" | {{ .ExecName }} keys add funding --recover $KEYRING_FLAGS
+echo "funding address: $({{ .ExecName }} keys show funding -a $KEYRING_FLAGS)"
+
+# fund the validator, relayer and funding accounts
+{{ .ExecName }} add-genesis-account $({{ .ExecName }} keys show validator -a $KEYRING_FLAGS) 300000000000stake
+{{ .ExecName }} add-genesis-account $({{ .ExecName }} keys show relayer -a $KEYRING_FLAGS) 200000000000stake
+{{ .ExecName }} add-genesis-account $({{ .ExecName }} keys show funding -a $KEYRING_FLAGS) 100000000000stake
 
 # create validator gentx
 {{ .ExecName }} gentx validator 100000000stake $CHAIN_ID_FLAGS $KEYRING_FLAGS

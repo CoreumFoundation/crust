@@ -72,7 +72,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
 		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
-		"-cored-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
+		"-coreum-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
@@ -82,6 +82,13 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		args = append(args, "-test.v")
 	}
 
+	const (
+		testGroupCoreumModules = "coreum-modules"
+		testGroupCoreumUpgrade = "coreum-upgrade"
+		testGroupCoreumIBC     = "coreum-ibc"
+		testGroupFaucet        = "faucet"
+	)
+
 	var failed bool
 	// the execution order might be important
 	for _, onlyTestGroup := range onlyTestGroups {
@@ -89,42 +96,35 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
 		switch onlyTestGroup {
-		case "coreum-modules", "coreum-upgrade":
+		case testGroupCoreumModules, testGroupCoreumUpgrade, testGroupCoreumIBC:
+
 			fullArgs = append(fullArgs,
 				"-log-format", config.LogFormat,
-				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
 				"-run-unsafe=true",
+				"-coreum-funding-mnemonic", coredNode.Config().FundingMnemonic,
 			)
 
 			for _, m := range appSet {
 				coredApp, ok := m.(cored.Cored)
-				if ok && coredApp.Config().IsValidator && strings.HasPrefix(m.Name(), apps.AppPrefixCored) {
-					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
+				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), string(cored.AppType)) {
+					fullArgs = append(fullArgs, "-coreum-staker-mnemonic", coredApp.Config().StakerMnemonic)
 				}
 			}
-		case "coreum-ibc":
-			gaiaNode := appSet.FindRunningApp(gaiad.AppType, apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
-			if gaiaNode == nil {
-				return errors.New("no running ibc gaia app found")
-			}
 
-			gaiaApp := gaiaNode.(cosmoschain.BaseApp)
-
-			fullArgs = append(fullArgs,
-				"-log-format", config.LogFormat,
-				"-funding-mnemonic", coredNode.Config().FaucetMnemonic,
-				"-run-unsafe=true",
-				"-gaia-chain-id", gaiaApp.AppConfig().ChainID,
-			)
-
-			for _, m := range appSet {
-				coredApp, ok := m.(cored.Cored)
-				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "cored-") {
-					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
+			if onlyTestGroup == testGroupCoreumIBC {
+				gaiaNode := appSet.FindRunningApp(gaiad.AppType, apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
+				if gaiaNode == nil {
+					return errors.New("no running ibc gaia app found")
 				}
+				gaiaApp := gaiaNode.(cosmoschain.BaseApp)
+
+				fullArgs = append(fullArgs,
+					"-gaia-address", infra.JoinNetAddr("", gaiaApp.Info().HostFromHost, gaiaApp.Ports().GRPC),
+					"-gaia-funding-mnemonic", gaiaApp.AppConfig().FundingMnemonic,
+				)
 			}
-		case "faucet":
-			faucetApp := appSet.FindRunningApp(faucet.AppType, "faucet")
+		case testGroupFaucet:
+			faucetApp := appSet.FindRunningApp(faucet.AppType, string(faucet.AppType))
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
 			}

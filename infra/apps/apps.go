@@ -181,6 +181,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		AppInfo:         f.spec.DescribeApp(gaiad.AppType, nameGaia),
 		Ports:           gaiad.DefaultPorts,
 		RelayerMnemonic: gaiad.RelayerMnemonic,
+		FundingMnemonic: gaiad.FundingMnemonic,
 	})
 
 	osmosisApp := osmosis.New(cosmoschain.AppConfig{
@@ -190,6 +191,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		AppInfo:         f.spec.DescribeApp(osmosis.AppType, nameOsmosis),
 		Ports:           osmosis.DefaultPorts,
 		RelayerMnemonic: osmosis.RelayerMnemonic,
+		FundingMnemonic: osmosis.FundingMnemonic,
 	})
 
 	relayerGaiaApp := relayercosmos.New(relayercosmos.Config{

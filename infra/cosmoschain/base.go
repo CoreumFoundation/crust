@@ -51,6 +51,7 @@ type AppConfig struct {
 	AppInfo         *infra.AppInfo
 	Ports           Ports
 	RelayerMnemonic string
+	FundingMnemonic string
 }
 
 // AppTypeConfig defines configuration of the application type.
@@ -151,6 +152,7 @@ func (ba BaseApp) prepare() error {
 		HomePath        string
 		ChainID         string
 		RelayerMnemonic string
+		FundingMnemonic string
 		RPCLaddr        string
 		P2PLaddr        string
 		GRPCAddress     string
@@ -161,6 +163,7 @@ func (ba BaseApp) prepare() error {
 		HomePath:        targets.AppHomeDir,
 		ChainID:         ba.appConfig.ChainID,
 		RelayerMnemonic: ba.appConfig.RelayerMnemonic,
+		FundingMnemonic: ba.appConfig.FundingMnemonic,
 		RPCLaddr:        infra.JoinNetAddrIP("tcp", net.IPv4zero, ba.appConfig.Ports.RPC),
 		P2PLaddr:        infra.JoinNetAddrIP("tcp", net.IPv4zero, ba.appConfig.Ports.P2P),
 		GRPCAddress:     infra.JoinNetAddrIP("", net.IPv4zero, ba.appConfig.Ports.GRPC),
