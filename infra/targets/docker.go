@@ -188,9 +188,7 @@ func (d *Docker) prepareRunArgs(name string, app infra.Deployment) []string {
 		}
 	}
 
-	if len(app.DockerArgs) > 0 {
-		runArgs = append(runArgs, app.DockerArgs...)
-	}
+	runArgs = append(runArgs, app.DockerArgs...)
 
 	if app.Entrypoint != "" {
 		runArgs = append(runArgs, "--entrypoint", app.Entrypoint)

@@ -7,25 +7,23 @@ RELAYER_KEYS_PATH="$HOME/.relayer/config/keys"
 # The indicator to understand that relayer isn't initialized.
 if [ ! -d "$RELAYER_KEYS_PATH" ]; then
 
-echo "Importing the relayer mnemonics."
-relayer keys restore coreum coreum-key "{{ .CoreumRelayerMnemonic }}" --coin-type={{ .CoreumRelayerCoinType }}
-relayer keys restore peer peer-key "{{ .PeerRelayerMnemonic }}"
+  echo "Importing the relayer mnemonics."
+  relayer keys restore coreum coreum-key "{{ .CoreumRelayerMnemonic }}" --coin-type={{ .CoreumRelayerCoinType }}
+  relayer keys restore peer peer-key "{{ .PeerRelayerMnemonic }}"
 
-echo "Relayer balances:"
-relayer q balance coreum
-relayer q balance peer
+  echo "Relayer balances:"
+  relayer q balance coreum
+  relayer q balance peer
 
-echo  "Adding relayer paths."
-relayer paths new {{ .CoreumChanID }} {{ .PeerChanID }} coreum-peer-ibc-path
-
+  echo "Adding relayer paths."
+  relayer paths new {{ .CoreumChanID }} {{ .PeerChanID }} coreum-peer-ibc-path
 fi
 
-if [ $(relayer query channels coreum --home /app/.relayer/ | wc -l) -eq 0 ]
-then
-    echo "Connecting the chains."
-    relayer transact link coreum-peer-ibc-path
+# TODO move it back to the prev if once we add the relayer healthcheck back.
+if [ $(relayer query channels coreum --home "$HOME" | wc -l) -eq 0 ]; then
+  echo "Connecting the chains."
+  relayer transact link coreum-peer-ibc-path
 fi
-
 
 echo "Starting the relayer."
-relayer start  --debug-addr "0.0.0.0:{{ .DebugPort }}"
+relayer start --debug-addr "0.0.0.0:{{ .DebugPort }}"

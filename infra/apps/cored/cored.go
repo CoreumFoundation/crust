@@ -358,7 +358,6 @@ func (c Cored) prepare() error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		"v1": "cored-v1.0.0",
 		"v2": "cored", // TODO update to next version once the binary is ready
 	}
 	for upgrade, binary := range upgrades {

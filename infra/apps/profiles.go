@@ -1,10 +1,19 @@
 package apps
 
 import (
+	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
+)
+
+// AppPrefix constants are the prefixes used in the app factories.
+const (
+	AppPrefixCored      = "cored"
+	AppPrefixIBC        = "ibc"
+	AppPrefixExplorer   = "explorer"
+	AppPrefixMonitoring = "monitoring"
 )
 
 const (
@@ -103,7 +112,8 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	var appSet infra.AppSet
 
 	var err error
-	coredApp, coredNodes, err := appF.CoredNetwork("cored", cored.DefaultPorts, numOfCoredValidators, 0, coredVersion)
+
+	coredApp, coredNodes, err := appF.CoredNetwork(AppPrefixCored, cored.DefaultPorts, numOfCoredValidators, 0, coredVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -112,20 +122,20 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	}
 
 	if pMap[profileIBC] {
-		appSet = append(appSet, appF.IBC("ibc", coredApp)...)
+		appSet = append(appSet, appF.IBC(AppPrefixIBC, coredApp)...)
 	}
 
 	if pMap[profileFaucet] {
-		appSet = append(appSet, appF.Faucet("faucet", coredApp))
+		appSet = append(appSet, appF.Faucet(string(faucet.AppType), coredApp))
 	}
 
-	explorerApp := appF.BlockExplorer("explorer", coredApp)
+	explorerApp := appF.BlockExplorer(AppPrefixExplorer, coredApp)
 	if pMap[profileExplorer] {
 		appSet = append(appSet, explorerApp.ToAppSet()...)
 	}
 
 	if pMap[profileMonitoring] {
-		appSet = append(appSet, appF.Monitoring("monitoring", coredNodes, explorerApp.BDJuno)...)
+		appSet = append(appSet, appF.Monitoring(AppPrefixMonitoring, coredNodes, explorerApp.BDJuno)...)
 	}
 
 	return appSet, nil

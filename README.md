@@ -87,7 +87,7 @@ with `crust znet remove` and only then you can start the new env.
 The `--cored-version` allows to start the `znet` with any previously released version.
 
 ```
-$ crust znet start --cored-version=v0.1.1 --profiles=3cored,faucet,explorer,monitoring
+$ crust znet start --cored-version=v1.0.0 --profiles=3cored,faucet,explorer,monitoring
 ```
 **NOTE**: if you already have a znet env started with different profiles, you need to remove it 
 with `crust znet remove` so you can start a new environment.
@@ -95,7 +95,7 @@ with `crust znet remove` so you can start a new environment.
 Also, it's possible to execute tests with any previously released version.
 
 ```
-$ crust znet test --cored-version=v0.1.1 --test-groups=coreum-upgrade
+$ crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade
 ```
 
 ## Commands

@@ -17,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
@@ -96,15 +97,16 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			)
 
 			for _, m := range appSet {
+				m.Type()
 				coredApp, ok := m.(cored.Cored)
-				if ok && coredApp.Config().IsValidator && strings.HasPrefix(coredApp.Name(), "cored-") {
+				if ok && coredApp.Config().IsValidator && strings.HasPrefix(m.Name(), apps.AppPrefixCored) {
 					fullArgs = append(fullArgs, "-staker-mnemonic", coredApp.Config().StakerMnemonic)
 				}
 			}
 		case "coreum-ibc":
-			gaiaNode := appSet.FindRunningApp(gaiad.AppType, "ibc-gaia")
+			gaiaNode := appSet.FindRunningApp(gaiad.AppType, apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
 			if gaiaNode == nil {
-				return errors.New("no running cored app found")
+				return errors.New("no running ibc gaia app found")
 			}
 
 			gaiaApp := gaiaNode.(cosmoschain.BaseApp)

@@ -32,7 +32,6 @@ const (
 	LibWASMMuslC Name = "libwasmvm_muslc"
 	Gaia         Name = "gaia"
 	Relayer      Name = "relayer"
-	CoredV011    Name = "cored-v0.1.1"
 	CoredV100    Name = "cored-v1.0.0"
 )
 
@@ -200,25 +199,6 @@ var tools = map[Name]Tool{
 		},
 	},
 	// https://github.com/CoreumFoundation/coreum/releases
-	CoredV011: {
-		Version: "v0.1.1",
-		Sources: Sources{
-			PlatformDockerAMD64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v0.1.1/cored-linux-amd64",
-				Hash: "sha256:21db2ea1b31d9e8202e0d11f2bee0de78d2e677c07fd75a7db1f3958bf49146c",
-				Binaries: map[string]string{
-					"bin/cored-v0.1.1": "cored-linux-amd64",
-				},
-			},
-			PlatformDockerARM64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v0.1.1/cored-linux-arm64",
-				Hash: "sha256:7d383d1a1bc9185677b25c05ebbe01cf20dd6c779ca4301065359ea6e3bcefa3",
-				Binaries: map[string]string{
-					"bin/cored-v0.1.1": "cored-linux-arm64",
-				},
-			},
-		},
-	},
 	CoredV100: {
 		Version: "v1.0.0",
 		Sources: Sources{
