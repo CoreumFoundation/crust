@@ -304,6 +304,9 @@ type Deployment struct {
 
 	// Entrypoint is the custom entrypoint for the container.
 	Entrypoint string
+
+	// DockerArgs is the arguments passed to docker when creating the container
+	DockerArgs []string
 }
 
 // Deploy deploys container to the target.
