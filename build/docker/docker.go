@@ -18,11 +18,8 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
-// Tags used to build our docker images.
-const (
-	AlpineImage = "alpine:3.17.0"
-	UbuntuImage = "ubuntu:22.04"
-)
+// AlpineImage is the alpine tag used to build our docker images.
+const AlpineImage = "alpine:3.17.0"
 
 // Action is the action to take after building the image.
 type Action int

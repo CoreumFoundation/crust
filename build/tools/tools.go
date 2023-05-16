@@ -32,7 +32,6 @@ const (
 	LibWASMMuslC Name = "libwasmvm_muslc"
 	Gaia         Name = "gaia"
 	Relayer      Name = "relayer"
-	Hermes       Name = "hermes"
 	CoredV100    Name = "cored-v1.0.0"
 )
 
@@ -197,24 +196,6 @@ var tools = map[Name]Tool{
 					"bin/relayer": "Cosmos Relayer_2.3.1_linux_arm64/rly",
 				},
 			},
-		},
-	},
-
-	// https://github.com/cosmos/relayer/releases
-	Hermes: {
-		Version: "v1.4.1",
-		Sources: Sources{
-			PlatformDockerAMD64: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.4.1/hermes-v1.4.1-x86_64-unknown-linux-gnu.tar.gz",
-				Hash: "sha256:013b7603e915305e9cd0fc6164ad90e0c9751082a589f6efef706c8a4f562647",
-			},
-			PlatformDockerARM64: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.4.1/hermes-v1.4.1-aarch64-unknown-linux-gnu.tar.gz",
-				Hash: "sha256:c11cd7eb941ee0ec4b62ef569f76ec04cb8bc09fe107dcb5732241a45fd19d8d",
-			},
-		},
-		Binaries: map[string]string{
-			"bin/hermes": "hermes",
 		},
 	},
 

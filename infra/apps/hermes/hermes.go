@@ -146,7 +146,7 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 func (h Hermes) Deployment() infra.Deployment {
 	return infra.Deployment{
 		RunAsUser: true,
-		Image:     "hermes:znet",
+		Image:     "informalsystems/hermes:1.4.1",
 		Name:      h.Name(),
 		Info:      h.config.AppInfo,
 		Volumes: []infra.Volume{
