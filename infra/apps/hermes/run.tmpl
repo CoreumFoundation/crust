@@ -15,6 +15,11 @@ echo "{{ .PeerRelayerMnemonic }}" > "$HOME/peer-mnemonic"
 hermes keys add --chain {{ .CoreumChanID }} --hd-path "m/44'/{{ .CoreumRelayerCoinType }}'/0'/0/0" --mnemonic-file "$HOME/coreum-mnemonic"
 hermes keys add --chain {{ .PeerChanID }} --mnemonic-file "$HOME/peer-mnemonic"
 
+fi
+
+# TODO move it back to the prev if once we add the relayer healthcheck back.
+if [ $(hermes query channels --chain {{ .CoreumChanID }} | wc -l) -eq 1 ]; then
+
 echo "Connecting the chains."
 hermes create channel --a-chain {{ .CoreumChanID }} --b-chain {{ .PeerChanID }} --a-port transfer --b-port transfer --new-client-connection --yes
 
