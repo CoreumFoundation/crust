@@ -21,6 +21,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
+	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
@@ -121,6 +122,17 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				fullArgs = append(fullArgs,
 					"-gaia-address", infra.JoinNetAddr("", gaiaApp.Info().HostFromHost, gaiaApp.Ports().GRPC),
 					"-gaia-funding-mnemonic", gaiaApp.AppConfig().FundingMnemonic,
+				)
+
+				osmosisNode := appSet.FindRunningApp(osmosis.AppType, apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(osmosis.AppType)))
+				if osmosisNode == nil {
+					return errors.New("no running ibc osmosis app found")
+				}
+				osmosisApp := osmosisNode.(cosmoschain.BaseApp)
+
+				fullArgs = append(fullArgs,
+					"-osmosis-address", infra.JoinNetAddr("", osmosisApp.Info().HostFromHost, osmosisApp.Ports().GRPC),
+					"-osmosis-funding-mnemonic", osmosisApp.AppConfig().FundingMnemonic,
 				)
 			}
 		case testGroupFaucet:
