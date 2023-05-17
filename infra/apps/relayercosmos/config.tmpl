@@ -9,7 +9,7 @@ chains:
         value:
             key: coreum-key
             chain-id: {{ .CoreumChanID }}
-            rpc-addr: {{ .CoreumRPCUrl }}
+            rpc-addr: {{ .CoreumRPCURL }}
             account-prefix: {{ .CoreumAccountPrefix }}
             keyring-backend: test
             gas-adjustment: 1.2
@@ -24,7 +24,7 @@ chains:
         value:
             key: peer-key
             chain-id: {{ .PeerChanID }}
-            rpc-addr: {{ .PeerRPCUrl }}
+            rpc-addr: {{ .PeerRPCURL }}
             account-prefix: {{ .PeerAccountPrefix }}
             keyring-backend: test
             gas-adjustment: 1.2

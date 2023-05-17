@@ -198,6 +198,7 @@ var tools = map[Name]Tool{
 			},
 		},
 	},
+
 	// https://github.com/CoreumFoundation/coreum/releases
 	CoredV100: {
 		Version: "v1.0.0",

@@ -41,12 +41,13 @@ const (
 
 // Config stores relayer app config.
 type Config struct {
-	Name        string
-	HomeDir     string
-	AppInfo     *infra.AppInfo
-	DebugPort   int
-	Cored       cored.Cored
-	PeeredChain cosmoschain.BaseApp
+	Name                  string
+	HomeDir               string
+	AppInfo               *infra.AppInfo
+	DebugPort             int
+	Cored                 cored.Cored
+	CoreumRelayerMnemonic string
+	PeeredChain           cosmoschain.BaseApp
 }
 
 // New creates new relayer app.
@@ -127,19 +128,19 @@ func (r Relayer) prepare() error {
 func (r Relayer) saveConfigFile() error {
 	configArgs := struct {
 		CoreumChanID        string
-		CoreumRPCUrl        string
+		CoreumRPCURL        string
 		CoreumAccountPrefix string
 
 		PeerChanID        string
-		PeerRPCUrl        string
+		PeerRPCURL        string
 		PeerAccountPrefix string
 	}{
 		CoreumChanID:        string(r.config.Cored.Config().Network.ChainID()),
-		CoreumRPCUrl:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
+		CoreumRPCURL:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
 		CoreumAccountPrefix: r.config.Cored.Config().Network.AddressPrefix(),
 
 		PeerChanID:        r.config.PeeredChain.AppConfig().ChainID,
-		PeerRPCUrl:        infra.JoinNetAddr("http", r.config.PeeredChain.Info().HostFromContainer, r.config.PeeredChain.AppConfig().Ports.RPC),
+		PeerRPCURL:        infra.JoinNetAddr("http", r.config.PeeredChain.Info().HostFromContainer, r.config.PeeredChain.AppConfig().Ports.RPC),
 		PeerAccountPrefix: r.config.PeeredChain.AppTypeConfig().AccountPrefix,
 	}
 
@@ -178,7 +179,7 @@ func (r Relayer) saveRunScriptFile() error {
 		HomePath: targets.AppHomeDir,
 
 		CoreumChanID:          string(r.config.Cored.Config().Network.ChainID()),
-		CoreumRelayerMnemonic: r.config.Cored.Config().RelayerMnemonic,
+		CoreumRelayerMnemonic: r.config.CoreumRelayerMnemonic,
 		CoreumRelayerCoinType: coreumconstant.CoinType,
 
 		PeerChanID:          r.config.PeeredChain.AppConfig().ChainID,

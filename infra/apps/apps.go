@@ -17,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 	"github.com/CoreumFoundation/crust/infra/apps/grafana"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
+	"github.com/CoreumFoundation/crust/infra/apps/hermes"
 	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
@@ -96,7 +97,6 @@ func (f *Factory) CoredNetwork(
 			},
 			FundingMnemonic: cored.FundingMnemonic,
 			FaucetMnemonic:  cored.FaucetMnemonic,
-			RelayerMnemonic: cored.RelayerMnemonic,
 			BinaryVersion:   binaryVersion,
 		})
 		if node0 == nil {
@@ -194,22 +194,24 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		FundingMnemonic: osmosis.FundingMnemonic,
 	})
 
-	relayerGaiaApp := relayercosmos.New(relayercosmos.Config{
-		Name:        nameRelayerGaia,
-		HomeDir:     filepath.Join(f.config.AppDir, nameRelayerGaia),
-		AppInfo:     f.spec.DescribeApp(relayercosmos.AppType, nameRelayerGaia),
-		DebugPort:   relayercosmos.DefaultDebugPort,
-		Cored:       coredApp,
-		PeeredChain: gaiaApp,
+	relayerGaiaApp := hermes.New(hermes.Config{
+		Name:                  nameRelayerGaia,
+		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerGaia),
+		AppInfo:               f.spec.DescribeApp(hermes.AppType, nameRelayerGaia),
+		DebugPort:             hermes.DefaultDebugPort,
+		Cored:                 coredApp,
+		CoreumRelayerMnemonic: cored.RelayerMnemonicGaia,
+		PeeredChain:           gaiaApp,
 	})
 
 	relayerOsmosisApp := relayercosmos.New(relayercosmos.Config{
-		Name:        nameRelayerOsmosis,
-		HomeDir:     filepath.Join(f.config.AppDir, nameRelayerOsmosis),
-		AppInfo:     f.spec.DescribeApp(relayercosmos.AppType, nameRelayerOsmosis),
-		DebugPort:   relayercosmos.DefaultDebugPort + 1,
-		Cored:       coredApp,
-		PeeredChain: osmosisApp,
+		Name:                  nameRelayerOsmosis,
+		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerOsmosis),
+		AppInfo:               f.spec.DescribeApp(relayercosmos.AppType, nameRelayerOsmosis),
+		DebugPort:             relayercosmos.DefaultDebugPort,
+		Cored:                 coredApp,
+		CoreumRelayerMnemonic: cored.RelayerMnemonicOsmosis,
+		PeeredChain:           osmosisApp,
 	})
 
 	return infra.AppSet{
