@@ -171,7 +171,7 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 	nameGaia := BuildPrefixedAppName(prefix, string(gaiad.AppType))
 	nameOsmosis := BuildPrefixedAppName(prefix, string(osmosis.AppType))
-	nameRelayerGaia := BuildPrefixedAppName(prefix, string(relayercosmos.AppType), string(gaiad.AppType))
+	nameRelayerGaia := BuildPrefixedAppName(prefix, string(hermes.AppType), string(gaiad.AppType))
 	nameRelayerOsmosis := BuildPrefixedAppName(prefix, string(relayercosmos.AppType), string(osmosis.AppType))
 
 	gaiaApp := gaiad.New(cosmoschain.AppConfig{
