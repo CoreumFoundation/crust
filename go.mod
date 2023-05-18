@@ -10,7 +10,7 @@ replace (
 replace github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.34.26
 
 require (
-	github.com/CoreumFoundation/coreum v1.0.1-0.20230413103107-4d8b6d562037
+	github.com/CoreumFoundation/coreum v1.0.1-0.20230517102316-8167b3bd8f7a
 	github.com/CoreumFoundation/coreum-tools v0.4.0
 	github.com/cosmos/cosmos-sdk v0.45.14
 	github.com/fsnotify/fsnotify v1.6.0
@@ -79,7 +79,7 @@ require (
 	github.com/gogo/gateway v1.1.0 // indirect
 	github.com/gogo/protobuf v1.3.3 // indirect
 	github.com/golang/glog v1.0.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
