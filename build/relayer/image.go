@@ -12,18 +12,18 @@ import (
 )
 
 const (
-	binaryName = "relayer"
+	binaryName = "relayercosmos"
 	binaryPath = "bin/" + binaryName
 )
 
 // BuildDockerImage builds docker image of the ibc relayer.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	if err := tools.EnsureBinaries(ctx, tools.Relayer, tools.PlatformDockerLocal); err != nil {
+	if err := tools.EnsureBinaries(ctx, tools.RelayerCosmos, tools.PlatformDockerLocal); err != nil {
 		return err
 	}
 
 	relayerLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
-	if err := tools.CopyToolBinaries(tools.Relayer, tools.PlatformDockerLocal, relayerLocalPath, binaryPath); err != nil {
+	if err := tools.CopyToolBinaries(tools.RelayerCosmos, tools.PlatformDockerLocal, relayerLocalPath, binaryPath); err != nil {
 		return err
 	}
 
