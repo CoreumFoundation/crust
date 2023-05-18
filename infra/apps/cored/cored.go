@@ -395,7 +395,7 @@ func newBasicManager() module.BasicManager {
 	)
 }
 
-// SaveGenesis saves json encoded representation of the genesis config into file
+// SaveGenesis saves json encoded representation of the genesis config into file.
 func (c Cored) SaveGenesis(homeDir string) error {
 	genDocBytes, err := c.config.NetworkConfig.EncodeGenesis()
 	if err != nil {
