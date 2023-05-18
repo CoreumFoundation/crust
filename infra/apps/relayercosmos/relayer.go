@@ -31,7 +31,7 @@ var (
 
 const (
 	// AppType is the type of relayer application.
-	AppType infra.AppType = "relayer"
+	AppType infra.AppType = "relayercosmos"
 
 	// DefaultDebugPort is the default port relayer listens for debug/metric requests.
 	DefaultDebugPort = 7597
@@ -90,7 +90,7 @@ func (r Relayer) HealthCheck(ctx context.Context) error {
 func (r Relayer) Deployment() infra.Deployment {
 	return infra.Deployment{
 		RunAsUser: true,
-		Image:     "relayer:znet",
+		Image:     "relayercosmos:znet",
 		Name:      r.Name(),
 		Info:      r.config.AppInfo,
 		Volumes: []infra.Volume{

@@ -25,14 +25,15 @@ import (
 
 // Tool names.
 const (
-	Go           Name = "go"
-	GolangCI     Name = "golangci"
-	Ignite       Name = "ignite"
-	Cosmovisor   Name = "cosmovisor"
-	LibWASMMuslC Name = "libwasmvm_muslc"
-	Gaia         Name = "gaia"
-	Relayer      Name = "relayer"
-	CoredV100    Name = "cored-v1.0.0"
+	Go            Name = "go"
+	GolangCI      Name = "golangci"
+	Ignite        Name = "ignite"
+	Cosmovisor    Name = "cosmovisor"
+	LibWASMMuslC  Name = "libwasmvm_muslc"
+	Gaia          Name = "gaia"
+	RelayerCosmos Name = "relayercosmos"
+	Hermes        Name = "hermes"
+	CoredV100     Name = "cored-v1.0.0"
 )
 
 var tools = map[Name]Tool{
@@ -179,21 +180,21 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/cosmos/relayer/releases
-	Relayer: {
+	RelayerCosmos: {
 		Version: "v2.3.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
 				URL:  "https://github.com/cosmos/relayer/releases/download/v2.3.1/Cosmos.Relayer_2.3.1_linux_amd64.tar.gz",
 				Hash: "sha256:68c94403959239683cc80f17e50ca99c7e5caff8d70a17d2171009969d4c2692",
 				Binaries: map[string]string{
-					"bin/relayer": "Cosmos Relayer_2.3.1_linux_amd64/rly",
+					"bin/relayercosmos": "Cosmos Relayer_2.3.1_linux_amd64/rly",
 				},
 			},
 			PlatformDockerARM64: {
 				URL:  "https://github.com/cosmos/relayer/releases/download/v2.3.1/Cosmos.Relayer_2.3.1_linux_arm64.tar.gz",
 				Hash: "sha256:5466606e6d1186ce70321a7ae421b7da121308960719caf6cc7c5a4923585230",
 				Binaries: map[string]string{
-					"bin/relayer": "Cosmos Relayer_2.3.1_linux_arm64/rly",
+					"bin/relayercosmos": "Cosmos Relayer_2.3.1_linux_arm64/rly",
 				},
 			},
 		},
