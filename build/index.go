@@ -8,6 +8,7 @@ import (
 	"github.com/CoreumFoundation/crust/build/crust"
 	"github.com/CoreumFoundation/crust/build/faucet"
 	"github.com/CoreumFoundation/crust/build/gaia"
+	"github.com/CoreumFoundation/crust/build/hermes"
 	"github.com/CoreumFoundation/crust/build/relayer"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
@@ -31,6 +32,7 @@ var Commands = map[string]build.CommandFunc{
 	"images/cored":                           coreum.BuildCoredDockerImage,
 	"images/faucet":                          faucet.BuildDockerImage,
 	"images/gaiad":                           gaia.BuildDockerImage,
+	"images/hermes":                          hermes.BuildDockerImage,
 	"images/relayer":                         relayer.BuildDockerImage,
 	"lint":                                   lint,
 	"lint/coreum":                            coreum.Lint,
@@ -84,7 +86,8 @@ func buildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
-	deps(coreum.BuildCoredDockerImage, faucet.BuildDockerImage, gaia.BuildDockerImage, relayer.BuildDockerImage)
+	deps(coreum.BuildCoredDockerImage, faucet.BuildDockerImage, gaia.BuildDockerImage, hermes.BuildDockerImage,
+		relayer.BuildDockerImage)
 	return nil
 }
 

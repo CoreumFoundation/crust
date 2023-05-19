@@ -28,7 +28,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
-		From:   docker.AlpineImage,
+		From:   docker.UbuntuImage,
 		Binary: binaryPath,
 	})
 	if err != nil {
