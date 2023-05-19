@@ -117,6 +117,7 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr e
 	if err != nil {
 		return err
 	}
+	networkConfig.SetSDKConfig()
 	appF := apps.NewFactory(config, spec, networkConfig)
 	appSet, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
@@ -180,6 +181,7 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	if err != nil {
 		return err
 	}
+	networkConfig.SetSDKConfig()
 	appF := apps.NewFactory(config, spec, networkConfig)
 	appSet, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
