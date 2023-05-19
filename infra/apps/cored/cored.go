@@ -93,9 +93,8 @@ func New(cfg Config) Cored {
 			minimumSelfDelegation.Amount,
 		)
 		must.OK(err)
-		nw := cfg.NetworkConfig.Provider.(config.DynamicConfigProvider)
-		nw = nw.WithGenesisTx(createValidatorTx)
-		cfg.NetworkConfig.Provider = nw
+		networkProvider := cfg.NetworkConfig.Provider.(config.DynamicConfigProvider)
+		cfg.NetworkConfig.Provider = networkProvider.WithGenesisTx(createValidatorTx)
 	}
 
 	return Cored{

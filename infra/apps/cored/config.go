@@ -11,11 +11,6 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
-const (
-	// votingPeriod is the proposal voting period duration.
-	votingPeriod = time.Second * 15
-)
-
 func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
 	err := nodeConfig.SavePrivateKeys(homeDir)
 	must.OK(err)
@@ -39,21 +34,20 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
 func NetworkConfig() (config.NetworkConfig, error) {
 	networkConfig := config.NetworkConfig{
 		AddressPrefix: constant.AddressPrefixDev,
-	}
-
-	networkConfig.Provider = config.DynamicConfigProvider{
-		ChainID:     constant.ChainIDDev,
-		GenesisTime: time.Now(),
-		Denom:       constant.DenomDev,
-		GovConfig: config.GovConfig{
-			ProposalConfig: config.GovProposalConfig{
-				MinDepositAmount: "1000",
-				VotingPeriod:     votingPeriod.String(),
+		Provider: config.DynamicConfigProvider{
+			ChainID:     constant.ChainIDDev,
+			GenesisTime: time.Now(),
+			Denom:       constant.DenomDev,
+			GovConfig: config.GovConfig{
+				ProposalConfig: config.GovProposalConfig{
+					MinDepositAmount: "1000",
+					VotingPeriod:     (time.Second * 15).String(),
+				},
 			},
-		},
-		CustomParamsConfig: config.CustomParamsConfig{
-			Staking: config.CustomParamsStakingConfig{
-				MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+			CustomParamsConfig: config.CustomParamsConfig{
+				Staking: config.CustomParamsStakingConfig{
+					MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+				},
 			},
 		},
 	}
