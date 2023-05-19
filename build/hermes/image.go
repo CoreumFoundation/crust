@@ -1,4 +1,4 @@
-package gaia
+package hermes
 
 import (
 	"context"
@@ -12,18 +12,18 @@ import (
 )
 
 const (
-	binaryName = "gaiad"
+	binaryName = "hermes"
 	binaryPath = "bin/" + binaryName
 )
 
-// BuildDockerImage builds docker image of the gaia.
+// BuildDockerImage builds docker image of the ibc relayer.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	if err := tools.EnsureBinaries(ctx, tools.Gaia, tools.PlatformDockerLocal); err != nil {
+	if err := tools.EnsureBinaries(ctx, tools.Hermes, tools.PlatformDockerLocal); err != nil {
 		return err
 	}
 
-	gaiaLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
-	if err := tools.CopyToolBinaries(tools.Gaia, tools.PlatformDockerLocal, gaiaLocalPath, binaryPath); err != nil {
+	hermesLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
+	if err := tools.CopyToolBinaries(tools.Hermes, tools.PlatformDockerLocal, hermesLocalPath, binaryPath); err != nil {
 		return err
 	}
 
@@ -36,7 +36,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		ContextDir: gaiaLocalPath,
+		ContextDir: hermesLocalPath,
 		ImageName:  binaryName,
 		Dockerfile: dockerfile,
 		Versions:   []string{config.ZNetVersion},
