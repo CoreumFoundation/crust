@@ -23,7 +23,7 @@ import (
 
 var (
 	lintNewLinesSkipDirsRegexps  = []string{`^\.`, `^vendor$`}
-	lintNewLinesSkipFilesRegexps = []string{`\.iml$`, `\.wasm$`, `\.png$`, `\.json$`}
+	lintNewLinesSkipFilesRegexps = []string{`\.iml$`, `\.wasm$`, `\.png$`}
 )
 
 // Lint runs linters and check that git status is clean.
