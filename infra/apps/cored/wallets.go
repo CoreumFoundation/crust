@@ -86,9 +86,10 @@ type Wallet struct {
 }
 
 // NewFundedWallet creates wallet and funds all predefined accounts.
-func NewFundedWallet(network *config.Network) *Wallet {
+func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfig) {
 	// distribute the remaining after stakers amount among Alice, Bob, Faucet, etc
 	namedMnemonicsBalance := (desiredTotalSupply - stakerBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicsList))
+	networkProvider := network.Provider.(config.DynamicConfigProvider)
 
 	w := &Wallet{
 		// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
@@ -103,16 +104,17 @@ func NewFundedWallet(network *config.Network) *Wallet {
 	for _, mnemonic := range w.namedMnemonicsList {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
-		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicsBalance))))
+		networkProvider = networkProvider.WithAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicsBalance)))
 	}
 
 	for _, mnemonic := range w.stakerMnemonicsList {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
-		must.OK(network.FundAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerBalance))))
+		networkProvider = networkProvider.WithAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerBalance)))
 	}
 
-	return w
+	network.Provider = networkProvider
+	return w, network
 }
 
 // GetStakersMnemonicsCount returns length of stakerMnemonicsList.
