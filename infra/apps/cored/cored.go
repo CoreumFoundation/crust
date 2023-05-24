@@ -47,7 +47,7 @@ type Config struct {
 	HomeDir           string
 	BinDir            string
 	WrapperDir        string
-	Network           *config.Network
+	NetworkConfig     *config.NetworkConfig
 	AppInfo           *infra.AppInfo
 	Ports             Ports
 	IsValidator       bool
@@ -77,15 +77,15 @@ func New(cfg Config) Cored {
 		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
 
-		minimumSelfDelegation := sdk.NewInt64Coin(cfg.Network.Denom(), 20_000_000_000) // 20k core
+		minimumSelfDelegation := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), 20_000_000_000) // 20k core
 
-		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).WithChainID(string(cfg.Network.ChainID()))
+		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).WithChainID(string(cfg.NetworkConfig.ChainID()))
 
 		// leave 10% for slashing and commission
-		stake := sdk.NewInt64Coin(cfg.Network.Denom(), int64(float64(cfg.StakerBalance)*0.9))
+		stake := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), int64(float64(cfg.StakerBalance)*0.9))
 
 		createValidatorTx, err := prepareTxStakingCreateValidator(
-			cfg.Network.ChainID(),
+			cfg.NetworkConfig.ChainID(),
 			clientCtx.TxConfig(),
 			valPublicKey,
 			stakerPrivKey,
@@ -93,7 +93,8 @@ func New(cfg Config) Cored {
 			minimumSelfDelegation.Amount,
 		)
 		must.OK(err)
-		cfg.Network.AddGenesisTx(createValidatorTx)
+		networkProvider := cfg.NetworkConfig.Provider.(config.DynamicConfigProvider)
+		cfg.NetworkConfig.Provider = networkProvider.WithGenesisTx(createValidatorTx)
 	}
 
 	return Cored{
@@ -215,7 +216,7 @@ func (c Cored) ClientContext() client.Context {
 	must.OK(err)
 
 	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
-		WithChainID(string(c.config.Network.ChainID())).
+		WithChainID(string(c.config.NetworkConfig.ChainID())).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient).
 		WithKeyring(keyring.NewInMemory()).
@@ -226,7 +227,7 @@ func (c Cored) ClientContext() client.Context {
 func (c Cored) TxFactory(clientCtx client.Context) tx.Factory {
 	return tx.Factory{}.
 		WithKeybase(clientCtx.Keyring()).
-		WithChainID(string(c.config.Network.ChainID())).
+		WithChainID(string(c.config.NetworkConfig.ChainID())).
 		WithTxConfig(clientCtx.TxConfig())
 }
 
@@ -246,7 +247,7 @@ func (c Cored) Deployment() infra.Deployment {
 			return []infra.EnvVar{
 				{
 					Name:  "DAEMON_HOME",
-					Value: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID())),
+					Value: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID())),
 				},
 				{
 					Name:  "DAEMON_NAME",
@@ -257,19 +258,19 @@ func (c Cored) Deployment() infra.Deployment {
 		Volumes: []infra.Volume{
 			{
 				Source:      filepath.Join(c.config.HomeDir, "config"),
-				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "config"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "config"),
 			},
 			{
 				Source:      filepath.Join(c.config.HomeDir, "data"),
-				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "data"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "data"),
 			},
 			{
 				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "genesis"),
-				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "cosmovisor", "genesis"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "cosmovisor", "genesis"),
 			},
 			{
 				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades"),
-				Destination: filepath.Join(targets.AppHomeDir, string(c.config.Network.ChainID()), "cosmovisor", "upgrades"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "cosmovisor", "upgrades"),
 			},
 		},
 		ArgsFunc: func() []string {
@@ -284,7 +285,7 @@ func (c Cored) Deployment() infra.Deployment {
 				"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPCWeb),
 				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
 				"--inv-check-period", "1",
-				"--chain-id", string(c.config.Network.ChainID()),
+				"--chain-id", string(c.config.NetworkConfig.ChainID()),
 			}
 			if c.config.RootNode != nil {
 				args = append(args,
@@ -338,7 +339,7 @@ func (c Cored) prepare() error {
 		return err
 	}
 
-	if err := c.config.Network.SaveGenesis(c.config.HomeDir); err != nil {
+	if err := c.SaveGenesis(c.config.HomeDir); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -380,7 +381,7 @@ if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
 fi
 
-exec "` + c.config.BinDir + `/cored" --chain-id "` + string(c.config.Network.ChainID()) + `" --home "` + filepath.Dir(c.config.HomeDir) + `" "$@" $OPTS
+exec "` + c.config.BinDir + `/cored" --chain-id "` + string(c.config.NetworkConfig.ChainID()) + `" --home "` + filepath.Dir(c.config.HomeDir) + `" "$@" $OPTS
 `
 	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
 }
@@ -391,6 +392,21 @@ func newBasicManager() module.BasicManager {
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 	)
+}
+
+// SaveGenesis saves json encoded representation of the genesis config into file.
+func (c Cored) SaveGenesis(homeDir string) error {
+	genDocBytes, err := c.config.NetworkConfig.EncodeGenesis()
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
+		return errors.Wrap(err, "unable to make config directory")
+	}
+
+	err = os.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
+	return errors.Wrap(err, "unable to write genesis bytes to file")
 }
 
 func copyFile(src, dst string, perm os.FileMode) error {

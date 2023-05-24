@@ -111,7 +111,7 @@ func (j BDJuno) Deployment() infra.Deployment {
 			},
 		},
 		PrepareFunc: func() error {
-			if err := j.config.Cored.Config().Network.SaveGenesis(j.config.HomeDir); err != nil {
+			if err := j.config.Cored.SaveGenesis(j.config.HomeDir); err != nil {
 				return err
 			}
 

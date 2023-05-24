@@ -2,9 +2,13 @@ package cored
 
 import (
 	"path/filepath"
+	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/pkg/config"
+	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
 func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
@@ -24,4 +28,29 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
 	cfg.Mempool.MaxTxsBytes = 5368709120
 
 	must.OK(config.WriteTendermintConfigToFile(filepath.Join(homeDir, config.DefaultNodeConfigPath), cfg))
+}
+
+// NetworkConfig returns the network config used by crust.
+func NetworkConfig() (config.NetworkConfig, error) {
+	networkConfig := config.NetworkConfig{
+		AddressPrefix: constant.AddressPrefixDev,
+		Provider: config.DynamicConfigProvider{
+			ChainID:     constant.ChainIDDev,
+			GenesisTime: time.Now(),
+			Denom:       constant.DenomDev,
+			GovConfig: config.GovConfig{
+				ProposalConfig: config.GovProposalConfig{
+					MinDepositAmount: "1000",
+					VotingPeriod:     (time.Second * 15).String(),
+				},
+			},
+			CustomParamsConfig: config.CustomParamsConfig{
+				Staking: config.CustomParamsStakingConfig{
+					MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+				},
+			},
+		},
+	}
+
+	return networkConfig, nil
 }

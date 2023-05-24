@@ -48,9 +48,7 @@ func (f *Factory) CoredNetwork(
 	validatorsCount, sentriesCount int,
 	binaryVersion string,
 ) (cored.Cored, []cored.Cored, error) {
-	network := config.NewNetwork(f.networkConfig)
-
-	wallet := cored.NewFundedWallet(&network)
+	wallet, networkConfig := cored.NewFundedWallet(f.networkConfig)
 
 	if validatorsCount > wallet.GetStakersMnemonicsCount() {
 		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, wallet.GetStakersMnemonicsCount())
@@ -66,12 +64,12 @@ func (f *Factory) CoredNetwork(
 		isValidator := i < validatorsCount
 
 		node := cored.New(cored.Config{
-			Name:       name,
-			HomeDir:    filepath.Join(f.config.AppDir, name, string(network.ChainID())),
-			BinDir:     f.config.BinDir,
-			WrapperDir: f.config.WrapperDir,
-			Network:    &network,
-			AppInfo:    f.spec.DescribeApp(cored.AppType, name),
+			Name:          name,
+			HomeDir:       filepath.Join(f.config.AppDir, name, string(networkConfig.ChainID())),
+			BinDir:        f.config.BinDir,
+			WrapperDir:    f.config.WrapperDir,
+			NetworkConfig: &networkConfig,
+			AppInfo:       f.spec.DescribeApp(cored.AppType, name),
 			Ports: cored.Ports{
 				RPC:        firstPorts.RPC + portDelta,
 				P2P:        firstPorts.P2P + portDelta,
@@ -114,7 +112,7 @@ func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 		Name:    name,
 		HomeDir: filepath.Join(f.config.AppDir, name),
 		BinDir:  f.config.BinDir,
-		ChainID: f.networkConfig.ChainID,
+		ChainID: f.networkConfig.Provider.GetChainID(),
 		AppInfo: f.spec.DescribeApp(faucet.AppType, name),
 		Port:    faucet.DefaultPort,
 		Cored:   coredApp,
