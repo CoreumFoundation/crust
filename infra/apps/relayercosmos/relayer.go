@@ -135,9 +135,9 @@ func (r Relayer) saveConfigFile() error {
 		PeerRPCURL        string
 		PeerAccountPrefix string
 	}{
-		CoreumChanID:        string(r.config.Cored.Config().Network.ChainID()),
+		CoreumChanID:        string(r.config.Cored.Config().NetworkConfig.ChainID()),
 		CoreumRPCURL:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
-		CoreumAccountPrefix: r.config.Cored.Config().Network.AddressPrefix(),
+		CoreumAccountPrefix: r.config.Cored.Config().NetworkConfig.AddressPrefix,
 
 		PeerChanID:        r.config.PeeredChain.AppConfig().ChainID,
 		PeerRPCURL:        infra.JoinNetAddr("http", r.config.PeeredChain.Info().HostFromContainer, r.config.PeeredChain.AppConfig().Ports.RPC),
@@ -178,7 +178,7 @@ func (r Relayer) saveRunScriptFile() error {
 	}{
 		HomePath: targets.AppHomeDir,
 
-		CoreumChanID:          string(r.config.Cored.Config().Network.ChainID()),
+		CoreumChanID:          string(r.config.Cored.Config().NetworkConfig.ChainID()),
 		CoreumRelayerMnemonic: r.config.CoreumRelayerMnemonic,
 		CoreumRelayerCoinType: coreumconstant.CoinType,
 

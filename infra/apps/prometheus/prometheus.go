@@ -198,7 +198,7 @@ func (p Prometheus) saveConfigFile() error {
 
 	chainID := ""
 	if len(p.config.CoredNodes) > 0 {
-		chainID = string(p.config.CoredNodes[0].Config().Network.ChainID())
+		chainID = string(p.config.CoredNodes[0].Config().NetworkConfig.ChainID())
 	}
 	rulesArgs := struct {
 		ChainID string

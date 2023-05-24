@@ -19,10 +19,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	integrationtests "github.com/CoreumFoundation/coreum/integration-tests"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
+	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
@@ -114,10 +113,11 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr e
 	}
 
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := integrationtests.NewNetworkConfig(constant.ChainIDDev)
+	networkConfig, err := cored.NetworkConfig()
 	if err != nil {
 		return err
 	}
+	networkConfig.SetSDKConfig()
 	appF := apps.NewFactory(config, spec, networkConfig)
 	appSet, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
@@ -177,10 +177,11 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	}
 
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := integrationtests.NewNetworkConfig(constant.ChainIDDev)
+	networkConfig, err := cored.NetworkConfig()
 	if err != nil {
 		return err
 	}
+	networkConfig.SetSDKConfig()
 	appF := apps.NewFactory(config, spec, networkConfig)
 	appSet, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
