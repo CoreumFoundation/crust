@@ -85,3 +85,12 @@ groups:
         service: cosmos-monitoring
       annotations:
         description: 'Slow block time.'
+
+    - alert: MissedProposals
+      expr: (sum(increase(bdjuno_proposal_sum{}[15m])) by (validator)) / (sum(increase(bdjuno_proposal_count{}[15m])) by (validator)) < 0.9
+      for: 5m
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'Proposal rate on {{ `{{ $labels.validator }}` }} is lower than threshold (0.9)'
