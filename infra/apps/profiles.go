@@ -4,8 +4,13 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
+	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
+	"github.com/CoreumFoundation/crust/infra/apps/hermes"
+	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
+	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
 )
 
 // AppPrefix constants are the prefixes used in the app factories.
@@ -129,13 +134,33 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		appSet = append(appSet, appF.Faucet(string(faucet.AppType), coredApp))
 	}
 
-	explorerApp := appF.BlockExplorer(AppPrefixExplorer, coredApp)
 	if pMap[profileExplorer] {
-		appSet = append(appSet, explorerApp.ToAppSet()...)
+		appSet = append(appSet, appF.BlockExplorer(AppPrefixExplorer, coredApp).ToAppSet()...)
 	}
 
 	if pMap[profileMonitoring] {
-		appSet = append(appSet, appF.Monitoring(AppPrefixMonitoring, coredNodes, explorerApp.BDJuno)...)
+		var bdJunoApp bdjuno.BDJuno
+		if bdJunoAppSetApp, ok := appSet.FindAppByName(
+			BuildPrefixedAppName(AppPrefixExplorer, string(bdjuno.AppType)),
+		).(bdjuno.BDJuno); ok {
+			bdJunoApp = bdJunoAppSetApp
+		}
+
+		var hermesApp hermes.Hermes
+		if hermesAppSetApp, ok := appSet.FindAppByName(
+			BuildPrefixedAppName(AppPrefixIBC, string(hermes.AppType), string(gaiad.AppType)),
+		).(hermes.Hermes); ok {
+			hermesApp = hermesAppSetApp
+		}
+
+		var relayerCosmosApp relayercosmos.Relayer
+		if relayerCosmosAppSetApp, ok := appSet.FindAppByName(
+			BuildPrefixedAppName(AppPrefixIBC, string(relayercosmos.AppType), string(osmosis.AppType)),
+		).(relayercosmos.Relayer); ok {
+			relayerCosmosApp = relayerCosmosAppSetApp
+		}
+
+		appSet = append(appSet, appF.Monitoring(AppPrefixMonitoring, coredNodes, bdJunoApp, hermesApp, relayerCosmosApp)...)
 	}
 
 	return appSet, nil
