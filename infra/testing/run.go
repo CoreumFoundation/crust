@@ -100,7 +100,6 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		case testGroupCoreumModules, testGroupCoreumUpgrade, testGroupCoreumIBC:
 
 			fullArgs = append(fullArgs,
-				"-log-format", config.LogFormat,
 				"-run-unsafe=true",
 				"-coreum-funding-mnemonic", coredNode.Config().FundingMnemonic,
 			)
