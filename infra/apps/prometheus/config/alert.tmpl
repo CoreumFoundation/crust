@@ -94,3 +94,21 @@ groups:
         service: cosmos-monitoring
       annotations:
         description: 'Proposal rate on {{ `{{ $labels.validator }}` }} is lower than threshold (0.9)'
+
+    - alert: IBCRelayerHermesLowBalance
+      expr: wallet_balance{job="ibc-relayer-hermes"} < 10000000
+      for: 5s
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'IBC relayer Hermes balance for chain {{ `{{ $labels.chain }}` }}, account {{ `{{ $labels.account }}` }}  is less then 10.000.000'
+
+    - alert: IBCRelayerCosmosLowBalance
+      expr: cosmos_relayer_wallet_balance{job="ibc-relayer-cosmos"} < 10000000
+      for: 5s
+      labels:
+        severity: major
+        service: cosmos-monitoring
+      annotations:
+        description: 'IBC relayer cosmos balance for chain {{ `{{ $labels.chain }}` }} is less then 10.000.000'

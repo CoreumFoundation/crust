@@ -15,9 +15,32 @@ scrape_configs:
           environment: znet
           instance: "{{.Name}}"
 {{end}}
+
+{{ if .DBJuno.Host }}
   - job_name: 'bdjuno'
     static_configs:
       - targets: [ "{{.DBJuno.Host}}:{{.DBJuno.Port}}" ]
         labels:
           environment: znet
           instance: "bdjuno"
+{{ end }}
+
+{{ if .Hermes.Host }}
+  - job_name: 'ibc-relayer-hermes'
+    metrics_path: /metrics
+    static_configs:
+      - targets: [ "{{.Hermes.Host}}:{{.Hermes.Port}}" ]
+        labels:
+          environment: znet
+          instance: "ibc-relayer-hermes"
+{{ end }}
+
+{{ if .RelayerCosmos.Host }}
+  - job_name: 'ibc-relayer-cosmos'
+    metrics_path: /relayer/metrics
+    static_configs:
+      - targets: [ "{{.RelayerCosmos.Host}}:{{.RelayerCosmos.Port}}" ]
+        labels:
+          environment: znet
+          instance: "ibc-relayer-cosmos"
+{{ end }}
