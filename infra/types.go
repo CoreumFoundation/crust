@@ -147,10 +147,20 @@ func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Sp
 	return spec.Save()
 }
 
-// FindRunningApp returns running app of particular type and name available in app set.
-func (m AppSet) FindRunningApp(appType AppType, appName string) App {
+// FindRunningAppByName returns running app by name available in app set.
+func (m AppSet) FindRunningAppByName(appName string) App {
 	for _, app := range m {
-		if app.Type() == appType && app.Info().Status == AppStatusRunning && app.Name() == appName {
+		if app.Info().Status == AppStatusRunning && app.Name() == appName {
+			return app
+		}
+	}
+	return nil
+}
+
+// FindAppByName returns app by name available in app set.
+func (m AppSet) FindAppByName(appName string) App {
+	for _, app := range m {
+		if app.Name() == appName {
 			return app
 		}
 	}

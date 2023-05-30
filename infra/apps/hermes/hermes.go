@@ -39,8 +39,8 @@ const (
 	// AppType is the type of hermes application.
 	AppType infra.AppType = "hermes"
 
-	// DefaultDebugPort is the default port hermes listens for debug/metric requests.
-	DefaultDebugPort = 7698
+	// DefaultTelemetryPort is the default port hermes listens for debug/metric requests.
+	DefaultTelemetryPort = 7698
 
 	dockerEntrypoint = "run.sh"
 )
@@ -50,7 +50,7 @@ type Config struct {
 	Name                  string
 	HomeDir               string
 	AppInfo               *infra.AppInfo
-	DebugPort             int
+	TelemetryPort         int
 	Cored                 cored.Cored
 	CoreumRelayerMnemonic string
 	PeeredChain           cosmoschain.BaseApp
@@ -83,6 +83,11 @@ func (h Hermes) Info() infra.DeploymentInfo {
 	return h.config.AppInfo.Info()
 }
 
+// Config returns config.
+func (h Hermes) Config() Config {
+	return h.config
+}
+
 // HealthCheck checks if hermes is operating.
 func (h Hermes) HealthCheck(ctx context.Context) error {
 	const metric = "ws_events_total"
@@ -95,7 +100,7 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 	return nil
 
 	//nolint:govet // ignored intentionally
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", h.Info().HostFromHost, h.config.DebugPort), Path: "/metrics"}
+	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", h.Info().HostFromHost, h.config.TelemetryPort), Path: "/metrics"}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -160,7 +165,7 @@ func (h Hermes) Deployment() infra.Deployment {
 			},
 		},
 		Ports: map[string]int{
-			"debug": h.config.DebugPort,
+			"debug": h.config.TelemetryPort,
 		},
 		Requires: infra.Prerequisites{
 			Timeout: 20 * time.Second,
@@ -187,7 +192,7 @@ func (h Hermes) prepare() error {
 
 func (h Hermes) saveConfigFile() error {
 	configArgs := struct {
-		DebugPort int
+		TelemetryPort int
 
 		CoreumChanID        string
 		CoreumRPCURL        string
@@ -203,7 +208,7 @@ func (h Hermes) saveConfigFile() error {
 		PeerAccountPrefix string
 		PeerGasPrice      sdk.DecCoin
 	}{
-		DebugPort: h.config.DebugPort,
+		TelemetryPort: h.config.TelemetryPort,
 
 		CoreumChanID:        string(h.config.Cored.Config().NetworkConfig.ChainID()),
 		CoreumRPCURL:        infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),

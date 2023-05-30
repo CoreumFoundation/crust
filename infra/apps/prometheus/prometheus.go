@@ -19,6 +19,8 @@ import (
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/crust/infra/apps/hermes"
+	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
 )
 
 var (
@@ -44,12 +46,14 @@ const (
 
 // Config stores prometheus app config.
 type Config struct {
-	Name       string
-	HomeDir    string
-	Port       int
-	AppInfo    *infra.AppInfo
-	CoredNodes []cored.Cored
-	BDJuno     bdjuno.BDJuno
+	Name          string
+	HomeDir       string
+	Port          int
+	AppInfo       *infra.AppInfo
+	CoredNodes    []cored.Cored
+	BDJuno        bdjuno.BDJuno
+	Hermes        hermes.Hermes
+	RelayerCosmos relayercosmos.Relayer
 }
 
 // New creates new prometheus app.
@@ -131,9 +135,17 @@ func (p Prometheus) Deployment() infra.Deployment {
 				for _, node := range p.config.CoredNodes {
 					containers = append(containers, node)
 				}
-				// determine whether the dbjuno was provide
+				// determine whether the dbjuno is provided
 				if p.config.BDJuno.Name() != "" {
 					containers = append(containers, p.config.BDJuno)
+				}
+				// determine whether the hermes is provided
+				if p.config.Hermes.Name() != "" {
+					containers = append(containers, p.config.Hermes)
+				}
+				// determine whether the relayer cosmos is provided
+				if p.config.RelayerCosmos.Name() != "" {
+					containers = append(containers, p.config.RelayerCosmos)
 				}
 
 				return containers
@@ -157,7 +169,7 @@ func (p Prometheus) saveConfigFile() error {
 		Name string
 	}
 
-	type bdjunoConfig struct {
+	type hostPortConfig struct {
 		Host string
 		Port int
 	}
@@ -176,14 +188,36 @@ func (p Prometheus) saveConfigFile() error {
 	}
 
 	configArgs := struct {
-		Nodes  []nodesConfigArgs
-		DBJuno bdjunoConfig
+		Nodes         []nodesConfigArgs
+		DBJuno        hostPortConfig
+		Hermes        hostPortConfig
+		RelayerCosmos hostPortConfig
 	}{
 		Nodes: nodesConfig,
-		DBJuno: bdjunoConfig{
+	}
+
+	// determine whether the dbjuno is provided
+	if p.config.BDJuno.Name() != "" {
+		configArgs.DBJuno = hostPortConfig{
 			Host: p.config.BDJuno.Info().HostFromContainer,
 			Port: p.config.BDJuno.Config().TelemetryPort,
-		},
+		}
+	}
+
+	// determine whether the hermes is provided
+	if p.config.Hermes.Name() != "" {
+		configArgs.Hermes = hostPortConfig{
+			Host: p.config.Hermes.Info().HostFromContainer,
+			Port: p.config.Hermes.Config().TelemetryPort,
+		}
+	}
+
+	// determine whether the relayer cosmos is provided
+	if p.config.RelayerCosmos.Name() != "" {
+		configArgs.RelayerCosmos = hostPortConfig{
+			Host: p.config.RelayerCosmos.Info().HostFromContainer,
+			Port: p.config.RelayerCosmos.Config().DebugPort,
+		}
 	}
 
 	buf := &bytes.Buffer{}
