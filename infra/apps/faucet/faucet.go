@@ -109,7 +109,6 @@ func (f Faucet) Deployment() infra.Deployment {
 				"--chain-id", string(f.config.ChainID),
 				"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
 				"--node", infra.JoinNetAddr("", f.config.Cored.Info().HostFromContainer, f.config.Cored.Config().Ports.GRPC),
-				"--log-format", "yaml",
 			}
 		},
 		Ports: map[string]int{
