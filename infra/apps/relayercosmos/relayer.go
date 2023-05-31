@@ -77,6 +77,11 @@ func (r Relayer) Info() infra.DeploymentInfo {
 	return r.config.AppInfo.Info()
 }
 
+// Config returns config.
+func (r Relayer) Config() Config {
+	return r.config
+}
+
 // HealthCheck checks if relayer is operating.
 func (r Relayer) HealthCheck(ctx context.Context) error {
 	// TODO: bring back health check once we don't have any upgrade test which introduces ibc.

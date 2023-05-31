@@ -63,7 +63,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	}
 
 	log.Info("All the applications are ready")
-	coredApp := appSet.FindRunningApp(cored.AppType, "cored-00")
+	coredApp := appSet.FindRunningAppByName("cored-00")
 	if coredApp == nil {
 		return errors.New("no running cored app found")
 	}
@@ -72,15 +72,12 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	args := []string{
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
-		"-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
+		"-test.v", "-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
 		"-coreum-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
 		args = append(args, "-test.run", config.TestFilter)
-	}
-	if config.VerboseLogging {
-		args = append(args, "-test.v")
 	}
 
 	const (
@@ -100,7 +97,6 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		case testGroupCoreumModules, testGroupCoreumUpgrade, testGroupCoreumIBC:
 
 			fullArgs = append(fullArgs,
-				"-log-format", config.LogFormat,
 				"-run-unsafe=true",
 				"-coreum-funding-mnemonic", coredNode.Config().FundingMnemonic,
 			)
@@ -113,7 +109,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			}
 
 			if onlyTestGroup == testGroupCoreumIBC {
-				gaiaNode := appSet.FindRunningApp(gaiad.AppType, apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
+				gaiaNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
 				if gaiaNode == nil {
 					return errors.New("no running ibc gaia app found")
 				}
@@ -124,7 +120,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 					"-gaia-funding-mnemonic", gaiaApp.AppConfig().FundingMnemonic,
 				)
 
-				osmosisNode := appSet.FindRunningApp(osmosis.AppType, apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(osmosis.AppType)))
+				osmosisNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(osmosis.AppType)))
 				if osmosisNode == nil {
 					return errors.New("no running ibc osmosis app found")
 				}
@@ -136,7 +132,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				)
 			}
 		case testGroupFaucet:
-			faucetApp := appSet.FindRunningApp(faucet.AppType, string(faucet.AppType))
+			faucetApp := appSet.FindRunningAppByName(string(faucet.AppType))
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
 			}
