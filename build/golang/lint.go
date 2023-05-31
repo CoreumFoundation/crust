@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	lintNewLinesSkipDirsRegexps  = []string{`^\.`, `^vendor$`}
+	lintNewLinesSkipDirsRegexps  = []string{`^\.`, `^vendor$`, `^target$`, `^tmp$`}
 	lintNewLinesSkipFilesRegexps = []string{`\.iml$`, `\.wasm$`, `\.png$`}
 )
 
