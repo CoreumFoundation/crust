@@ -23,14 +23,27 @@ const (
 	WASMFT          = "ft"
 	WASMNFT         = "nft"
 	WASMSimpleState = "simple-state"
-)
 
-const wasmDir = repoPath + "/integration-tests/modules/testdata/wasm"
+	WASMIBCTransfer = "ibc-transfer"
+	WASMIBCCall     = "ibc-call"
+
+	WasmModulesDir = repoPath + "/integration-tests/modules/testdata/wasm"
+	WasmIBCDir     = repoPath + "/integration-tests/ibc/testdata/wasm"
+)
 
 // CompileAllSmartContracts compiles all th smart contracts.
 func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
-	entries, err := os.ReadDir(wasmDir)
+
+	if err := compileWasmDir(WasmModulesDir, deps); err != nil {
+		return err
+	}
+
+	return compileWasmDir(WasmIBCDir, deps)
+}
+
+func compileWasmDir(dirPath string, deps build.DepsFunc) error {
+	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -41,18 +54,19 @@ func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 			continue
 		}
 
-		actions = append(actions, CompileSmartContract(e.Name()))
+		actions = append(actions, CompileSmartContract(dirPath, e.Name()))
 	}
 	deps(actions...)
+
 	return nil
 }
 
 // CompileSmartContract returns function compiling smart contract.
-func CompileSmartContract(name string) build.CommandFunc {
+func CompileSmartContract(dirPath, name string) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		deps(ensureRepo)
 
-		path := filepath.Join(wasmDir, name)
+		path := filepath.Join(dirPath, name)
 
 		log := logger.Get(ctx)
 		log.Info("Compiling WASM smart contract", zap.String("path", path))

@@ -54,10 +54,12 @@ var Commands = map[string]build.CommandFunc{
 	"tidy/crust":                             crust.Tidy,
 	"tidy/faucet":                            faucet.Tidy,
 	"wasm":                                   coreum.CompileAllSmartContracts,
-	"wasm/bank-send":                         coreum.CompileSmartContract(coreum.WASMBankSend),
-	"wasm/ft":                                coreum.CompileSmartContract(coreum.WASMFT),
-	"wasm/nft":                               coreum.CompileSmartContract(coreum.WASMNFT),
-	"wasm/simple-state":                      coreum.CompileSmartContract(coreum.WASMSimpleState),
+	"wasm/bank-send":                         coreum.CompileSmartContract(coreum.WasmModulesDir, coreum.WASMBankSend),
+	"wasm/ft":                                coreum.CompileSmartContract(coreum.WasmModulesDir, coreum.WASMFT),
+	"wasm/nft":                               coreum.CompileSmartContract(coreum.WasmModulesDir, coreum.WASMNFT),
+	"wasm/simple-state":                      coreum.CompileSmartContract(coreum.WasmModulesDir, coreum.WASMSimpleState),
+	"wasm/ibc-transfer":                      coreum.CompileSmartContract(coreum.WasmIBCDir, coreum.WASMIBCTransfer),
+	"wasm/ibc-call":                          coreum.CompileSmartContract(coreum.WasmIBCDir, coreum.WASMIBCCall),
 }
 
 func tidy(ctx context.Context, deps build.DepsFunc) error {
