@@ -35,7 +35,7 @@ var Commands = map[string]build.CommandFunc{
 	"images/hermes":                          hermes.BuildDockerImage,
 	"images/relayer":                         relayer.BuildDockerImage,
 	"lint":                                   lint,
-	"lint/current-dir":                       lintCurrentDir,
+	"lint/current-dir":                       crust.LintCurrentDir,
 	"lint/coreum":                            coreum.Lint,
 	"lint/crust":                             crust.Lint,
 	"lint/faucet":                            faucet.Lint,
@@ -68,11 +68,6 @@ func tidy(ctx context.Context, deps build.DepsFunc) error {
 
 func lint(ctx context.Context, deps build.DepsFunc) error {
 	deps(crust.Lint, coreum.Lint, faucet.Lint)
-	return nil
-}
-
-func lintCurrentDir(ctx context.Context, deps build.DepsFunc) error {
-	deps(crust.LintCurrentDir)
 	return nil
 }
 
