@@ -54,7 +54,7 @@ func compileWasmDir(dirPath string, deps build.DepsFunc) error {
 			continue
 		}
 
-		actions = append(actions, CompileSmartContract(dirPath, e.Name()))
+		actions = append(actions, CompileSmartContract(filepath.Join(dirPath, e.Name())))
 	}
 	deps(actions...)
 
@@ -62,11 +62,9 @@ func compileWasmDir(dirPath string, deps build.DepsFunc) error {
 }
 
 // CompileSmartContract returns function compiling smart contract.
-func CompileSmartContract(dirPath, name string) build.CommandFunc {
+func CompileSmartContract(path string) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		deps(ensureRepo)
-
-		path := filepath.Join(dirPath, name)
 
 		log := logger.Get(ctx)
 		log.Info("Compiling WASM smart contract", zap.String("path", path))
