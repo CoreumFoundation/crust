@@ -35,6 +35,7 @@ var Commands = map[string]build.CommandFunc{
 	"images/hermes":                          hermes.BuildDockerImage,
 	"images/relayer":                         relayer.BuildDockerImage,
 	"lint":                                   lint,
+	"lint/current-dir":                       crust.LintCurrentDir,
 	"lint/coreum":                            coreum.Lint,
 	"lint/crust":                             crust.Lint,
 	"lint/faucet":                            faucet.Lint,
