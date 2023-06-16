@@ -3,13 +3,16 @@ package coreum
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/mod/sumdb/dirhash"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -51,35 +54,118 @@ func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 func CompileSmartContract(name string) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		deps(ensureRepo)
-
-		path := filepath.Join(wasmDir, name)
+		codeDirPath := filepath.Join(wasmDir, name)
 
 		log := logger.Get(ctx)
-		log.Info("Compiling WASM smart contract", zap.String("path", path))
+		log.Info("Compiling WASM smart contract", zap.String("path", codeDirPath))
 
-		path, err := filepath.Abs(path)
+		codeDirAbsPath, err := filepath.Abs(codeDirPath)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		targetCachePath := filepath.Join(tools.CacheDir(), "wasm", "targets", fmt.Sprintf("%x", sha256.Sum256([]byte(path))))
+		codeHash, err := computeContractCodeHash(codeDirAbsPath)
+		if err != nil {
+			return err
+		}
+		log.Info("Computed contract code hash", zap.String("hash", codeHash))
+
+		wasmCachePath := filepath.Join(tools.CacheDir(), "wasm")
+		if err := os.MkdirAll(wasmCachePath, 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+
+		codeHashesFile, err := os.OpenFile(filepath.Join(wasmCachePath, "code-hashes.json"), os.O_CREATE|os.O_RDWR, 0o700)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer codeHashesFile.Close()
+
+		codeHashesBytes, err := io.ReadAll(codeHashesFile)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		absPathHash := fmt.Sprintf("%x", sha256.Sum256([]byte(codeDirAbsPath)))
+
+		storedCodeHashes := make(map[string]string, 0)
+		if len(codeHashesBytes) != 0 {
+			err := json.Unmarshal(codeHashesBytes, &storedCodeHashes)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			storedHash, ok := storedCodeHashes[absPathHash]
+			if ok && codeHash == storedHash {
+				log.Info("No changes in the contract, skipping compilation.")
+				return nil
+			}
+		}
+
+		targetCachePath := filepath.Join(wasmCachePath, "targets", absPathHash)
 		if err := os.MkdirAll(targetCachePath, 0o700); err != nil {
 			return errors.WithStack(err)
 		}
 
-		registryCachePath := filepath.Join(tools.CacheDir(), "wasm", "registry")
+		registryCachePath := filepath.Join(wasmCachePath, "registry")
 		if err := os.MkdirAll(registryCachePath, 0o700); err != nil {
 			return errors.WithStack(err)
 		}
 
 		cmd := exec.Command("docker", "run", "--rm",
-			"-v", path+":/code",
+			"-v", codeDirAbsPath+":/code",
 			"-v", registryCachePath+":/usr/local/cargo/registry",
 			"-v", targetCachePath+":/code/target",
 			"-e", "HOME=/tmp",
 			"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 			"cosmwasm/rust-optimizer:0.12.13")
 
-		return libexec.Exec(ctx, cmd)
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return err
+		}
+
+		newCodeHash, err := computeContractCodeHash(codeDirAbsPath)
+		if err != nil {
+			return err
+		}
+
+		storedCodeHashes[absPathHash] = newCodeHash
+		codeHashesBytes, err = json.Marshal(storedCodeHashes)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		return replaceFileContent(codeHashesFile, codeHashesBytes)
 	}
+}
+
+func computeContractCodeHash(path string) (string, error) {
+	srcHash, err := dirhash.HashDir(filepath.Join(path, "src"), "", dirhash.Hash1)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	artifactsPath := filepath.Join(path, "artifacts")
+	var artifactsHash string
+	if _, err := os.Stat(artifactsPath); os.IsNotExist(err) {
+		artifactsHash, err = dirhash.HashDir(filepath.Join(path, "src"), "", dirhash.Hash1)
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+	}
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(srcHash+artifactsHash))), nil
+}
+
+func replaceFileContent(codeHashesFile *os.File, codeHashesBytes []byte) error {
+	if err := codeHashesFile.Truncate(0); err != nil {
+		return errors.WithStack(err)
+	}
+	if _, err := codeHashesFile.Seek(0, 0); err != nil {
+		return errors.WithStack(err)
+	}
+	if _, err := codeHashesFile.Write(codeHashesBytes); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }
