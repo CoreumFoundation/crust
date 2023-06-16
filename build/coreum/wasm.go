@@ -87,7 +87,7 @@ func CompileSmartContract(name string) build.CommandFunc {
 		}
 		absPathHash := fmt.Sprintf("%x", sha256.Sum256([]byte(codeDirAbsPath)))
 
-		storedCodeHashes := make(map[string]string, 0)
+		storedCodeHashes := make(map[string]string)
 		if len(codeHashesBytes) != 0 {
 			err := json.Unmarshal(codeHashesBytes, &storedCodeHashes)
 			if err != nil {
