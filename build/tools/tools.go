@@ -656,8 +656,8 @@ func Path(binary string, platform Platform) string {
 	return must.String(filepath.Abs(filepath.Join(CacheDir(), platform.String(), binary)))
 }
 
-// Dir copies a whole directory recursively.
-func Dir(src string, dst string) (err error) {
+// CopyDir copies a whole directory recursively.
+func CopyDir(src string, dst string) (err error) {
 	var dirEntries []fs.DirEntry
 
 	err = os.RemoveAll(dst)
@@ -678,11 +678,11 @@ func Dir(src string, dst string) (err error) {
 		dstFilePath := path.Join(dst, dirEntry.Name())
 
 		if dirEntry.IsDir() {
-			if err = Dir(srcFilePath, dstFilePath); err != nil {
+			if err = CopyDir(srcFilePath, dstFilePath); err != nil {
 				return err
 			}
 		} else {
-			if err = File(srcFilePath, dstFilePath); err != nil {
+			if err = CopyFile(srcFilePath, dstFilePath); err != nil {
 				return err
 			}
 		}
@@ -691,8 +691,8 @@ func Dir(src string, dst string) (err error) {
 	return nil
 }
 
-// File copies a single file from src to dst.
-func File(src, dst string) (err error) {
+// CopyFile copies a single file from src to dst.
+func CopyFile(src, dst string) (err error) {
 	var srcFile, dstFile *os.File
 	var srcInfo os.FileInfo
 

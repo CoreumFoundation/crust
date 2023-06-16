@@ -75,7 +75,7 @@ func getModulesVersions() (map[string]string, error) {
 		return nil, err
 	}
 
-	// Get dependencies from coreum/go.mod.
+	// Get versions for specific modules from coreum/go.mod.
 	var cmd *exec.Cmd
 	var output []byte
 	for moduleName := range moduleToVersion {
@@ -119,7 +119,7 @@ func copyProtoFiles(log *zap.Logger, repos map[string]string) error {
 			destinationDir = "./third_party/proto/tendermint"
 		}
 
-		err := tools.Dir(sourceDir, destinationDir)
+		err := tools.CopyDir(sourceDir, destinationDir)
 		if err != nil {
 			return err
 		}
