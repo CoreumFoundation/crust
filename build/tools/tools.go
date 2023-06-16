@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -652,4 +654,65 @@ func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...
 // Path returns path to the installed binary.
 func Path(binary string, platform Platform) string {
 	return must.String(filepath.Abs(filepath.Join(CacheDir(), platform.String(), binary)))
+}
+
+// Dir copies a whole directory recursively.
+func Dir(src string, dst string) (err error) {
+	var dirEntries []fs.DirEntry
+
+	err = os.RemoveAll(dst)
+	if err != nil {
+		return err
+	}
+
+	if err = os.MkdirAll(dst, fs.ModePerm); err != nil {
+		return err
+	}
+
+	if dirEntries, err = fs.ReadDir(os.DirFS(src), "."); err != nil {
+		return err
+	}
+
+	for _, dirEntry := range dirEntries {
+		srcFilePath := path.Join(src, dirEntry.Name())
+		dstFilePath := path.Join(dst, dirEntry.Name())
+
+		if dirEntry.IsDir() {
+			if err = Dir(srcFilePath, dstFilePath); err != nil {
+				return err
+			}
+		} else {
+			if err = File(srcFilePath, dstFilePath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// File copies a single file from src to dst.
+func File(src, dst string) (err error) {
+	var srcFile, dstFile *os.File
+	var srcInfo os.FileInfo
+
+	if srcFile, err = os.Open(src); err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	if dstFile, err = os.Create(dst); err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	if _, err = io.Copy(dstFile, srcFile); err != nil {
+		return err
+	}
+
+	if srcInfo, err = os.Stat(src); err != nil {
+		return err
+	}
+
+	return os.Chmod(dst, srcInfo.Mode())
 }

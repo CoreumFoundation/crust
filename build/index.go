@@ -6,6 +6,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/coreum"
 	"github.com/CoreumFoundation/crust/build/crust"
+	"github.com/CoreumFoundation/crust/build/docs"
 	"github.com/CoreumFoundation/crust/build/faucet"
 	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/hermes"
@@ -26,6 +27,7 @@ var Commands = map[string]build.CommandFunc{
 	"build/integration-tests/coreum/modules": coreum.BuildIntegrationTests(coreum.TestModules),
 	"build/integration-tests/coreum/upgrade": coreum.BuildIntegrationTests(coreum.TestUpgrade),
 	"build/integration-tests/faucet":         faucet.BuildIntegrationTests,
+	"docs/proto":                             docs.Proto,
 	"generate":                               generate,
 	"generate/coreum":                        coreum.Generate,
 	"images":                                 buildDockerImages,
