@@ -26,7 +26,8 @@ const (
 	cometBftModule   = "github.com/cometbft/cometbft"
 )
 
-// Proto generates documentation from proto and puts it to docs/src/api.md.
+// Proto collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
+// generates documentation using above proto files + coreum/proto, and places the result to docs/src/api.md.
 func Proto(ctx context.Context, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 
