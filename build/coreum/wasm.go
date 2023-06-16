@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 	"golang.org/x/mod/sumdb/dirhash"
 
@@ -64,11 +65,10 @@ func CompileSmartContract(name string) build.CommandFunc {
 			return errors.WithStack(err)
 		}
 
-		codeHash, err := computeContractCodeHash(codeDirAbsPath)
+		contractSrcHash, err := computeContractSrcHash(codeDirAbsPath)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
-		log.Info("Computed contract code hash", zap.String("hash", codeHash))
 
 		wasmCachePath := filepath.Join(tools.CacheDir(), "wasm")
 		if err := os.MkdirAll(wasmCachePath, 0o700); err != nil {
@@ -93,9 +93,16 @@ func CompileSmartContract(name string) build.CommandFunc {
 			if err != nil {
 				return errors.WithStack(err)
 			}
+		}
 
-			storedHash, ok := storedCodeHashes[absPathHash]
-			if ok && codeHash == storedHash {
+		if storedHash, ok := storedCodeHashes[absPathHash]; ok {
+			contractArtifactsHash, err := computeContractArtifactsHash(codeDirAbsPath)
+			if err != nil {
+				return err
+			}
+			codeHash := joinHashes([]byte(contractSrcHash), []byte(contractArtifactsHash))
+			log.Info("Computed contract code hash", zap.String("hash", codeHash))
+			if codeHash == storedHash {
 				log.Info("No changes in the contract, skipping compilation.")
 				return nil
 			}
@@ -123,10 +130,11 @@ func CompileSmartContract(name string) build.CommandFunc {
 			return err
 		}
 
-		newCodeHash, err := computeContractCodeHash(codeDirAbsPath)
+		contractArtifactsHash, err := computeContractArtifactsHash(codeDirAbsPath)
 		if err != nil {
 			return err
 		}
+		newCodeHash := joinHashes([]byte(contractSrcHash), []byte(contractArtifactsHash))
 
 		storedCodeHashes[absPathHash] = newCodeHash
 		codeHashesBytes, err = json.Marshal(storedCodeHashes)
@@ -138,12 +146,20 @@ func CompileSmartContract(name string) build.CommandFunc {
 	}
 }
 
-func computeContractCodeHash(path string) (string, error) {
-	srcHash, err := dirhash.HashDir(filepath.Join(path, "src"), "", dirhash.Hash1)
+func computeContractSrcHash(path string) (string, error) {
+	hash, err := dirhash.HashDir(filepath.Join(path, "src"), "", dirhash.Hash1)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
 
+	return hash, nil
+}
+
+func joinHashes(hashes ...[]byte) string {
+	return fmt.Sprintf("%x", sha256.Sum256(lo.Flatten(hashes)))
+}
+
+func computeContractArtifactsHash(path string) (string, error) {
 	artifactsPath := filepath.Join(path, "artifacts")
 	var artifactsHash string
 	if _, err := os.Stat(artifactsPath); os.IsNotExist(err) {
@@ -153,7 +169,7 @@ func computeContractCodeHash(path string) (string, error) {
 		}
 	}
 
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(srcHash+artifactsHash))), nil
+	return artifactsHash, nil
 }
 
 func replaceFileContent(codeHashesFile *os.File, codeHashesBytes []byte) error {
