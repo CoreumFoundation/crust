@@ -19,6 +19,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
+	coreumconfig "github.com/CoreumFoundation/coreum/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -107,13 +108,18 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 }
 
 // Start starts environment.
-func Start(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
+func Start(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	if err := spec.Verify(); err != nil {
 		return err
 	}
 
+	genesisTemplate, err := coredVersionToGenesisTemplate(config.CoredVersion)
+	if err != nil {
+		return err
+	}
+
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := cored.NetworkConfig()
+	networkConfig, err := cored.NetworkConfig(genesisTemplate)
 	if err != nil {
 		return err
 	}
@@ -176,8 +182,13 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		}
 	}
 
+	genesisTemplate, err := coredVersionToGenesisTemplate(config.CoredVersion)
+	if err != nil {
+		return err
+	}
+
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := cored.NetworkConfig()
+	networkConfig, err := cored.NetworkConfig(genesisTemplate)
 	if err != nil {
 		return err
 	}
@@ -282,4 +293,15 @@ func shellConfig(envName string) (string, string, error) {
 		promptVar = promptVarFn(envName)
 	}
 	return shell, promptVar, nil
+}
+
+func coredVersionToGenesisTemplate(coredVersion string) (string, error) {
+	switch coredVersion {
+	case "":
+		return coreumconfig.GenesisV2Template, nil
+	case "v1.0.0":
+		return coreumconfig.GenesisV1Template, nil
+	default:
+		return "", errors.Errorf("not supported version of cored: %s", coredVersion)
+	}
 }
