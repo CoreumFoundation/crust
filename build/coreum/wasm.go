@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"go.uber.org/zap"
 	"golang.org/x/mod/sumdb/dirhash"
 
@@ -100,7 +100,7 @@ func CompileSmartContract(name string) build.CommandFunc {
 			if err != nil {
 				return err
 			}
-			codeHash := joinHashes([]byte(contractSrcHash), []byte(contractArtifactsHash))
+			codeHash := joinHashes(contractSrcHash, contractArtifactsHash)
 			log.Info("Computed contract code hash", zap.String("hash", codeHash))
 			if codeHash == storedHash {
 				log.Info("No changes in the contract, skipping compilation.")
@@ -134,7 +134,11 @@ func CompileSmartContract(name string) build.CommandFunc {
 		if err != nil {
 			return err
 		}
-		newCodeHash := joinHashes([]byte(contractSrcHash), []byte(contractArtifactsHash))
+		if contractArtifactsHash == "" {
+			return errors.New("artifacts folder doesn't exist after the contract building")
+		}
+
+		newCodeHash := joinHashes(contractSrcHash, contractArtifactsHash)
 
 		storedCodeHashes[absPathHash] = newCodeHash
 		codeHashesBytes, err = json.Marshal(storedCodeHashes)
@@ -155,21 +159,20 @@ func computeContractSrcHash(path string) (string, error) {
 	return hash, nil
 }
 
-func joinHashes(hashes ...[]byte) string {
-	return fmt.Sprintf("%x", sha256.Sum256(lo.Flatten(hashes)))
-}
-
 func computeContractArtifactsHash(path string) (string, error) {
-	artifactsPath := filepath.Join(path, "artifacts")
-	var artifactsHash string
-	if _, err := os.Stat(artifactsPath); os.IsNotExist(err) {
-		artifactsHash, err = dirhash.HashDir(filepath.Join(path, "src"), "", dirhash.Hash1)
-		if err != nil {
-			return "", errors.WithStack(err)
+	hash, err := dirhash.HashDir(filepath.Join(path, "artifacts"), "", dirhash.Hash1)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
 		}
+		return "", errors.WithStack(err)
 	}
 
-	return artifactsHash, nil
+	return hash, nil
+}
+
+func joinHashes(hashes ...string) string {
+	return fmt.Sprintf("%x", strings.Join(hashes, ""))
 }
 
 func replaceFileContent(codeHashesFile *os.File, codeHashesBytes []byte) error {
