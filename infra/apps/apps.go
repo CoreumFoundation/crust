@@ -127,10 +127,9 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 	nameBigDipper := BuildPrefixedAppName(prefix, string(bigdipper.AppType))
 
 	postgresApp := postgres.New(postgres.Config{
-		Name:             namePostgres,
-		AppInfo:          f.spec.DescribeApp(postgres.AppType, namePostgres),
-		Port:             blockexplorer.DefaultPorts.Postgres,
-		SchemaLoaderFunc: blockexplorer.LoadPostgresSchema,
+		Name:    namePostgres,
+		AppInfo: f.spec.DescribeApp(postgres.AppType, namePostgres),
+		Port:    blockexplorer.DefaultPorts.Postgres,
 	})
 	bdjunoApp := bdjuno.New(bdjuno.Config{
 		Name:           nameBDJuno,
