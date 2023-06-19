@@ -2,6 +2,8 @@
 
 set -e
 
+export SOURCE_DIR=$(pwd)
+
 # go to root dir of repository
 pushd "$(dirname "${BASH_SOURCE[0]}")/.." > /dev/null
 

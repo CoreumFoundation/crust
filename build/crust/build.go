@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/golang"
@@ -42,6 +44,16 @@ func Tidy(ctx context.Context, deps build.DepsFunc) error {
 // Lint lints crust repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Lint(ctx, repoPath, deps)
+}
+
+// LintCurrentDir lints current dir.
+func LintCurrentDir(ctx context.Context, deps build.DepsFunc) error {
+	path := os.Getenv("SOURCE_DIR")
+	if path == "" {
+		return errors.New("can't get current dir for linting")
+	}
+
+	return golang.Lint(ctx, path, deps)
 }
 
 // Test run unit tests in crust repo.
