@@ -120,9 +120,6 @@ func (j BDJuno) Deployment() infra.Deployment {
 		},
 		PrepareFunc: j.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
-		DockerArgs: []string{
-			"--user", "root",
-		},
 	}
 }
 
