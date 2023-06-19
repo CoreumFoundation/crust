@@ -31,13 +31,14 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
 }
 
 // NetworkConfig returns the network config used by crust.
-func NetworkConfig() (config.NetworkConfig, error) {
+func NetworkConfig(genesisTemplate string) (config.NetworkConfig, error) {
 	networkConfig := config.NetworkConfig{
 		AddressPrefix: constant.AddressPrefixDev,
 		Provider: config.DynamicConfigProvider{
-			ChainID:     constant.ChainIDDev,
-			GenesisTime: time.Now(),
-			Denom:       constant.DenomDev,
+			GenesisTemplate: genesisTemplate,
+			ChainID:         constant.ChainIDDev,
+			GenesisTime:     time.Now(),
+			Denom:           constant.DenomDev,
 			GovConfig: config.GovConfig{
 				ProposalConfig: config.GovProposalConfig{
 					MinDepositAmount: "1000",
