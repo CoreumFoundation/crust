@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -100,7 +99,7 @@ func CompileSmartContract(name string) build.CommandFunc {
 			if err != nil {
 				return err
 			}
-			codeHash := joinHashes(contractSrcHash, contractArtifactsHash)
+			codeHash := contractSrcHash + contractArtifactsHash
 			log.Info("Computed contract code hash", zap.String("hash", codeHash))
 			if codeHash == storedHash {
 				log.Info("No changes in the contract, skipping compilation.")
@@ -138,8 +137,7 @@ func CompileSmartContract(name string) build.CommandFunc {
 			return errors.New("artifacts folder doesn't exist after the contract building")
 		}
 
-		newCodeHash := joinHashes(contractSrcHash, contractArtifactsHash)
-
+		newCodeHash := contractSrcHash + contractArtifactsHash
 		storedCodeHashes[absPathHash] = newCodeHash
 		codeHashesBytes, err = json.Marshal(storedCodeHashes)
 		if err != nil {
@@ -169,10 +167,6 @@ func computeContractArtifactsHash(path string) (string, error) {
 	}
 
 	return hash, nil
-}
-
-func joinHashes(hashes ...string) string {
-	return fmt.Sprintf("%x", strings.Join(hashes, ""))
 }
 
 func replaceFileContent(codeHashesFile *os.File, codeHashesBytes []byte) error {
