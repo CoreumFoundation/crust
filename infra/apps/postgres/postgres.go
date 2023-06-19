@@ -8,9 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/crust/infra"
 )
@@ -34,10 +32,9 @@ type SchemaLoaderFunc func(ctx context.Context, db *pgx.Conn) error
 
 // Config stores configuration of postgres app.
 type Config struct {
-	Name             string
-	AppInfo          *infra.AppInfo
-	Port             int
-	SchemaLoaderFunc SchemaLoaderFunc
+	Name    string
+	AppInfo *infra.AppInfo
+	Port    int
 }
 
 // New creates new postgres app.
@@ -130,50 +127,5 @@ func (p Postgres) Deployment() infra.Deployment {
 		Ports: map[string]int{
 			"sql": p.config.Port,
 		},
-		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-			if p.config.SchemaLoaderFunc == nil {
-				return nil
-			}
-
-			log := logger.Get(ctx)
-
-			db, err := p.dbConnection(ctx, deployment.HostFromHost)
-			if err != nil {
-				return err
-			}
-			defer db.Close(ctx)
-
-			log.Info("Loading schema into the database")
-
-			if err := p.config.SchemaLoaderFunc(ctx, db); err != nil {
-				return errors.Wrap(err, "loading schema failed")
-			}
-
-			log.Info("Database ready")
-			return nil
-		},
 	}
-}
-
-func (p Postgres) dbConnection(ctx context.Context, hostname string) (*pgx.Conn, error) {
-	connStr := "postgres://" + User + "@" + infra.JoinNetAddr("", hostname, p.config.Port) + "/" + DB
-	logger.Get(ctx).Info("Connecting to the database server", zap.String("connectionString", connStr))
-
-	var db *pgx.Conn
-
-	retryCtx, cancel := context.WithTimeout(ctx, 40*time.Second)
-	defer cancel()
-	err := retry.Do(retryCtx, time.Second, func() error {
-		connCtx, cancel := context.WithTimeout(ctx, time.Second)
-		defer cancel()
-
-		var err error
-		db, err = pgx.Connect(connCtx, connStr)
-		return retry.Retryable(errors.WithStack(err))
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }
