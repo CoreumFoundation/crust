@@ -3,9 +3,15 @@ package bdjuno
 import (
 	"bytes"
 	"context"
+	_ "embed"
+	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"path"
+	"path/filepath"
+	"strconv"
 	"text/template"
 	"time"
 
@@ -20,6 +26,12 @@ import (
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
+var (
+	//go:embed run.tmpl
+	scriptTmpl        string
+	runScriptTemplate = template.Must(template.New("").Parse(scriptTmpl))
+)
+
 const (
 	// AppType is the type of bdjuno application.
 	AppType infra.AppType = "bdjuno"
@@ -29,6 +41,8 @@ const (
 
 	// DefaultTelemetryPort is default port use for the bdjuno telemetry.
 	DefaultTelemetryPort = 5001
+
+	dockerEntrypoint = "run.sh"
 )
 
 // Config storesbdjuno app configuration.
@@ -93,12 +107,6 @@ func (j BDJuno) Deployment() infra.Deployment {
 				Destination: targets.AppHomeDir,
 			},
 		},
-		ArgsFunc: func() []string {
-			return []string{
-				"bdjuno", "start",
-				"--home", targets.AppHomeDir,
-			}
-		},
 		Ports: map[string]int{
 			"actions":   j.config.Port,
 			"telemetry": j.config.TelemetryPort,
@@ -110,13 +118,8 @@ func (j BDJuno) Deployment() infra.Deployment {
 				j.config.Postgres,
 			},
 		},
-		PrepareFunc: func() error {
-			if err := j.config.Cored.SaveGenesis(j.config.HomeDir); err != nil {
-				return err
-			}
-
-			return os.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644)
-		},
+		PrepareFunc: j.prepare,
+		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
 	}
 }
 
@@ -186,4 +189,39 @@ func (j BDJuno) prepareConfig() []byte {
 		},
 	}))
 	return configBuf.Bytes()
+}
+
+func (j BDJuno) prepare() error {
+	if err := j.config.Cored.SaveGenesis(j.config.HomeDir); err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(j.config.HomeDir+"/config.yaml", j.prepareConfig(), 0o644); err != nil {
+		return err
+	}
+
+	return j.saveRunScriptFile()
+}
+
+func (j BDJuno) saveRunScriptFile() error {
+	scriptArgs := struct {
+		HomePath    string
+		PostgresURL string
+	}{
+		HomePath: targets.AppHomeDir,
+		PostgresURL: fmt.Sprintf("postgres://%s@%s/%s",
+			postgres.User, net.JoinHostPort(j.config.Postgres.Info().HostFromContainer, strconv.Itoa(j.config.Postgres.Port())), postgres.DB),
+	}
+
+	buf := &bytes.Buffer{}
+	if err := runScriptTemplate.Execute(buf, scriptArgs); err != nil {
+		return errors.WithStack(err)
+	}
+
+	err := os.WriteFile(path.Join(j.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o777)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }
