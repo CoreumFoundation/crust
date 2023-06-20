@@ -83,6 +83,10 @@ func (h Hasura) Deployment() infra.Deployment {
 					Name:  "ACTION_BASE_URL",
 					Value: infra.JoinNetAddr("http", h.config.BDJuno.Info().HostFromContainer, h.config.BDJuno.Port()),
 				},
+				{
+					Name:  "HASURA_GRAPHQL_ENABLE_CONSOLE",
+					Value: "true",
+				},
 			}
 		},
 		Name: h.Name(),

@@ -318,6 +318,10 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 
 // Tidy runs go mod tidy in repository.
 func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+	// FIXME (wojtek): temporarily disabled due to https://github.com/golang/go/issues/60313
+	return nil
+
+	//nolint:govet
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
