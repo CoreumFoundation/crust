@@ -3,27 +3,29 @@ package docs
 import (
 	"context"
 	"fmt"
+	"github.com/CoreumFoundation/crust/build/tools"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/coreum"
-	"github.com/CoreumFoundation/crust/build/git"
-	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/golang"
 )
 
 const (
-	repoURL = "git@github.com:CoreumFoundation/docs.git"
-
 	cosmosSdkModule  = "github.com/cosmos/cosmos-sdk"
 	cosmWasmModule   = "github.com/CosmWasm/wasmd"
 	tenderMintModule = "github.com/tendermint/tendermint"
 	cometBftModule   = "github.com/cometbft/cometbft"
+
+	protoPathKey = "--proto_path"
 )
 
 // Proto collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
@@ -31,30 +33,26 @@ const (
 func Proto(ctx context.Context, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 
-	err := coreum.Tidy(ctx, deps)
-	if err != nil {
-		return err
-	}
+	//err := golang.EnsureProtoc(ctx, deps)
+	//if err != nil {
+	//	return err
+	//}
 
-	moduleToVersion, err := getModulesVersions()
+	deps(coreum.Tidy)
+
+	moduleToVersion, err := getModuleVersions(ctx, deps)
 	if err != nil {
 		log.Error("failed to get modules versions", zap.Error(err))
 		return err
 	}
 
-	err = copyProtoFiles(log, moduleToVersion)
+	moduleToPath, err := getModulePaths(moduleToVersion)
 	if err != nil {
 		log.Error("failed to copy proto files", zap.Error(err))
 		return err
 	}
 
-	err = git.EnsureRepo(ctx, repoURL)
-	if err != nil {
-		log.Error("failed to ensure repo", zap.String("repo", repoURL), zap.Error(err))
-		return err
-	}
-
-	err = executeProtocCommand()
+	err = executeProtocCommand(ctx, moduleToPath)
 	if err != nil {
 		log.Error("failed to execute protoc command", zap.Error(err))
 		return err
@@ -63,87 +61,120 @@ func Proto(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-func getModulesVersions() (map[string]string, error) {
+func getModuleVersions(ctx context.Context, deps build.DepsFunc) (map[string]string, error) {
 	var moduleToVersion = map[string]string{
 		cosmosSdkModule:  "",
-		cosmWasmModule:   "",
 		tenderMintModule: "",
-	}
-
-	// Go to coreum dir.
-	err := os.Chdir("../coreum")
-	if err != nil {
-		return nil, err
+		cosmWasmModule:   "",
 	}
 
 	// Get versions for specific modules from coreum/go.mod.
-	var cmd *exec.Cmd
-	var output []byte
+	var version string
+	var err error
 	for moduleName := range moduleToVersion {
-		cmd = exec.Command("go", "list", "-m", moduleName)
-		output, err = cmd.Output()
+		version, err = golang.GetModuleVersion(ctx, deps, coreum.RepoPath, moduleName)
 		if err != nil {
 			return nil, err
 		}
 
-		parts := strings.Fields(string(output))
-		if len(parts) >= 2 {
-			moduleToVersion[moduleName] = parts[1]
-		} else {
-			return nil, errors.New("no module version")
-		}
+		moduleToVersion[moduleName] = version
 	}
 
 	return moduleToVersion, nil
 }
 
-// copyProtoFiles copies third-party proto files to coreum/third_party/proto dir.
-func copyProtoFiles(log *zap.Logger, repos map[string]string) error {
+// getModulePaths copies third-party proto files to coreum/third_party/proto dir.
+func getModulePaths(modulesMap map[string]string) (map[string]string, error) {
 	goPath := os.Getenv("GOPATH")
 	if goPath == "" {
-		return errors.New("empty GOPATH")
+		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
 	}
 
-	var sourceDir, destinationDir string
-	for repo, version := range repos {
-		switch repo {
+	for module, version := range modulesMap {
+		switch module {
 		case cosmosSdkModule:
 			// example: $GOPATH/pkg/mod/github.com/cosmos/cosmos-sdk@v0.45.16/proto.
-			sourceDir = fmt.Sprintf("%s/pkg/mod/%s@%s/proto/cosmos", goPath, repo, version)
-			destinationDir = "./third_party/proto/cosmos"
-		case cosmWasmModule:
-			sourceDir = fmt.Sprintf("%s/pkg/mod/github.com/!cosm!wasm/wasmd@%s/proto/cosmwasm", goPath, version)
-			destinationDir = "./third_party/proto/cosmwasm"
+			modulesMap[module] = filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", module, version), "proto")
 		// TODO tune it when we complete migration from tendermint to cometbft
 		case tenderMintModule:
-			sourceDir = fmt.Sprintf("%s/pkg/mod/%s@%s/proto/tendermint", goPath, cometBftModule, version)
-			destinationDir = "./third_party/proto/tendermint"
+			modulesMap[module] = filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", cometBftModule, version), "proto")
+		case cosmWasmModule:
+			modulesMap[module] = filepath.Join(goPath, "pkg", "mod", "github.com", "!cosm!wasm", fmt.Sprintf("wasmd@%s", version), "proto")
 		}
-
-		err := tools.CopyDir(sourceDir, destinationDir)
-		if err != nil {
-			return err
-		}
-
-		log.Info("Proto files are copied successfully:", zap.String("module", repo))
 	}
 
-	return nil
+	return modulesMap, nil
 }
 
-func executeProtocCommand() error {
-	cmd := exec.Command("sh", "-c", `
-		protoc \
-			--proto_path "proto" \
-			--proto_path "third_party/proto" \
+func executeProtocCommand(ctx context.Context, moduleToPath map[string]string) error {
+	command := []string{
+		`protoc \
 			--doc_out=../docs/src/api \
 			--doc_opt=../docs/proto/protodoc-markdown.tmpl,api.md \
+			--proto_path "proto" \
+			--proto_path "third_party/proto"`,
+	}
+
+	//pathList := []string{
+	//	filepath.Join("proto", "coreum"),
+	//	filepath.Join("third_party", "proto"),
+	//}
+
+	for _, path := range moduleToPath {
+		command = append(command, protoPathKey, fmt.Sprintf("\"%s\"", path))
+		//pathList = append(pathList, path)
+	}
+
+	command = append(command, `$(find "proto/coreum" -maxdepth 5 -name '*.proto')`)
+	command = append(command, `$(find "third_party/proto" -maxdepth 5 -name '*.proto')`)
+
+	for _, path := range moduleToPath {
+		command = append(command, fmt.Sprintf(`$(find "%s" -maxdepth 5 -name '*.proto')`, path))
+	}
+
+	//allProtoFiles, err := findAllProtoFiles(pathList)
+	//if err != nil {
+	//	return err
+	//}
+
+	//command = append(command, allProtoFiles...)
+
+	fmt.Println("### ", strings.Join(command, " "))
+
+	cmd := exec.Command("sh", "-c", strings.Join(command, " "))
+	cmd.Dir = coreum.RepoPath
+
+	return libexec.Exec(ctx, cmd)
+}
+
+func findAllProtoFiles(pathList []string) (finalResult []string, err error) {
+	var iterationResult []string
+	for _, path := range pathList {
+		iterationResult, err = tools.ListFilesByPath(path, ".proto")
+		if err != nil {
+			return nil, err
+		}
+		finalResult = append(finalResult, iterationResult...)
+	}
+
+	return finalResult, nil
+}
+
+func executeProtocCommand2(ctx context.Context, moduleToPath map[string]string) error {
+	cmd := exec.Command("sh", "-c", `
+		protoc \
+			--doc_out=../docs/src/api \
+			--doc_opt=../docs/proto/protodoc-markdown.tmpl,api.md \
+			--proto_path "proto" \
+			--proto_path "third_party/proto" \
+      		--proto_path "/Users/vertex451/go/pkg/mod/github.com/cosmos/cosmos-sdk@v0.45.16/proto" \
+      		--proto_path "/Users/vertex451/go/pkg/mod/github.com/cometbft/cometbft@v0.34.27/proto" \
 			$(find "proto/coreum" -maxdepth 5 -name '*.proto') \
-			$(find "third_party/proto" -maxdepth 5 -name '*.proto')
+			$(find "third_party/proto" -maxdepth 5 -name '*.proto') \
+      		$(find "/Users/vertex451/go/pkg/mod/github.com/cosmos/cosmos-sdk@v0.45.16/proto/cosmos" -maxdepth 5 -name '*.proto') \
+      		$(find "/Users/vertex451/go/pkg/mod/github.com/cometbft/cometbft@v0.34.27/proto/tendermint" -maxdepth 5 -name '*.proto')
 	`)
+	cmd.Dir = coreum.RepoPath
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
+	return libexec.Exec(ctx, cmd)
 }

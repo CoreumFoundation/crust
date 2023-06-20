@@ -73,6 +73,11 @@ func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureTool(ctx, tools.GolangCI)
 }
 
+// EnsureProtoc ensures that protoc is available.
+func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
+	return tools.EnsureTool(ctx, tools.Protoc)
+}
+
 // Build builds go binary.
 func Build(ctx context.Context, config BinaryBuildConfig) error {
 	if config.Platform.OS == tools.DockerOS {
@@ -353,4 +358,54 @@ func containsGoCode(path string) (bool, error) {
 		return true, nil
 	}
 	return false, errors.WithStack(err)
+}
+
+func GetModuleVersion(ctx context.Context, deps build.DepsFunc, repoPath, moduleName string) (string, error) {
+	cmd := exec.Command("go", "list", "-m", moduleName)
+	cmd.Dir = repoPath
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	parts := strings.Fields(string(output))
+	if len(parts) < 2 {
+		return "", errors.New("no module version")
+	}
+
+	return parts[1], nil
+}
+
+// GetModuleVersion returns a version from go.mod for the specified module within the given repo
+func GetModuleVersion2(ctx context.Context, deps build.DepsFunc, repoPath, moduleName string) (string, error) {
+	deps(EnsureGo)
+
+	args := []string{
+		"list",
+		"-m",
+		moduleName,
+	}
+
+	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), args...)
+	cmd.Dir = repoPath
+
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return "", err
+	}
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("### 20")
+
+	parts := strings.Fields(string(output))
+	if len(parts) < 2 {
+		return "", errors.New("no module version")
+	}
+
+	fmt.Println("### 1")
+
+	return parts[1], nil
 }

@@ -51,7 +51,7 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		RepoPath:   repoPath,
+		RepoPath:   RepoPath,
 		ContextDir: filepath.Join("bin", ".cache", binaryName),
 		ImageName:  binaryName,
 		Platforms:  cfg.Platforms,

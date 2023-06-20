@@ -8,10 +8,8 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/fs"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -36,6 +34,7 @@ const (
 	RelayerCosmos Name = "relayercosmos"
 	Hermes        Name = "hermes"
 	CoredV100     Name = "cored-v1.0.0"
+	Protoc        Name = "protoc"
 )
 
 var tools = map[Name]Tool{
@@ -238,6 +237,29 @@ var tools = map[Name]Tool{
 					"bin/cored-v1.0.0": "cored-linux-arm64",
 				},
 			},
+		},
+	},
+
+	//https://github.com/protocolbuffers/protobuf/releases
+	Protoc: {
+		Version: "v23.3",
+		Local:   true,
+		Sources: Sources{
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-linux-x86_64.zip",
+				Hash: "sha256:8f5abeb19c0403a7bf6e48f4fa1bb8b97724d8701f6823a327922df8cc1da4f5",
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-osx-x86_64.zip",
+				Hash: "sha256:82becd1c2dc887a7b3108981d5d6bb5f5b66e81d7356e3e2ab2f36c7b346914f",
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-osx-aarch_64.zip",
+				Hash: "sha256:edb432e4990c23fea1040a2a76b87ab0f738e384cd25d650cc35683603fe8cdc",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/protoc": "bin/protoc",
 		},
 	},
 }
@@ -656,63 +678,20 @@ func Path(binary string, platform Platform) string {
 	return must.String(filepath.Abs(filepath.Join(CacheDir(), platform.String(), binary)))
 }
 
-// CopyDir copies a whole directory recursively.
-func CopyDir(src string, dst string) (err error) {
-	var dirEntries []fs.DirEntry
-
-	err = os.RemoveAll(dst)
-	if err != nil {
-		return err
-	}
-
-	if err = os.MkdirAll(dst, fs.ModePerm); err != nil {
-		return err
-	}
-
-	if dirEntries, err = fs.ReadDir(os.DirFS(src), "."); err != nil {
-		return err
-	}
-
-	for _, dirEntry := range dirEntries {
-		srcFilePath := path.Join(src, dirEntry.Name())
-		dstFilePath := path.Join(dst, dirEntry.Name())
-
-		if dirEntry.IsDir() {
-			if err = CopyDir(srcFilePath, dstFilePath); err != nil {
-				return err
-			}
-		} else {
-			if err = CopyFile(srcFilePath, dstFilePath); err != nil {
-				return err
-			}
+func ListFilesByPath(path, extension string) (fileList []string, err error) {
+	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
-	}
+		if info.IsDir() {
+			// Skip directories
+			return nil
+		}
+		if strings.HasSuffix(path, extension) {
+			fileList = append(fileList, path)
+		}
+		return nil
+	})
 
-	return nil
-}
-
-// CopyFile copies a single file from src to dst.
-func CopyFile(src, dst string) (err error) {
-	var srcFile, dstFile *os.File
-	var srcInfo os.FileInfo
-
-	if srcFile, err = os.Open(src); err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	if dstFile, err = os.Create(dst); err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	if _, err = io.Copy(dstFile, srcFile); err != nil {
-		return err
-	}
-
-	if srcInfo, err = os.Stat(src); err != nil {
-		return err
-	}
-
-	return os.Chmod(dst, srcInfo.Mode())
+	return fileList, err
 }
