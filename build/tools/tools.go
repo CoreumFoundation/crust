@@ -683,13 +683,15 @@ func ListFilesByPath(path, extension string) (fileList []string, err error) {
 		if err != nil {
 			return err
 		}
+
 		if info.IsDir() {
-			// Skip directories
 			return nil
 		}
+
 		if strings.HasSuffix(path, extension) {
 			fileList = append(fileList, path)
 		}
+		
 		return nil
 	})
 

@@ -25,7 +25,9 @@ const (
 	tenderMintModule = "github.com/tendermint/tendermint"
 	cometBftModule   = "github.com/cometbft/cometbft"
 
-	protoPathKey = "--proto_path"
+	protoPathKey    = "--proto_path"
+	protoDocsOutKey = "--doc_out"
+	protoDOcsOptKey = "--doc_opt"
 )
 
 // Proto collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
@@ -40,7 +42,7 @@ func Proto(ctx context.Context, deps build.DepsFunc) error {
 
 	deps(coreum.Tidy)
 
-	moduleToVersion, err := getModuleVersions(ctx, deps)
+	moduleToVersion, err := getModuleVersions(deps)
 	if err != nil {
 		log.Error("failed to get modules versions", zap.Error(err))
 		return err
@@ -61,7 +63,7 @@ func Proto(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-func getModuleVersions(ctx context.Context, deps build.DepsFunc) (map[string]string, error) {
+func getModuleVersions(deps build.DepsFunc) (map[string]string, error) {
 	var moduleToVersion = map[string]string{
 		cosmosSdkModule:  "",
 		tenderMintModule: "",
@@ -72,7 +74,7 @@ func getModuleVersions(ctx context.Context, deps build.DepsFunc) (map[string]str
 	var version string
 	var err error
 	for moduleName := range moduleToVersion {
-		version, err = golang.GetModuleVersion(ctx, deps, coreum.RepoPath, moduleName)
+		version, err = golang.GetModuleVersion(deps, coreum.RepoPath, moduleName)
 		if err != nil {
 			return nil, err
 		}
@@ -108,10 +110,11 @@ func getModulePaths(modulesMap map[string]string) (map[string]string, error) {
 
 func executeProtocCommand(ctx context.Context, moduleToPath map[string]string) error {
 	command := []string{
-		`protoc \
-			--doc_out=docs \
-			--doc_opt=docs/protodoc-markdown.tmpl,api.md`,
+		`protoc`,
 	}
+
+	command = append(command, fmt.Sprintf("%s=%s", protoDocsOutKey, "docs"))
+	command = append(command, fmt.Sprintf("%s=%s,api.md", protoDOcsOptKey, filepath.Join("docs", "protodoc-markdown.tmpl")))
 
 	pathList, err := collectAllPaths(moduleToPath)
 	if err != nil {
