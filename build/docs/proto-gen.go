@@ -109,42 +109,48 @@ func getModulePaths(modulesMap map[string]string) (map[string]string, error) {
 func executeProtocCommand(ctx context.Context, moduleToPath map[string]string) error {
 	command := []string{
 		`protoc \
-			--doc_out=../docs/src/api \
-			--doc_opt=../docs/proto/protodoc-markdown.tmpl,api.md \
-			--proto_path "proto" \
-			--proto_path "third_party/proto"`,
+			--doc_out=docs \
+			--doc_opt=docs/protodoc-markdown.tmpl,api.md`,
 	}
 
-	//pathList := []string{
-	//	filepath.Join("proto", "coreum"),
-	//	filepath.Join("third_party", "proto"),
-	//}
+	pathList, err := collectAllPaths(moduleToPath)
+	if err != nil {
+		return err
+	}
 
-	for _, path := range moduleToPath {
+	for _, path := range pathList {
 		command = append(command, protoPathKey, fmt.Sprintf("\"%s\"", path))
-		//pathList = append(pathList, path)
 	}
 
-	command = append(command, `$(find "proto/coreum" -maxdepth 5 -name '*.proto')`)
-	command = append(command, `$(find "third_party/proto" -maxdepth 5 -name '*.proto')`)
-
-	for _, path := range moduleToPath {
-		command = append(command, fmt.Sprintf(`$(find "%s" -maxdepth 5 -name '*.proto')`, path))
+	allProtoFiles, err := findAllProtoFiles(pathList)
+	if err != nil {
+		return err
 	}
 
-	//allProtoFiles, err := findAllProtoFiles(pathList)
-	//if err != nil {
-	//	return err
-	//}
-
-	//command = append(command, allProtoFiles...)
-
-	fmt.Println("### ", strings.Join(command, " "))
+	command = append(command, allProtoFiles...)
 
 	cmd := exec.Command("sh", "-c", strings.Join(command, " "))
 	cmd.Dir = coreum.RepoPath
 
 	return libexec.Exec(ctx, cmd)
+}
+
+func collectAllPaths(moduleToPath map[string]string) ([]string, error) {
+	absPath, err := filepath.Abs(coreum.RepoPath)
+	if err != nil {
+		return nil, err
+	}
+
+	pathList := []string{
+		filepath.Join(absPath, "proto"),
+		filepath.Join(absPath, "third_party", "proto"),
+	}
+
+	for _, path := range moduleToPath {
+		pathList = append(pathList, path)
+	}
+
+	return pathList, nil
 }
 
 func findAllProtoFiles(pathList []string) (finalResult []string, err error) {
@@ -158,23 +164,4 @@ func findAllProtoFiles(pathList []string) (finalResult []string, err error) {
 	}
 
 	return finalResult, nil
-}
-
-func executeProtocCommand2(ctx context.Context, moduleToPath map[string]string) error {
-	cmd := exec.Command("sh", "-c", `
-		protoc \
-			--doc_out=../docs/src/api \
-			--doc_opt=../docs/proto/protodoc-markdown.tmpl,api.md \
-			--proto_path "proto" \
-			--proto_path "third_party/proto" \
-      		--proto_path "/Users/vertex451/go/pkg/mod/github.com/cosmos/cosmos-sdk@v0.45.16/proto" \
-      		--proto_path "/Users/vertex451/go/pkg/mod/github.com/cometbft/cometbft@v0.34.27/proto" \
-			$(find "proto/coreum" -maxdepth 5 -name '*.proto') \
-			$(find "third_party/proto" -maxdepth 5 -name '*.proto') \
-      		$(find "/Users/vertex451/go/pkg/mod/github.com/cosmos/cosmos-sdk@v0.45.16/proto/cosmos" -maxdepth 5 -name '*.proto') \
-      		$(find "/Users/vertex451/go/pkg/mod/github.com/cometbft/cometbft@v0.34.27/proto/tendermint" -maxdepth 5 -name '*.proto')
-	`)
-	cmd.Dir = coreum.RepoPath
-
-	return libexec.Exec(ctx, cmd)
 }
