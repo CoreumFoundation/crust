@@ -3,7 +3,6 @@ package docs
 import (
 	"context"
 	"fmt"
-	"github.com/CoreumFoundation/crust/build/tools"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/coreum"
 	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 const (
@@ -28,17 +28,14 @@ const (
 	protoPathKey    = "--proto_path"
 	protoDocsOutKey = "--doc_out"
 	protoDOcsOptKey = "--doc_opt"
+
+	protoExtension = ".proto"
 )
 
 // Proto collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
 // generates documentation using above proto files + coreum/proto, and places the result to docs/src/api.md.
 func Proto(ctx context.Context, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
-
-	//err := golang.EnsureProtoc(ctx, deps)
-	//if err != nil {
-	//	return err
-	//}
 
 	deps(coreum.Tidy)
 
@@ -48,13 +45,7 @@ func Proto(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	moduleToPath, err := getModulePaths(moduleToVersion)
-	if err != nil {
-		log.Error("failed to copy proto files", zap.Error(err))
-		return err
-	}
-
-	err = executeProtocCommand(ctx, moduleToPath)
+	err = executeProtocCommand(ctx, deps, getModulePaths(moduleToVersion))
 	if err != nil {
 		log.Error("failed to execute protoc command", zap.Error(err))
 		return err
@@ -86,7 +77,7 @@ func getModuleVersions(deps build.DepsFunc) (map[string]string, error) {
 }
 
 // getModulePaths copies third-party proto files to coreum/third_party/proto dir.
-func getModulePaths(modulesMap map[string]string) (map[string]string, error) {
+func getModulePaths(modulesMap map[string]string) map[string]string {
 	goPath := os.Getenv("GOPATH")
 	if goPath == "" {
 		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
@@ -105,10 +96,20 @@ func getModulePaths(modulesMap map[string]string) (map[string]string, error) {
 		}
 	}
 
-	return modulesMap, nil
+	return modulesMap
 }
 
-func executeProtocCommand(ctx context.Context, moduleToPath map[string]string) error {
+func executeProtocCommand(ctx context.Context, deps build.DepsFunc, moduleToPath map[string]string) error {
+	err := golang.EnsureProtoc(ctx, deps)
+	if err != nil {
+		return err
+	}
+
+	err = golang.EnsureProtocGenDoc(ctx, deps)
+	if err != nil {
+		return err
+	}
+
 	command := []string{
 		`protoc`,
 	}
@@ -159,7 +160,7 @@ func collectAllPaths(moduleToPath map[string]string) ([]string, error) {
 func findAllProtoFiles(pathList []string) (finalResult []string, err error) {
 	var iterationResult []string
 	for _, path := range pathList {
-		iterationResult, err = tools.ListFilesByPath(path, ".proto")
+		iterationResult, err = tools.ListFilesByPath(path, protoExtension)
 		if err != nil {
 			return nil, err
 		}

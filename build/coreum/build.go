@@ -16,10 +16,11 @@ const (
 	binaryName     = "cored"
 	repoURL        = "https://github.com/CoreumFoundation/coreum.git"
 	repoName       = "coreum"
-	RepoPath       = "../" + repoName
-	binaryPath     = "bin/" + binaryName
-	testsDir       = RepoPath + "/integration-tests"
-	testsBinDir    = "bin/.cache/integration-tests"
+	// RepoPath is relative path to coreum from crust.
+	RepoPath    = "../" + repoName
+	binaryPath  = "bin/" + binaryName
+	testsDir    = RepoPath + "/integration-tests"
+	testsBinDir = "bin/.cache/integration-tests"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 )

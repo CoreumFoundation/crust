@@ -2,6 +2,7 @@ package tools
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
@@ -35,6 +36,7 @@ const (
 	Hermes        Name = "hermes"
 	CoredV100     Name = "cored-v1.0.0"
 	Protoc        Name = "protoc"
+	ProtocGenDoc  Name = "protoc-gen-doc"
 )
 
 var tools = map[Name]Tool{
@@ -260,6 +262,27 @@ var tools = map[Name]Tool{
 		},
 		Binaries: map[string]string{
 			"bin/protoc": "bin/protoc",
+		},
+	},
+	ProtocGenDoc: {
+		Version: "v1.5.1",
+		Local:   true,
+		Sources: Sources{
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_linux_amd64.tar.gz",
+				Hash: "sha256:47cd72b07e6dab3408d686a65d37d3a6ab616da7d8b564b2bd2a2963a72b72fd",
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_amd64.tar.gz",
+				Hash: "sha256:f429e5a5ddd886bfb68265f2f92c1c6a509780b7adcaf7a8b3be943f28e144ba",
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_arm64.tar.gz",
+				Hash: "sha256:6e8c737d9a67a6a873a3f1d37ed8bb2a0a9996f6dcf6701aa1048c7bd798aaf9",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/protoc-gen-doc": "protoc-gen-doc",
 		},
 	},
 }
@@ -509,6 +532,8 @@ func save(url string, reader io.Reader, path string) error {
 			return errors.WithStack(err)
 		}
 		return untar(reader, path)
+	case strings.HasSuffix(url, ".zip"):
+		return unpackZip(reader, path)
 	default:
 		f, err := os.OpenFile(filepath.Join(path, filepath.Base(url)), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
 		if err != nil {
@@ -584,6 +609,77 @@ func untar(reader io.Reader, path string) error {
 			return errors.Errorf("unsupported file type: %d", header.Typeflag)
 		}
 	}
+}
+
+func unpackZip(reader io.Reader, path string) error {
+	// Create a temporary file
+	tempFile, err := os.CreateTemp("", "zipfile")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tempFile.Name()) //nolint: errcheck
+
+	// Copy the contents of the reader to the temporary file
+	_, err = io.Copy(tempFile, reader)
+	if err != nil {
+		return err
+	}
+
+	// Open the temporary file for reading
+	file, err := os.Open(tempFile.Name())
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Get the file information to obtain its size
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return err
+	}
+	fileSize := fileInfo.Size()
+
+	// Use the file as a ReaderAt to unpack the zip file
+	zipReader, err := zip.NewReader(file, fileSize)
+	if err != nil {
+		return err
+	}
+
+	// Process the files in the zip archive
+	for _, zf := range zipReader.File {
+		// Open each file in the archive
+		rc, err := zf.Open()
+		if err != nil {
+			return err
+		}
+		defer rc.Close()
+
+		// Construct the destination path for the file
+		destPath := filepath.Join(path, zf.Name)
+
+		if zf.FileInfo().IsDir() {
+			// Create directories if they don't exist
+			err := os.MkdirAll(destPath, os.ModePerm)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Create the file in the destination path
+			outputFile, err := os.Create(destPath)
+			if err != nil {
+				return err
+			}
+			defer outputFile.Close()
+
+			// Copy the file contents
+			_, err = io.Copy(outputFile, rc)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // CacheDir returns path to cache directory.
@@ -678,6 +774,7 @@ func Path(binary string, platform Platform) string {
 	return must.String(filepath.Abs(filepath.Join(CacheDir(), platform.String(), binary)))
 }
 
+// ListFilesByPath returns the array of files with the specific extension within the given path.
 func ListFilesByPath(path, extension string) (fileList []string, err error) {
 	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -691,7 +788,7 @@ func ListFilesByPath(path, extension string) (fileList []string, err error) {
 		if strings.HasSuffix(path, extension) {
 			fileList = append(fileList, path)
 		}
-		
+
 		return nil
 	})
 

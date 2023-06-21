@@ -78,6 +78,11 @@ func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureTool(ctx, tools.Protoc)
 }
 
+// EnsureProtocGenDoc ensures that protoc-gen-doc is available.
+func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
+	return tools.EnsureTool(ctx, tools.ProtocGenDoc)
+}
+
 // Build builds go binary.
 func Build(ctx context.Context, config BinaryBuildConfig) error {
 	if config.Platform.OS == tools.DockerOS {
@@ -364,7 +369,7 @@ func containsGoCode(path string) (bool, error) {
 	return false, errors.WithStack(err)
 }
 
-// GetModuleVersion returns a version from go.mod for the specified module within the given repo
+// GetModuleVersion returns a version from go.mod for the specified module within the given repo.
 func GetModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string, error) {
 	deps(EnsureGo)
 
@@ -388,5 +393,4 @@ func GetModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string,
 	}
 
 	return parts[1], nil
-
 }
