@@ -74,7 +74,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
 		"-test.v", "-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
 		"-coreum-grpc-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
-		"-coreum-rpc-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC),
+		"-coreum-rpc-address", infra.JoinNetAddr("http", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC),
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
@@ -118,7 +118,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 
 				fullArgs = append(fullArgs,
 					"-gaia-grpc-address", infra.JoinNetAddr("", gaiaApp.Info().HostFromHost, gaiaApp.Ports().GRPC),
-					"-gaia-rpc-address", infra.JoinNetAddr("", gaiaApp.Info().HostFromHost, gaiaApp.Ports().RPC),
+					"-gaia-rpc-address", infra.JoinNetAddr("http", gaiaApp.Info().HostFromHost, gaiaApp.Ports().RPC),
 					"-gaia-funding-mnemonic", gaiaApp.AppConfig().FundingMnemonic,
 				)
 
@@ -130,7 +130,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 
 				fullArgs = append(fullArgs,
 					"-osmosis-grpc-address", infra.JoinNetAddr("", osmosisApp.Info().HostFromHost, osmosisApp.Ports().GRPC),
-					"-osmosis-rpc-address", infra.JoinNetAddr("", osmosisApp.Info().HostFromHost, osmosisApp.Ports().RPC),
+					"-osmosis-rpc-address", infra.JoinNetAddr("http", osmosisApp.Info().HostFromHost, osmosisApp.Ports().RPC),
 					"-osmosis-funding-mnemonic", osmosisApp.AppConfig().FundingMnemonic,
 				)
 			}
