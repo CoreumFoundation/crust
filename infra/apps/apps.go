@@ -15,6 +15,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
+	"github.com/CoreumFoundation/crust/infra/apps/gaiadfriendless"
 	"github.com/CoreumFoundation/crust/infra/apps/grafana"
 	"github.com/CoreumFoundation/crust/infra/apps/hasura"
 	"github.com/CoreumFoundation/crust/infra/apps/hermes"
@@ -170,6 +171,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 	nameOsmosis := BuildPrefixedAppName(prefix, string(osmosis.AppType))
 	nameRelayerHermesGaia := BuildPrefixedAppName(prefix, string(hermes.AppType), string(gaiad.AppType))
 	nameRelayerCosmosOsmosis := BuildPrefixedAppName(prefix, string(relayercosmos.AppType), string(osmosis.AppType))
+	nameGaiaFriendless := BuildPrefixedAppName(prefix, string(gaiadfriendless.AppType))
 
 	gaiaApp := gaiad.New(cosmoschain.AppConfig{
 		Name:            nameGaia,
@@ -211,11 +213,22 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		PeeredChain:           osmosisApp,
 	})
 
+	gaiaFriendlessApp := gaiadfriendless.New(cosmoschain.AppConfig{
+		Name:            nameGaiaFriendless,
+		HomeDir:         filepath.Join(f.config.AppDir, nameGaiaFriendless),
+		ChainID:         gaiadfriendless.DefaultChainID,
+		AppInfo:         f.spec.DescribeApp(gaiadfriendless.AppType, nameGaiaFriendless),
+		Ports:           gaiadfriendless.DefaultPorts,
+		RelayerMnemonic: gaiadfriendless.RelayerMnemonic,
+		FundingMnemonic: gaiadfriendless.FundingMnemonic,
+	})
+
 	return infra.AppSet{
 		gaiaApp,
 		osmosisApp,
 		relayerGaiaApp,
 		relayerOsmosisApp,
+		gaiaFriendlessApp,
 	}
 }
 
