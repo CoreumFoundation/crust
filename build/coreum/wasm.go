@@ -22,6 +22,7 @@ import (
 
 // Smart contract names.
 const (
+	WASMAuthz       = "authz"
 	WASMBankSend    = "bank-send"
 	WASMFT          = "ft"
 	WASMNFT         = "nft"
