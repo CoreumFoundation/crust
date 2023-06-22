@@ -35,6 +35,20 @@ const (
 	WasmIBCDir     = repoPath + "/integration-tests/ibc/testdata/wasm"
 )
 
+// CompileModulesSmartContracts compiles modules smart contracts.
+func CompileModulesSmartContracts(ctx context.Context, deps build.DepsFunc) error {
+	deps(ensureRepo)
+
+	return compileWasmDir(WasmModulesDir, deps)
+}
+
+// CompileIBCSmartContracts compiles ibc smart contracts.
+func CompileIBCSmartContracts(ctx context.Context, deps build.DepsFunc) error {
+	deps(ensureRepo)
+
+	return compileWasmDir(WasmIBCDir, deps)
+}
+
 // CompileAllSmartContracts compiles all th smart contracts.
 func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
