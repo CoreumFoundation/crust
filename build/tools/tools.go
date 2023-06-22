@@ -138,7 +138,7 @@ var tools = map[Name]Tool{
 	// https://github.com/CosmWasm/wasmvm/releases
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	LibWASMMuslC: {
-		Version: "v1.1.1",
+		Version: "v1.1.2",
 		Sources: Sources{
 			PlatformDockerAMD64: {
 				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.2/libwasmvm_muslc.x86_64.a",
