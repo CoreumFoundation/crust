@@ -24,6 +24,12 @@ const (
 	UbuntuImage = "ubuntu:22.04"
 )
 
+// Label used to tag docker resources created by crust.
+const (
+	LabelKey   = "com.coreum.crust"
+	LabelValue = "crust"
+)
+
 // Action is the action to take after building the image.
 type Action int
 
@@ -119,7 +125,12 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 
 // getTagsForDockerImage returns params for further use in "docker build" command.
 func getDockerBuildParams(ctx context.Context, input dockerBuildParamsInput) []string {
-	params := []string{"buildx", "build", "--builder", "crust"}
+	params := []string{
+		"buildx",
+		"build",
+		"--builder", "crust",
+		"--label", LabelKey + "=" + LabelValue,
+	}
 
 	switch input.action {
 	case ActionLoad:

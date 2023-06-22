@@ -59,6 +59,7 @@ var Commands = map[string]build.CommandFunc{
 	"wasm/ft":                                coreum.CompileSmartContract(coreum.WASMFT),
 	"wasm/nft":                               coreum.CompileSmartContract(coreum.WASMNFT),
 	"wasm/simple-state":                      coreum.CompileSmartContract(coreum.WASMSimpleState),
+	"remove":                                 crust.Remove,
 }
 
 func tidy(ctx context.Context, deps build.DepsFunc) error {
