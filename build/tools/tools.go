@@ -141,15 +141,15 @@ var tools = map[Name]Tool{
 		Version: "v1.1.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:6e4de7ba9bad4ae9679c7f9ecf7e283dd0160e71567c6a7be6ae47c81ebe7f32",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.2/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:e0a0955815a23c139d42781f1cc70beffa916aa74fe649e5c69ee7e95ff13b6b",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:9ecb037336bd56076573dc18c26631a9d2099a7f2b40dc04b6cae31ffb4c8f9a",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.2/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:77b41e65f6c3327d910a7f9284538570727e380ab49bc3c88c8d4053811d5209",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
 				},
