@@ -43,6 +43,7 @@ func Lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 		return err
 	}
 	if !isClean {
+		// fmt.Println is used intentionally here, because logger escapes special characters producing unreadable output
 		fmt.Println("git status:")
 		fmt.Println(dirtyContent)
 		return errors.Errorf("git status of repository '%s' is not empty", filepath.Base(repoPath))
