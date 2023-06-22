@@ -135,9 +135,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 					"-osmosis-funding-mnemonic", osmosisApp.AppConfig().FundingMnemonic,
 				)
 			}
-		case testGroupFaucet:
-			fullArgs = append(fullArgs, "-coreum-rpc-address", infra.JoinNetAddr("http", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC))
 
+		case testGroupFaucet:
 			faucetApp := appSet.FindRunningAppByName(string(faucet.AppType))
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
