@@ -74,7 +74,6 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
 		"-test.v", "-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
 		"-coreum-grpc-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
-		"-coreum-rpc-address", infra.JoinNetAddr("http", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC),
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
@@ -110,6 +109,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			}
 
 			if onlyTestGroup == testGroupCoreumIBC {
+				fullArgs = append(fullArgs, "-coreum-rpc-address", infra.JoinNetAddr("http", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC))
+
 				gaiaNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
 				if gaiaNode == nil {
 					return errors.New("no running ibc gaia app found")
@@ -135,6 +136,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				)
 			}
 		case testGroupFaucet:
+			fullArgs = append(fullArgs, "-coreum-rpc-address", infra.JoinNetAddr("http", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC))
+
 			faucetApp := appSet.FindRunningAppByName(string(faucet.AppType))
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
