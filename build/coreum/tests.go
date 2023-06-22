@@ -43,9 +43,13 @@ func BuildAllIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 func BuildIntegrationTests(name string) build.CommandFunc {
 	return func(ctx context.Context, deps build.DepsFunc) error {
 		prerequisites := []build.CommandFunc{golang.EnsureGo, ensureRepo}
-		if name == TestModules {
-			prerequisites = append(prerequisites, CompileAllSmartContracts)
+		switch name {
+		case TestModules:
+			prerequisites = append(prerequisites, CompileModulesSmartContracts)
+		case TestIBC:
+			prerequisites = append(prerequisites, CompileIBCSmartContracts)
 		}
+
 		deps(prerequisites...)
 
 		return golang.BuildTests(ctx, golang.TestBuildConfig{
