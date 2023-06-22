@@ -20,10 +20,8 @@ import (
 )
 
 const (
-	cosmosSdkModule  = "github.com/cosmos/cosmos-sdk"
-	cosmWasmModule   = "github.com/CosmWasm/wasmd"
-	tenderMintModule = "github.com/tendermint/tendermint"
-	cometBftModule   = "github.com/cometbft/cometbft"
+	cosmosSdkModule = "github.com/cosmos/cosmos-sdk"
+	cosmWasmModule  = "github.com/CosmWasm/wasmd"
 
 	protoPathKey    = "--proto_path"
 	protoDocsOutKey = "--doc_out"
@@ -39,13 +37,23 @@ func Proto(ctx context.Context, deps build.DepsFunc) error {
 
 	deps(coreum.Tidy)
 
-	moduleToVersion, err := getModuleVersions(deps)
+	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
+	moduleToVersion, err := getModuleVersions(deps, []string{
+		cosmosSdkModule,
+		cosmWasmModule,
+	})
 	if err != nil {
 		log.Error("failed to get modules versions", zap.Error(err))
 		return err
 	}
 
-	err = executeProtocCommand(ctx, deps, getModulePaths(moduleToVersion))
+	protoPathList, err := getProtoDirs(moduleToVersion)
+	if err != nil {
+		log.Error("failed to get paths to proto dirs", zap.Error(err))
+		return err
+	}
+
+	err = executeProtocCommand(ctx, deps, protoPathList)
 	if err != nil {
 		log.Error("failed to execute protoc command", zap.Error(err))
 		return err
@@ -54,52 +62,56 @@ func Proto(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-func getModuleVersions(deps build.DepsFunc) (map[string]string, error) {
-	var moduleToVersion = map[string]string{
-		cosmosSdkModule:  "",
-		tenderMintModule: "",
-		cosmWasmModule:   "",
-	}
+// getModuleVersions returns a map[moduleName]version.
+func getModuleVersions(deps build.DepsFunc, modules []string) (map[string]string, error) {
+	moduleToVersion := make(map[string]string)
 
-	// Get versions for specific modules from coreum/go.mod.
 	var version string
 	var err error
-	for moduleName := range moduleToVersion {
-		version, err = golang.GetModuleVersion(deps, coreum.RepoPath, moduleName)
+	for _, module := range modules {
+		version, err = golang.GetModuleVersion(deps, coreum.RepoPath, module)
 		if err != nil {
 			return nil, err
 		}
 
-		moduleToVersion[moduleName] = version
+		moduleToVersion[module] = version
 	}
 
 	return moduleToVersion, nil
 }
 
-// getModulePaths copies third-party proto files to coreum/third_party/proto dir.
-func getModulePaths(modulesMap map[string]string) map[string]string {
+// getProtoDirs returns a list of absolute path to needed proto directories.
+func getProtoDirs(modulesMap map[string]string) ([]string, error) {
 	goPath := os.Getenv("GOPATH")
 	if goPath == "" {
 		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
 	}
 
+	absPath, err := filepath.Abs(coreum.RepoPath)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []string{
+		filepath.Join(absPath, "proto"),
+	}
+
 	for module, version := range modulesMap {
 		switch module {
 		case cosmosSdkModule:
-			// example: $GOPATH/pkg/mod/github.com/cosmos/cosmos-sdk@v0.45.16/proto.
-			modulesMap[module] = filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", module, version), "proto")
-		// TODO tune it when we complete migration from tendermint to cometbft
-		case tenderMintModule:
-			modulesMap[module] = filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", cometBftModule, version), "proto")
+			// path example: $GOPATH/pkg/mod/github.com/cosmos/cosmos-sdk@v0.45.16/proto.
+			result = append(result, filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", module, version), "proto"))
+			result = append(result, filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", module, version), "third_party", "proto"))
 		case cosmWasmModule:
-			modulesMap[module] = filepath.Join(goPath, "pkg", "mod", "github.com", "!cosm!wasm", fmt.Sprintf("wasmd@%s", version), "proto")
+			result = append(result, filepath.Join(goPath, "pkg", "mod", "github.com", "!cosm!wasm", fmt.Sprintf("wasmd@%s", version), "proto"))
 		}
 	}
 
-	return modulesMap
+	return result, nil
 }
 
-func executeProtocCommand(ctx context.Context, deps build.DepsFunc, moduleToPath map[string]string) error {
+// executeProtocCommand ensures needed dependencies, composes the protoc command and executes it.
+func executeProtocCommand(ctx context.Context, deps build.DepsFunc, pathList []string) error {
 	err := golang.EnsureProtoc(ctx, deps)
 	if err != nil {
 		return err
@@ -113,14 +125,8 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, moduleToPath
 	command := []string{
 		`protoc`,
 	}
-
 	command = append(command, fmt.Sprintf("%s=%s", protoDocsOutKey, "docs"))
 	command = append(command, fmt.Sprintf("%s=%s,api.md", protoDOcsOptKey, filepath.Join("docs", "protodoc-markdown.tmpl")))
-
-	pathList, err := collectAllPaths(moduleToPath)
-	if err != nil {
-		return err
-	}
 
 	for _, path := range pathList {
 		command = append(command, protoPathKey, fmt.Sprintf("\"%s\"", path))
@@ -139,24 +145,7 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, moduleToPath
 	return libexec.Exec(ctx, cmd)
 }
 
-func collectAllPaths(moduleToPath map[string]string) ([]string, error) {
-	absPath, err := filepath.Abs(coreum.RepoPath)
-	if err != nil {
-		return nil, err
-	}
-
-	pathList := []string{
-		filepath.Join(absPath, "proto"),
-		filepath.Join(absPath, "third_party", "proto"),
-	}
-
-	for _, path := range moduleToPath {
-		pathList = append(pathList, path)
-	}
-
-	return pathList, nil
-}
-
+// findAllProtoFiles returns a list of absolute paths to each proto file within the given directories.
 func findAllProtoFiles(pathList []string) (finalResult []string, err error) {
 	var iterationResult []string
 	for _, path := range pathList {
