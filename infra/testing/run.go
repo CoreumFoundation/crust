@@ -21,6 +21,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
+	"github.com/CoreumFoundation/crust/infra/apps/gaiadfriendless"
 	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
@@ -109,6 +110,9 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			}
 
 			if onlyTestGroup == testGroupCoreumIBC {
+
+				// *** Gaia ***
+
 				gaiaNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
 				if gaiaNode == nil {
 					return errors.New("no running ibc gaia app found")
@@ -120,6 +124,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 					"-gaia-funding-mnemonic", gaiaApp.AppConfig().FundingMnemonic,
 				)
 
+				// *** Osmosis ***
+
 				osmosisNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(osmosis.AppType)))
 				if osmosisNode == nil {
 					return errors.New("no running ibc osmosis app found")
@@ -129,6 +135,19 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				fullArgs = append(fullArgs,
 					"-osmosis-address", infra.JoinNetAddr("", osmosisApp.Info().HostFromHost, osmosisApp.Ports().GRPC),
 					"-osmosis-funding-mnemonic", osmosisApp.AppConfig().FundingMnemonic,
+				)
+
+				// *** Friendless Gaia ***
+
+				friendlessGaiaNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiadfriendless.AppType)))
+				if friendlessGaiaNode == nil {
+					return errors.New("no running ibc friendless gaia app found")
+				}
+				friendlessGaiaApp := friendlessGaiaNode.(cosmoschain.BaseApp)
+
+				fullArgs = append(fullArgs,
+					"-friendless-gaia-address", infra.JoinNetAddr("", friendlessGaiaApp.Info().HostFromHost, friendlessGaiaApp.Ports().GRPC),
+					"-friendless-gaia-funding-mnemonic", friendlessGaiaApp.AppConfig().FundingMnemonic,
 				)
 			}
 		case testGroupFaucet:
