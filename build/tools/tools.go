@@ -664,6 +664,11 @@ func unpackZip(reader io.Reader, path string) error {
 				return err
 			}
 		} else {
+			err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm)
+			if err != nil {
+				return err
+			}
+
 			// Create the file in the destination path
 			outputFile, err := os.Create(destPath)
 			if err != nil {
