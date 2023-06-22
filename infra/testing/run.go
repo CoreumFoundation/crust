@@ -110,7 +110,6 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			}
 
 			if onlyTestGroup == testGroupCoreumIBC {
-
 				// *** Gaia ***
 
 				gaiaNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
