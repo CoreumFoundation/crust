@@ -16,10 +16,10 @@ const (
 	binaryName     = "cored"
 	repoURL        = "https://github.com/CoreumFoundation/coreum.git"
 	repoName       = "coreum"
-	// RepoPath is relative path to coreum from crust.
-	RepoPath    = "../" + repoName
+	// repoPath is relative path to coreum from crust.
+	repoPath    = "../" + repoName
 	binaryPath  = "bin/" + binaryName
-	testsDir    = RepoPath + "/integration-tests"
+	testsDir    = repoPath + "/integration-tests"
 	testsBinDir = "bin/.cache/integration-tests"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
@@ -86,19 +86,19 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 // Tidy runs `go mod tidy` for coreum repo.
 func Tidy(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
-	return golang.Tidy(ctx, RepoPath, deps)
+	return golang.Tidy(ctx, repoPath, deps)
 }
 
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo, Generate, CompileAllSmartContracts)
-	return golang.Lint(ctx, RepoPath, deps)
+	return golang.Lint(ctx, repoPath, deps)
 }
 
 // Test run unit tests in coreum repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
-	return golang.Test(ctx, RepoPath, deps)
+	return golang.Test(ctx, repoPath, deps)
 }
 
 func ensureRepo(ctx context.Context, deps build.DepsFunc) error {
@@ -116,12 +116,12 @@ func (p params) Commit() string {
 }
 
 func coredVersionParams(ctx context.Context, buildTags []string) (params, error) {
-	hash, err := git.DirtyHeadHash(ctx, RepoPath)
+	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
 		return nil, err
 	}
 
-	version, err := git.VersionFromTag(ctx, RepoPath)
+	version, err := git.VersionFromTag(ctx, repoPath)
 	if err != nil {
 		return nil, err
 	}

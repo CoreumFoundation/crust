@@ -10,5 +10,5 @@ import (
 // Generate regenerates everything in coreum.
 func Generate(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
-	return golang.Generate(ctx, RepoPath, deps)
+	return golang.Generate(ctx, repoPath, deps)
 }

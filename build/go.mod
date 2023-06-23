@@ -13,7 +13,6 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum v1.0.1-0.20230413103107-4d8b6d562037
 	github.com/CoreumFoundation/coreum-tools v0.4.0
-	github.com/mholt/archiver/v3 v3.5.1
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.37.0
 	github.com/stretchr/testify v1.8.1

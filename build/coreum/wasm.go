@@ -28,7 +28,7 @@ const (
 	WASMSimpleState = "simple-state"
 )
 
-const wasmDir = RepoPath + "/integration-tests/modules/testdata/wasm"
+const wasmDir = repoPath + "/integration-tests/modules/testdata/wasm"
 
 // CompileAllSmartContracts compiles all th smart contracts.
 func CompileAllSmartContracts(ctx context.Context, deps build.DepsFunc) error {

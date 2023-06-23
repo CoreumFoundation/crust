@@ -73,16 +73,6 @@ func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
 	return tools.EnsureTool(ctx, tools.GolangCI)
 }
 
-// EnsureProtoc ensures that protoc is available.
-func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureTool(ctx, tools.Protoc)
-}
-
-// EnsureProtocGenDoc ensures that protoc-gen-doc is available.
-func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureTool(ctx, tools.ProtocGenDoc)
-}
-
 // Build builds go binary.
 func Build(ctx context.Context, config BinaryBuildConfig) error {
 	if config.Platform.OS == tools.DockerOS {
@@ -133,10 +123,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 
 	srcDir := must.String(filepath.Abs(".."))
-	goPath := os.Getenv("GOPATH")
-	if goPath == "" {
-		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
-	}
+	goPath := GetGopath()
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -369,8 +356,25 @@ func containsGoCode(path string) (bool, error) {
 	return false, errors.WithStack(err)
 }
 
-// GetModuleVersion returns a version from go.mod for the specified module within the given repo.
-func GetModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string, error) {
+// GetModuleVersions returns a map[moduleName]version with version from go.mod for the specified module within the given repo.
+func GetModuleVersions(deps build.DepsFunc, repoPath string, modules []string) (map[string]string, error) {
+	moduleToVersion := make(map[string]string, len(modules))
+
+	var version string
+	var err error
+	for _, module := range modules {
+		version, err = getModuleVersion(deps, repoPath, module)
+		if err != nil {
+			return nil, err
+		}
+
+		moduleToVersion[module] = version
+	}
+
+	return moduleToVersion, nil
+}
+
+func getModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string, error) {
 	deps(EnsureGo)
 
 	args := []string{
@@ -393,4 +397,14 @@ func GetModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string,
 	}
 
 	return parts[1], nil
+}
+
+// GetGopath returns $GOPATH.
+func GetGopath() string {
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
+	}
+
+	return goPath
 }

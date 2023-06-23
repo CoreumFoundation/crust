@@ -344,6 +344,16 @@ func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
+// EnsureProtoc ensures that protoc is available.
+func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
+	return EnsureTool(ctx, Protoc)
+}
+
+// EnsureProtocGenDoc ensures that protoc-gen-doc is available.
+func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
+	return EnsureTool(ctx, ProtocGenDoc)
+}
+
 // EnsureTool ensures that tool is installed and available in bin folder.
 func EnsureTool(ctx context.Context, tool Name) error {
 	info, exists := tools[tool]
@@ -615,34 +625,34 @@ func unpackZip(reader io.Reader, path string) error {
 	// Create a temporary file
 	tempFile, err := os.CreateTemp("", "zipfile")
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer os.Remove(tempFile.Name()) //nolint: errcheck
 
 	// Copy the contents of the reader to the temporary file
 	_, err = io.Copy(tempFile, reader)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	// Open the temporary file for reading
 	file, err := os.Open(tempFile.Name())
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer file.Close()
 
 	// Get the file information to obtain its size
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	fileSize := fileInfo.Size()
 
 	// Use the file as a ReaderAt to unpack the zip file
 	zipReader, err := zip.NewReader(file, fileSize)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
 	// Process the files in the zip archive
@@ -650,36 +660,36 @@ func unpackZip(reader io.Reader, path string) error {
 		// Open each file in the archive
 		rc, err := zf.Open()
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		defer rc.Close()
 
 		// Construct the destination path for the file
 		destPath := filepath.Join(path, zf.Name)
 
-		if zf.FileInfo().IsDir() {
+		if zf.FileInfo().IsDir() { //nolint: nestif
 			// Create directories if they don't exist
 			err := os.MkdirAll(destPath, os.ModePerm)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		} else {
 			err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 
 			// Create the file in the destination path
 			outputFile, err := os.Create(destPath)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 			defer outputFile.Close()
 
 			// Copy the file contents
 			_, err = io.Copy(outputFile, rc)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
 		}
 	}
@@ -777,25 +787,4 @@ func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...
 // Path returns path to the installed binary.
 func Path(binary string, platform Platform) string {
 	return must.String(filepath.Abs(filepath.Join(CacheDir(), platform.String(), binary)))
-}
-
-// ListFilesByPath returns the array of files with the specific extension within the given path.
-func ListFilesByPath(path, extension string) (fileList []string, err error) {
-	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		if strings.HasSuffix(path, extension) {
-			fileList = append(fileList, path)
-		}
-
-		return nil
-	})
-
-	return fileList, err
 }

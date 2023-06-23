@@ -14,7 +14,7 @@ import (
 
 // ReleaseCored releases cored binary for amd64 and arm64 to be published inside the release.
 func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
-	clean, _, err := git.StatusClean(ctx, RepoPath)
+	clean, _, err := git.StatusClean(ctx, repoPath)
 	if err != nil {
 		return err
 	}
@@ -22,7 +22,7 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 		return errors.New("released commit contains uncommitted changes")
 	}
 
-	version, err := git.VersionFromTag(ctx, RepoPath)
+	version, err := git.VersionFromTag(ctx, repoPath)
 	if err != nil {
 		return err
 	}
