@@ -74,7 +74,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
 		"-test.v", "-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
-		"-coreum-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
+		"-coreum-grpc-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
 	}
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
@@ -110,6 +110,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 			}
 
 			if onlyTestGroup == testGroupCoreumIBC {
+				fullArgs = append(fullArgs, "-coreum-rpc-address", infra.JoinNetAddr("http", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC))
+
 				// *** Gaia ***
 
 				gaiaNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
@@ -119,7 +121,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				gaiaApp := gaiaNode.(cosmoschain.BaseApp)
 
 				fullArgs = append(fullArgs,
-					"-gaia-address", infra.JoinNetAddr("", gaiaApp.Info().HostFromHost, gaiaApp.Ports().GRPC),
+					"-gaia-grpc-address", infra.JoinNetAddr("", gaiaApp.Info().HostFromHost, gaiaApp.Ports().GRPC),
+					"-gaia-rpc-address", infra.JoinNetAddr("http", gaiaApp.Info().HostFromHost, gaiaApp.Ports().RPC),
 					"-gaia-funding-mnemonic", gaiaApp.AppConfig().FundingMnemonic,
 				)
 
@@ -132,7 +135,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				osmosisApp := osmosisNode.(cosmoschain.BaseApp)
 
 				fullArgs = append(fullArgs,
-					"-osmosis-address", infra.JoinNetAddr("", osmosisApp.Info().HostFromHost, osmosisApp.Ports().GRPC),
+					"-osmosis-grpc-address", infra.JoinNetAddr("", osmosisApp.Info().HostFromHost, osmosisApp.Ports().GRPC),
+					"-osmosis-rpc-address", infra.JoinNetAddr("http", osmosisApp.Info().HostFromHost, osmosisApp.Ports().RPC),
 					"-osmosis-funding-mnemonic", osmosisApp.AppConfig().FundingMnemonic,
 				)
 
@@ -145,8 +149,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				friendlessGaiaApp := friendlessGaiaNode.(cosmoschain.BaseApp)
 
 				fullArgs = append(fullArgs,
-					"-friendless-gaia-address", infra.JoinNetAddr("", friendlessGaiaApp.Info().HostFromHost, friendlessGaiaApp.Ports().GRPC),
-					"-friendless-gaia-funding-mnemonic", friendlessGaiaApp.AppConfig().FundingMnemonic,
+					"-friendless-gaia-grpc-address", infra.JoinNetAddr("", friendlessGaiaApp.Info().HostFromHost, friendlessGaiaApp.Ports().GRPC),
+					"-friendless-gaia-rpc-address", infra.JoinNetAddr("http", friendlessGaiaApp.Info().HostFromHost, friendlessGaiaApp.Ports().RPC),
 				)
 			}
 		case testGroupFaucet:

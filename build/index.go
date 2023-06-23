@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/coreum"
@@ -55,10 +56,13 @@ var Commands = map[string]build.CommandFunc{
 	"tidy/crust":                             crust.Tidy,
 	"tidy/faucet":                            faucet.Tidy,
 	"wasm":                                   coreum.CompileAllSmartContracts,
-	"wasm/bank-send":                         coreum.CompileSmartContract(coreum.WASMBankSend),
-	"wasm/ft":                                coreum.CompileSmartContract(coreum.WASMFT),
-	"wasm/nft":                               coreum.CompileSmartContract(coreum.WASMNFT),
-	"wasm/simple-state":                      coreum.CompileSmartContract(coreum.WASMSimpleState),
+	"wasm/authz":                             coreum.CompileSmartContract(filepath.Join(coreum.WasmModulesDir, coreum.WASMAuthz)),
+	"wasm/bank-send":                         coreum.CompileSmartContract(filepath.Join(coreum.WasmModulesDir, coreum.WASMBankSend)),
+	"wasm/ft":                                coreum.CompileSmartContract(filepath.Join(coreum.WasmModulesDir, coreum.WASMFT)),
+	"wasm/nft":                               coreum.CompileSmartContract(filepath.Join(coreum.WasmModulesDir, coreum.WASMNFT)),
+	"wasm/simple-state":                      coreum.CompileSmartContract(filepath.Join(coreum.WasmModulesDir, coreum.WASMSimpleState)),
+	"wasm/ibc-transfer":                      coreum.CompileSmartContract(filepath.Join(coreum.WasmIBCDir, coreum.WASMIBCTransfer)),
+	"wasm/ibc-call":                          coreum.CompileSmartContract(filepath.Join(coreum.WasmIBCDir, coreum.WASMIBCCall)),
 }
 
 func tidy(ctx context.Context, deps build.DepsFunc) error {
