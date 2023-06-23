@@ -135,7 +135,7 @@ func (p Prometheus) Deployment() infra.Deployment {
 				for _, node := range p.config.CoredNodes {
 					containers = append(containers, node)
 				}
-				// determine whether the dbjuno is provided
+				// determine whether the bdjuno is provided
 				if p.config.BDJuno.Name() != "" {
 					containers = append(containers, p.config.BDJuno)
 				}
@@ -196,7 +196,7 @@ func (p Prometheus) saveConfigFile() error {
 		Nodes: nodesConfig,
 	}
 
-	// determine whether the dbjuno is provided
+	// determine whether the bdjuno is provided
 	if p.config.BDJuno.Name() != "" {
 		configArgs.DBJuno = hostPortConfig{
 			Host: p.config.BDJuno.Info().HostFromContainer,
