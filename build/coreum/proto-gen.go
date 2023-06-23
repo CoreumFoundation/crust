@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/crust/build/golang"
@@ -46,9 +48,9 @@ func Proto(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-// getProtoDirs returns a list of absolute path to needed proto directories.
+// getProtoDirs returns a list of absolute paths to needed proto directories.
 func getProtoDirs(moduleMap map[string]string) ([]string, error) {
-	goPath := golang.GetGopath()
+	goPath := golang.GetGoPath()
 
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
@@ -59,11 +61,17 @@ func getProtoDirs(moduleMap map[string]string) ([]string, error) {
 		filepath.Join(absPath, "proto"),
 	}
 
-	cosmosSdkVersion := moduleMap[cosmosSdkModule]
+	cosmosSdkVersion, ok := moduleMap[cosmosSdkModule]
+	if !ok {
+		return nil, errors.New("module entry does not exist")
+	}
 	result = append(result, filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", cosmosSdkModule, cosmosSdkVersion), "proto"))
 	result = append(result, filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", cosmosSdkModule, cosmosSdkVersion), "third_party", "proto"))
 
-	cosmWasmVersion := moduleMap[cosmWasmModule]
+	cosmWasmVersion, ok := moduleMap[cosmWasmModule]
+	if !ok {
+		return nil, errors.New("module entry does not exist")
+	}
 	result = append(result, filepath.Join(goPath, "pkg", "mod", "github.com", "!cosm!wasm", fmt.Sprintf("wasmd@%s", cosmWasmVersion), "proto"))
 
 	return result, nil
@@ -79,7 +87,7 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, pathList []s
 	}
 
 	for _, path := range pathList {
-		args = append(args, "--proto_path", fmt.Sprintf("\"%s\"", path))
+		args = append(args, "--proto_path", path)
 	}
 
 	allProtoFiles, err := findAllProtoFiles(pathList)
@@ -90,10 +98,6 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, pathList []s
 	args = append(args, allProtoFiles...)
 
 	cmd := exec.Command(tools.Path("bin/protoc", tools.PlatformLocal), args...)
-
-	// Replace cmd := exec.Command(tools.Path("bin/protoc", tools.PlatformLocal), args...) with the following lines to get working code.
-	// args = append([]string{"protoc"}, args...)
-	// cmd := exec.Command("sh", "-c", strings.Join(args, " "))
 
 	cmd.Dir = repoPath
 

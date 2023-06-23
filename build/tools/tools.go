@@ -667,24 +667,27 @@ func unpackZip(reader io.Reader, path string) error {
 		// Construct the destination path for the file
 		destPath := filepath.Join(path, zf.Name)
 
-		if !zf.FileInfo().IsDir() {
-			err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm)
-			if err != nil {
-				return errors.WithStack(err)
-			}
+		// skip empty dirs
+		if zf.FileInfo().IsDir() {
+			continue
+		}
 
-			// Create the file in the destination path
-			outputFile, err := os.Create(destPath)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			defer outputFile.Close()
+		err = os.MkdirAll(filepath.Dir(destPath), os.ModePerm)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 
-			// Copy the file contents
-			_, err = io.Copy(outputFile, rc)
-			if err != nil {
-				return errors.WithStack(err)
-			}
+		// Create the file in the destination path
+		outputFile, err := os.Create(destPath)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer outputFile.Close()
+
+		// Copy the file contents
+		_, err = io.Copy(outputFile, rc)
+		if err != nil {
+			return errors.WithStack(err)
 		}
 	}
 
