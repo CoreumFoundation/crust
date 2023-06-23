@@ -62,6 +62,8 @@ linters:
     - maligned
 
 linters-settings:
+  exclude-rules:
+    - "many empty lines at the end of file '../coreum/docs/api.md'"
   nakedret:
     # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
     max-func-lines: 1
