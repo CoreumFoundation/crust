@@ -73,7 +73,6 @@ jobs:
         with:
           repository: CoreumFoundation/coreum
           path: coreum
-          ref: dzmitryhil/wasm-simple-ibc #TODO(dzmitryhil) remove once we merge the coreum
       - name: Checkout faucet
         uses: actions/checkout@v3
         with:
