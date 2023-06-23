@@ -123,7 +123,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 
 	srcDir := must.String(filepath.Abs(".."))
-	goPath := GetGoPath()
+	goPath := GoPath()
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -399,8 +399,8 @@ func getModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string,
 	return parts[1], nil
 }
 
-// GetGoPath returns $GOPATH.
-func GetGoPath() string {
+// GoPath returns $GOPATH.
+func GoPath() string {
 	goPath := os.Getenv("GOPATH")
 	if goPath == "" {
 		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")

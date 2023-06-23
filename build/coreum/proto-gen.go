@@ -50,7 +50,7 @@ func Proto(ctx context.Context, deps build.DepsFunc) error {
 
 // getProtoDirs returns a list of absolute paths to needed proto directories.
 func getProtoDirs(moduleMap map[string]string) ([]string, error) {
-	goPath := golang.GetGoPath()
+	goPath := golang.GoPath()
 
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
