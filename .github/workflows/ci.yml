@@ -79,7 +79,6 @@ jobs:
         with:
           repository: CoreumFoundation/faucet
           path: faucet
-          ref: dzmitryhil/rename-test-args #TODO(dzmitryhil) remove once we merge the faucet
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
