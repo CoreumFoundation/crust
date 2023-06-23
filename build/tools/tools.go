@@ -667,13 +667,7 @@ func unpackZip(reader io.Reader, path string) error {
 		// Construct the destination path for the file
 		destPath := filepath.Join(path, zf.Name)
 
-		if zf.FileInfo().IsDir() { //nolint: nestif
-			// Create directories if they don't exist
-			err := os.MkdirAll(destPath, os.ModePerm)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		} else {
+		if !zf.FileInfo().IsDir() {
 			err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm)
 			if err != nil {
 				return errors.WithStack(err)
