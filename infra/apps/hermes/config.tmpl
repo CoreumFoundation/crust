@@ -114,7 +114,7 @@ account_prefix = '{{ .CoreumAccountPrefix }}'
 key_name = 'coreum-key'
 store_prefix = 'ibc'
 default_gas = 100000
-max_gas = 400000
+max_gas = 4000000
 gas_price = { price = {{ .CoreumGasPrice.Amount }}, denom = '{{ .CoreumGasPrice.Denom }}' }
 gas_multiplier = 1.1
 max_msg_num = 30
@@ -135,7 +135,7 @@ account_prefix = '{{ .PeerAccountPrefix }}'
 key_name = 'peer-key'
 store_prefix = 'ibc'
 default_gas = 100000
-max_gas = 400000
+max_gas = 4000000
 gas_price = { price = {{ .PeerGasPrice.Amount }}, denom = '{{ .PeerGasPrice.Denom }}' }
 gas_multiplier = 1.1
 max_msg_num = 30
