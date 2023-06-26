@@ -2,6 +2,7 @@ package tools
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
@@ -34,6 +35,8 @@ const (
 	RelayerCosmos Name = "relayercosmos"
 	Hermes        Name = "hermes"
 	CoredV100     Name = "cored-v1.0.0"
+	Protoc        Name = "protoc"
+	ProtocGenDoc  Name = "protoc-gen-doc"
 )
 
 var tools = map[Name]Tool{
@@ -138,18 +141,18 @@ var tools = map[Name]Tool{
 	// https://github.com/CosmWasm/wasmvm/releases
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	LibWASMMuslC: {
-		Version: "v1.1.1",
+		Version: "v1.1.2",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:6e4de7ba9bad4ae9679c7f9ecf7e283dd0160e71567c6a7be6ae47c81ebe7f32",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.2/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:e0a0955815a23c139d42781f1cc70beffa916aa74fe649e5c69ee7e95ff13b6b",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.1/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:9ecb037336bd56076573dc18c26631a9d2099a7f2b40dc04b6cae31ffb4c8f9a",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.2/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:77b41e65f6c3327d910a7f9284538570727e380ab49bc3c88c8d4053811d5209",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
 				},
@@ -238,6 +241,50 @@ var tools = map[Name]Tool{
 			},
 		},
 	},
+
+	//https://github.com/protocolbuffers/protobuf/releases
+	Protoc: {
+		Version: "v23.3",
+		Local:   true,
+		Sources: Sources{
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-linux-x86_64.zip",
+				Hash: "sha256:8f5abeb19c0403a7bf6e48f4fa1bb8b97724d8701f6823a327922df8cc1da4f5",
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-osx-x86_64.zip",
+				Hash: "sha256:82becd1c2dc887a7b3108981d5d6bb5f5b66e81d7356e3e2ab2f36c7b346914f",
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-osx-aarch_64.zip",
+				Hash: "sha256:edb432e4990c23fea1040a2a76b87ab0f738e384cd25d650cc35683603fe8cdc",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/protoc": "bin/protoc",
+		},
+	},
+	ProtocGenDoc: {
+		Version: "v1.5.1",
+		Local:   true,
+		Sources: Sources{
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_linux_amd64.tar.gz",
+				Hash: "sha256:47cd72b07e6dab3408d686a65d37d3a6ab616da7d8b564b2bd2a2963a72b72fd",
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_amd64.tar.gz",
+				Hash: "sha256:f429e5a5ddd886bfb68265f2f92c1c6a509780b7adcaf7a8b3be943f28e144ba",
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_arm64.tar.gz",
+				Hash: "sha256:6e8c737d9a67a6a873a3f1d37ed8bb2a0a9996f6dcf6701aa1048c7bd798aaf9",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/protoc-gen-doc": "protoc-gen-doc",
+		},
+	},
 }
 
 // Name is the type used for defining tool names.
@@ -295,6 +342,16 @@ func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 		}
 	}
 	return nil
+}
+
+// EnsureProtoc ensures that protoc is available.
+func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
+	return EnsureTool(ctx, Protoc)
+}
+
+// EnsureProtocGenDoc ensures that protoc-gen-doc is available.
+func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
+	return EnsureTool(ctx, ProtocGenDoc)
 }
 
 // EnsureTool ensures that tool is installed and available in bin folder.
@@ -485,6 +542,8 @@ func save(url string, reader io.Reader, path string) error {
 			return errors.WithStack(err)
 		}
 		return untar(reader, path)
+	case strings.HasSuffix(url, ".zip"):
+		return unpackZip(reader, path)
 	default:
 		f, err := os.OpenFile(filepath.Join(path, filepath.Base(url)), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
 		if err != nil {
@@ -560,6 +619,79 @@ func untar(reader io.Reader, path string) error {
 			return errors.Errorf("unsupported file type: %d", header.Typeflag)
 		}
 	}
+}
+
+func unpackZip(reader io.Reader, path string) error {
+	// Create a temporary file
+	tempFile, err := os.CreateTemp("", "zipfile")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer os.Remove(tempFile.Name()) //nolint: errcheck
+
+	// Copy the contents of the reader to the temporary file
+	_, err = io.Copy(tempFile, reader)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// Open the temporary file for reading
+	file, err := os.Open(tempFile.Name())
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer file.Close()
+
+	// Get the file information to obtain its size
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	fileSize := fileInfo.Size()
+
+	// Use the file as a ReaderAt to unpack the zip file
+	zipReader, err := zip.NewReader(file, fileSize)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// Process the files in the zip archive
+	for _, zf := range zipReader.File {
+		// Open each file in the archive
+		rc, err := zf.Open()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer rc.Close()
+
+		// Construct the destination path for the file
+		destPath := filepath.Join(path, zf.Name)
+
+		// skip empty dirs
+		if zf.FileInfo().IsDir() {
+			continue
+		}
+
+		err = os.MkdirAll(filepath.Dir(destPath), os.ModePerm)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		// Create the file in the destination path
+		outputFile, err := os.Create(destPath)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer outputFile.Close()
+
+		// Copy the file contents
+		_, err = io.Copy(outputFile, rc)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
 }
 
 // CacheDir returns path to cache directory.
