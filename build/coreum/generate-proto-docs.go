@@ -21,9 +21,9 @@ const (
 	cosmWasmModule  = "github.com/CosmWasm/wasmd"
 )
 
-// Proto collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
+// generateProtoDocs collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
 // generates documentation using above proto files + coreum/proto, and places the result to docs/src/api.md.
-func Proto(ctx context.Context, deps build.DepsFunc) error {
+func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
 	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
@@ -83,7 +83,7 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, pathList []s
 
 	args := []string{
 		fmt.Sprintf("%s=%s", "--doc_out", "docs"),
-		fmt.Sprintf("%s=%s,api.md", "--doc_opt", filepath.Join("docs", "protodoc-markdown.tmpl")),
+		fmt.Sprintf("%s=%s,api.md", "--doc_opt", filepath.Join("docs", "api.md.tmpl")),
 	}
 
 	for _, path := range pathList {

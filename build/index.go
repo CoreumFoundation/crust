@@ -40,7 +40,6 @@ var Commands = map[string]build.CommandFunc{
 	"lint/coreum":                            coreum.Lint,
 	"lint/crust":                             crust.Lint,
 	"lint/faucet":                            faucet.Lint,
-	"proto/coreum":                           coreum.Proto,
 	"release":                                release,
 	"release/cored":                          coreum.ReleaseCored,
 	"release/faucet":                         faucet.Release,
