@@ -12,7 +12,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum v1.0.1-0.20230413103107-4d8b6d562037
-	github.com/CoreumFoundation/coreum-tools v0.4.0
+	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.37.0
 	github.com/stretchr/testify v1.8.1
@@ -21,18 +21,9 @@ require (
 )
 
 require (
-	github.com/andybalholm/brotli v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
-	github.com/klauspost/compress v1.15.11 // indirect
-	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/nwaples/rardecode v1.1.0 // indirect
-	github.com/pierrec/lz4/v4 v4.1.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/ulikunitz/xz v0.5.9 // indirect
-	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/exp v0.0.0-20221019170559-20944726eadf // indirect
