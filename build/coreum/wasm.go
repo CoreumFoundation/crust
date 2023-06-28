@@ -17,6 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -146,6 +147,7 @@ func CompileSmartContract(codeDirPath string) build.CommandFunc {
 		}
 
 		cmd := exec.Command("docker", "run", "--rm",
+			"--label", docker.LabelKey+"="+docker.LabelValue,
 			"-v", codeDirAbsPath+":/code",
 			"-v", registryCachePath+":/usr/local/cargo/registry",
 			"-v", targetCachePath+":/code/target",
