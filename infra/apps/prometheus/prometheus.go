@@ -111,7 +111,7 @@ func (p Prometheus) DataSourcePort() int {
 // Deployment returns deployment of prometheus.
 func (p Prometheus) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image:     "prom/prometheus:v2.43.1",
+		Image:     "prom/prometheus:v2.45.0",
 		RunAsUser: true,
 		Name:      p.Name(),
 		Info:      p.config.AppInfo,
