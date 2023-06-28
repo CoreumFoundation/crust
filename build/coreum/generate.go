@@ -9,8 +9,7 @@ import (
 
 // Generate regenerates everything in coreum.
 func Generate(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureRepo)
-	deps(generateProtoDocs)
+	deps(ensureRepo, generateProtoDocs)
 
 	return golang.Generate(ctx, repoPath, deps)
 }

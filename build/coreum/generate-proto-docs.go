@@ -83,7 +83,7 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, pathList []s
 
 	args := []string{
 		fmt.Sprintf("%s=%s", "--doc_out", "docs"),
-		fmt.Sprintf("%s=%s,api.md", "--doc_opt", filepath.Join("docs", "api.md.tmpl")),
+		fmt.Sprintf("%s=%s,api.md", "--doc_opt", filepath.Join("docs", "api.tmpl.md")),
 	}
 
 	for _, path := range pathList {
