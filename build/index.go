@@ -63,6 +63,7 @@ var Commands = map[string]build.CommandFunc{
 	"wasm/simple-state":                      coreum.CompileSmartContract(filepath.Join(coreum.WasmModulesDir, coreum.WASMSimpleState)),
 	"wasm/ibc-transfer":                      coreum.CompileSmartContract(filepath.Join(coreum.WasmIBCDir, coreum.WASMIBCTransfer)),
 	"wasm/ibc-call":                          coreum.CompileSmartContract(filepath.Join(coreum.WasmIBCDir, coreum.WASMIBCCall)),
+	"remove":                                 crust.Remove,
 }
 
 func tidy(ctx context.Context, deps build.DepsFunc) error {

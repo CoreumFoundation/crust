@@ -22,6 +22,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -141,6 +142,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 	runArgs := []string{
 		"run", "--rm",
+		"--label", docker.LabelKey + "=" + docker.LabelValue,
 		"-v", srcDir + ":/src",
 		"-v", goPath + ":/go",
 		"-v", cacheDir + ":/crust-cache",
@@ -215,7 +217,14 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 		return image, nil
 	}
 
-	buildCmd := exec.Command("docker", "build", "--tag", image, "--tag", "crust-go-build:latest", "-")
+	buildCmd := exec.Command(
+		"docker",
+		"build",
+		"--label", docker.LabelKey+"="+docker.LabelValue,
+		"--tag", image,
+		"--tag", "crust-go-build:latest",
+		"-",
+	)
 	buildCmd.Stdin = dockerfileBuf
 
 	if err := libexec.Exec(ctx, buildCmd); err != nil {
