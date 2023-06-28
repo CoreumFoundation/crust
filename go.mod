@@ -11,7 +11,7 @@ replace github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.2
 
 require (
 	github.com/CoreumFoundation/coreum v1.0.1-0.20230616135945-0aa1db496469
-	github.com/CoreumFoundation/coreum-tools v0.4.0
+	github.com/CoreumFoundation/coreum-tools v0.4.0 // TODO(dzmitryhil) update version once tidy issue is fixed
 	github.com/cosmos/cosmos-sdk v0.45.16
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/jackc/pgx/v4 v4.16.1
