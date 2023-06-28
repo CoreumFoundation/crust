@@ -124,10 +124,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 
 	srcDir := must.String(filepath.Abs(".."))
-	goPath := os.Getenv("GOPATH")
-	if goPath == "" {
-		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
-	}
+	goPath := GoPath()
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -366,4 +363,57 @@ func containsGoCode(path string) (bool, error) {
 		return true, nil
 	}
 	return false, errors.WithStack(err)
+}
+
+// GetModuleVersions returns a map[moduleName]version with version from go.mod for the specified module within the given repo.
+func GetModuleVersions(deps build.DepsFunc, repoPath string, modules []string) (map[string]string, error) {
+	moduleToVersion := make(map[string]string, len(modules))
+
+	var version string
+	var err error
+	for _, module := range modules {
+		version, err = getModuleVersion(deps, repoPath, module)
+		if err != nil {
+			return nil, err
+		}
+
+		moduleToVersion[module] = version
+	}
+
+	return moduleToVersion, nil
+}
+
+func getModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string, error) {
+	deps(EnsureGo)
+
+	args := []string{
+		"list",
+		"-m",
+		moduleName,
+	}
+
+	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), args...)
+	cmd.Dir = repoPath
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	parts := strings.Fields(string(output))
+	if len(parts) < 2 {
+		return "", errors.New("no module version")
+	}
+
+	return parts[1], nil
+}
+
+// GoPath returns $GOPATH.
+func GoPath() string {
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		goPath = filepath.Join(must.String(os.UserHomeDir()), "go")
+	}
+
+	return goPath
 }
