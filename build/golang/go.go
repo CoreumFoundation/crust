@@ -310,14 +310,16 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 
 // Tidy runs go mod tidy in repository.
 func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+	// FIXME (wojtek): temporarily disabled due to https://github.com/golang/go/issues/60313
+	return nil
+
+	//nolint:govet
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
 
-		// FIXME (wojtek): "-e" is used here to overcome a bug tracked here: https://github.com/golang/go/issues/60313
-		// Fix has been already backported to go 1.20 branch but latest release still does not contain it.
-		cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), "mod", "tidy", "-e")
+		cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), "mod", "tidy")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "'go mod tidy' failed in module '%s'", path)
