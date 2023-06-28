@@ -310,7 +310,6 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 
 // Tidy runs go mod tidy in repository.
 func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
-	//nolint:govet
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
