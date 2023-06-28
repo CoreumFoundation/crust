@@ -46,6 +46,8 @@ func BuildIntegrationTests(name string) build.CommandFunc {
 		switch name {
 		case TestModules:
 			prerequisites = append(prerequisites, CompileModulesSmartContracts)
+		case TestUpgrade:
+			prerequisites = append(prerequisites, CompileModulesSmartContracts)
 		case TestIBC:
 			prerequisites = append(prerequisites, CompileIBCSmartContracts)
 		}
