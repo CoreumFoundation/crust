@@ -92,6 +92,12 @@ Running operations together is better because if they internally have common dep
 be executed once. Moreover, each execution of `crust` may compile code. By running more operations at once
 you just save your time. In all the cases operations are executed sequentially.
 
+To remove all the caches and docker containers and images used by crust run:
+
+```
+crust remove
+```
+
 ## Common environment
 
 The build tool is also responsible for installing external binaries required by our environment.
