@@ -169,7 +169,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 	nameGaia := BuildPrefixedAppName(prefix, string(gaiad.AppType))
 	nameOsmosis := BuildPrefixedAppName(prefix, string(osmosis.AppType))
 	nameRelayerHermesGaia := BuildPrefixedAppName(prefix, string(hermes.AppType), string(gaiad.AppType))
-	nameRelayerCosmosOsmosis := BuildPrefixedAppName(prefix, string(relayercosmos.AppType), string(osmosis.AppType))
+	nameRelayerHermesOsmosis := BuildPrefixedAppName(prefix, string(hermes.AppType), string(osmosis.AppType))
 
 	gaiaApp := gaiad.New(cosmoschain.AppConfig{
 		Name:            nameGaia,
@@ -201,11 +201,11 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		PeeredChain:           gaiaApp,
 	})
 
-	relayerOsmosisApp := relayercosmos.New(relayercosmos.Config{
-		Name:                  nameRelayerCosmosOsmosis,
-		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerCosmosOsmosis),
-		AppInfo:               f.spec.DescribeApp(relayercosmos.AppType, nameRelayerCosmosOsmosis),
-		DebugPort:             relayercosmos.DefaultDebugPort,
+	relayerOsmosisApp := hermes.New(hermes.Config{
+		Name:                  nameRelayerHermesOsmosis,
+		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerHermesOsmosis),
+		AppInfo:               f.spec.DescribeApp(hermes.AppType, nameRelayerHermesOsmosis),
+		TelemetryPort:         hermes.DefaultTelemetryPort + 1,
 		Cored:                 coredApp,
 		CoreumRelayerMnemonic: cored.RelayerMnemonicOsmosis,
 		PeeredChain:           osmosisApp,

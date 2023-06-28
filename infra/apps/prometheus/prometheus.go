@@ -46,13 +46,17 @@ const (
 
 // Config stores prometheus app config.
 type Config struct {
-	Name          string
-	HomeDir       string
-	Port          int
-	AppInfo       *infra.AppInfo
-	CoredNodes    []cored.Cored
-	BDJuno        bdjuno.BDJuno
-	Hermes        hermes.Hermes
+	Name       string
+	HomeDir    string
+	Port       int
+	AppInfo    *infra.AppInfo
+	CoredNodes []cored.Cored
+	BDJuno     bdjuno.BDJuno
+	Hermes     hermes.Hermes
+	// FIXME (dzmitry): after replacing cosmos relayer with hermes for osmosis sth here probably stops working.
+	// Instead of enumerating all the apps here, it would be nice to expect an interface like `MonitoredApps []MonitorableApp`
+	// defining whatever methods are required to configure the app in the Prometheus. This way we may easily add/remove/replace
+	// apps at any time, without coming back to this place.
 	RelayerCosmos relayercosmos.Relayer
 }
 
@@ -105,7 +109,7 @@ func (p Prometheus) Info() infra.DeploymentInfo {
 
 // DataSourcePort returns the data source port of the Prometheus.
 func (p Prometheus) DataSourcePort() int {
-	return DefaultPort
+	return p.config.Port
 }
 
 // Deployment returns deployment of prometheus.
@@ -189,7 +193,7 @@ func (p Prometheus) saveConfigFile() error {
 
 	configArgs := struct {
 		Nodes         []nodesConfigArgs
-		DBJuno        hostPortConfig
+		BDJuno        hostPortConfig
 		Hermes        hostPortConfig
 		RelayerCosmos hostPortConfig
 	}{
@@ -198,7 +202,7 @@ func (p Prometheus) saveConfigFile() error {
 
 	// determine whether the bdjuno is provided
 	if p.config.BDJuno.Name() != "" {
-		configArgs.DBJuno = hostPortConfig{
+		configArgs.BDJuno = hostPortConfig{
 			Host: p.config.BDJuno.Info().HostFromContainer,
 			Port: p.config.BDJuno.Config().TelemetryPort,
 		}
