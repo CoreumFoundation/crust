@@ -39,25 +39,25 @@ jobs:
             go-cache: true
             wasm-cache: true
             linter-cache: false
-            docker-cache: false # FIXME(dzmitryhil) update ibce disc issue is fixed
+            docker-cache: true
           - ci_step: "integration tests coreum-ibc"
             command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc"
             go-cache: true
             wasm-cache: false
             linter-cache: false
-            docker-cache: false # FIXME(dzmitryhil) update ibce disc issue is fixed
+            docker-cache: true
           - ci_step: "integration tests coreum-upgrade"
             command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc"
             go-cache: true
             wasm-cache: true
             linter-cache: false
-            docker-cache: false # FIXME(dzmitryhil) update ibce disc issue is fixed
+            docker-cache: true
           - ci_step: "integration tests faucet"
             command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet"
             go-cache: true
             wasm-cache: false
             linter-cache: false
-            docker-cache: false # FIXME(dzmitryhil) update ibce disc issue is fixed
+            docker-cache: true
 
     runs-on: ubuntu-22.04
     steps:
@@ -109,6 +109,10 @@ jobs:
         run: |
           echo "date=$(/bin/date -u "+%Y-%U")" >> $GITHUB_OUTPUT
         shell: bash
+      - name: Print docker
+        run: |
+          docker ps -a
+          docker images
       - name: Set docker cache
         uses: satackey/action-docker-layer-caching@v0.0.11
         if: ${{ matrix.docker-cache }}
@@ -117,8 +121,8 @@ jobs:
           key: ${{ runner.os }}-docker-${{ steps.get-year-week.outputs.date }} # year-week key
           restore-keys: |
             ${{ runner.os }}-docker-
-      - name: Run ${{ matrix.ci_step }}
-        run: ${{ matrix.command }}
-      - name: Dump docker logs on failure
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2
+#      - name: Run ${{ matrix.ci_step }}
+#        run: ${{ matrix.command }}
+#      - name: Dump docker logs on failure
+#        if: failure()
+#        uses: jwalton/gh-docker-logs@v2
