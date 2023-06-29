@@ -46,17 +46,13 @@ const (
 
 // Config stores prometheus app config.
 type Config struct {
-	Name       string
-	HomeDir    string
-	Port       int
-	AppInfo    *infra.AppInfo
-	CoredNodes []cored.Cored
-	BDJuno     bdjuno.BDJuno
-	Hermes     hermes.Hermes
-	// FIXME (dzmitry): after replacing cosmos relayer with hermes for osmosis sth here probably stops working.
-	// Instead of enumerating all the apps here, it would be nice to expect an interface like `MonitoredApps []MonitorableApp`
-	// defining whatever methods are required to configure the app in the Prometheus. This way we may easily add/remove/replace
-	// apps at any time, without coming back to this place.
+	Name          string
+	HomeDir       string
+	Port          int
+	AppInfo       *infra.AppInfo
+	CoredNodes    []cored.Cored
+	BDJuno        bdjuno.BDJuno
+	Hermes        hermes.Hermes
 	RelayerCosmos relayercosmos.Relayer
 }
 
