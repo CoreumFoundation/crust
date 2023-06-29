@@ -73,6 +73,7 @@ jobs:
         with:
           repository: CoreumFoundation/coreum
           path: coreum
+          ref: dzmitryhil/migrate-contract # FIXME remove once merged
       - name: Checkout faucet
         uses: actions/checkout@v3
         with:
