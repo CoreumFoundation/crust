@@ -153,7 +153,7 @@ func CompileSmartContract(codeDirPath string) build.CommandFunc {
 			"-v", targetCachePath+":/code/target",
 			"-e", "HOME=/tmp",
 			"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-			"cosmwasm/rust-optimizer:0.13.0")
+			"cosmwasm/rust-optimizer:0.12.13") // FIXME (wojtek): 0.13.0 causes permission errors
 
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err
