@@ -128,7 +128,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	cacheDir := filepath.Join(tools.CacheDir(), config.Platform.String())
+	cacheDir := tools.BinariesRootPath(config.Platform)
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
