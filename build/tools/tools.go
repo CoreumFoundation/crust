@@ -483,7 +483,7 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
-	dstDir := filepath.Join(BinariesRootPath(platform))
+	dstDir := BinariesRootPath(platform)
 	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
 		dstPath := dstDir + "/" + dst
