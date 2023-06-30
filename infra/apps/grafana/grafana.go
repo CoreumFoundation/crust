@@ -78,7 +78,7 @@ func (g Grafana) Info() infra.DeploymentInfo {
 // Deployment returns deployment of grafana.
 func (g Grafana) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image:     "grafana/grafana:9.5.2",
+		Image:     "grafana/grafana:10.0.1",
 		RunAsUser: true,
 		Name:      g.Name(),
 		Info:      g.config.AppInfo,
