@@ -242,7 +242,7 @@ var tools = map[Name]Tool{
 		},
 	},
 
-	//https://github.com/protocolbuffers/protobuf/releases
+	// https://github.com/protocolbuffers/protobuf/releases
 	Protoc: {
 		Version: "v23.3",
 		Local:   true,
@@ -375,7 +375,7 @@ func EnsureTool(ctx context.Context, tool Name) error {
 	}
 
 	for binaryName := range lo.Assign(info.Binaries, source.Binaries) {
-		srcPath := filepath.Join(CacheDir(), PlatformLocal.String(), binaryName)
+		srcPath := filepath.Join(BinariesRootPath(PlatformLocal), binaryName)
 
 		absSrcPath, err := filepath.Abs(srcPath)
 		if err != nil {
@@ -421,7 +421,7 @@ func EnsureBinaries(ctx context.Context, tool Name, platform Platform) error {
 			return installBinary(ctx, tool, info, platform)
 		}
 
-		dstPath, err := filepath.Abs(filepath.Join(CacheDir(), platform.String(), dst))
+		dstPath, err := filepath.Abs(filepath.Join(BinariesRootPath(platform), dst))
 		if err != nil {
 			return installBinary(ctx, tool, info, platform)
 		}
@@ -483,7 +483,7 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
-	dstDir := filepath.Join(CacheDir(), platform.String())
+	dstDir := filepath.Join(BinariesRootPath(platform))
 	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
 		dstPath := dstDir + "/" + dst
@@ -705,7 +705,7 @@ func toolDir(name Name, platform Platform) string {
 		panic(errors.Errorf("tool %s is not defined", name))
 	}
 
-	return filepath.Join(CacheDir(), platform.String(), "downloads", string(name)+"-"+info.Version)
+	return filepath.Join(BinariesRootPath(platform), "downloads", string(name)+"-"+info.Version)
 }
 
 func ensureDir(file string) error {
@@ -781,7 +781,12 @@ func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...
 	return nil
 }
 
+// BinariesRootPath returns the root path of cached binaries.
+func BinariesRootPath(platform Platform) string {
+	return filepath.Join(CacheDir(), "bin", platform.String())
+}
+
 // Path returns path to the installed binary.
 func Path(binary string, platform Platform) string {
-	return must.String(filepath.Abs(filepath.Join(CacheDir(), platform.String(), binary)))
+	return must.String(filepath.Abs(filepath.Join(BinariesRootPath(platform), binary)))
 }
