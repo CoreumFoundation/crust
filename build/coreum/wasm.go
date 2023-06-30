@@ -150,10 +150,10 @@ func CompileSmartContract(codeDirPath string) build.CommandFunc {
 			"--label", docker.LabelKey+"="+docker.LabelValue,
 			"-v", codeDirAbsPath+":/code",
 			"-v", registryCachePath+":/usr/local/cargo/registry",
-			"-v", targetCachePath+":/code/target",
+			"-v", targetCachePath+":/target",
 			"-e", "HOME=/tmp",
 			"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-			"cosmwasm/rust-optimizer:0.12.13")
+			"cosmwasm/rust-optimizer:0.13.0")
 
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err

@@ -105,13 +105,13 @@ func (p Prometheus) Info() infra.DeploymentInfo {
 
 // DataSourcePort returns the data source port of the Prometheus.
 func (p Prometheus) DataSourcePort() int {
-	return DefaultPort
+	return p.config.Port
 }
 
 // Deployment returns deployment of prometheus.
 func (p Prometheus) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image:     "prom/prometheus:v2.43.1",
+		Image:     "prom/prometheus:v2.45.0",
 		RunAsUser: true,
 		Name:      p.Name(),
 		Info:      p.config.AppInfo,
@@ -189,7 +189,7 @@ func (p Prometheus) saveConfigFile() error {
 
 	configArgs := struct {
 		Nodes         []nodesConfigArgs
-		DBJuno        hostPortConfig
+		BDJuno        hostPortConfig
 		Hermes        hostPortConfig
 		RelayerCosmos hostPortConfig
 	}{
@@ -198,7 +198,7 @@ func (p Prometheus) saveConfigFile() error {
 
 	// determine whether the bdjuno is provided
 	if p.config.BDJuno.Name() != "" {
-		configArgs.DBJuno = hostPortConfig{
+		configArgs.BDJuno = hostPortConfig{
 			Host: p.config.BDJuno.Info().HostFromContainer,
 			Port: p.config.BDJuno.Config().TelemetryPort,
 		}
