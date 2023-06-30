@@ -42,20 +42,20 @@ const (
 var tools = map[Name]Tool{
 	// https://go.dev/dl/
 	Go: {
-		Version: "1.20.4",
+		Version: "1.20.5",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://go.dev/dl/go1.20.4.linux-amd64.tar.gz",
-				Hash: "sha256:698ef3243972a51ddb4028e4a1ac63dc6d60821bf18e59a807e051fee0a385bd",
+				URL:  "https://go.dev/dl/go1.20.5.linux-amd64.tar.gz",
+				Hash: "sha256:d7ec48cde0d3d2be2c69203bc3e0a44de8660b9c09a6e85c4732a3f7dc442612",
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://go.dev/dl/go1.20.4.darwin-amd64.tar.gz",
-				Hash: "sha256:242b099b5b9bd9c5d4d25c041216bc75abcdf8e0541aec975eeabcbce61ad47f",
+				URL:  "https://go.dev/dl/go1.20.5.darwin-amd64.tar.gz",
+				Hash: "sha256:79715ca5b8becd120703ac9af5d1da749e095d2b9bf830c4f3af4b15b2cb049d",
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://go.dev/dl/go1.20.4.darwin-arm64.tar.gz",
-				Hash: "sha256:61bd4f7f2d209e2a6a7ce17787fc5fea52fb11cc9efb3d8471187a8b39ce0dc9",
+				URL:  "https://go.dev/dl/go1.20.5.darwin-arm64.tar.gz",
+				Hash: "sha256:94ad76b7e1593bb59df7fd35a738194643d6eed26a4181c94e3ee91381e40459",
 			},
 		},
 		Binaries: map[string]string{
@@ -66,28 +66,28 @@ var tools = map[Name]Tool{
 
 	// https://github.com/golangci/golangci-lint/releases/
 	GolangCI: {
-		Version: "1.52.2",
+		Version: "1.53.3",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.52.2/golangci-lint-1.52.2-linux-amd64.tar.gz",
-				Hash: "sha256:c9cf72d12058a131746edd409ed94ccd578fbd178899d1ed41ceae3ce5f54501",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-linux-amd64.tar.gz",
+				Hash: "sha256:4f62007ca96372ccba54760e2ed39c2446b40ec24d9a90c21aad9f2fdf6cf0da",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.52.2-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.53.3-linux-amd64/golangci-lint",
 				},
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.52.2/golangci-lint-1.52.2-darwin-amd64.tar.gz",
-				Hash: "sha256:e57f2599de73c4da1d36d5255b9baec63f448b3d7fb726ebd3cd64dabbd3ee4a",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-darwin-amd64.tar.gz",
+				Hash: "sha256:e6fe5df023c35482cf9858eeb0a14aeecea58e64549be9084268b4a1fb632ece",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.52.2-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.53.3-darwin-amd64/golangci-lint",
 				},
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.52.2/golangci-lint-1.52.2-darwin-arm64.tar.gz",
-				Hash: "sha256:89e523d45883903cfc472ab65621073f850abd4ffbb7720bbdd7ba66ee490bc8",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-darwin-arm64.tar.gz",
+				Hash: "sha256:76607909a15e825a39bd61f1c5805997746b365bd285314277dccde1b86edae6",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.52.2-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.53.3-darwin-arm64/golangci-lint",
 				},
 			},
 		},
@@ -163,20 +163,20 @@ var tools = map[Name]Tool{
 	// https://github.com/cosmos/gaia/releases
 	// Before upgrading verify in go.mod that they use the same version of IBC
 	Gaia: {
-		Version: "v9.1.0",
+		Version: "v10.0.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v9.1.0/gaiad-v9.1.0-linux-amd64",
-				Hash: "sha256:591cd6d5432a1996f9d658057ed9d446f1ecfaf5f060f3a7a30740d8722d7b5d",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-amd64",
+				Hash: "sha256:fcb8210308223d78bc36f3d4c89e2578dcf784994c052cea97efd61f1672cf72",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v9.1.0-linux-amd64",
+					"bin/gaiad": "gaiad-v10.0.1-linux-amd64",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v9.1.0/gaiad-v9.1.0-linux-arm64",
-				Hash: "sha256:098c6fd577b7509c2a2d66a25f1b76bd57a7ed992250e22c6d848e603a30deeb",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-arm64",
+				Hash: "sha256:db9b69cf224b410c669fa4f820192890357534e74d4693a744ef915028567462",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v9.1.0-linux-arm64",
+					"bin/gaiad": "gaiad-v10.0.1-linux-arm64",
 				},
 			},
 		},
@@ -205,15 +205,15 @@ var tools = map[Name]Tool{
 
 	// https://github.com/informalsystems/hermes/releases
 	Hermes: {
-		Version: "v1.4.1",
+		Version: "v1.5.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.4.1/hermes-v1.4.1-x86_64-unknown-linux-gnu.tar.gz",
-				Hash: "sha256:013b7603e915305e9cd0fc6164ad90e0c9751082a589f6efef706c8a4f562647",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.5.1/hermes-v1.5.1-x86_64-unknown-linux-gnu.tar.gz",
+				Hash: "sha256:d370cfde598ff5096707532e7dd8f71a3d1b5b5762891078f0a9fff8fbcf5b82",
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.4.1/hermes-v1.4.1-aarch64-unknown-linux-gnu.tar.gz",
-				Hash: "sha256:c11cd7eb941ee0ec4b62ef569f76ec04cb8bc09fe107dcb5732241a45fd19d8d",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.5.1/hermes-v1.5.1-aarch64-unknown-linux-gnu.tar.gz",
+				Hash: "sha256:79786507d8ec786c9e35c113d14c352859917bd5c4d07b3c39d23e4878d5f763",
 			},
 		},
 		Binaries: map[string]string{
@@ -242,7 +242,7 @@ var tools = map[Name]Tool{
 		},
 	},
 
-	//https://github.com/protocolbuffers/protobuf/releases
+	// https://github.com/protocolbuffers/protobuf/releases
 	Protoc: {
 		Version: "v23.3",
 		Local:   true,
@@ -264,6 +264,8 @@ var tools = map[Name]Tool{
 			"bin/protoc": "bin/protoc",
 		},
 	},
+
+	// https://github.com/pseudomuto/protoc-gen-doc/releases/
 	ProtocGenDoc: {
 		Version: "v1.5.1",
 		Local:   true,
@@ -375,7 +377,7 @@ func EnsureTool(ctx context.Context, tool Name) error {
 	}
 
 	for binaryName := range lo.Assign(info.Binaries, source.Binaries) {
-		srcPath := filepath.Join(CacheDir(), PlatformLocal.String(), binaryName)
+		srcPath := filepath.Join(BinariesRootPath(PlatformLocal), binaryName)
 
 		absSrcPath, err := filepath.Abs(srcPath)
 		if err != nil {
@@ -421,7 +423,7 @@ func EnsureBinaries(ctx context.Context, tool Name, platform Platform) error {
 			return installBinary(ctx, tool, info, platform)
 		}
 
-		dstPath, err := filepath.Abs(filepath.Join(CacheDir(), platform.String(), dst))
+		dstPath, err := filepath.Abs(filepath.Join(BinariesRootPath(platform), dst))
 		if err != nil {
 			return installBinary(ctx, tool, info, platform)
 		}
@@ -483,7 +485,7 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
-	dstDir := filepath.Join(CacheDir(), platform.String())
+	dstDir := BinariesRootPath(platform)
 	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
 		dstPath := dstDir + "/" + dst
@@ -705,7 +707,7 @@ func toolDir(name Name, platform Platform) string {
 		panic(errors.Errorf("tool %s is not defined", name))
 	}
 
-	return filepath.Join(CacheDir(), platform.String(), "downloads", string(name)+"-"+info.Version)
+	return filepath.Join(BinariesRootPath(platform), "downloads", string(name)+"-"+info.Version)
 }
 
 func ensureDir(file string) error {
@@ -781,7 +783,12 @@ func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...
 	return nil
 }
 
+// BinariesRootPath returns the root path of cached binaries.
+func BinariesRootPath(platform Platform) string {
+	return filepath.Join(CacheDir(), "bin", platform.String())
+}
+
 // Path returns path to the installed binary.
 func Path(binary string, platform Platform) string {
-	return must.String(filepath.Abs(filepath.Join(CacheDir(), platform.String(), binary)))
+	return must.String(filepath.Abs(filepath.Join(BinariesRootPath(platform), binary)))
 }
