@@ -91,7 +91,11 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 			config.Platform, tools.PlatformLocal)
 	}
 
-	args, envs, err := buildArgsAndEnvs(config, filepath.Join(tools.CacheDir(), "lib"))
+	libDir := filepath.Join(tools.CacheDir(), "lib")
+	if err := os.MkdirAll(libDir, 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+	args, envs, err := buildArgsAndEnvs(config, libDir)
 	if err != nil {
 		return err
 	}
