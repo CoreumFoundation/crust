@@ -1,5 +1,6 @@
 .idea
 .vscode
 /bin
+/coverage
 vendor
 *.iml
