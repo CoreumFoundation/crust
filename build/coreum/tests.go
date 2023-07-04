@@ -29,7 +29,7 @@ func BuildAllIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 
 	actions := make([]build.CommandFunc, 0, len(entries))
 	for _, e := range entries {
-		if !e.IsDir() {
+		if !e.IsDir() || e.Name() == "contracts" {
 			continue
 		}
 
