@@ -23,17 +23,8 @@ import (
 
 // Smart contract names.
 const (
-	WASMAuthz       = "authz"
-	WASMBankSend    = "bank-send"
-	WASMFT          = "ft"
-	WASMNFT         = "nft"
-	WASMSimpleState = "simple-state"
-
-	WASMIBCTransfer = "ibc-transfer"
-	WASMIBCCall     = "ibc-call"
-
-	WasmModulesDir = repoPath + "/integration-tests/modules/testdata/wasm"
-	WasmIBCDir     = repoPath + "/integration-tests/ibc/testdata/wasm"
+	WasmModulesDir = repoPath + "/integration-tests/contracts/modules"
+	WasmIBCDir     = repoPath + "/integration-tests/contracts/ibc"
 )
 
 // CompileModulesSmartContracts compiles modules smart contracts.
