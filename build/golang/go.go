@@ -26,7 +26,7 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
-const goAlpineVersion = "3.17"
+const goAlpineVersion = "3.18"
 
 // BinaryBuildConfig is the configuration for `go build`.
 type BinaryBuildConfig struct {
@@ -132,7 +132,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	cacheDir := filepath.Join(tools.CacheDir(), config.Platform.String())
+	cacheDir := tools.BinariesRootPath(config.Platform)
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -327,6 +327,7 @@ func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
+
 		cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), "mod", "tidy")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
