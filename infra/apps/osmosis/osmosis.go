@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	dockerImage   = "osmolabs/osmosis:14.0.0-alpine"
+	dockerImage   = "osmolabs/osmosis:15.2.0-alpine"
 	accountPrefix = "osmo"
 	execName      = "osmosisd"
 
