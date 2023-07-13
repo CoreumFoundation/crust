@@ -109,13 +109,14 @@ func (f *Factory) CoredNetwork(
 // Faucet creates new faucet.
 func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 	return faucet.New(faucet.Config{
-		Name:    name,
-		HomeDir: filepath.Join(f.config.AppDir, name),
-		BinDir:  f.config.BinDir,
-		ChainID: f.networkConfig.Provider.GetChainID(),
-		AppInfo: f.spec.DescribeApp(faucet.AppType, name),
-		Port:    faucet.DefaultPort,
-		Cored:   coredApp,
+		Name:           name,
+		HomeDir:        filepath.Join(f.config.AppDir, name),
+		BinDir:         f.config.BinDir,
+		ChainID:        f.networkConfig.Provider.GetChainID(),
+		AppInfo:        f.spec.DescribeApp(faucet.AppType, name),
+		Port:           faucet.DefaultPort,
+		MonitoringPort: faucet.DefaultMonitoringPort,
+		Cored:          coredApp,
 	})
 }
 
