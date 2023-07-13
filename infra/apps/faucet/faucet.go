@@ -74,6 +74,11 @@ func (f Faucet) Info() infra.DeploymentInfo {
 	return f.config.AppInfo.Info()
 }
 
+// Config returns config.
+func (f Faucet) Config() Config {
+	return f.config
+}
+
 // HealthCheck checks if cored chain is ready to accept transactions.
 func (f Faucet) HealthCheck(ctx context.Context) error {
 	if f.config.AppInfo.Info().Status != infra.AppStatusRunning {

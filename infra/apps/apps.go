@@ -224,6 +224,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 func (f *Factory) Monitoring(
 	prefix string,
 	coredNodes []cored.Cored,
+	faucet faucet.Faucet,
 	bdJuno bdjuno.BDJuno,
 	hermes hermes.Hermes,
 	relayerCosmos relayercosmos.Relayer,
@@ -237,6 +238,7 @@ func (f *Factory) Monitoring(
 		Port:          prometheus.DefaultPort,
 		AppInfo:       f.spec.DescribeApp(prometheus.AppType, namePrometheus),
 		CoredNodes:    coredNodes,
+		Faucet:        faucet,
 		BDJuno:        bdJuno,
 		Hermes:        hermes,
 		RelayerCosmos: relayerCosmos,
