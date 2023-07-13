@@ -78,6 +78,7 @@ jobs:
         with:
           repository: CoreumFoundation/faucet
           path: faucet
+          ref: wojtek/metrics # FIXME remove once merged
       - name: Set up crust
         run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
       - name: Setup go cache
