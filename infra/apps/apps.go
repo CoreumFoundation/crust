@@ -109,13 +109,14 @@ func (f *Factory) CoredNetwork(
 // Faucet creates new faucet.
 func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 	return faucet.New(faucet.Config{
-		Name:    name,
-		HomeDir: filepath.Join(f.config.AppDir, name),
-		BinDir:  f.config.BinDir,
-		ChainID: f.networkConfig.Provider.GetChainID(),
-		AppInfo: f.spec.DescribeApp(faucet.AppType, name),
-		Port:    faucet.DefaultPort,
-		Cored:   coredApp,
+		Name:           name,
+		HomeDir:        filepath.Join(f.config.AppDir, name),
+		BinDir:         f.config.BinDir,
+		ChainID:        f.networkConfig.Provider.GetChainID(),
+		AppInfo:        f.spec.DescribeApp(faucet.AppType, name),
+		Port:           faucet.DefaultPort,
+		MonitoringPort: faucet.DefaultMonitoringPort,
+		Cored:          coredApp,
 	})
 }
 
@@ -223,6 +224,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 func (f *Factory) Monitoring(
 	prefix string,
 	coredNodes []cored.Cored,
+	faucet faucet.Faucet,
 	bdJuno bdjuno.BDJuno,
 	hermes hermes.Hermes,
 	relayerCosmos relayercosmos.Relayer,
@@ -236,6 +238,7 @@ func (f *Factory) Monitoring(
 		Port:          prometheus.DefaultPort,
 		AppInfo:       f.spec.DescribeApp(prometheus.AppType, namePrometheus),
 		CoredNodes:    coredNodes,
+		Faucet:        faucet,
 		BDJuno:        bdJuno,
 		Hermes:        hermes,
 		RelayerCosmos: relayerCosmos,

@@ -25,17 +25,21 @@ const (
 
 	// DefaultPort is the default port faucet listens on for client connections.
 	DefaultPort = 8090
+
+	// DefaultMonitoringPort is the default port faucet reports metrics on.
+	DefaultMonitoringPort = 8091
 )
 
 // Config stores faucet app config.
 type Config struct {
-	Name    string
-	HomeDir string
-	BinDir  string
-	ChainID constant.ChainID
-	AppInfo *infra.AppInfo
-	Port    int
-	Cored   cored.Cored
+	Name           string
+	HomeDir        string
+	BinDir         string
+	ChainID        constant.ChainID
+	AppInfo        *infra.AppInfo
+	Port           int
+	MonitoringPort int
+	Cored          cored.Cored
 }
 
 // New creates new faucet app.
@@ -68,6 +72,11 @@ func (f Faucet) Port() int {
 // Info returns deployment info.
 func (f Faucet) Info() infra.DeploymentInfo {
 	return f.config.AppInfo.Info()
+}
+
+// Config returns config.
+func (f Faucet) Config() Config {
+	return f.config
 }
 
 // HealthCheck checks if cored chain is ready to accept transactions.
@@ -106,13 +115,15 @@ func (f Faucet) Deployment() infra.Deployment {
 		ArgsFunc: func() []string {
 			return []string{
 				"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
+				"--monitoring-address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.MonitoringPort),
 				"--chain-id", string(f.config.ChainID),
 				"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
 				"--node", infra.JoinNetAddr("", f.config.Cored.Info().HostFromContainer, f.config.Cored.Config().Ports.GRPC),
 			}
 		},
 		Ports: map[string]int{
-			"server": f.config.Port,
+			"server":     f.config.Port,
+			"monitoring": f.config.MonitoringPort,
 		},
 		Requires: infra.Prerequisites{
 			Timeout: 20 * time.Second,

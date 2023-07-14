@@ -130,8 +130,10 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		appSet = append(appSet, appF.IBC(AppPrefixIBC, coredApp)...)
 	}
 
+	var faucetApp faucet.Faucet
 	if pMap[profileFaucet] {
-		appSet = append(appSet, appF.Faucet(string(faucet.AppType), coredApp))
+		faucetApp = appF.Faucet(string(faucet.AppType), coredApp)
+		appSet = append(appSet, faucetApp)
 	}
 
 	if pMap[profileExplorer] {
@@ -160,7 +162,14 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 			relayerCosmosApp = relayerCosmosAppSetApp
 		}
 
-		appSet = append(appSet, appF.Monitoring(AppPrefixMonitoring, coredNodes, bdJunoApp, hermesApp, relayerCosmosApp)...)
+		appSet = append(appSet, appF.Monitoring(
+			AppPrefixMonitoring,
+			coredNodes,
+			faucetApp,
+			bdJunoApp,
+			hermesApp,
+			relayerCosmosApp,
+		)...)
 	}
 
 	return appSet, nil
