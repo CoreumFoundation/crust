@@ -379,6 +379,9 @@ type ConfigFactory struct {
 	// Profiles defines the list of application profiles to run
 	Profiles []string
 
+	// TimeoutCommit allows to define custom timeout commit for all used chains.
+	TimeoutCommit time.Duration
+
 	// CoredVersion defines the version of the cored to be used on start
 	CoredVersion string
 
@@ -422,9 +425,10 @@ func NewSpec(configF *ConfigFactory) *Spec {
 		specFile: specFile,
 		configF:  configF,
 
-		Profiles: configF.Profiles,
-		Env:      configF.EnvName,
-		Apps:     map[string]*AppInfo{},
+		Profiles:      configF.Profiles,
+		TimeoutCommit: configF.TimeoutCommit,
+		Env:           configF.EnvName,
+		Apps:          map[string]*AppInfo{},
 	}
 	return spec
 }
@@ -436,6 +440,9 @@ type Spec struct {
 
 	// Profiles is the list of deployed application profiles
 	Profiles []string `json:"profiles"`
+
+	// TimeoutCommit allows to define custom timeout commit for all used chains.
+	TimeoutCommit time.Duration `json:"timeoutCommit"`
 
 	// Env is the name of env
 	Env string `json:"env"`
@@ -454,6 +461,10 @@ func (s *Spec) Verify() error {
 	if !profilesCompare(s.Profiles, s.configF.Profiles) {
 		return errors.Errorf("profile mismatch, spec: %s, config: %s", strings.Join(s.Profiles, ","), strings.Join(s.configF.Profiles, ","))
 	}
+	if s.TimeoutCommit != s.configF.TimeoutCommit {
+		return errors.Errorf("timeout commit mismatch, spec: %s, config: %s", s.TimeoutCommit, s.configF.TimeoutCommit)
+	}
+
 	return nil
 }
 

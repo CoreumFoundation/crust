@@ -96,6 +96,7 @@ func (f *Factory) CoredNetwork(
 			FundingMnemonic: cored.FundingMnemonic,
 			FaucetMnemonic:  cored.FaucetMnemonic,
 			BinaryVersion:   binaryVersion,
+			TimeoutCommit:   f.spec.TimeoutCommit,
 		})
 		if node0 == nil {
 			node0 = &node

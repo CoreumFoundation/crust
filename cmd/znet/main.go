@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -67,6 +69,7 @@ func startCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdF
 	addBinDirFlag(startCmd, configF)
 	addProfileFlag(startCmd, configF)
 	addCoredVersionFlag(startCmd, configF)
+	addTimeoutCommitFlag(startCmd, configF)
 
 	return startCmd
 }
@@ -110,6 +113,7 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 	addBinDirFlag(testCmd, configF)
 	addFilterFlag(testCmd, configF)
 	addCoredVersionFlag(testCmd, configF)
+	addTimeoutCommitFlag(testCmd, configF)
 	return testCmd
 }
 
@@ -153,6 +157,15 @@ func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 
 func addProfileFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringSliceVar(&configF.Profiles, "profiles", defaultStrings("CRUST_ZNET_PROFILES", apps.DefaultProfiles()), "List of application profiles to deploy: "+strings.Join(apps.Profiles(), " | "))
+}
+
+func addTimeoutCommitFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
+	defaultTimeoutCommitString := defaultString("CRUST_ZNET_TIMEOUT_COMMIT", "0s")
+	defaultTimeoutCommit, err := time.ParseDuration(defaultTimeoutCommitString)
+	if err != nil {
+		panic(errors.Errorf("failed to covert default timeout commit to duration, err:%s", err))
+	}
+	cmd.Flags().DurationVar(&configF.TimeoutCommit, "timeout-commit", defaultTimeoutCommit, "Chains timeout commit.")
 }
 
 func addCoredVersionFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {

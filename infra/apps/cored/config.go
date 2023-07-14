@@ -11,7 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum/pkg/config/constant"
 )
 
-func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
+func saveTendermintConfig(nodeConfig config.NodeConfig, timeoutCommit time.Duration, homeDir string) {
 	err := nodeConfig.SavePrivateKeys(homeDir)
 	must.OK(err)
 	cfg := nodeConfig.TendermintNodeConfig(nil)
@@ -26,6 +26,9 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
 	cfg.RPC.MaxSubscriptionsPerClient = 10000
 	cfg.Mempool.Size = 50000
 	cfg.Mempool.MaxTxsBytes = 5368709120
+	if timeoutCommit > 0 {
+		cfg.Consensus.TimeoutCommit = timeoutCommit
+	}
 
 	must.OK(config.WriteTendermintConfigToFile(filepath.Join(homeDir, config.DefaultNodeConfigPath), cfg))
 }
@@ -42,7 +45,7 @@ func NetworkConfig(genesisTemplate string) (config.NetworkConfig, error) {
 			GovConfig: config.GovConfig{
 				ProposalConfig: config.GovProposalConfig{
 					MinDepositAmount: "1000",
-					VotingPeriod:     (time.Second * 15).String(),
+					VotingPeriod:     (time.Second * 5).String(),
 				},
 			},
 			CustomParamsConfig: config.CustomParamsConfig{
