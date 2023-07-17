@@ -19,6 +19,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
+	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/hermes"
 	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
 )
@@ -51,6 +52,7 @@ type Config struct {
 	Port          int
 	AppInfo       *infra.AppInfo
 	CoredNodes    []cored.Cored
+	Faucet        faucet.Faucet
 	BDJuno        bdjuno.BDJuno
 	Hermes        hermes.Hermes
 	RelayerCosmos relayercosmos.Relayer
@@ -189,11 +191,20 @@ func (p Prometheus) saveConfigFile() error {
 
 	configArgs := struct {
 		Nodes         []nodesConfigArgs
+		Faucet        hostPortConfig
 		BDJuno        hostPortConfig
 		Hermes        hostPortConfig
 		RelayerCosmos hostPortConfig
 	}{
 		Nodes: nodesConfig,
+	}
+
+	// determine whether the faucet is provided
+	if p.config.Faucet.Name() != "" {
+		configArgs.Faucet = hostPortConfig{
+			Host: p.config.Faucet.Info().HostFromContainer,
+			Port: p.config.Faucet.Config().MonitoringPort,
+		}
 	}
 
 	// determine whether the bdjuno is provided

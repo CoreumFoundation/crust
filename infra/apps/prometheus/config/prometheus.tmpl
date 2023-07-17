@@ -16,6 +16,16 @@ scrape_configs:
           instance: "{{.Name}}"
 {{end}}
 
+{{ if .Faucet.Host }}
+  - job_name: 'faucet'
+    metrics_path: /metrics
+    static_configs:
+      - targets: [ "{{.Faucet.Host}}:{{.Faucet.Port}}" ]
+        labels:
+          environment: znet
+          instance: "faucet"
+{{ end }}
+
 {{ if .BDJuno.Host }}
   - job_name: 'bdjuno'
     static_configs:
