@@ -15,6 +15,9 @@ const (
 
 	// DefaultChainID is the gaia's default chain id.
 	DefaultChainID = "gaia-localnet-1"
+
+	// DefaultHomeName is the gaia's default home name.
+	DefaultHomeName = ".gaia"
 )
 
 // DefaultPorts are the default ports listens on.

@@ -176,20 +176,24 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		Name:            nameGaia,
 		HomeDir:         filepath.Join(f.config.AppDir, nameGaia),
 		ChainID:         gaiad.DefaultChainID,
+		HomeName:        gaiad.DefaultHomeName,
 		AppInfo:         f.spec.DescribeApp(gaiad.AppType, nameGaia),
 		Ports:           gaiad.DefaultPorts,
 		RelayerMnemonic: gaiad.RelayerMnemonic,
 		FundingMnemonic: gaiad.FundingMnemonic,
+		TimeoutCommit:   f.config.TimeoutCommit,
 	})
 
 	osmosisApp := osmosis.New(cosmoschain.AppConfig{
 		Name:            nameOsmosis,
 		HomeDir:         filepath.Join(f.config.AppDir, nameOsmosis),
 		ChainID:         osmosis.DefaultChainID,
+		HomeName:        osmosis.DefaultHomeName,
 		AppInfo:         f.spec.DescribeApp(osmosis.AppType, nameOsmosis),
 		Ports:           osmosis.DefaultPorts,
 		RelayerMnemonic: osmosis.RelayerMnemonic,
 		FundingMnemonic: osmosis.FundingMnemonic,
+		TimeoutCommit:   f.config.TimeoutCommit,
 	})
 
 	relayerGaiaApp := hermes.New(hermes.Config{

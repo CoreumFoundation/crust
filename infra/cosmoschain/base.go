@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"text/template"
+	"time"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -47,11 +48,13 @@ type Ports struct {
 type AppConfig struct {
 	Name            string
 	HomeDir         string
+	HomeName        string
 	ChainID         string
 	AppInfo         *infra.AppInfo
 	Ports           Ports
 	RelayerMnemonic string
 	FundingMnemonic string
+	TimeoutCommit   time.Duration
 }
 
 // AppTypeConfig defines configuration of the application type.
@@ -150,9 +153,11 @@ func (ba BaseApp) prepare() error {
 	args := struct {
 		ExecName        string
 		HomePath        string
+		HomeName        string
 		ChainID         string
 		RelayerMnemonic string
 		FundingMnemonic string
+		TimeoutCommit   string
 		RPCLaddr        string
 		P2PLaddr        string
 		GRPCAddress     string
@@ -161,9 +166,11 @@ func (ba BaseApp) prepare() error {
 	}{
 		ExecName:        ba.appTypeConfig.ExecName,
 		HomePath:        targets.AppHomeDir,
+		HomeName:        ba.appConfig.HomeName,
 		ChainID:         ba.appConfig.ChainID,
 		RelayerMnemonic: ba.appConfig.RelayerMnemonic,
 		FundingMnemonic: ba.appConfig.FundingMnemonic,
+		TimeoutCommit:   ba.appConfig.TimeoutCommit.String(),
 		RPCLaddr:        infra.JoinNetAddrIP("tcp", net.IPv4zero, ba.appConfig.Ports.RPC),
 		P2PLaddr:        infra.JoinNetAddrIP("tcp", net.IPv4zero, ba.appConfig.Ports.P2P),
 		GRPCAddress:     infra.JoinNetAddrIP("", net.IPv4zero, ba.appConfig.Ports.GRPC),

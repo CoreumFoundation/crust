@@ -15,6 +15,9 @@ const (
 
 	// DefaultChainID is the osmosis default chain id.
 	DefaultChainID = "osmosis-localnet-1"
+
+	// DefaultHomeName is the gaia's default home name.
+	DefaultHomeName = ".osmosisd"
 )
 
 // DefaultPorts are the default ports listens on.
