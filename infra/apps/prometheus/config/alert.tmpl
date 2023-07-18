@@ -112,6 +112,24 @@ groups:
       annotations:
         description: 'IBC relayer cosmos balance for chain {{ `{{ $labels.chain }}` }} is less then 10.000.000'
 
+    - alert: DeterministicGasFactorExceedExpectedMax
+      expr: max_over_time(deterministic_gas_factor_exceed_expected_max{job="cosmos"}[1m]) > 0
+      for: 1s
+      labels:
+        severity: critical
+        service: cosmos-monitoring
+      annotations:
+        description: 'Found message exceeded expected max gas factor, {{ `{{ $labels.msg_name }}` }} '
+
+    - alert: DeterministicGasExceedFuseGasMultiplier
+      expr: max_over_time(deterministic_gas_exceed_fuse_gas_multiplier{job="cosmos"}[1m]) > 0
+      for: 1s
+      labels:
+        severity: critical
+        service: cosmos-monitoring
+      annotations:
+        description: 'Found message exceeded fuse gas multiplier, {{ `{{ $labels.msg_name }}` }} '
+
   - name: Faucet
     rules:
     - alert: FaucetBalance
