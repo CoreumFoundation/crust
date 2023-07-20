@@ -41,7 +41,7 @@ jobs:
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests coreum-ibc"
-            command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 0.5s"
+            command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: false
             linter-cache: false
@@ -53,7 +53,7 @@ jobs:
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests faucet"
-            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 0.5s"
+            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
             go-cache: true
             wasm-cache: false
             linter-cache: false
