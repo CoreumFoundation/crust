@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/pkg/config"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 )
 
 func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
@@ -33,8 +33,8 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, homeDir string) {
 // NetworkConfig returns the network config used by crust.
 func NetworkConfig(genesisTemplate string) (config.NetworkConfig, error) {
 	networkConfig := config.NetworkConfig{
-		AddressPrefix: constant.AddressPrefixDev,
 		Provider: config.DynamicConfigProvider{
+			AddressPrefix:   constant.AddressPrefixDev,
 			GenesisTemplate: genesisTemplate,
 			ChainID:         constant.ChainIDDev,
 			GenesisTime:     time.Now(),

@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )

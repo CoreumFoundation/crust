@@ -12,7 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	coreumconstant "github.com/CoreumFoundation/coreum/pkg/config/constant"
+	coreumconstant "github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
@@ -142,7 +142,7 @@ func (r Relayer) saveConfigFile() error {
 	}{
 		CoreumChanID:        string(r.config.Cored.Config().NetworkConfig.ChainID()),
 		CoreumRPCURL:        infra.JoinNetAddr("http", r.config.Cored.Info().HostFromContainer, r.config.Cored.Config().Ports.RPC),
-		CoreumAccountPrefix: r.config.Cored.Config().NetworkConfig.AddressPrefix,
+		CoreumAccountPrefix: r.config.Cored.Config().NetworkConfig.Provider.GetAddressPrefix(),
 
 		PeerChanID:        r.config.PeeredChain.AppConfig().ChainID,
 		PeerRPCURL:        infra.JoinNetAddr("http", r.config.PeeredChain.Info().HostFromContainer, r.config.PeeredChain.AppConfig().Ports.RPC),

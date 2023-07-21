@@ -18,7 +18,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	coreumconstant "github.com/CoreumFoundation/coreum/pkg/config/constant"
+	coreumconstant "github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
@@ -214,7 +214,7 @@ func (h Hermes) saveConfigFile() error {
 		CoreumRPCURL:        infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
 		CoreumGRPCURL:       infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.GRPC),
 		CoreumWebsocketURL:  infra.JoinNetAddr("ws", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC) + "/websocket",
-		CoreumAccountPrefix: h.config.Cored.Config().NetworkConfig.AddressPrefix,
+		CoreumAccountPrefix: h.config.Cored.Config().NetworkConfig.Provider.GetAddressPrefix(),
 		CoreumGasPrice:      sdk.NewDecCoinFromDec("udevcore", sdk.MustNewDecFromStr("0.1")),
 
 		PeerChanID:        h.config.PeeredChain.AppConfig().ChainID,
