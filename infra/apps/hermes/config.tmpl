@@ -119,7 +119,7 @@ gas_price = { price = {{ .CoreumGasPrice.Amount }}, denom = '{{ .CoreumGasPrice.
 gas_multiplier = 1.1
 max_msg_num = 30
 max_tx_size = 2097152
-clock_drift = '5m'
+clock_drift = '5s'
 max_block_time = '30s'
 trusting_period = '6days'
 trust_threshold = { numerator = '1', denominator = '3' }
@@ -140,7 +140,7 @@ gas_price = { price = {{ .PeerGasPrice.Amount }}, denom = '{{ .PeerGasPrice.Deno
 gas_multiplier = 1.1
 max_msg_num = 30
 max_tx_size = 2097152
-clock_drift = '5m'
+clock_drift = '5s'
 max_block_time = '30s'
 trusting_period = '6days'
 trust_threshold = { numerator = '1', denominator = '3' }
