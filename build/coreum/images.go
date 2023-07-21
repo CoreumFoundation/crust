@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
-	"github.com/CoreumFoundation/coreum/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/coreum/image"
 	"github.com/CoreumFoundation/crust/build/docker"
