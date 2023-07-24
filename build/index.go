@@ -20,6 +20,7 @@ var Commands = map[string]build.CommandFunc{
 	"build/faucet":            faucet.Build,
 	"build/znet":              crust.BuildZNet,
 	"build/integration-tests": buildIntegrationTests,
+	"build-locally/cored":     coreum.BuildCoredLocally,
 	"images":                  buildDockerImages,
 	"images/cored":            coreum.BuildCoredDockerImage,
 	"images/faucet":           faucet.BuildDockerImage,
