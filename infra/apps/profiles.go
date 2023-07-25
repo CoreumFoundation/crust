@@ -29,6 +29,7 @@ const (
 	AppPrefixMonitoring = "monitoring"
 )
 
+// Predefined Profiles.
 const (
 	Profile1Cored                  = "1cored"
 	Profile3Cored                  = "3cored"
@@ -76,6 +77,8 @@ func DefaultProfiles() []string {
 }
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
+//
+//nolint:funlen // breaking down this logic will not make it easier to understand it.
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, error) {
 	pMap := map[string]bool{}
 	coredProfilePresent := false
