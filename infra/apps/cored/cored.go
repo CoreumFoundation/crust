@@ -58,6 +58,7 @@ type Config struct {
 	RootNode          *Cored
 	ImportedMnemonics map[string]string
 	BinaryVersion     string
+	TimeoutCommit     time.Duration
 }
 
 // New creates new cored app.
@@ -321,7 +322,7 @@ func (c Cored) prepare() error {
 		PrometheusPort: c.config.Ports.Prometheus,
 		NodeKey:        c.nodePrivateKey,
 		ValidatorKey:   c.validatorPrivateKey,
-	}, c.config.HomeDir)
+	}, c.config.TimeoutCommit, c.config.HomeDir)
 
 	appCfg := srvconfig.DefaultConfig()
 	appCfg.API.Enable = true

@@ -1,5 +1,7 @@
 package infra
 
+import "time"
+
 // Config stores configuration.
 type Config struct {
 	// EnvName is the name of created environment
@@ -7,6 +9,9 @@ type Config struct {
 
 	// Profiles defines the list of application profiles to run
 	Profiles []string
+
+	// TimeoutCommit allows to define custom timeout commit for all used chains.
+	TimeoutCommit time.Duration
 
 	// CoredVersion defines the version of the cored to be used on start
 	CoredVersion string

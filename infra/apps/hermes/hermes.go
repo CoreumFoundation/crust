@@ -215,7 +215,8 @@ func (h Hermes) saveConfigFile() error {
 		CoreumGRPCURL:       infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.GRPC),
 		CoreumWebsocketURL:  infra.JoinNetAddr("ws", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC) + "/websocket",
 		CoreumAccountPrefix: h.config.Cored.Config().NetworkConfig.Provider.GetAddressPrefix(),
-		CoreumGasPrice:      sdk.NewDecCoinFromDec("udevcore", sdk.MustNewDecFromStr("0.1")),
+		// TODO(dzmitryhil) move gas price for host and peed chains to prams
+		CoreumGasPrice: sdk.NewDecCoinFromDec("udevcore", sdk.MustNewDecFromStr("0.0625")),
 
 		PeerChanID:        h.config.PeeredChain.AppConfig().ChainID,
 		PeerRPCURL:        infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC),
