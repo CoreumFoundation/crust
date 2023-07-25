@@ -8,12 +8,16 @@ KEYRING_FLAGS="--keyring-backend test --keyring-dir $HOME"
 RELAYER_MNEMONIC="{{ .RelayerMnemonic }}"
 FUNDING_MNEMONIC="{{ .FundingMnemonic }}"
 
-GENESIS_PATH="$HOME/.gaia/config/genesis.json"
+NODE_CONFIG_PATH="$HOME/{{ .HomeName }}/config/config.toml"
 
-if [ ! -f "$GENESIS_PATH" ]; then
+if [ ! -f "$NODE_CONFIG_PATH" ]; then
 
 # init the chain
 {{ .ExecName }} init moniker $CHAIN_ID_FLAGS
+
+if [ "{{ .TimeoutCommit }}" != "0s" ]; then
+    sed -i '/^timeout_commit/s/.*/timeout_commit="{{ .TimeoutCommit }}"/g' $NODE_CONFIG_PATH
+fi
 
 # add chain validator
 {{ .ExecName }} keys add validator $KEYRING_FLAGS

@@ -43,6 +43,7 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 	config := infra.Config{
 		EnvName:        configF.EnvName,
 		Profiles:       spec.Profiles,
+		TimeoutCommit:  spec.TimeoutCommit,
 		CoredVersion:   configF.CoredVersion,
 		HomeDir:        homeDir,
 		AppDir:         homeDir + "/app",
