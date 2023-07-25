@@ -77,22 +77,10 @@ func DefaultProfiles() []string {
 }
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
-//
-//nolint:funlen // breaking down this logic will not make it easier to understand it.
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, error) {
 	pMap := map[string]bool{}
-	coredProfilePresent := false
-	for _, p := range profiles {
-		if _, ok := availableProfiles[p]; !ok {
-			return nil, errors.Errorf("profile %s does not exist", p)
-		}
-		if p == Profile1Cored || p == Profile3Cored || p == Profile5Cored {
-			if coredProfilePresent {
-				return nil, errors.Errorf("profiles 1cored, 3cored and 5cored are mutually exclusive")
-			}
-			coredProfilePresent = true
-		}
-		pMap[p] = true
+	if err := checkProfiles(pMap); err != nil {
+		return nil, err
 	}
 
 	if pMap[ProfileIntegrationTestsIBC] || pMap[ProfileIntegrationTestsModules] {
@@ -102,8 +90,6 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		if !pMap[Profile5Cored] {
 			pMap[Profile3Cored] = true
 		}
-
-		pMap[ProfileFaucet] = true
 	}
 
 	if pMap[ProfileIntegrationTestsIBC] {
@@ -183,4 +169,35 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	}
 
 	return appSet, nil
+}
+
+func decideNumOfCoredValidators(pMap map[string]bool) int {
+	switch {
+	case pMap[Profile1Cored]:
+		return 1
+	case pMap[Profile3Cored]:
+		return 3
+	case pMap[Profile5Cored]:
+		return 5
+	default:
+		return 1
+	}
+}
+
+func checkProfiles(pMap map[string]bool) error {
+	coredProfilePresent := false
+	for _, p := range profiles {
+		if _, ok := availableProfiles[p]; !ok {
+			return errors.Errorf("profile %s does not exist", p)
+		}
+		if p == Profile1Cored || p == Profile3Cored || p == Profile5Cored {
+			if coredProfilePresent {
+				return errors.Errorf("profiles 1cored, 3cored and 5cored are mutually exclusive")
+			}
+			coredProfilePresent = true
+		}
+		pMap[p] = true
+	}
+
+	return nil
 }

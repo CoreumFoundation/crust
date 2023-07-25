@@ -101,12 +101,9 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		Use:   "test",
 		Short: "Runs integration tests for all repos",
 		RunE: cmdF.Cmd(func() error {
-			switch {
-			case lo.Some(configF.TestGroups, []string{apps.TestGroupCoreumIBC, apps.TestGroupCoreumUpgrade}):
+			if lo.Some(configF.TestGroups, []string{apps.TestGroupCoreumIBC, apps.TestGroupCoreumUpgrade}) || len(configF.TestGroups) == 0 {
 				configF.Profiles = []string{apps.ProfileIntegrationTestsIBC}
-			case len(configF.TestGroups) == 0:
-				configF.Profiles = []string{apps.ProfileIntegrationTestsIBC}
-			default:
+			} else {
 				configF.Profiles = []string{apps.ProfileIntegrationTestsModules}
 			}
 			spec := infra.NewSpec(configF)
