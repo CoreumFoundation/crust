@@ -13,6 +13,14 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
 )
 
+// TestGroup constant values.
+const (
+	TestGroupCoreumModules = "coreum-modules"
+	TestGroupCoreumUpgrade = "coreum-upgrade"
+	TestGroupCoreumIBC     = "coreum-ibc"
+	TestGroupFaucet        = "faucet"
+)
+
 // AppPrefix constants are the prefixes used in the app factories.
 const (
 	AppPrefixCored      = "cored"
@@ -22,30 +30,31 @@ const (
 )
 
 const (
-	profile1Cored           = "1cored"
-	profile3Cored           = "3cored"
-	profile5Cored           = "5cored"
-	profileIBC              = "ibc"
-	profileFaucet           = "faucet"
-	profileExplorer         = "explorer"
-	profileMonitoring       = "monitoring"
-	profileIntegrationTests = "integration-tests"
+	Profile1Cored                  = "1cored"
+	Profile3Cored                  = "3cored"
+	Profile5Cored                  = "5cored"
+	ProfileIBC                     = "ibc"
+	ProfileFaucet                  = "faucet"
+	ProfileExplorer                = "explorer"
+	ProfileMonitoring              = "monitoring"
+	ProfileIntegrationTestsIBC     = "integration-tests-ibc"
+	ProfileIntegrationTestsModules = "integration-tests-modules"
 )
 
 var profiles = []string{
-	profile1Cored,
-	profile3Cored,
-	profile5Cored,
-	profileIBC,
-	profileFaucet,
-	profileExplorer,
-	profileMonitoring,
-	profileIntegrationTests,
+	Profile1Cored,
+	Profile3Cored,
+	Profile5Cored,
+	ProfileIBC,
+	ProfileFaucet,
+	ProfileExplorer,
+	ProfileMonitoring,
+	ProfileIntegrationTestsIBC,
+	ProfileIntegrationTestsModules,
 }
 
 var (
-	defaultProfiles          = []string{profile1Cored}
-	integrationTestsProfiles = []string{profileIntegrationTests}
+	defaultProfiles = []string{Profile1Cored}
 )
 
 var availableProfiles = func() map[string]struct{} {
@@ -66,11 +75,6 @@ func DefaultProfiles() []string {
 	return defaultProfiles
 }
 
-// IntegrationTestsProfiles returns the list of profiles started for integration tests.
-func IntegrationTestsProfiles() []string {
-	return integrationTestsProfiles
-}
-
 // BuildAppSet builds the application set to deploy based on provided profiles.
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, error) {
 	pMap := map[string]bool{}
@@ -79,7 +83,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		if _, ok := availableProfiles[p]; !ok {
 			return nil, errors.Errorf("profile %s does not exist", p)
 		}
-		if p == profile1Cored || p == profile3Cored || p == profile5Cored {
+		if p == Profile1Cored || p == Profile3Cored || p == Profile5Cored {
 			if coredProfilePresent {
 				return nil, errors.Errorf("profiles 1cored, 3cored and 5cored are mutually exclusive")
 			}
@@ -88,28 +92,32 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		pMap[p] = true
 	}
 
-	if pMap[profileIntegrationTests] {
-		if pMap[profile1Cored] {
+	if pMap[ProfileIntegrationTestsIBC] || pMap[ProfileIntegrationTestsModules] {
+		if pMap[Profile1Cored] {
 			return nil, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored or 5cored")
 		}
-		if !pMap[profile5Cored] {
-			pMap[profile3Cored] = true
+		if !pMap[Profile5Cored] {
+			pMap[Profile3Cored] = true
 		}
-		pMap[profileIBC] = true
-		pMap[profileFaucet] = true
+
+		pMap[ProfileFaucet] = true
 	}
 
-	if (pMap[profileIBC] || pMap[profileFaucet] || pMap[profileExplorer] || pMap[profileMonitoring]) && !pMap[profile3Cored] && !pMap[profile5Cored] {
-		pMap[profile1Cored] = true
+	if pMap[ProfileIntegrationTestsIBC] {
+		pMap[ProfileIBC] = true
+	}
+
+	if (pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileExplorer] || pMap[ProfileMonitoring]) && !pMap[Profile3Cored] && !pMap[Profile5Cored] {
+		pMap[Profile1Cored] = true
 	}
 
 	var numOfCoredValidators int
 	switch {
-	case pMap[profile1Cored]:
+	case pMap[Profile1Cored]:
 		numOfCoredValidators = 1
-	case pMap[profile3Cored]:
+	case pMap[Profile3Cored]:
 		numOfCoredValidators = 3
-	case pMap[profile5Cored]:
+	case pMap[Profile5Cored]:
 		numOfCoredValidators = 5
 	}
 
@@ -126,21 +134,20 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		appSet = append(appSet, coredNode)
 	}
 
-	if pMap[profileIBC] {
+	if pMap[ProfileIBC] {
 		appSet = append(appSet, appF.IBC(AppPrefixIBC, coredApp)...)
 	}
 
 	var faucetApp faucet.Faucet
-	if pMap[profileFaucet] {
-		faucetApp = appF.Faucet(string(faucet.AppType), coredApp)
-		appSet = append(appSet, faucetApp)
+	if pMap[ProfileFaucet] {
+		appSet = append(appSet, appF.Faucet(string(faucet.AppType), coredApp))
 	}
 
-	if pMap[profileExplorer] {
+	if pMap[ProfileExplorer] {
 		appSet = append(appSet, appF.BlockExplorer(AppPrefixExplorer, coredApp).ToAppSet()...)
 	}
 
-	if pMap[profileMonitoring] {
+	if pMap[ProfileMonitoring] {
 		var bdJunoApp bdjuno.BDJuno
 		if bdJunoAppSetApp, ok := appSet.FindAppByName(
 			BuildPrefixedAppName(AppPrefixExplorer, string(bdjuno.AppType)),

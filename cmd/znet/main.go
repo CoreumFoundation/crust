@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -100,7 +101,14 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		Use:   "test",
 		Short: "Runs integration tests for all repos",
 		RunE: cmdF.Cmd(func() error {
-			configF.Profiles = apps.IntegrationTestsProfiles()
+			switch {
+			case lo.Some(configF.TestGroups, []string{apps.TestGroupCoreumIBC, apps.TestGroupCoreumUpgrade}):
+				configF.Profiles = []string{apps.ProfileIntegrationTestsIBC}
+			case len(configF.TestGroups) == 0:
+				configF.Profiles = []string{apps.ProfileIntegrationTestsIBC}
+			default:
+				configF.Profiles = []string{apps.ProfileIntegrationTestsModules}
+			}
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
 			return znet.Test(ctx, config, spec)
