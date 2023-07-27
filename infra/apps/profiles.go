@@ -79,7 +79,8 @@ func DefaultProfiles() []string {
 // BuildAppSet builds the application set to deploy based on provided profiles.
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, error) {
 	pMap := map[string]bool{}
-	if err := checkProfiles(pMap); err != nil {
+	pMap, err := checkProfiles(profiles, pMap)
+	if err != nil {
 		return nil, err
 	}
 
@@ -100,20 +101,10 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		pMap[Profile1Cored] = true
 	}
 
-	var numOfCoredValidators int
-	switch {
-	case pMap[Profile1Cored]:
-		numOfCoredValidators = 1
-	case pMap[Profile3Cored]:
-		numOfCoredValidators = 3
-	case pMap[Profile5Cored]:
-		numOfCoredValidators = 5
-	}
+	numOfCoredValidators := decideNumOfCoredValidators(pMap)
 
 	var coredApp cored.Cored
 	var appSet infra.AppSet
-
-	var err error
 
 	coredApp, coredNodes, err := appF.CoredNetwork(AppPrefixCored, cored.DefaultPorts, numOfCoredValidators, 0, coredVersion)
 	if err != nil {
@@ -184,20 +175,20 @@ func decideNumOfCoredValidators(pMap map[string]bool) int {
 	}
 }
 
-func checkProfiles(pMap map[string]bool) error {
+func checkProfiles(profiles []string, pMap map[string]bool) (map[string]bool, error) {
 	coredProfilePresent := false
 	for _, p := range profiles {
 		if _, ok := availableProfiles[p]; !ok {
-			return errors.Errorf("profile %s does not exist", p)
+			return nil, errors.Errorf("profile %s does not exist", p)
 		}
 		if p == Profile1Cored || p == Profile3Cored || p == Profile5Cored {
 			if coredProfilePresent {
-				return errors.Errorf("profiles 1cored, 3cored and 5cored are mutually exclusive")
+				return nil, errors.Errorf("profiles 1cored, 3cored and 5cored are mutually exclusive")
 			}
 			coredProfilePresent = true
 		}
 		pMap[p] = true
 	}
 
-	return nil
+	return pMap, nil
 }
