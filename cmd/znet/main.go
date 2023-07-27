@@ -109,6 +109,9 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 			} else {
 				configF.Profiles = []string{apps.ProfileIntegrationTestsModules}
 			}
+			if lo.Contains(configF.TestGroups, apps.TestGroupFaucet) {
+				configF.Profiles = []string{apps.ProfileFaucet}
+			}
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
 			return znet.Test(ctx, config, spec)
