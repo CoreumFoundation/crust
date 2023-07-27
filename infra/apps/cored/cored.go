@@ -359,8 +359,9 @@ func (c Cored) prepare() error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		"v2":     "cored-v2.0.0",
-		"v2.0.1": "cored", // TODO update to next version once the binary is ready
+		// To test upgrade plan v2 for mainnet and v2patch1 for testnet both plans must target the newest binary
+		"v2":       "cored",
+		"v2patch1": "cored", // TODO update to next version once the binary is ready
 	}
 	for upgrade, binary := range upgrades {
 		err := copyFile(filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", binary),
