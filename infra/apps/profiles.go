@@ -175,7 +175,7 @@ func decideNumOfCoredValidators(pMap map[string]bool) int {
 }
 
 func checkProfiles(profiles []string) (map[string]bool, error) {
-	var pMap map[string]bool
+	pMap := map[string]bool{}
 	coredProfilePresent := false
 	for _, p := range profiles {
 		if _, ok := availableProfiles[p]; !ok {
