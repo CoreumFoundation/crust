@@ -66,6 +66,7 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
 	for _, binaryTool := range []tools.Name{
 		tools.CoredV100,
+		tools.CoredV200,
 	} {
 		if err := tools.EnsureBinaries(ctx, binaryTool, tools.PlatformDockerLocal); err != nil {
 			return err

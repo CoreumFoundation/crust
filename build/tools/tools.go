@@ -35,6 +35,7 @@ const (
 	RelayerCosmos Name = "relayercosmos"
 	Hermes        Name = "hermes"
 	CoredV100     Name = "cored-v1.0.0"
+	CoredV200     Name = "cored-v2.0.0"
 	Protoc        Name = "protoc"
 	ProtocGenDoc  Name = "protoc-gen-doc"
 )
@@ -237,6 +238,25 @@ var tools = map[Name]Tool{
 				Hash: "sha256:3ced97f06607f0cdaf77e7ff0b36b2011d101c660684e4f3e54c2ac6bf344dd6",
 				Binaries: map[string]string{
 					"bin/cored-v1.0.0": "cored-linux-arm64",
+				},
+			},
+		},
+	},
+	CoredV200: {
+		Version: "v2.0.0",
+		Sources: Sources{
+			PlatformDockerAMD64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.0/cored-linux-amd64",
+				Hash: "sha256:7848022a3a35723ecef02eb835fbf139989aace8d780186018dbcdebdc57d694",
+				Binaries: map[string]string{
+					"bin/cored-v2.0.0": "cored-linux-amd64",
+				},
+			},
+			PlatformDockerARM64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.0/cored-linux-arm64",
+				Hash: "sha256:8b0df987c13ede90eb79f7c4bdae3d1a503c14aaa2b5f187a84f575bad66b39b",
+				Binaries: map[string]string{
+					"bin/cored-v2.0.0": "cored-linux-arm64",
 				},
 			},
 		},
