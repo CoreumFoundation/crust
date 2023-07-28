@@ -78,8 +78,7 @@ func DefaultProfiles() []string {
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, error) {
-	pMap := map[string]bool{}
-	pMap, err := checkProfiles(profiles, pMap)
+	pMap, err := checkProfiles(profiles)
 	if err != nil {
 		return nil, err
 	}
@@ -171,11 +170,12 @@ func decideNumOfCoredValidators(pMap map[string]bool) int {
 	case pMap[Profile5Cored]:
 		return 5
 	default:
-		return 1
+		panic("no cored profile specified.")
 	}
 }
 
-func checkProfiles(profiles []string, pMap map[string]bool) (map[string]bool, error) {
+func checkProfiles(profiles []string) (map[string]bool, error) {
+	var pMap map[string]bool
 	coredProfilePresent := false
 	for _, p := range profiles {
 		if _, ok := availableProfiles[p]; !ok {

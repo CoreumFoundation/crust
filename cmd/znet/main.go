@@ -110,7 +110,7 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 				configF.Profiles = []string{apps.ProfileIntegrationTestsModules}
 			}
 			if lo.Contains(configF.TestGroups, apps.TestGroupFaucet) {
-				configF.Profiles = []string{apps.ProfileFaucet}
+				configF.Profiles = append(configF.Profiles, apps.ProfileFaucet)
 			}
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
