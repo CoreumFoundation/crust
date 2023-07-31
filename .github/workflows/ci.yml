@@ -132,5 +132,5 @@ jobs:
       - name: TEST
         run: |
           ls -la
-          ls -la ~/${{ github.workspace }}/coreum
+          ls -la ${{ github.workspace }}/coreum
           ls -la ./coreum
