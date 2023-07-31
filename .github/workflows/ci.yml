@@ -126,8 +126,10 @@ jobs:
         uses: actions/cache@v3
         if: ${{ matrix.wasm-cache }}
         with:
-          path: ~/.cache/crust/wasm
-          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }} # TODO we need to hash the rust files(.rs) in ~/.cache/crust/wasm
+          path: | 
+            ~/.cache/crust/wasm
+            !/.cache/crust/wasm/code-hashes.json
+          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('~/.cache/crust/wasm/**/*.rs') }}
       # - name: Setup linter cache
       #   uses: actions/cache@v3
       #   if: ${{ matrix.linter-cache }}
@@ -157,6 +159,7 @@ jobs:
         with:
           path: |
             ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/* 
+            ~/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
       - name: ls one of artifacts folders
