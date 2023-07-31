@@ -117,6 +117,12 @@ jobs:
         with:
           path: ~/.cache/crust/bin
           key: ${{ runner.os }}-bin-${{ steps.get-year-week.outputs.date }} # year-week key
+      - name: Setup smart contract build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            $GITHUB_WORKSPACE/coreum/integration-tests/contracts/**/artifacts
+          key: cache-smart-contracts-${{ hashFiles('**/*.wasm') }}
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
