@@ -132,8 +132,4 @@ jobs:
       - name: TEST
         run: |
           ls -la
-          echo $(pwd)
-          echo ~
           ls -la ~/coreum
-          echo ${{ github.workspace }}
-          echo $GITHUB_WORKSPACE
