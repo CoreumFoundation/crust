@@ -131,6 +131,9 @@ jobs:
         uses: jwalton/gh-docker-logs@v2
       - name: TEST
         run: |
+          ls -la
           echo $(pwd)
+          echo ~
+          echo ~/coreum
           echo ${{ github.workspace }}
           echo $GITHUB_WORKSPACE
