@@ -121,7 +121,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/coreum/integration-tests/contracts/**/artifacts
+            ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('**/*.wasm') }}
           # key: ${{ runner.os }}-cache-smart-contracts-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Run ${{ matrix.ci_step }}
@@ -129,8 +129,3 @@ jobs:
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
-      - name: TEST
-        run: |
-          ls -la
-          ls -la ${{ github.workspace }}/coreum
-          ls -la ./coreum
