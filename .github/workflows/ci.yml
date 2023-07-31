@@ -122,7 +122,8 @@ jobs:
         with:
           path: |
             $GITHUB_WORKSPACE/coreum/integration-tests/contracts/**/artifacts
-          key: cache-smart-contracts-${{ hashFiles('**/*.wasm') }}
+          # key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('**/*.wasm') }}
+          key: ${{ runner.os }}-cache-smart-contracts-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
