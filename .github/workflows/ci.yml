@@ -8,162 +8,171 @@ on:
     - cron: '0 1 * * 1' # At 01:00 on Monday
   workflow_dispatch:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout coreum
-      uses: actions/checkout@v3
-      with:
-        repository: CoreumFoundation/coreum
-        path: coreum
-
-    - name: Setup smart contract build cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/*
-        key: test1 
-
-    - name: ls one of artifacts folders
-      run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/ft/artifacts
-      continue-on-error: true
-    
-    - name: create a file
-      run: | 
-        mkdir ${{ github.workspace }}/coreum/integration-tests/contracts/modules/ft/artifacts
-        touch ${{ github.workspace }}/coreum/integration-tests/contracts/modules/ft/artifacts/test1.file
-
-
 # jobs:
-  # ci:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       ci_step: [
-  #         "lint",
-  #         "test",
-  #         "integration tests coreum-modules",
-  #         "integration tests coreum-ibc",
-  #         "integration tests coreum-upgrade",
-  #         "integration tests faucet",
-  #       ]
-  #       include:
-  #         - ci_step: "lint"
-  #           command: "crust lint/crust"
-  #           go-cache: true
-  #           wasm-cache: false
-  #           linter-cache: true
-  #           docker-cache: false
-  #         - ci_step: "test"
-  #           command: "crust test/crust"
-  #           go-cache: true
-  #           wasm-cache: false
-  #           linter-cache: false
-  #           docker-cache: false
-  #         - ci_step: "integration tests coreum-modules"
-  #           command: "crust build/integration-tests/coreum/modules images && crust znet test --test-groups=coreum-modules --timeout-commit 0.5s"
-  #           go-cache: true
-  #           wasm-cache: true
-  #           linter-cache: false
-  #           docker-cache: true
-  #         - ci_step: "integration tests coreum-ibc"
-  #           command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
-  #           go-cache: true
-  #           wasm-cache: true
-  #           linter-cache: false
-  #           docker-cache: true
-  #         - ci_step: "integration tests coreum-upgrade"
-  #           command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
-  #           go-cache: true
-  #           wasm-cache: true
-  #           linter-cache: false
-  #           docker-cache: true
-  #         - ci_step: "integration tests faucet"
-  #           command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
-  #           go-cache: true
-  #           wasm-cache: false
-  #           linter-cache: false
-  #           docker-cache: true
+#   build:
+#     runs-on: ubuntu-latest
 
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Go version used to build crust tool
-  #       run: go version
-  #     - name: Checkout crust
-  #       uses: actions/checkout@v3
-  #       with:
-  #         persist-credentials: false
-  #         path: crust
-  #     - name: Checkout coreum
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: CoreumFoundation/coreum
-  #         path: coreum
-  #     - name: Checkout faucet
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: CoreumFoundation/faucet
-  #         path: faucet
-  #     - name: Set up crust
-  #       run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
-  #     - name: Setup go cache
-  #       uses: actions/cache@v3
-  #       if: ${{ matrix.go-cache }}
-  #       with:
-  #         path: |
-  #           ~/.cache/go-build
-  #           ~/go/pkg/mod
-  #         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-  #     - name: Setup WASM cache
-  #       uses: actions/cache@v3
-  #       if: ${{ matrix.wasm-cache }}
-  #       with:
-  #         path: ~/.cache/crust/wasm
-  #         key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }} # TODO we need to hash the rust files(.rs) in ~/.cache/crust/wasm
-  #     - name: Setup linter cache
-  #       uses: actions/cache@v3
-  #       if: ${{ matrix.linter-cache }}
-  #       with:
-  #         path: ~/.cache/golangci-lint
-  #         key: ${{ runner.os }}-linter-cache
-  #     - name: Get Date
-  #       id: get-year-week
-  #       run: |
-  #         echo "date=$(/bin/date -u "+%Y-%U")" >> $GITHUB_OUTPUT
-  #       shell: bash
-  #     - name: Set docker cache
-  #       uses: satackey/action-docker-layer-caching@v0.0.11
-  #       if: ${{ matrix.docker-cache }}
-  #       continue-on-error: true
-  #       with:
-  #         key: ${{ runner.os }}-docker-v2-${{ steps.get-year-week.outputs.date }} # year-week key
-  #     - name: Set crust binaries cache
-  #       id: cache-crust-bin
-  #       uses: actions/cache@v3
-  #       continue-on-error: true
-  #       with:
-  #         path: ~/.cache/crust/bin
-  #         key: ${{ runner.os }}-bin-${{ steps.get-year-week.outputs.date }} # year-week key
-  #     - name: Setup smart contract build cache
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/* 
-  #         key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
-  #       if: ${{ matrix.wasm-cache }}
-  #     - name: ls one of artifacts folders
-  #       run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz/artifacts
-  #       continue-on-error: true
-  #     - name: ls one of smart contracts folder
-  #       run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz
-  #       continue-on-error: true
-  #     - name: ls the wasm cache folder 
-  #       run: ls -la ~/.cache/crust/wasm
-  #       continue-on-error: true
-  #     - name: Run ${{ matrix.ci_step }}
-  #       run: ${{ matrix.command }}
-  #     - name: Dump docker logs on failure
-  #       if: failure()
-  #       uses: jwalton/gh-docker-logs@v2
+#     steps:
+#     - name: Checkout coreum
+#       uses: actions/checkout@v3
+#       with:
+#         repository: CoreumFoundation/coreum
+#         path: coreum
+
+#     - name: Setup smart contract build cache
+#       uses: actions/cache@v3
+#       with:
+#         path: |
+#           ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/*
+#         key: test1 
+
+#     - name: ls one of artifacts folders
+#       run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/ft/artifacts
+#       continue-on-error: true
+    
+#     - name: create a file
+#       run: | 
+#         mkdir ${{ github.workspace }}/coreum/integration-tests/contracts/modules/ft/artifacts
+#         touch ${{ github.workspace }}/coreum/integration-tests/contracts/modules/ft/artifacts/test1.file
+
+
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_step: [
+          "build smart contract",
+          # "lint",
+          # "test",
+          # "integration tests coreum-modules",
+          # "integration tests coreum-ibc",
+          # "integration tests coreum-upgrade",
+          # "integration tests faucet",
+        ]
+        include:
+          - ci_step: "build smart contract"
+            command: "crust wasm"
+            go-cache: true
+            wasm-cache: true
+            docker-cache: false
+          # - ci_step: "lint"
+          #   command: "crust lint/crust"
+          #   go-cache: true
+          #   wasm-cache: false
+          #   linter-cache: true
+          #   docker-cache: false
+          # - ci_step: "test"
+          #   command: "crust test/crust"
+          #   go-cache: true
+          #   wasm-cache: false
+          #   linter-cache: false
+          #   docker-cache: false
+          # - ci_step: "integration tests coreum-modules"
+          #   command: "crust build/integration-tests/coreum/modules images && crust znet test --test-groups=coreum-modules --timeout-commit 0.5s"
+          #   go-cache: true
+          #   wasm-cache: true
+          #   linter-cache: false
+          #   docker-cache: true
+          # - ci_step: "integration tests coreum-ibc"
+          #   command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
+          #   go-cache: true
+          #   wasm-cache: true
+          #   linter-cache: false
+          #   docker-cache: true
+          # - ci_step: "integration tests coreum-upgrade"
+          #   command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
+          #   go-cache: true
+          #   wasm-cache: true
+          #   linter-cache: false
+          #   docker-cache: true
+          # - ci_step: "integration tests faucet"
+          #   command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
+          #   go-cache: true
+          #   wasm-cache: false
+          #   linter-cache: false
+          #   docker-cache: true
+
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Go version used to build crust tool
+        run: go version
+      - name: Checkout crust
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: crust
+      - name: Checkout coreum
+        uses: actions/checkout@v3
+        with:
+          repository: CoreumFoundation/coreum
+          path: coreum
+      # - name: Checkout faucet
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: CoreumFoundation/faucet
+      #     path: faucet
+      - name: Set up crust
+        run: echo "$(pwd)/crust/bin" >> $GITHUB_PATH
+      # - name: Setup go cache
+      #   uses: actions/cache@v3
+      #   if: ${{ matrix.go-cache }}
+      #   with:
+      #     path: |
+      #       ~/.cache/go-build
+      #       ~/go/pkg/mod
+      #     key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Setup WASM cache
+        uses: actions/cache@v3
+        if: ${{ matrix.wasm-cache }}
+        with:
+          path: ~/.cache/crust/wasm
+          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }} # TODO we need to hash the rust files(.rs) in ~/.cache/crust/wasm
+      # - name: Setup linter cache
+      #   uses: actions/cache@v3
+      #   if: ${{ matrix.linter-cache }}
+      #   with:
+      #     path: ~/.cache/golangci-lint
+      #     key: ${{ runner.os }}-linter-cache
+      - name: Get Date
+        id: get-year-week
+        run: |
+          echo "date=$(/bin/date -u "+%Y-%U")" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Set docker cache
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        if: ${{ matrix.docker-cache }}
+        continue-on-error: true
+        with:
+          key: ${{ runner.os }}-docker-v2-${{ steps.get-year-week.outputs.date }} # year-week key
+      - name: Set crust binaries cache
+        id: cache-crust-bin
+        uses: actions/cache@v3
+        continue-on-error: true
+        with:
+          path: ~/.cache/crust/bin
+          key: ${{ runner.os }}-bin-${{ steps.get-year-week.outputs.date }} # year-week key
+      - name: Setup smart contract build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/* 
+          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
+        if: ${{ matrix.wasm-cache }}
+      - name: ls one of artifacts folders
+        run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz/artifacts
+        continue-on-error: true
+      - name: ls one of smart contracts folder
+        run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz
+        continue-on-error: true
+      - name: ls the wasm cache folder 
+        run: ls -la ~/.cache/crust/wasm
+        continue-on-error: true
+      - name: Run ${{ matrix.ci_step }}
+        run: ${{ matrix.command }}
+      - name: ls one of artifacts folders after build
+        run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz/artifacts
+        continue-on-error: true
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2
