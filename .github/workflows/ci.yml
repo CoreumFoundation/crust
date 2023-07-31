@@ -121,9 +121,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            $GITHUB_WORKSPACE/coreum/integration-tests/contracts/**/artifacts
-          # key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('**/*.wasm') }}
-          key: ${{ runner.os }}-cache-smart-contracts-${{ steps.get-year-week.outputs.date }} # year-week key
+            ~/coreum/integration-tests/contracts/**/artifacts
+          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('**/*.wasm') }}
+          # key: ${{ runner.os }}-cache-smart-contracts-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
@@ -134,6 +134,6 @@ jobs:
           ls -la
           echo $(pwd)
           echo ~
-          echo ~/coreum
+          ls -la ~/coreum
           echo ${{ github.workspace }}
           echo $GITHUB_WORKSPACE
