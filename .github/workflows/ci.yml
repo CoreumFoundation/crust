@@ -43,7 +43,7 @@ jobs:
           - ci_step: "integration tests coreum-ibc"
             command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
             go-cache: true
-            wasm-cache: false
+            wasm-cache: true
             linter-cache: false
             docker-cache: true
           - ci_step: "integration tests coreum-upgrade"
@@ -93,7 +93,7 @@ jobs:
         if: ${{ matrix.wasm-cache }}
         with:
           path: ~/.cache/crust/wasm
-          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-wasm-cache-${{ hashFiles('**/Cargo.lock') }} # TODO we need to hash the rust files(.rs) in ~/.cache/crust/wasm
       - name: Setup linter cache
         uses: actions/cache@v3
         if: ${{ matrix.linter-cache }}
@@ -118,16 +118,19 @@ jobs:
         with:
           path: ~/.cache/crust/bin
           key: ${{ runner.os }}-bin-${{ steps.get-year-week.outputs.date }} # year-week key
-      - name: Build crust on cache miss
-        # if: steps.cache-crust-bin.outputs.cache-hit != 'true'
-        run: crust build/crust
       - name: Setup smart contract build cache
         uses: actions/cache@v3
         with:
           path: |
             ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts
-          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('**/*.wasm') }}
+          key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
+      - name: ls one of artifacts folders
+        run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz/artifacts
+        continue-on-error: true
+      - name: ls the wasm cache folder 
+        run: ls -la ~/.cache/crust/wasm
+        continue-on-error: true
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
       - name: Dump docker logs on failure
