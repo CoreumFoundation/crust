@@ -122,7 +122,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/*
+            ${{ github.workspace }}/coreum/integration-tests/contracts/**/artifacts/* 
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
       - name: ls one of artifacts folders
