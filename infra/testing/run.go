@@ -80,13 +80,6 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		args = append(args, "-test.run", config.TestFilter)
 	}
 
-	const (
-		testGroupCoreumModules = "coreum-modules"
-		testGroupCoreumUpgrade = "coreum-upgrade"
-		testGroupCoreumIBC     = "coreum-ibc"
-		testGroupFaucet        = "faucet"
-	)
-
 	var failed bool
 	// the execution order might be important
 	for _, onlyTestGroup := range onlyTestGroups {
@@ -94,7 +87,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
 		switch onlyTestGroup {
-		case testGroupCoreumModules, testGroupCoreumUpgrade, testGroupCoreumIBC:
+		case apps.TestGroupCoreumModules, apps.TestGroupCoreumUpgrade, apps.TestGroupCoreumIBC:
 
 			fullArgs = append(fullArgs,
 				"-run-unsafe=true",
@@ -108,7 +101,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				}
 			}
 
-			if onlyTestGroup == testGroupCoreumIBC {
+			if onlyTestGroup == apps.TestGroupCoreumIBC {
 				fullArgs = append(fullArgs, "-coreum-rpc-address", infra.JoinNetAddr("http", coredNode.Info().HostFromHost, coredNode.Config().Ports.RPC))
 
 				gaiaNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
@@ -136,7 +129,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 				)
 			}
 
-		case testGroupFaucet:
+		case apps.TestGroupFaucet:
 			faucetApp := appSet.FindRunningAppByName(string(faucet.AppType))
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
