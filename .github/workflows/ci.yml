@@ -128,6 +128,9 @@ jobs:
       - name: ls one of artifacts folders
         run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz/artifacts
         continue-on-error: true
+      - name: ls one of smart contracts folder
+        run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz
+        continue-on-error: true
       - name: ls the wasm cache folder 
         run: ls -la ~/.cache/crust/wasm
         continue-on-error: true
