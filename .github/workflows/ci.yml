@@ -73,10 +73,6 @@ jobs:
         with:
           repository: CoreumFoundation/coreum
           path: coreum
-        run: |
-          echo $(pwd)
-          echo ${{ github.workspace }}
-          echo $GITHUB_WORKSPACE
       - name: Checkout faucet
         uses: actions/checkout@v3
         with:
@@ -133,3 +129,8 @@ jobs:
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
+      - name: TEST
+        run: |
+          echo $(pwd)
+          echo ${{ github.workspace }}
+          echo $GITHUB_WORKSPACE
