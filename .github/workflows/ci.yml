@@ -114,7 +114,6 @@ jobs:
         with:
           key: ${{ runner.os }}-docker-v2-${{ steps.get-year-week.outputs.date }} # year-week key
       - name: Set crust binaries cache
-        id: cache-crust-bin
         uses: actions/cache@v3
         continue-on-error: true
         with:
