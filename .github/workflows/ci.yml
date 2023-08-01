@@ -14,7 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         ci_step: [
-          "build smart contract",
           "lint",
           "test",
           "integration tests coreum-modules",
@@ -129,20 +128,8 @@ jobs:
             ~/.cache/crust/wasm/code-hashes.json
           key: ${{ runner.os }}-cache-smart-contracts-${{ hashFiles('./coreum/**/*.rs') }}
         if: ${{ matrix.wasm-cache }}
-      - name: ls one of artifacts folders
-        run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz/artifacts
-        continue-on-error: true
-      - name: ls one of smart contracts folder
-        run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz
-        continue-on-error: true
-      - name: ls the wasm cache folder 
-        run: ls -la ~/.cache/crust/wasm
-        continue-on-error: true
       - name: Run ${{ matrix.ci_step }}
         run: ${{ matrix.command }}
-      - name: ls one of artifacts folders after build
-        run: ls -la ${{ github.workspace }}/coreum/integration-tests/contracts/modules/authz/artifacts
-        continue-on-error: true
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
