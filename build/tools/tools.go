@@ -435,6 +435,8 @@ func EnsureBinaries(ctx context.Context, tool Name, platform Platform) error {
 
 	toolDir := toolDir(tool, platform)
 	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
+		// todo: does this for loop check that binary has correct checksum ?
+
 		srcPath, err := filepath.Abs(toolDir + "/" + src)
 		if err != nil {
 			return installBinary(ctx, tool, info, platform)
