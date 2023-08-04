@@ -95,22 +95,22 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/ignite/cli/releases/
-	// v0.23.0 is the last version based on Cosmos v0.45.x
+	// v0.27.1 is the last version based on Cosmos v0.47.x
 	Ignite: {
-		Version: "0.23.0",
+		Version: "0.27.1",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_linux_amd64.tar.gz",
-				Hash: "sha256:915a96eb366fbf9c353af32d0ddb01796a30b86343ac77d613cc8a8af3dd395a",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.27.1/ignite_0.27.1_linux_amd64.tar.gz",
+				Hash: "sha256:040a898521d1bd7d6521d2d85151ae8c8821c19492a8c0d0cb21c5cddcf56df0",
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_darwin_amd64.tar.gz",
-				Hash: "sha256:b9ca67a70f4d1b43609c4289a7e83dc2174754d35f30fb43f1518c0434361c4e",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.27.1/ignite_0.27.1_darwin_amd64.tar.gz",
+				Hash: "sha256:e836ff1a854594cdb9a1c6fc13fff057eaf364da97a1cbeb1fa24285036eb131",
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.23.0/ignite_0.23.0_darwin_arm64.tar.gz",
-				Hash: "sha256:daefd4ac83e3bb384cf97a2ff8cc6e81427f74e2c81c567fd0507fce647146ec",
+				URL:  "https://github.com/ignite/cli/releases/download/v0.27.1/ignite_0.27.1_darwin_arm64.tar.gz",
+				Hash: "sha256:376f1a25d134b1f7a8fc31d58f4185fca50a81efbfd57e041d435fb2ee2ee6ed",
 			},
 		},
 		Binaries: map[string]string{
@@ -142,18 +142,18 @@ var tools = map[Name]Tool{
 	// https://github.com/CosmWasm/wasmvm/releases
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	LibWASMMuslC: {
-		Version: "v1.1.2",
+		Version: "v1.3.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.2/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:e0a0955815a23c139d42781f1cc70beffa916aa74fe649e5c69ee7e95ff13b6b",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.3.0/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:b4aad4480f9b4c46635b4943beedbb72c929eab1d1b9467fe3b43e6dbf617e32",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.1.2/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:77b41e65f6c3327d910a7f9284538570727e380ab49bc3c88c8d4053811d5209",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.3.0/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:b1610f9c8ad8bdebf5b8f819f71d238466f83521c74a2deb799078932e862722",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
 				},

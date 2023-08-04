@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"net"
 	"os"
 	"path"
@@ -11,20 +12,15 @@ import (
 	"text/template"
 	"time"
 
-	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
-
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
 const dockerEntrypoint = "run.sh"
@@ -114,15 +110,9 @@ func (ba BaseApp) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", ba.Info().HostFromHost, ba.appConfig.Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC), grpc.WithInsecure())
-	must.OK(err)
-
 	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
 		WithChainID(ba.appConfig.ChainID).
-		WithRPCClient(rpcClient).
-		WithGRPCClient(grpcClient).
-		WithKeyring(keyring.NewInMemory()).
-		WithBroadcastMode(flags.BroadcastBlock)
+		WithRPCClient(rpcClient)
 }
 
 // HealthCheck checks if chain is ready.

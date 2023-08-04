@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"fmt"
+	"github.com/CoreumFoundation/coreum/v2/app"
 	"io"
 	"net"
 	"os"
@@ -12,8 +14,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/targets"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -28,14 +35,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
-
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
 // AppType is the type of cored application.
@@ -143,7 +142,7 @@ func prepareTxStakingCreateValidator(
 		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
 	}
 
-	inMemKeyring := keyring.NewInMemory()
+	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
 
 	armor := crypto.EncryptArmorPrivKey(&stakerPrivateKey, passphrase, string(hd.Secp256k1Type))
 	if err := inMemKeyring.ImportPrivKey(stakerAddress.String(), armor, passphrase); err != nil {
@@ -213,15 +212,9 @@ func (c Cored) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), grpc.WithInsecure())
-	must.OK(err)
-
 	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
 		WithChainID(string(c.config.NetworkConfig.ChainID())).
-		WithRPCClient(rpcClient).
-		WithGRPCClient(grpcClient).
-		WithKeyring(keyring.NewInMemory()).
-		WithBroadcastMode(flags.BroadcastBlock)
+		WithRPCClient(rpcClient)
 }
 
 // TxFactory returns factory with present values for the chain.
@@ -287,6 +280,7 @@ func (c Cored) Deployment() infra.Deployment {
 				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
 				"--inv-check-period", "1",
 				"--chain-id", string(c.config.NetworkConfig.ChainID()),
+				"--minimum-gas-prices", fmt.Sprintf("0.000000000000000001%s", c.config.NetworkConfig.Denom()),
 			}
 			if c.config.RootNode != nil {
 				args = append(args,
