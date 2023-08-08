@@ -16,9 +16,8 @@ jobs:
         ci_step: [
           "lint",
           "test",
-          "integration tests coreum-modules",
-          "integration tests coreum-ibc",
-          "integration tests coreum-upgrade",
+          "integration tests coreum-upgrade & coreum-modules",
+          "integration tests coreum-upgrade & coreum-ibc",
           "integration tests faucet",
         ]
         include:
@@ -34,20 +33,14 @@ jobs:
             wasm-cache: false
             linter-cache: false
             docker-cache: false
-          - ci_step: "integration tests coreum-modules"
-            command: "crust build/integration-tests/coreum/modules images && crust znet test --test-groups=coreum-modules --timeout-commit 0.5s"
+          - ci_step: "integration tests coreum-upgrade & coreum-modules"
+            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules --timeout-commit 0.5s"
             go-cache: true
             wasm-cache: true
             linter-cache: false
             docker-cache: true
-          - ci_step: "integration tests coreum-ibc"
-            command: "crust build/integration-tests/coreum/ibc images && crust znet test --test-groups=coreum-ibc --timeout-commit 1s"
-            go-cache: true
-            wasm-cache: true
-            linter-cache: false
-            docker-cache: true
-          - ci_step: "integration tests coreum-upgrade"
-            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-modules,coreum-ibc --timeout-commit 1s"
+          - ci_step: "integration tests coreum-upgrade & coreum-ibc"
+            command: "crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/ibc images && crust znet test --cored-version=v1.0.0 --test-groups=coreum-upgrade,coreum-ibc --timeout-commit 1s"
             go-cache: true
             wasm-cache: true
             linter-cache: false
