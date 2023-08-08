@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -61,18 +62,29 @@ func getProtoDirs(moduleMap map[string]string) ([]string, error) {
 		filepath.Join(absPath, "proto"),
 	}
 
-	cosmosSdkVersion, ok := moduleMap[cosmosSdkModule]
-	if !ok {
-		return nil, errors.New("module entry does not exist")
+	re := regexp.MustCompile(`[A-Z]`)
+	protoDirs := []string{
+		"proto",
+		"third_party/proto",
 	}
-	result = append(result, filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", cosmosSdkModule, cosmosSdkVersion), "proto"))
-	result = append(result, filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", cosmosSdkModule, cosmosSdkVersion), "third_party", "proto"))
 
-	cosmWasmVersion, ok := moduleMap[cosmWasmModule]
-	if !ok {
-		return nil, errors.New("module entry does not exist")
+	for m, version := range moduleMap {
+		m = re.ReplaceAllStringFunc(m, func(match string) string {
+			return "!" + string(match[0]+32) // Convert uppercase to lowercase ASCII value
+		})
+		for _, dir := range protoDirs {
+			dir = filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", m, version), dir)
+			info, err := os.Stat(dir)
+			switch {
+			case err == nil:
+				result = append(result, dir)
+			case errors.Is(err, os.ErrNotExist) || !info.IsDir():
+				continue
+			default:
+				return nil, errors.WithStack(err)
+			}
+		}
 	}
-	result = append(result, filepath.Join(goPath, "pkg", "mod", "github.com", "!cosm!wasm", fmt.Sprintf("wasmd@%s", cosmWasmVersion), "proto"))
 
 	return result, nil
 }

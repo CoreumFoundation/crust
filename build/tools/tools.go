@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
@@ -39,11 +41,14 @@ const (
 	CoredV200             Name = "cored-v2.0.0"
 	Protoc                Name = "protoc"
 	ProtocGenDoc          Name = "protoc-gen-doc"
+	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
+	ProtocGenGoCosmos     Name = "protoc-gen-gocosmos"
 )
 
-var tools = map[Name]Tool{
+var tools = []Tool{
 	// https://go.dev/dl/
-	Go: {
+	BinaryTool{
+		Name:    Go,
 		Version: "1.21.0",
 		Local:   true,
 		Sources: Sources{
@@ -67,7 +72,8 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/golangci/golangci-lint/releases/
-	GolangCI: {
+	BinaryTool{
+		Name:    GolangCI,
 		Version: "1.54.0",
 		Local:   true,
 		Sources: Sources{
@@ -97,7 +103,8 @@ var tools = map[Name]Tool{
 
 	// https://github.com/ignite/cli/releases/
 	// v0.23.0 is the last version based on Cosmos v0.45.x
-	Ignite: {
+	BinaryTool{
+		Name:    Ignite,
 		Version: "0.23.0",
 		Local:   true,
 		Sources: Sources{
@@ -120,7 +127,8 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/cosmos/cosmos-sdk/releases
-	Cosmovisor: {
+	BinaryTool{
+		Name:    Cosmovisor,
 		Version: "1.5.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -138,7 +146,8 @@ var tools = map[Name]Tool{
 	},
 
 	// http://musl.cc/#binaries
-	Aarch64LinuxMuslCross: {
+	BinaryTool{
+		Name:    Aarch64LinuxMuslCross,
 		Version: "11.2.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -153,7 +162,8 @@ var tools = map[Name]Tool{
 
 	// https://github.com/CosmWasm/wasmvm/releases
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
-	LibWASMMuslC: {
+	BinaryTool{
+		Name:    LibWASMMuslC,
 		Version: "v1.1.2",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -175,7 +185,8 @@ var tools = map[Name]Tool{
 
 	// https://github.com/cosmos/gaia/releases
 	// Before upgrading verify in go.mod that they use the same version of IBC
-	Gaia: {
+	BinaryTool{
+		Name:    Gaia,
 		Version: "v11.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -196,7 +207,8 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/cosmos/relayer/releases
-	RelayerCosmos: {
+	BinaryTool{
+		Name:    RelayerCosmos,
 		Version: "v2.3.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -218,7 +230,8 @@ var tools = map[Name]Tool{
 
 	// FIXME (wojtek): When using v2.4.0 tests TestIBCTransferFromSmartContract and TestIBCAssetFTSendCommissionAndBurnRate don't pass.
 
-	// RelayerCosmos: {
+	//  {
+	//  Name: RelayerCosmos,
 	//	Version: "v2.4.0",
 	//	Sources: Sources{
 	//		PlatformDockerAMD64: {
@@ -239,7 +252,8 @@ var tools = map[Name]Tool{
 	// },
 
 	// https://github.com/informalsystems/hermes/releases
-	Hermes: {
+	BinaryTool{
+		Name:    Hermes,
 		Version: "v1.6.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -257,7 +271,8 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/CoreumFoundation/coreum/releases
-	CoredV100: {
+	BinaryTool{
+		Name:    CoredV100,
 		Version: "v1.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -276,7 +291,8 @@ var tools = map[Name]Tool{
 			},
 		},
 	},
-	CoredV200: {
+	BinaryTool{
+		Name:    CoredV200,
 		Version: "v2.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -297,7 +313,8 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/protocolbuffers/protobuf/releases
-	Protoc: {
+	BinaryTool{
+		Name:    Protoc,
 		Version: "v24.0",
 		Local:   true,
 		Sources: Sources{
@@ -320,7 +337,8 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/pseudomuto/protoc-gen-doc/releases/
-	ProtocGenDoc: {
+	BinaryTool{
+		Name:    ProtocGenDoc,
 		Version: "v1.5.1",
 		Local:   true,
 		Sources: Sources{
@@ -341,7 +359,29 @@ var tools = map[Name]Tool{
 			"bin/protoc-gen-doc": "protoc-gen-doc",
 		},
 	},
+
+	// https://github.com/grpc-ecosystem/grpc-gateway/releases
+	GoPackageTool{
+		Name:    ProtocGenGRPCGateway,
+		Version: "v1.16.0",
+		Package: "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway",
+	},
+
+	// https://github.com/regen-network/cosmos-proto/releases
+	GoPackageTool{
+		Name:    ProtocGenGoCosmos,
+		Version: "v0.3.1",
+		Package: "github.com/regen-network/cosmos-proto/protoc-gen-gocosmos",
+	},
 }
+
+var toolsMap = func(tools []Tool) map[Name]Tool {
+	res := make(map[Name]Tool, len(tools))
+	for _, t := range tools {
+		res[t.GetName()] = t
+	}
+	return res
+}(tools)
 
 // Name is the type used for defining tool names.
 type Name string
@@ -370,144 +410,105 @@ var (
 	PlatformDockerLocal = Platform{OS: DockerOS, Arch: runtime.GOARCH}
 )
 
+var (
+	_ Tool = BinaryTool{}
+	_ Tool = GoPackageTool{}
+)
+
 // Tool represents tool to be installed.
-type Tool struct {
+type Tool interface {
+	GetName() Name
+	GetVersion() string
+	IsLocal() bool
+	IsCompatible(platform Platform) bool
+	GetBinaries(platform Platform) []string
+	Ensure(ctx context.Context, platform Platform) error
+}
+
+// BinaryTool is the tool having compiled binaries available on the internet.
+type BinaryTool struct {
+	Name     Name
 	Version  string
 	Local    bool
 	Sources  Sources
 	Binaries map[string]string
 }
 
-// Source represents source where tool is fetched from.
-type Source struct {
-	URL      string
-	Hash     string
-	Binaries map[string]string
+// GetName returns the name of the tool.
+func (bt BinaryTool) GetName() Name {
+	return bt.Name
 }
 
-// Sources is the map of sources.
-type Sources map[Platform]Source
+// GetVersion returns the version of the tool.
+func (bt BinaryTool) GetVersion() string {
+	return bt.Version
+}
 
-// InstallAll installs all the tools.
-func InstallAll(ctx context.Context, deps build.DepsFunc) error {
-	for tool := range tools {
-		if tools[tool].Local {
-			if err := EnsureTool(ctx, tool); err != nil {
+// IsLocal tells if tool should be installed locally.
+func (bt BinaryTool) IsLocal() bool {
+	return bt.Local
+}
+
+// IsCompatible tells if tool is defined for the platform.
+func (bt BinaryTool) IsCompatible(platform Platform) bool {
+	_, exists := bt.Sources[platform]
+	return exists
+}
+
+// GetBinaries returns binaries defined for the platform.
+func (bt BinaryTool) GetBinaries(platform Platform) []string {
+	res := make([]string, 0, len(bt.Binaries)+len(bt.Sources[platform].Binaries))
+	for k := range bt.Binaries {
+		res = append(res, k)
+	}
+	for k := range bt.Sources[platform].Binaries {
+		res = append(res, k)
+	}
+	return res
+}
+
+// Ensure ensures that tool is installed.
+func (bt BinaryTool) Ensure(ctx context.Context, platform Platform) error {
+	source, exists := bt.Sources[platform]
+	if !exists {
+		return errors.Errorf("tool %s is not configured for platform %s", bt.Name, platform)
+	}
+
+	// TODO: we should also verify that checksum of binary matches & if it doesn't - reinstall it.
+	// If I'm not mistaken, crust wasn't downloading new cosmovisor binary when I changed version in toolsMap.
+	// I had to remove old one before.
+
+	var install bool
+	for dst, src := range lo.Assign(bt.Binaries, source.Binaries) {
+		if shouldReinstall(bt, platform, src, dst) {
+			install = true
+			break
+		}
+	}
+
+	if install {
+		if err := bt.install(ctx, platform); err != nil {
+			return err
+		}
+	}
+
+	for dst := range lo.Assign(bt.Binaries, source.Binaries) {
+		if bt.Local {
+			if err := linkTool(dst); err != nil {
 				return err
 			}
 		}
 	}
+
 	return nil
 }
 
-// EnsureProtoc ensures that protoc is available.
-func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
-	return EnsureTool(ctx, Protoc)
-}
-
-// EnsureProtocGenDoc ensures that protoc-gen-doc is available.
-func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
-	return EnsureTool(ctx, ProtocGenDoc)
-}
-
-// EnsureTool ensures that tool is installed and available in bin folder.
-func EnsureTool(ctx context.Context, tool Name) error {
-	info, exists := tools[tool]
+func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr error) {
+	source, exists := bt.Sources[platform]
 	if !exists {
-		return errors.Errorf("tool %s is not defined", tool)
+		panic(errors.Errorf("tool %s is not configured for platform %s", bt.Name, platform))
 	}
-
-	if !info.Local {
-		return errors.Errorf("tool %s is not intended to be installed locally", tool)
-	}
-
-	if err := EnsureBinaries(ctx, tool, PlatformLocal); err != nil {
-		return err
-	}
-
-	source, exists := info.Sources[PlatformLocal]
-	if !exists {
-		panic(errors.Errorf("tool %s is not configured for platform %s", tool, PlatformLocal))
-	}
-
-	for binaryName := range lo.Assign(info.Binaries, source.Binaries) {
-		srcPath := filepath.Join(BinariesRootPath(PlatformLocal), binaryName)
-
-		absSrcPath, err := filepath.Abs(srcPath)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		realSrcPath, err := filepath.EvalSymlinks(absSrcPath)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		absDstPath, err := filepath.Abs(binaryName)
-		if err != nil {
-			return linkTool(binaryName, srcPath)
-		}
-		realDstPath, err := filepath.EvalSymlinks(absDstPath)
-		if err != nil {
-			return linkTool(binaryName, srcPath)
-		}
-
-		if realSrcPath != realDstPath {
-			return linkTool(binaryName, srcPath)
-		}
-	}
-	return nil
-}
-
-// EnsureBinaries ensures that tool's binaries are installed.
-func EnsureBinaries(ctx context.Context, tool Name, platform Platform) error {
-	info, exists := tools[tool]
-	if !exists {
-		return errors.Errorf("tool %s is not defined", tool)
-	}
-
-	source, exists := info.Sources[platform]
-	if !exists {
-		panic(errors.Errorf("tool %s is not configured for platform %s", tool, platform))
-	}
-
-	toolDir := toolDir(tool, platform)
-	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
-		// todo: IMO in this loop we should also verify that checksum of binary matches & if it doesn't - reinstall it.
-		// If I'm not mistaken, crust wasn't downloading new cosmovisor binary when I changed version in tools.
-		// I had to remove old one before.
-
-		srcPath, err := filepath.Abs(toolDir + "/" + src)
-		if err != nil {
-			return installBinary(ctx, tool, info, platform)
-		}
-
-		dstPath, err := filepath.Abs(filepath.Join(BinariesRootPath(platform), dst))
-		if err != nil {
-			return installBinary(ctx, tool, info, platform)
-		}
-
-		realPath, err := filepath.EvalSymlinks(dstPath)
-		if err != nil || realPath != srcPath {
-			return installBinary(ctx, tool, info, platform)
-		}
-
-		fInfo, err := os.Stat(realPath)
-		if err != nil {
-			return installBinary(ctx, tool, info, platform)
-		}
-		if fInfo.Mode()&0o700 == 0 {
-			return installBinary(ctx, tool, info, platform)
-		}
-	}
-	return nil
-}
-
-func installBinary(ctx context.Context, name Name, info Tool, platform Platform) (retErr error) {
-	source, exists := info.Sources[platform]
-	if !exists {
-		panic(errors.Errorf("tool %s is not configured for platform %s", name, platform))
-	}
-	ctx = logger.With(ctx, zap.String("tool", string(name)), zap.String("version", info.Version),
+	ctx = logger.With(ctx, zap.String("tool", string(bt.Name)), zap.String("version", bt.Version),
 		zap.String("url", source.URL), zap.Stringer("platform", platform))
 	log := logger.Get(ctx)
 	log.Info("Installing binaries")
@@ -520,9 +521,9 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 
 	hasher, expectedChecksum := hasher(source.Hash)
 	reader := io.TeeReader(resp.Body, hasher)
-	toolDir := toolDir(name, platform)
+	toolDir := toolDir(bt, platform)
 	if err := os.RemoveAll(toolDir); err != nil && !os.IsNotExist(err) {
-		panic(err)
+		return err
 	}
 	if err := os.MkdirAll(toolDir, 0o700); err != nil {
 		panic(err)
@@ -539,12 +540,12 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 
 	actualChecksum := fmt.Sprintf("%02x", hasher.Sum(nil))
 	if actualChecksum != expectedChecksum {
-		return errors.Errorf("checksum does not match for tool %s, expected: %s, actual: %s, url: %s", name,
+		return errors.Errorf("checksum does not match for tool %s, expected: %s, actual: %s, url: %s", bt.Name,
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
 	dstDir := BinariesRootPath(platform)
-	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
+	for dst, src := range lo.Assign(bt.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
 		dstPath := dstDir + "/" + dst
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
@@ -552,7 +553,7 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 		}
 		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
 		must.OK(os.Chmod(srcPath, 0o700))
-		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), "downloads", string(name)+"-"+info.Version, src)
+		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), "downloads", string(bt.Name)+"-"+bt.Version, src)
 		must.OK(os.Symlink(srcLinkPath, dstPath))
 		must.Any(filepath.EvalSymlinks(dstPath))
 		log.Info("Binary installed to path", zap.String("path", dstPath))
@@ -562,7 +563,144 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 	return nil
 }
 
-func linkTool(dst, src string) error {
+// GoPackageTool is the tool installed using go install command.
+type GoPackageTool struct {
+	Name    Name
+	Version string
+	Package string
+}
+
+// GetName returns the name of the tool.
+func (gpt GoPackageTool) GetName() Name {
+	return gpt.Name
+}
+
+// GetVersion returns the version of the tool.
+func (gpt GoPackageTool) GetVersion() string {
+	return gpt.Version
+}
+
+// IsLocal tells if tool should be installed locally.
+func (gpt GoPackageTool) IsLocal() bool {
+	return true
+}
+
+// IsCompatible tells if tool is defined for the platform.
+func (gpt GoPackageTool) IsCompatible(_ Platform) bool {
+	return true
+}
+
+// GetBinaries returns binaries defined for the platform.
+func (gpt GoPackageTool) GetBinaries(_ Platform) []string {
+	return []string{
+		"bin/" + filepath.Base(gpt.Package),
+	}
+}
+
+// Ensure ensures that tool is installed.
+func (gpt GoPackageTool) Ensure(ctx context.Context, platform Platform) error {
+	binName := filepath.Base(gpt.Package)
+	toolDir := toolDir(gpt, platform)
+	dst := filepath.Join("bin", binName)
+	if shouldReinstall(gpt, platform, binName, dst) {
+		cmd := exec.Command(Path("bin/go", PlatformLocal), "install", "-tags=tools", gpt.Package)
+		cmd.Dir = "build/tools"
+		cmd.Env = append(os.Environ(), "GOBIN="+toolDir)
+
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return err
+		}
+
+		srcPath := toolDir + "/" + binName
+		dstPath := BinariesRootPath(platform) + "/" + dst
+		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
+			panic(err)
+		}
+		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
+		must.OK(os.Chmod(srcPath, 0o700))
+		srcLinkPath := filepath.Join("..", "downloads", string(gpt.Name)+"-"+gpt.Version, binName)
+		must.OK(os.Symlink(srcLinkPath, dstPath))
+		must.Any(filepath.EvalSymlinks(dstPath))
+		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
+	}
+
+	if err := linkTool(dst); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Source represents source where tool is fetched from.
+type Source struct {
+	URL      string
+	Hash     string
+	Binaries map[string]string
+}
+
+// Sources is the map of sources.
+type Sources map[Platform]Source
+
+// InstallAll installs all the toolsMap.
+func InstallAll(ctx context.Context, deps build.DepsFunc) error {
+	for toolName := range toolsMap {
+		tool := toolsMap[toolName]
+		if tool.IsLocal() {
+			if err := tool.Ensure(ctx, PlatformLocal); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// EnsureProtoc ensures that protoc is available.
+func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
+	t, err := Get(Protoc)
+	if err != nil {
+		return err
+	}
+	return t.Ensure(ctx, PlatformLocal)
+}
+
+// EnsureProtocGenDoc ensures that protoc-gen-doc is available.
+func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
+	t, err := Get(ProtocGenDoc)
+	if err != nil {
+		return err
+	}
+	return t.Ensure(ctx, PlatformLocal)
+}
+
+// EnsureProtocGenGRPCGateway ensures that protoc-gen-grpc-gateway is available.
+func EnsureProtocGenGRPCGateway(ctx context.Context, deps build.DepsFunc) error {
+	t, err := Get(ProtocGenGRPCGateway)
+	if err != nil {
+		return err
+	}
+	return t.Ensure(ctx, PlatformLocal)
+}
+
+// EnsureProtocGenGoCosmos ensures that protoc-gen-gocosmos is available.
+func EnsureProtocGenGoCosmos(ctx context.Context, deps build.DepsFunc) error {
+	t, err := Get(ProtocGenGoCosmos)
+	if err != nil {
+		return err
+	}
+	return t.Ensure(ctx, PlatformLocal)
+}
+
+func linkTool(dst string) error {
+	relink, err := shouldRelink(dst)
+	if err != nil {
+		return err
+	}
+
+	if !relink {
+		return nil
+	}
+
+	src := filepath.Join(BinariesRootPath(PlatformLocal), dst)
 	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -763,13 +901,8 @@ func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
 
-func toolDir(name Name, platform Platform) string {
-	info, exists := tools[name]
-	if !exists {
-		panic(errors.Errorf("tool %s is not defined", name))
-	}
-
-	return filepath.Join(BinariesRootPath(platform), "downloads", string(name)+"-"+info.Version)
+func toolDir(t Tool, platform Platform) string {
+	return filepath.Join(BinariesRootPath(platform), "downloads", string(t.GetName())+"-"+t.GetVersion())
 }
 
 func ensureDir(file string) error {
@@ -779,21 +912,81 @@ func ensureDir(file string) error {
 	return nil
 }
 
-// ByName returns tool definition by its name.
-func ByName(name Name) Tool {
-	return tools[name]
-}
+func shouldReinstall(t Tool, platform Platform, src, dst string) bool {
+	toolDir := toolDir(t, platform)
 
-// CopyToolBinaries moves the tools artifacts from the local cache to the target local location.
-// In case the binPath doesn't exist the method will create it.
-func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...string) error {
-	info, exists := tools[tool]
-	if !exists {
-		return errors.Errorf("tool %s is not defined", tool)
+	srcPath, err := filepath.Abs(toolDir + "/" + src)
+	if err != nil {
+		return true
 	}
 
-	infoPlatform, exists := info.Sources[platform]
+	dstPath, err := filepath.Abs(filepath.Join(BinariesRootPath(platform), dst))
+	if err != nil {
+		return true
+	}
+
+	realPath, err := filepath.EvalSymlinks(dstPath)
+	if err != nil || realPath != srcPath {
+		return true
+	}
+
+	fInfo, err := os.Stat(realPath)
+	if err != nil {
+		return true
+	}
+	if fInfo.Mode()&0o700 == 0 {
+		return true
+	}
+
+	return false
+}
+
+func shouldRelink(dst string) (bool, error) {
+	dstPath := filepath.Join(BinariesRootPath(PlatformLocal), dst)
+
+	absSrcPath, err := filepath.Abs(dstPath)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+	realSrcPath, err := filepath.EvalSymlinks(absSrcPath)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	absDstPath, err := filepath.Abs(dst)
+	if err != nil {
+		return true, nil
+	}
+	realDstPath, err := filepath.EvalSymlinks(absDstPath)
+	if err != nil {
+		return true, nil
+	}
+
+	if realSrcPath != realDstPath {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// Get returns tool definition by its name.
+func Get(name Name) (Tool, error) {
+	t, exists := toolsMap[name]
 	if !exists {
+		return nil, errors.Errorf("tool %s does not exist", name)
+	}
+	return t, nil
+}
+
+// CopyToolBinaries moves the toolsMap artifacts from the local cache to the target local location.
+// In case the binPath doesn't exist the method will create it.
+func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...string) error {
+	t, err := Get(tool)
+	if err != nil {
+		return err
+	}
+
+	if !t.IsCompatible(platform) {
 		return errors.Errorf("tool %s is not defined for platform %s", tool, platform)
 	}
 
@@ -803,11 +996,8 @@ func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...
 
 	storedBinaryNames := map[string]struct{}{}
 	// combine binaries
-	for key := range info.Binaries {
-		storedBinaryNames[key] = struct{}{}
-	}
-	for key := range infoPlatform.Binaries {
-		storedBinaryNames[key] = struct{}{}
+	for _, b := range t.GetBinaries(platform) {
+		storedBinaryNames[b] = struct{}{}
 	}
 
 	// initial validation to check that we have all binaries

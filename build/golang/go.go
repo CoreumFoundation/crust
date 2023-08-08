@@ -66,12 +66,20 @@ type TestBuildConfig struct {
 
 // EnsureGo ensures that go is available.
 func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureTool(ctx, tools.Go)
+	t, err := tools.Get(tools.Go)
+	if err != nil {
+		return err
+	}
+	return t.Ensure(ctx, tools.PlatformLocal)
 }
 
 // EnsureGolangCI ensures that go linter is available.
 func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureTool(ctx, tools.GolangCI)
+	t, err := tools.Get(tools.GolangCI)
+	if err != nil {
+		return err
+	}
+	return t.Ensure(ctx, tools.PlatformLocal)
 }
 
 // Build builds go binary.
@@ -205,12 +213,16 @@ var dockerfileTemplate string
 var dockerfileTemplateParsed = template.Must(template.New("Dockerfile").Parse(dockerfileTemplate))
 
 func ensureBuildDockerImage(ctx context.Context) (string, error) {
+	goTool, err := tools.Get(tools.Go)
+	if err != nil {
+		return "", err
+	}
 	dockerfileBuf := &bytes.Buffer{}
-	err := dockerfileTemplateParsed.Execute(dockerfileBuf, struct {
+	err = dockerfileTemplateParsed.Execute(dockerfileBuf, struct {
 		GOVersion     string
 		AlpineVersion string
 	}{
-		GOVersion:     tools.ByName(tools.Go).Version,
+		GOVersion:     goTool.GetVersion(),
 		AlpineVersion: goAlpineVersion,
 	})
 	if err != nil {

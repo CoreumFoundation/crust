@@ -68,12 +68,20 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 	}
 
 	if tools.PlatformLocal == tools.PlatformLinuxAMD64 && platform == tools.PlatformDockerARM64 {
-		if err := tools.EnsureBinaries(ctx, tools.Aarch64LinuxMuslCross, tools.PlatformDockerAMD64); err != nil {
+		tCrossCompiler, err := tools.Get(tools.Aarch64LinuxMuslCross)
+		if err != nil {
+			return err
+		}
+		if err := tCrossCompiler.Ensure(ctx, tools.PlatformDockerAMD64); err != nil {
 			return err
 		}
 	}
 
-	if err := tools.EnsureBinaries(ctx, tools.LibWASMMuslC, platform); err != nil {
+	tLibWASM, err := tools.Get(tools.LibWASMMuslC)
+	if err != nil {
+		return err
+	}
+	if err := tLibWASM.Ensure(ctx, platform); err != nil {
 		return err
 	}
 

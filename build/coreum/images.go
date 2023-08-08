@@ -68,7 +68,11 @@ func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
 		tools.CoredV100,
 		tools.CoredV200,
 	} {
-		if err := tools.EnsureBinaries(ctx, binaryTool, tools.PlatformDockerLocal); err != nil {
+		t, err := tools.Get(binaryTool)
+		if err != nil {
+			return err
+		}
+		if err := t.Ensure(ctx, tools.PlatformDockerLocal); err != nil {
 			return err
 		}
 
