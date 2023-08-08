@@ -8,7 +8,7 @@ import (
 )
 
 func ensureCosmovisor(ctx context.Context, platform tools.Platform) error {
-	if err := tools.EnsureBinaries(ctx, tools.Cosmovisor, platform); err != nil {
+	if err := tools.Ensure(ctx, tools.Cosmovisor, platform); err != nil {
 		return err
 	}
 

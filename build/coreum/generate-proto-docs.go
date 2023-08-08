@@ -27,15 +27,12 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
 	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
-	moduleToVersion, err := golang.GetModuleVersions(deps, repoPath, []string{
-		cosmosSdkModule,
-		cosmWasmModule,
-	})
+	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath, cosmosSdkModule, cosmWasmModule)
 	if err != nil {
 		return err
 	}
 
-	protoPathList, err := getProtoDirs(moduleToVersion)
+	protoPathList, err := getProtoDirs(moduleDirs)
 	if err != nil {
 		return err
 	}
@@ -49,30 +46,38 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // getProtoDirs returns a list of absolute paths to needed proto directories.
-func getProtoDirs(moduleMap map[string]string) ([]string, error) {
-	goPath := golang.GoPath()
-
+func getProtoDirs(moduleDirs []string) ([]string, error) {
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return nil, err
 	}
 
-	result := []string{
-		filepath.Join(absPath, "proto"),
+	result := []string{}
+
+	// This is the list of subdirectories scanned in each module for proto files.
+	protoDirs := []string{
+		"proto",
+		"third_party/proto",
 	}
 
-	cosmosSdkVersion, ok := moduleMap[cosmosSdkModule]
-	if !ok {
-		return nil, errors.New("module entry does not exist")
+	// In this loop all the proto directories from requested modules are collected.
+	for _, modDir := range moduleDirs {
+		// Iterate over defined well-known proto dirs. If dir exists, add it to the results.
+		for _, dir := range protoDirs {
+			dir = filepath.Join(modDir, dir)
+			info, err := os.Stat(dir)
+			switch {
+			case err == nil:
+				result = append(result, dir)
+			case errors.Is(err, os.ErrNotExist) || !info.IsDir():
+				continue
+			default:
+				return nil, errors.WithStack(err)
+			}
+		}
 	}
-	result = append(result, filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", cosmosSdkModule, cosmosSdkVersion), "proto"))
-	result = append(result, filepath.Join(goPath, "pkg", "mod", fmt.Sprintf("%s@%s", cosmosSdkModule, cosmosSdkVersion), "third_party", "proto"))
 
-	cosmWasmVersion, ok := moduleMap[cosmWasmModule]
-	if !ok {
-		return nil, errors.New("module entry does not exist")
-	}
-	result = append(result, filepath.Join(goPath, "pkg", "mod", "github.com", "!cosm!wasm", fmt.Sprintf("wasmd@%s", cosmWasmVersion), "proto"))
+	result = append(result, filepath.Join(absPath, "proto"))
 
 	return result, nil
 }

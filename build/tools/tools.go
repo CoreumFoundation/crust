@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -20,43 +21,48 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 )
 
 // Tool names.
 const (
-	Go            Name = "go"
-	GolangCI      Name = "golangci"
-	Ignite        Name = "ignite"
-	Cosmovisor    Name = "cosmovisor"
-	LibWASMMuslC  Name = "libwasmvm_muslc"
-	Gaia          Name = "gaia"
-	RelayerCosmos Name = "relayercosmos"
-	Hermes        Name = "hermes"
-	CoredV100     Name = "cored-v1.0.0"
-	CoredV200     Name = "cored-v2.0.0"
-	Protoc        Name = "protoc"
-	ProtocGenDoc  Name = "protoc-gen-doc"
+	Go                    Name = "go"
+	GolangCI              Name = "golangci"
+	Ignite                Name = "ignite"
+	Cosmovisor            Name = "cosmovisor"
+	Aarch64LinuxMuslCross Name = "aarch64-linux-musl-cross"
+	LibWASMMuslC          Name = "libwasmvm_muslc"
+	Gaia                  Name = "gaia"
+	RelayerCosmos         Name = "relayercosmos"
+	Hermes                Name = "hermes"
+	CoredV100             Name = "cored-v1.0.0"
+	CoredV200             Name = "cored-v2.0.0"
+	Protoc                Name = "protoc"
+	ProtocGenDoc          Name = "protoc-gen-doc"
+	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
+	ProtocGenGoCosmos     Name = "protoc-gen-gocosmos"
 )
 
-var tools = map[Name]Tool{
+var tools = []Tool{
 	// https://go.dev/dl/
-	Go: {
-		Version: "1.20.5",
+	BinaryTool{
+		Name:    Go,
+		Version: "1.21.0",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://go.dev/dl/go1.20.5.linux-amd64.tar.gz",
-				Hash: "sha256:d7ec48cde0d3d2be2c69203bc3e0a44de8660b9c09a6e85c4732a3f7dc442612",
+				URL:  "https://go.dev/dl/go1.21.0.linux-amd64.tar.gz",
+				Hash: "sha256:d0398903a16ba2232b389fb31032ddf57cac34efda306a0eebac34f0965a0742",
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://go.dev/dl/go1.20.5.darwin-amd64.tar.gz",
-				Hash: "sha256:79715ca5b8becd120703ac9af5d1da749e095d2b9bf830c4f3af4b15b2cb049d",
+				URL:  "https://go.dev/dl/go1.21.0.darwin-amd64.tar.gz",
+				Hash: "sha256:b314de9f704ab122c077d2ec8e67e3670affe8865479d1f01991e7ac55d65e70",
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://go.dev/dl/go1.20.5.darwin-arm64.tar.gz",
-				Hash: "sha256:94ad76b7e1593bb59df7fd35a738194643d6eed26a4181c94e3ee91381e40459",
+				URL:  "https://go.dev/dl/go1.21.0.darwin-arm64.tar.gz",
+				Hash: "sha256:3aca44de55c5e098de2f406e98aba328898b05d509a2e2a356416faacf2c4566",
 			},
 		},
 		Binaries: map[string]string{
@@ -66,29 +72,30 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/golangci/golangci-lint/releases/
-	GolangCI: {
-		Version: "1.53.3",
+	BinaryTool{
+		Name:    GolangCI,
+		Version: "1.54.0",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-linux-amd64.tar.gz",
-				Hash: "sha256:4f62007ca96372ccba54760e2ed39c2446b40ec24d9a90c21aad9f2fdf6cf0da",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-linux-amd64.tar.gz",
+				Hash: "sha256:a694f19dbfab3ea4d3956cb105d2e74c1dc49cb4c06ece903a3c534bce86b3dc",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.53.3-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.54.0-linux-amd64/golangci-lint",
 				},
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-darwin-amd64.tar.gz",
-				Hash: "sha256:e6fe5df023c35482cf9858eeb0a14aeecea58e64549be9084268b4a1fb632ece",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-darwin-amd64.tar.gz",
+				Hash: "sha256:0a76fcb91bca94c0b3bcb931662eafd320fbe458b3a29ce368b0bffbd4eff2fb",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.53.3-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.54.0-darwin-amd64/golangci-lint",
 				},
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-darwin-arm64.tar.gz",
-				Hash: "sha256:76607909a15e825a39bd61f1c5805997746b365bd285314277dccde1b86edae6",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-darwin-arm64.tar.gz",
+				Hash: "sha256:aeb77a00c24720e223ef73da18eea3afb29ea46356db33e1f503c66f2799d387",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.53.3-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.54.0-darwin-arm64/golangci-lint",
 				},
 			},
 		},
@@ -96,7 +103,8 @@ var tools = map[Name]Tool{
 
 	// https://github.com/ignite/cli/releases/
 	// v0.27.1 is the last version based on Cosmos v0.47.x
-	Ignite: {
+	BinaryTool{
+		Name:    Ignite,
 		Version: "0.27.1",
 		Local:   true,
 		Sources: Sources{
@@ -119,19 +127,17 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/cosmos/cosmos-sdk/releases
-	// There is 1.4.0, but it is a dummy release without changes as described here:
-	// https://github.com/cosmos/cosmos-sdk/issues/13654
-	// and they didn't even provide compiled binaries for it.
-	Cosmovisor: {
-		Version: "1.3.0",
+	BinaryTool{
+		Name:    Cosmovisor,
+		Version: "1.5.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-amd64.tar.gz",
-				Hash: "sha256:34d7c9fbaa03f49b8278e13768d0fd82e28101dfa9625e25379c36a86d558826",
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-amd64.tar.gz",
+				Hash: "sha256:7f4bebfb18a170bff1c725f13dda326e0158132deef9f037ab0c2a48727c3077",
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-arm64.tar.gz",
-				Hash: "sha256:8d7de2a18eb2cc4a749efbdbe060ecb34c3e5ca12354b7118a6966fa46d3a33d",
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-arm64.tar.gz",
+				Hash: "sha256:e15f2625b1d208ac2fed51bc84ae75678009888648ac2186fd0ed5ab6177dc14",
 			},
 		},
 		Binaries: map[string]string{
@@ -139,9 +145,25 @@ var tools = map[Name]Tool{
 		},
 	},
 
+	// http://musl.cc/#binaries
+	BinaryTool{
+		Name:    Aarch64LinuxMuslCross,
+		Version: "11.2.1",
+		Sources: Sources{
+			PlatformDockerAMD64: {
+				URL:  "http://musl.cc/aarch64-linux-musl-cross.tgz",
+				Hash: "sha256:c909817856d6ceda86aa510894fa3527eac7989f0ef6e87b5721c58737a06c38",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/aarch64-linux-musl-gcc": "aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc",
+		},
+	},
+
 	// https://github.com/CosmWasm/wasmvm/releases
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
-	LibWASMMuslC: {
+	BinaryTool{
+		Name:    LibWASMMuslC,
 		Version: "v1.3.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -163,28 +185,30 @@ var tools = map[Name]Tool{
 
 	// https://github.com/cosmos/gaia/releases
 	// Before upgrading verify in go.mod that they use the same version of IBC
-	Gaia: {
-		Version: "v10.0.1",
+	BinaryTool{
+		Name:    Gaia,
+		Version: "v11.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-amd64",
-				Hash: "sha256:fcb8210308223d78bc36f3d4c89e2578dcf784994c052cea97efd61f1672cf72",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
+				Hash: "sha256:258df2eec5b22f8baadc988e184fbfd2ae6f9f888e9f4461a110cc365fe86300",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v10.0.1-linux-amd64",
+					"bin/gaiad": "gaiad-v11.0.0-linux-amd64",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-arm64",
-				Hash: "sha256:db9b69cf224b410c669fa4f820192890357534e74d4693a744ef915028567462",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-arm64",
+				Hash: "sha256:688e3ae4aa5ed91978f537798e012322336c7309fe5ee9169fdd607ab6c348b8",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v10.0.1-linux-arm64",
+					"bin/gaiad": "gaiad-v11.0.0-linux-arm64",
 				},
 			},
 		},
 	},
 
 	// https://github.com/cosmos/relayer/releases
-	RelayerCosmos: {
+	BinaryTool{
+		Name:    RelayerCosmos,
 		Version: "v2.3.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -204,17 +228,41 @@ var tools = map[Name]Tool{
 		},
 	},
 
+	// FIXME (wojtek): When using v2.4.0 tests TestIBCTransferFromSmartContract and TestIBCAssetFTSendCommissionAndBurnRate don't pass.
+
+	//  {
+	//  Name: RelayerCosmos,
+	//	Version: "v2.4.0",
+	//	Sources: Sources{
+	//		PlatformDockerAMD64: {
+	//			URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_amd64.tar.gz",
+	//			Hash: "sha256:6c7b197656643ecb16dabaae67dfda943c4ccffe46baac4ab606762bf78b9a30",
+	//			Binaries: map[string]string{
+	//				"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_amd64/rly",
+	//			},
+	//		},
+	//		PlatformDockerARM64: {
+	//			URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_arm64.tar.gz",
+	//			Hash: "sha256:b7c1f4109db5fc8a095cf6a673233adc76103b4fa8e9aae9c79323e6ddb00687",
+	//			Binaries: map[string]string{
+	//				"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_arm64/rly",
+	//			},
+	//		},
+	//	},
+	// },
+
 	// https://github.com/informalsystems/hermes/releases
-	Hermes: {
-		Version: "v1.5.1",
+	BinaryTool{
+		Name:    Hermes,
+		Version: "v1.6.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.5.1/hermes-v1.5.1-x86_64-unknown-linux-gnu.tar.gz",
-				Hash: "sha256:d370cfde598ff5096707532e7dd8f71a3d1b5b5762891078f0a9fff8fbcf5b82",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.6.0/hermes-v1.6.0-x86_64-unknown-linux-gnu.tar.gz",
+				Hash: "sha256:20d2798e221a6b90956bfd237bb171b5ca5fd3e1368fb58d4fbac3dc0093aadb",
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.5.1/hermes-v1.5.1-aarch64-unknown-linux-gnu.tar.gz",
-				Hash: "sha256:79786507d8ec786c9e35c113d14c352859917bd5c4d07b3c39d23e4878d5f763",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.6.0/hermes-v1.6.0-aarch64-unknown-linux-gnu.tar.gz",
+				Hash: "sha256:3d4939aef95886d5016f1346de62a16e18469326ecf9b1159aa571ab8682b38d",
 			},
 		},
 		Binaries: map[string]string{
@@ -223,7 +271,8 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/CoreumFoundation/coreum/releases
-	CoredV100: {
+	BinaryTool{
+		Name:    CoredV100,
 		Version: "v1.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -242,7 +291,8 @@ var tools = map[Name]Tool{
 			},
 		},
 	},
-	CoredV200: {
+	BinaryTool{
+		Name:    CoredV200,
 		Version: "v2.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
@@ -254,7 +304,7 @@ var tools = map[Name]Tool{
 			},
 			PlatformDockerARM64: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.0/cored-linux-arm64",
-				Hash: "sha256:8b0df987c13ede90eb79f7c4bdae3d1a503c14aaa2b5f187a84f575bad66b39b",
+				Hash: "sha256:c082eeebbc206633f1b71ef9c16a7f390f5ea5b27ce06c735ed7a632f38b5891",
 				Binaries: map[string]string{
 					"bin/cored-v2.0.0": "cored-linux-arm64",
 				},
@@ -263,21 +313,22 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/protocolbuffers/protobuf/releases
-	Protoc: {
-		Version: "v23.3",
+	BinaryTool{
+		Name:    Protoc,
+		Version: "v24.0",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-linux-x86_64.zip",
-				Hash: "sha256:8f5abeb19c0403a7bf6e48f4fa1bb8b97724d8701f6823a327922df8cc1da4f5",
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-linux-x86_64.zip",
+				Hash: "sha256:4feef12d91c4e452eac8c45bd11f43d51541db7fc6c18b4ca7bdd38af52c9d15",
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-osx-x86_64.zip",
-				Hash: "sha256:82becd1c2dc887a7b3108981d5d6bb5f5b66e81d7356e3e2ab2f36c7b346914f",
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-osx-x86_64.zip",
+				Hash: "sha256:c438ae68427aa848f4e2dbf7d6cbd4e6a13e30a6bcc61007fd95cfc90451264a",
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-osx-aarch_64.zip",
-				Hash: "sha256:edb432e4990c23fea1040a2a76b87ab0f738e384cd25d650cc35683603fe8cdc",
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-osx-aarch_64.zip",
+				Hash: "sha256:e4cc0739f0f8ae31633fb11335f11e6fbe067ecda8fd1b4716e80cfe3661ee1d",
 			},
 		},
 		Binaries: map[string]string{
@@ -286,7 +337,8 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/pseudomuto/protoc-gen-doc/releases/
-	ProtocGenDoc: {
+	BinaryTool{
+		Name:    ProtocGenDoc,
 		Version: "v1.5.1",
 		Local:   true,
 		Sources: Sources{
@@ -307,7 +359,29 @@ var tools = map[Name]Tool{
 			"bin/protoc-gen-doc": "protoc-gen-doc",
 		},
 	},
+
+	// https://github.com/grpc-ecosystem/grpc-gateway/releases
+	GoPackageTool{
+		Name:    ProtocGenGRPCGateway,
+		Version: "v1.16.0",
+		Package: "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway",
+	},
+
+	// https://github.com/regen-network/cosmos-proto/releases
+	GoPackageTool{
+		Name:    ProtocGenGoCosmos,
+		Version: "v0.3.1",
+		Package: "github.com/regen-network/cosmos-proto/protoc-gen-gocosmos",
+	},
 }
+
+var toolsMap = func(tools []Tool) map[Name]Tool {
+	res := make(map[Name]Tool, len(tools))
+	for _, tool := range tools {
+		res[tool.GetName()] = tool
+	}
+	return res
+}(tools)
 
 // Name is the type used for defining tool names.
 type Name string
@@ -336,140 +410,105 @@ var (
 	PlatformDockerLocal = Platform{OS: DockerOS, Arch: runtime.GOARCH}
 )
 
+var (
+	_ Tool = BinaryTool{}
+	_ Tool = GoPackageTool{}
+)
+
 // Tool represents tool to be installed.
-type Tool struct {
+type Tool interface {
+	GetName() Name
+	GetVersion() string
+	IsLocal() bool
+	IsCompatible(platform Platform) bool
+	GetBinaries(platform Platform) []string
+	Ensure(ctx context.Context, platform Platform) error
+}
+
+// BinaryTool is the tool having compiled binaries available on the internet.
+type BinaryTool struct {
+	Name     Name
 	Version  string
 	Local    bool
 	Sources  Sources
 	Binaries map[string]string
 }
 
-// Source represents source where tool is fetched from.
-type Source struct {
-	URL      string
-	Hash     string
-	Binaries map[string]string
+// GetName returns the name of the tool.
+func (bt BinaryTool) GetName() Name {
+	return bt.Name
 }
 
-// Sources is the map of sources.
-type Sources map[Platform]Source
+// GetVersion returns the version of the tool.
+func (bt BinaryTool) GetVersion() string {
+	return bt.Version
+}
 
-// InstallAll installs all the tools.
-func InstallAll(ctx context.Context, deps build.DepsFunc) error {
-	for tool := range tools {
-		if tools[tool].Local {
-			if err := EnsureTool(ctx, tool); err != nil {
+// IsLocal tells if tool should be installed locally.
+func (bt BinaryTool) IsLocal() bool {
+	return bt.Local
+}
+
+// IsCompatible tells if tool is defined for the platform.
+func (bt BinaryTool) IsCompatible(platform Platform) bool {
+	_, exists := bt.Sources[platform]
+	return exists
+}
+
+// GetBinaries returns binaries defined for the platform.
+func (bt BinaryTool) GetBinaries(platform Platform) []string {
+	res := make([]string, 0, len(bt.Binaries)+len(bt.Sources[platform].Binaries))
+	for k := range bt.Binaries {
+		res = append(res, k)
+	}
+	for k := range bt.Sources[platform].Binaries {
+		res = append(res, k)
+	}
+	return res
+}
+
+// Ensure ensures that tool is installed.
+func (bt BinaryTool) Ensure(ctx context.Context, platform Platform) error {
+	source, exists := bt.Sources[platform]
+	if !exists {
+		return errors.Errorf("tool %s is not configured for platform %s", bt.Name, platform)
+	}
+
+	// TODO: we should also verify that checksum of binary matches & if it doesn't - reinstall it.
+	// If I'm not mistaken, crust wasn't downloading new cosmovisor binary when I changed version in toolsMap.
+	// I had to remove old one before.
+
+	var install bool
+	for dst, src := range lo.Assign(bt.Binaries, source.Binaries) {
+		if shouldReinstall(bt, platform, src, dst) {
+			install = true
+			break
+		}
+	}
+
+	if install {
+		if err := bt.install(ctx, platform); err != nil {
+			return err
+		}
+	}
+
+	for dst := range lo.Assign(bt.Binaries, source.Binaries) {
+		if bt.Local {
+			if err := linkTool(dst); err != nil {
 				return err
 			}
 		}
 	}
+
 	return nil
 }
 
-// EnsureProtoc ensures that protoc is available.
-func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
-	return EnsureTool(ctx, Protoc)
-}
-
-// EnsureProtocGenDoc ensures that protoc-gen-doc is available.
-func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
-	return EnsureTool(ctx, ProtocGenDoc)
-}
-
-// EnsureTool ensures that tool is installed and available in bin folder.
-func EnsureTool(ctx context.Context, tool Name) error {
-	info, exists := tools[tool]
+func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr error) {
+	source, exists := bt.Sources[platform]
 	if !exists {
-		return errors.Errorf("tool %s is not defined", tool)
+		panic(errors.Errorf("tool %s is not configured for platform %s", bt.Name, platform))
 	}
-
-	if !info.Local {
-		return errors.Errorf("tool %s is not intended to be installed locally", tool)
-	}
-
-	if err := EnsureBinaries(ctx, tool, PlatformLocal); err != nil {
-		return err
-	}
-
-	source, exists := info.Sources[PlatformLocal]
-	if !exists {
-		panic(errors.Errorf("tool %s is not configured for platform %s", tool, PlatformLocal))
-	}
-
-	for binaryName := range lo.Assign(info.Binaries, source.Binaries) {
-		srcPath := filepath.Join(BinariesRootPath(PlatformLocal), binaryName)
-
-		absSrcPath, err := filepath.Abs(srcPath)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		realSrcPath, err := filepath.EvalSymlinks(absSrcPath)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		absDstPath, err := filepath.Abs(binaryName)
-		if err != nil {
-			return linkTool(binaryName, srcPath)
-		}
-		realDstPath, err := filepath.EvalSymlinks(absDstPath)
-		if err != nil {
-			return linkTool(binaryName, srcPath)
-		}
-
-		if realSrcPath != realDstPath {
-			return linkTool(binaryName, srcPath)
-		}
-	}
-	return nil
-}
-
-// EnsureBinaries ensures that tool's binaries are installed.
-func EnsureBinaries(ctx context.Context, tool Name, platform Platform) error {
-	info, exists := tools[tool]
-	if !exists {
-		return errors.Errorf("tool %s is not defined", tool)
-	}
-
-	source, exists := info.Sources[platform]
-	if !exists {
-		panic(errors.Errorf("tool %s is not configured for platform %s", tool, platform))
-	}
-
-	toolDir := toolDir(tool, platform)
-	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
-		srcPath, err := filepath.Abs(toolDir + "/" + src)
-		if err != nil {
-			return installBinary(ctx, tool, info, platform)
-		}
-
-		dstPath, err := filepath.Abs(filepath.Join(BinariesRootPath(platform), dst))
-		if err != nil {
-			return installBinary(ctx, tool, info, platform)
-		}
-
-		realPath, err := filepath.EvalSymlinks(dstPath)
-		if err != nil || realPath != srcPath {
-			return installBinary(ctx, tool, info, platform)
-		}
-
-		fInfo, err := os.Stat(realPath)
-		if err != nil {
-			return installBinary(ctx, tool, info, platform)
-		}
-		if fInfo.Mode()&0o700 == 0 {
-			return installBinary(ctx, tool, info, platform)
-		}
-	}
-	return nil
-}
-
-func installBinary(ctx context.Context, name Name, info Tool, platform Platform) (retErr error) {
-	source, exists := info.Sources[platform]
-	if !exists {
-		panic(errors.Errorf("tool %s is not configured for platform %s", name, platform))
-	}
-	ctx = logger.With(ctx, zap.String("tool", string(name)), zap.String("version", info.Version),
+	ctx = logger.With(ctx, zap.String("tool", string(bt.Name)), zap.String("version", bt.Version),
 		zap.String("url", source.URL), zap.Stringer("platform", platform))
 	log := logger.Get(ctx)
 	log.Info("Installing binaries")
@@ -482,9 +521,9 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 
 	hasher, expectedChecksum := hasher(source.Hash)
 	reader := io.TeeReader(resp.Body, hasher)
-	toolDir := toolDir(name, platform)
+	toolDir := toolDir(bt, platform)
 	if err := os.RemoveAll(toolDir); err != nil && !os.IsNotExist(err) {
-		panic(err)
+		return err
 	}
 	if err := os.MkdirAll(toolDir, 0o700); err != nil {
 		panic(err)
@@ -501,12 +540,12 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 
 	actualChecksum := fmt.Sprintf("%02x", hasher.Sum(nil))
 	if actualChecksum != expectedChecksum {
-		return errors.Errorf("checksum does not match for tool %s, expected: %s, actual: %s, url: %s", name,
+		return errors.Errorf("checksum does not match for tool %s, expected: %s, actual: %s, url: %s", bt.Name,
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
 	dstDir := BinariesRootPath(platform)
-	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
+	for dst, src := range lo.Assign(bt.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
 		dstPath := dstDir + "/" + dst
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
@@ -514,7 +553,7 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 		}
 		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
 		must.OK(os.Chmod(srcPath, 0o700))
-		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), "downloads", string(name)+"-"+info.Version, src)
+		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), "downloads", string(bt.Name)+"-"+bt.Version, src)
 		must.OK(os.Symlink(srcLinkPath, dstPath))
 		must.Any(filepath.EvalSymlinks(dstPath))
 		log.Info("Binary installed to path", zap.String("path", dstPath))
@@ -524,7 +563,124 @@ func installBinary(ctx context.Context, name Name, info Tool, platform Platform)
 	return nil
 }
 
-func linkTool(dst, src string) error {
+// GoPackageTool is the tool installed using go install command.
+type GoPackageTool struct {
+	Name    Name
+	Version string
+	Package string
+}
+
+// GetName returns the name of the tool.
+func (gpt GoPackageTool) GetName() Name {
+	return gpt.Name
+}
+
+// GetVersion returns the version of the tool.
+func (gpt GoPackageTool) GetVersion() string {
+	return gpt.Version
+}
+
+// IsLocal tells if tool should be installed locally.
+func (gpt GoPackageTool) IsLocal() bool {
+	return true
+}
+
+// IsCompatible tells if tool is defined for the platform.
+func (gpt GoPackageTool) IsCompatible(_ Platform) bool {
+	return true
+}
+
+// GetBinaries returns binaries defined for the platform.
+func (gpt GoPackageTool) GetBinaries(_ Platform) []string {
+	return []string{
+		"bin/" + filepath.Base(gpt.Package),
+	}
+}
+
+// Ensure ensures that tool is installed.
+func (gpt GoPackageTool) Ensure(ctx context.Context, platform Platform) error {
+	binName := filepath.Base(gpt.Package)
+	toolDir := toolDir(gpt, platform)
+	dst := filepath.Join("bin", binName)
+	if shouldReinstall(gpt, platform, binName, dst) {
+		cmd := exec.Command(Path("bin/go", PlatformLocal), "install", "-tags=tools", gpt.Package)
+		cmd.Dir = "build/tools"
+		cmd.Env = append(os.Environ(), "GOBIN="+toolDir)
+
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return err
+		}
+
+		srcPath := toolDir + "/" + binName
+		dstPath := BinariesRootPath(platform) + "/" + dst
+		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
+			panic(err)
+		}
+		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
+		must.OK(os.Chmod(srcPath, 0o700))
+		srcLinkPath := filepath.Join("..", "downloads", string(gpt.Name)+"-"+gpt.Version, binName)
+		must.OK(os.Symlink(srcLinkPath, dstPath))
+		must.Any(filepath.EvalSymlinks(dstPath))
+		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
+	}
+
+	return linkTool(dst)
+}
+
+// Source represents source where tool is fetched from.
+type Source struct {
+	URL      string
+	Hash     string
+	Binaries map[string]string
+}
+
+// Sources is the map of sources.
+type Sources map[Platform]Source
+
+// InstallAll installs all the toolsMap.
+func InstallAll(ctx context.Context, deps build.DepsFunc) error {
+	for toolName := range toolsMap {
+		tool := toolsMap[toolName]
+		if tool.IsLocal() {
+			if err := tool.Ensure(ctx, PlatformLocal); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// EnsureProtoc ensures that protoc is available.
+func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
+	return Ensure(ctx, Protoc, PlatformLocal)
+}
+
+// EnsureProtocGenDoc ensures that protoc-gen-doc is available.
+func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
+	return Ensure(ctx, ProtocGenDoc, PlatformLocal)
+}
+
+// EnsureProtocGenGRPCGateway ensures that protoc-gen-grpc-gateway is available.
+func EnsureProtocGenGRPCGateway(ctx context.Context, deps build.DepsFunc) error {
+	return Ensure(ctx, ProtocGenGRPCGateway, PlatformLocal)
+}
+
+// EnsureProtocGenGoCosmos ensures that protoc-gen-gocosmos is available.
+func EnsureProtocGenGoCosmos(ctx context.Context, deps build.DepsFunc) error {
+	return Ensure(ctx, ProtocGenGoCosmos, PlatformLocal)
+}
+
+func linkTool(dst string) error {
+	relink, err := shouldRelink(dst)
+	if err != nil {
+		return err
+	}
+
+	if !relink {
+		return nil
+	}
+
+	src := filepath.Join(BinariesRootPath(PlatformLocal), dst)
 	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -557,7 +713,7 @@ func hasher(hashStr string) (hash.Hash, string) {
 
 func save(url string, reader io.Reader, path string) error {
 	switch {
-	case strings.HasSuffix(url, ".tar.gz"):
+	case strings.HasSuffix(url, ".tar.gz") || strings.HasSuffix(url, ".tgz"):
 		var err error
 		reader, err = gzip.NewReader(reader)
 		if err != nil {
@@ -622,7 +778,11 @@ func untar(reader io.Reader, path string) error {
 				return errors.WithStack(err)
 			}
 		case header.Typeflag == tar.TypeLink:
+			header.Linkname = path + "/" + header.Linkname
 			if err := ensureDir(header.Name); err != nil {
+				return err
+			}
+			if err := ensureDir(header.Linkname); err != nil {
 				return err
 			}
 			// linked file may not exist yet, so let's create it - it will be overwritten later
@@ -721,13 +881,8 @@ func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
 
-func toolDir(name Name, platform Platform) string {
-	info, exists := tools[name]
-	if !exists {
-		panic(errors.Errorf("tool %s is not defined", name))
-	}
-
-	return filepath.Join(BinariesRootPath(platform), "downloads", string(name)+"-"+info.Version)
+func toolDir(tool Tool, platform Platform) string {
+	return filepath.Join(BinariesRootPath(platform), "downloads", string(tool.GetName())+"-"+tool.GetVersion())
 }
 
 func ensureDir(file string) error {
@@ -737,22 +892,82 @@ func ensureDir(file string) error {
 	return nil
 }
 
-// ByName returns tool definition by its name.
-func ByName(name Name) Tool {
-	return tools[name]
-}
+func shouldReinstall(t Tool, platform Platform, src, dst string) bool {
+	toolDir := toolDir(t, platform)
 
-// CopyToolBinaries moves the tools artifacts from the local cache to the target local location.
-// In case the binPath doesn't exist the method will create it.
-func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...string) error {
-	info, exists := tools[tool]
-	if !exists {
-		return errors.Errorf("tool %s is not defined", tool)
+	srcPath, err := filepath.Abs(toolDir + "/" + src)
+	if err != nil {
+		return true
 	}
 
-	infoPlatform, exists := info.Sources[platform]
+	dstPath, err := filepath.Abs(filepath.Join(BinariesRootPath(platform), dst))
+	if err != nil {
+		return true
+	}
+
+	realPath, err := filepath.EvalSymlinks(dstPath)
+	if err != nil || realPath != srcPath {
+		return true
+	}
+
+	fInfo, err := os.Stat(realPath)
+	if err != nil {
+		return true
+	}
+	if fInfo.Mode()&0o700 == 0 {
+		return true
+	}
+
+	return false
+}
+
+func shouldRelink(dst string) (bool, error) {
+	dstPath := filepath.Join(BinariesRootPath(PlatformLocal), dst)
+
+	absSrcPath, err := filepath.Abs(dstPath)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+	realSrcPath, err := filepath.EvalSymlinks(absSrcPath)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	absDstPath, err := filepath.Abs(dst)
+	if err != nil {
+		return true, nil //nolint:nilerr // this is ok
+	}
+	realDstPath, err := filepath.EvalSymlinks(absDstPath)
+	if err != nil {
+		return true, nil //nolint:nilerr // this is ok
+	}
+
+	if realSrcPath != realDstPath {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// Get returns tool definition by its name.
+func Get(name Name) (Tool, error) {
+	t, exists := toolsMap[name]
 	if !exists {
-		return errors.Errorf("tool %s is not defined for platform %s", tool, platform)
+		return nil, errors.Errorf("tool %s does not exist", name)
+	}
+	return t, nil
+}
+
+// CopyToolBinaries moves the toolsMap artifacts from the local cache to the target local location.
+// In case the binPath doesn't exist the method will create it.
+func CopyToolBinaries(toolName Name, platform Platform, path string, binaryNames ...string) error {
+	tool, err := Get(toolName)
+	if err != nil {
+		return err
+	}
+
+	if !tool.IsCompatible(platform) {
+		return errors.Errorf("tool %s is not defined for platform %s", toolName, platform)
 	}
 
 	if len(binaryNames) == 0 {
@@ -761,17 +976,14 @@ func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...
 
 	storedBinaryNames := map[string]struct{}{}
 	// combine binaries
-	for key := range info.Binaries {
-		storedBinaryNames[key] = struct{}{}
-	}
-	for key := range infoPlatform.Binaries {
-		storedBinaryNames[key] = struct{}{}
+	for _, b := range tool.GetBinaries(platform) {
+		storedBinaryNames[b] = struct{}{}
 	}
 
 	// initial validation to check that we have all binaries
 	for _, binaryName := range binaryNames {
 		if _, ok := storedBinaryNames[binaryName]; !ok {
-			return errors.Errorf("the binary %q doesn't exist for the requested tool %q", binaryName, tool)
+			return errors.Errorf("the binary %q doesn't exist for the requested tool %q", binaryName, toolName)
 		}
 	}
 
@@ -810,5 +1022,14 @@ func BinariesRootPath(platform Platform) string {
 
 // Path returns path to the installed binary.
 func Path(binary string, platform Platform) string {
-	return must.String(filepath.Abs(filepath.Join(BinariesRootPath(platform), binary)))
+	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(filepath.Join(BinariesRootPath(platform), binary)))))
+}
+
+// Ensure ensures tool exists for the platform.
+func Ensure(ctx context.Context, toolName Name, platform Platform) error {
+	tool, err := Get(toolName)
+	if err != nil {
+		return err
+	}
+	return tool.Ensure(ctx, platform)
 }
