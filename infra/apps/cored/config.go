@@ -38,6 +38,9 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, timeoutCommit time.Durat
 
 // NetworkConfig returns the network config used by crust.
 func NetworkConfig(genesisTemplate string, blockTimeIota time.Duration) (config.NetworkConfig, error) {
+	if blockTimeIota <= 0 {
+		blockTimeIota = time.Second
+	}
 	networkConfig := config.NetworkConfig{
 		Provider: config.DynamicConfigProvider{
 			AddressPrefix:   constant.AddressPrefixDev,
