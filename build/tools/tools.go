@@ -435,7 +435,9 @@ func EnsureBinaries(ctx context.Context, tool Name, platform Platform) error {
 
 	toolDir := toolDir(tool, platform)
 	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
-		// todo: does this for loop check that binary has correct checksum ?
+		// todo: IMO in this loop we should also verify that checksum of binary matches & if it doesn't - reinstall it.
+		// If I'm not mistaken, crust wasn't downloading new cosmovisor binary when I changed version in tools.
+		// I had to remove old one before.
 
 		srcPath, err := filepath.Abs(toolDir + "/" + src)
 		if err != nil {
