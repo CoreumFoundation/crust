@@ -203,15 +203,15 @@ var tools = map[Name]Tool{
 
 	// https://github.com/informalsystems/hermes/releases
 	Hermes: {
-		Version: "v1.5.1",
+		Version: "v1.6.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.5.1/hermes-v1.5.1-x86_64-unknown-linux-gnu.tar.gz",
-				Hash: "sha256:d370cfde598ff5096707532e7dd8f71a3d1b5b5762891078f0a9fff8fbcf5b82",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.6.0/hermes-v1.6.0-x86_64-unknown-linux-gnu.tar.gz",
+				Hash: "sha256:20d2798e221a6b90956bfd237bb171b5ca5fd3e1368fb58d4fbac3dc0093aadb",
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.5.1/hermes-v1.5.1-aarch64-unknown-linux-gnu.tar.gz",
-				Hash: "sha256:79786507d8ec786c9e35c113d14c352859917bd5c4d07b3c39d23e4878d5f763",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.6.0/hermes-v1.6.0-aarch64-unknown-linux-gnu.tar.gz",
+				Hash: "sha256:3d4939aef95886d5016f1346de62a16e18469326ecf9b1159aa571ab8682b38d",
 			},
 		},
 		Binaries: map[string]string{
