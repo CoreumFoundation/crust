@@ -26,18 +26,19 @@ import (
 
 // Tool names.
 const (
-	Go            Name = "go"
-	GolangCI      Name = "golangci"
-	Ignite        Name = "ignite"
-	Cosmovisor    Name = "cosmovisor"
-	LibWASMMuslC  Name = "libwasmvm_muslc"
-	Gaia          Name = "gaia"
-	RelayerCosmos Name = "relayercosmos"
-	Hermes        Name = "hermes"
-	CoredV100     Name = "cored-v1.0.0"
-	CoredV200     Name = "cored-v2.0.0"
-	Protoc        Name = "protoc"
-	ProtocGenDoc  Name = "protoc-gen-doc"
+	Go                    Name = "go"
+	GolangCI              Name = "golangci"
+	Ignite                Name = "ignite"
+	Cosmovisor            Name = "cosmovisor"
+	Aarch64LinuxMuslCross Name = "aarch64-linux-musl-cross"
+	LibWASMMuslC          Name = "libwasmvm_muslc"
+	Gaia                  Name = "gaia"
+	RelayerCosmos         Name = "relayercosmos"
+	Hermes                Name = "hermes"
+	CoredV100             Name = "cored-v1.0.0"
+	CoredV200             Name = "cored-v2.0.0"
+	Protoc                Name = "protoc"
+	ProtocGenDoc          Name = "protoc-gen-doc"
 )
 
 var tools = map[Name]Tool{
@@ -136,6 +137,20 @@ var tools = map[Name]Tool{
 		},
 		Binaries: map[string]string{
 			"bin/cosmovisor": "cosmovisor",
+		},
+	},
+
+	// http://musl.cc/#binaries
+	Aarch64LinuxMuslCross: {
+		Version: "11.2.1",
+		Sources: Sources{
+			PlatformDockerAMD64: {
+				URL:  "http://musl.cc/aarch64-linux-musl-cross.tgz",
+				Hash: "sha256:c909817856d6ceda86aa510894fa3527eac7989f0ef6e87b5721c58737a06c38",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/aarch64-linux-musl-gcc": "aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc",
 		},
 	},
 
@@ -557,7 +572,7 @@ func hasher(hashStr string) (hash.Hash, string) {
 
 func save(url string, reader io.Reader, path string) error {
 	switch {
-	case strings.HasSuffix(url, ".tar.gz"):
+	case strings.HasSuffix(url, ".tar.gz") || strings.HasSuffix(url, ".tgz"):
 		var err error
 		reader, err = gzip.NewReader(reader)
 		if err != nil {
@@ -622,7 +637,11 @@ func untar(reader io.Reader, path string) error {
 				return errors.WithStack(err)
 			}
 		case header.Typeflag == tar.TypeLink:
+			header.Linkname = path + "/" + header.Linkname
 			if err := ensureDir(header.Name); err != nil {
+				return err
+			}
+			if err := ensureDir(header.Linkname); err != nil {
 				return err
 			}
 			// linked file may not exist yet, so let's create it - it will be overwritten later
@@ -810,5 +829,5 @@ func BinariesRootPath(platform Platform) string {
 
 // Path returns path to the installed binary.
 func Path(binary string, platform Platform) string {
-	return must.String(filepath.Abs(filepath.Join(BinariesRootPath(platform), binary)))
+	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(filepath.Join(BinariesRootPath(platform), binary)))))
 }
