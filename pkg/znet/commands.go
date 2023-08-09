@@ -119,7 +119,7 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	}
 
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := cored.NetworkConfig(genesisTemplate)
+	networkConfig, err := cored.NetworkConfig(genesisTemplate, config.TimeoutCommit)
 	if err != nil {
 		return err
 	}
@@ -188,7 +188,7 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	}
 
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := cored.NetworkConfig(genesisTemplate)
+	networkConfig, err := cored.NetworkConfig(genesisTemplate, config.TimeoutCommit)
 	if err != nil {
 		return err
 	}
