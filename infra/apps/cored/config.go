@@ -20,12 +20,15 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, timeoutCommit time.Durat
 	cfg.P2P.AllowDuplicateIP = true
 	cfg.P2P.MaxNumOutboundPeers = 100
 	cfg.P2P.MaxNumInboundPeers = 100
+	cfg.P2P.FlushThrottleTimeout = 10 * time.Millisecond
 	cfg.RPC.MaxSubscriptionClients = 10000
 	cfg.RPC.MaxOpenConnections = 10000
 	cfg.RPC.GRPCMaxOpenConnections = 10000
 	cfg.RPC.MaxSubscriptionsPerClient = 10000
 	cfg.Mempool.Size = 50000
 	cfg.Mempool.MaxTxsBytes = 5368709120
+	cfg.Consensus.PeerGossipSleepDuration = 10 * time.Millisecond
+	cfg.Consensus.PeerQueryMaj23SleepDuration = 10 * time.Millisecond
 	if timeoutCommit > 0 {
 		cfg.Consensus.TimeoutCommit = timeoutCommit
 	}
@@ -34,13 +37,14 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, timeoutCommit time.Durat
 }
 
 // NetworkConfig returns the network config used by crust.
-func NetworkConfig(genesisTemplate string) (config.NetworkConfig, error) {
+func NetworkConfig(genesisTemplate string, blockTimeIota time.Duration) (config.NetworkConfig, error) {
 	networkConfig := config.NetworkConfig{
 		Provider: config.DynamicConfigProvider{
 			AddressPrefix:   constant.AddressPrefixDev,
 			GenesisTemplate: genesisTemplate,
 			ChainID:         constant.ChainIDDev,
 			GenesisTime:     time.Now(),
+			BlockTimeIota:   blockTimeIota,
 			Denom:           constant.DenomDev,
 			GovConfig: config.GovConfig{
 				ProposalConfig: config.GovProposalConfig{
