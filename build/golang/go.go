@@ -156,6 +156,14 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		"--name", "crust-build-" + filepath.Base(config.BinOutputPath) + "-" + hex.EncodeToString(nameSuffix),
 	}
+	if tools.PlatformLocal == tools.PlatformLinuxAMD64 && config.Platform == tools.PlatformDockerARM64 {
+		crossCompilerPath := filepath.Dir(filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.PlatformDockerAMD64)))
+		libWasmVMPath := tools.Path("lib/libwasmvm_muslc.a", tools.PlatformDockerARM64)
+		runArgs = append(runArgs,
+			"-v", crossCompilerPath+":/aarch64-linux-musl-cross",
+			"-v", libWasmVMPath+":/aarch64-linux-musl-cross/aarch64-linux-musl/lib/libwasmvm_muslc.a",
+		)
+	}
 	for _, env := range envs {
 		runArgs = append(runArgs, "--env", env)
 	}
