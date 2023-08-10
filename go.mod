@@ -1,6 +1,6 @@
 module github.com/CoreumFoundation/crust
 
-go 1.20
+go 1.21
 
 replace (
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1 // workaround for the btcd import conflicts

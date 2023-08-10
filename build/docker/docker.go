@@ -20,8 +20,8 @@ import (
 
 // Tags used to build our docker images.
 const (
-	AlpineImage = "alpine:3.18.2"
-	UbuntuImage = "ubuntu:22.04"
+	AlpineImage = "alpine:3.18.3"
+	UbuntuImage = "ubuntu:23.10"
 )
 
 // Label used to tag docker resources created by crust.
