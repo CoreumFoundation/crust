@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"fmt"
-	"github.com/CoreumFoundation/coreum/v2/app"
 	"io"
 	"net"
 	"os"
@@ -14,12 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config"
-	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
-	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/targets"
+	sdkmath "cosmossdk.io/math"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto"
@@ -35,6 +29,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/v2/app"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
+	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
 // AppType is the type of cored application.
@@ -114,7 +116,7 @@ func prepareTxStakingCreateValidator(
 	validatorPublicKey ed25519.PublicKey,
 	stakerPrivateKey cosmossecp256k1.PrivKey,
 	stakedBalance sdk.Coin,
-	selfDelegation sdk.Int,
+	selfDelegation sdkmath.Int,
 ) ([]byte, error) {
 	// the passphrase here is the trick to import the private key into the keyring
 	const passphrase = "tmp"
