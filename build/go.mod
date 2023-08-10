@@ -1,8 +1,8 @@
 module github.com/CoreumFoundation/crust/build
 
-// 1.19 is used here because still not all distros deliver 1.20.
+// 1.20 is used here because still not all distros deliver 1.21.
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
-go 1.19
+go 1.20
 
 replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
