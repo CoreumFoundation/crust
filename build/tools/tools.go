@@ -291,7 +291,7 @@ var tools = map[Name]Tool{
 			},
 			PlatformDockerARM64: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.0/cored-linux-arm64",
-				Hash: "sha256:8b0df987c13ede90eb79f7c4bdae3d1a503c14aaa2b5f187a84f575bad66b39b",
+				Hash: "sha256:c082eeebbc206633f1b71ef9c16a7f390f5ea5b27ce06c735ed7a632f38b5891",
 				Binaries: map[string]string{
 					"bin/cored-v2.0.0": "cored-linux-arm64",
 				},
