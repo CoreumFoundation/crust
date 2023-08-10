@@ -73,6 +73,7 @@ jobs:
         with:
           repository: CoreumFoundation/coreum
           path: coreum
+          ref: v0.47-migration-v2
       - name: Checkout faucet
         uses: actions/checkout@v3
         with:

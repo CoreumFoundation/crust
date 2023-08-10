@@ -4,12 +4,9 @@ module github.com/CoreumFoundation/crust/build
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
 go 1.19
 
-//FIXME(dzmitryhil) replace with real dependency
-replace github.com/CoreumFoundation/coreum/v2 => ../../coreum
-
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v2 v2.0.0
+	github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230810074019-b41dba895971
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.4

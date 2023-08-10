@@ -1,5 +1,7 @@
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab h1:XPcSzlQ06tor/py1LkEM9FX70LIeDWB++vLuAO6eAYI=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
+github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230810074019-b41dba895971 h1:yJN1IGXinoiEAkAIz/8hCGynONkUkp+F2f0U1L2+OFw=
+github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230810074019-b41dba895971/go.mod h1:MzFJLuwpp1bXxPzVJzjpOOe4hsGi5ZVoFk9DpsaLQ4g=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

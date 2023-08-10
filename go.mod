@@ -2,16 +2,12 @@ module github.com/CoreumFoundation/crust
 
 go 1.20
 
-replace (
-	//FIXME replace with real dependency
-	github.com/CoreumFoundation/coreum/v2 => ../coreum
-	// FIXME(v47-dependencies): try to remove that replacement
-	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-)
+// FIXME(v47-dependencies): try to remove that replacement
+replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v2 v2.0.0
+	github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230810074019-b41dba895971
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cosmos/cosmos-sdk v0.47.4
 	github.com/fsnotify/fsnotify v1.6.0
