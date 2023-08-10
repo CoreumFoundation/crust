@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -29,6 +30,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v2/app"
@@ -214,9 +217,14 @@ func (c Cored) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
+	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC),
+		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12})))
+	must.OK(err)
+
 	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
 		WithChainID(string(c.config.NetworkConfig.ChainID())).
-		WithRPCClient(rpcClient)
+		WithRPCClient(rpcClient).
+		WithGRPCClient(grpcClient)
 }
 
 // TxFactory returns factory with present values for the chain.
