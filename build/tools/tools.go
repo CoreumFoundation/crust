@@ -44,20 +44,20 @@ const (
 var tools = map[Name]Tool{
 	// https://go.dev/dl/
 	Go: {
-		Version: "1.20.5",
+		Version: "1.21.0",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://go.dev/dl/go1.20.5.linux-amd64.tar.gz",
-				Hash: "sha256:d7ec48cde0d3d2be2c69203bc3e0a44de8660b9c09a6e85c4732a3f7dc442612",
+				URL:  "https://go.dev/dl/go1.21.0.linux-amd64.tar.gz",
+				Hash: "sha256:d0398903a16ba2232b389fb31032ddf57cac34efda306a0eebac34f0965a0742",
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://go.dev/dl/go1.20.5.darwin-amd64.tar.gz",
-				Hash: "sha256:79715ca5b8becd120703ac9af5d1da749e095d2b9bf830c4f3af4b15b2cb049d",
+				URL:  "https://go.dev/dl/go1.21.0.darwin-amd64.tar.gz",
+				Hash: "sha256:b314de9f704ab122c077d2ec8e67e3670affe8865479d1f01991e7ac55d65e70",
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://go.dev/dl/go1.20.5.darwin-arm64.tar.gz",
-				Hash: "sha256:94ad76b7e1593bb59df7fd35a738194643d6eed26a4181c94e3ee91381e40459",
+				URL:  "https://go.dev/dl/go1.21.0.darwin-arm64.tar.gz",
+				Hash: "sha256:3aca44de55c5e098de2f406e98aba328898b05d509a2e2a356416faacf2c4566",
 			},
 		},
 		Binaries: map[string]string{
@@ -68,28 +68,28 @@ var tools = map[Name]Tool{
 
 	// https://github.com/golangci/golangci-lint/releases/
 	GolangCI: {
-		Version: "1.53.3",
+		Version: "1.54.0",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-linux-amd64.tar.gz",
-				Hash: "sha256:4f62007ca96372ccba54760e2ed39c2446b40ec24d9a90c21aad9f2fdf6cf0da",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-linux-amd64.tar.gz",
+				Hash: "sha256:a694f19dbfab3ea4d3956cb105d2e74c1dc49cb4c06ece903a3c534bce86b3dc",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.53.3-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.54.0-linux-amd64/golangci-lint",
 				},
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-darwin-amd64.tar.gz",
-				Hash: "sha256:e6fe5df023c35482cf9858eeb0a14aeecea58e64549be9084268b4a1fb632ece",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-darwin-amd64.tar.gz",
+				Hash: "sha256:0a76fcb91bca94c0b3bcb931662eafd320fbe458b3a29ce368b0bffbd4eff2fb",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.53.3-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.54.0-darwin-amd64/golangci-lint",
 				},
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.53.3/golangci-lint-1.53.3-darwin-arm64.tar.gz",
-				Hash: "sha256:76607909a15e825a39bd61f1c5805997746b365bd285314277dccde1b86edae6",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-darwin-arm64.tar.gz",
+				Hash: "sha256:aeb77a00c24720e223ef73da18eea3afb29ea46356db33e1f503c66f2799d387",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.53.3-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.54.0-darwin-arm64/golangci-lint",
 				},
 			},
 		},
@@ -179,41 +179,40 @@ var tools = map[Name]Tool{
 	// https://github.com/cosmos/gaia/releases
 	// Before upgrading verify in go.mod that they use the same version of IBC
 	Gaia: {
-		Version: "v10.0.1",
+		Version: "v11.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-amd64",
-				Hash: "sha256:fcb8210308223d78bc36f3d4c89e2578dcf784994c052cea97efd61f1672cf72",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
+				Hash: "sha256:258df2eec5b22f8baadc988e184fbfd2ae6f9f888e9f4461a110cc365fe86300",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v10.0.1-linux-amd64",
+					"bin/gaiad": "gaiad-v11.0.0-linux-amd64",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-arm64",
-				Hash: "sha256:db9b69cf224b410c669fa4f820192890357534e74d4693a744ef915028567462",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-arm64",
+				Hash: "sha256:688e3ae4aa5ed91978f537798e012322336c7309fe5ee9169fdd607ab6c348b8",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v10.0.1-linux-arm64",
+					"bin/gaiad": "gaiad-v11.0.0-linux-arm64",
 				},
 			},
 		},
 	},
 
-	// https://github.com/cosmos/relayer/releases
 	RelayerCosmos: {
-		Version: "v2.3.1",
+		Version: "v2.4.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.3.1/Cosmos.Relayer_2.3.1_linux_amd64.tar.gz",
-				Hash: "sha256:68c94403959239683cc80f17e50ca99c7e5caff8d70a17d2171009969d4c2692",
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_amd64.tar.gz",
+				Hash: "sha256:6c7b197656643ecb16dabaae67dfda943c4ccffe46baac4ab606762bf78b9a30",
 				Binaries: map[string]string{
-					"bin/relayercosmos": "Cosmos Relayer_2.3.1_linux_amd64/rly",
+					"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_amd64/rly",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.3.1/Cosmos.Relayer_2.3.1_linux_arm64.tar.gz",
-				Hash: "sha256:5466606e6d1186ce70321a7ae421b7da121308960719caf6cc7c5a4923585230",
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_arm64.tar.gz",
+				Hash: "sha256:b7c1f4109db5fc8a095cf6a673233adc76103b4fa8e9aae9c79323e6ddb00687",
 				Binaries: map[string]string{
-					"bin/relayercosmos": "Cosmos Relayer_2.3.1_linux_arm64/rly",
+					"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_arm64/rly",
 				},
 			},
 		},
@@ -279,20 +278,20 @@ var tools = map[Name]Tool{
 
 	// https://github.com/protocolbuffers/protobuf/releases
 	Protoc: {
-		Version: "v23.3",
+		Version: "v24.0",
 		Local:   true,
 		Sources: Sources{
 			PlatformLinuxAMD64: {
-				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-linux-x86_64.zip",
-				Hash: "sha256:8f5abeb19c0403a7bf6e48f4fa1bb8b97724d8701f6823a327922df8cc1da4f5",
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-linux-x86_64.zip",
+				Hash: "sha256:4feef12d91c4e452eac8c45bd11f43d51541db7fc6c18b4ca7bdd38af52c9d15",
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-osx-x86_64.zip",
-				Hash: "sha256:82becd1c2dc887a7b3108981d5d6bb5f5b66e81d7356e3e2ab2f36c7b346914f",
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-osx-x86_64.zip",
+				Hash: "sha256:c438ae68427aa848f4e2dbf7d6cbd4e6a13e30a6bcc61007fd95cfc90451264a",
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v23.3/protoc-23.3-osx-aarch_64.zip",
-				Hash: "sha256:edb432e4990c23fea1040a2a76b87ab0f738e384cd25d650cc35683603fe8cdc",
+				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-osx-aarch_64.zip",
+				Hash: "sha256:e4cc0739f0f8ae31633fb11335f11e6fbe067ecda8fd1b4716e80cfe3661ee1d",
 			},
 		},
 		Binaries: map[string]string{
