@@ -254,10 +254,6 @@ func (c Cored) Deployment() infra.Deployment {
 					Name:  "DAEMON_NAME",
 					Value: "cored",
 				},
-				{
-					Name:  "DAEMON_SHUTDOWN_GRACE",
-					Value: "1m",
-				},
 			}
 		},
 		Volumes: []infra.Volume{
