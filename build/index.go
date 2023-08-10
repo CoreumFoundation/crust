@@ -19,6 +19,7 @@ var Commands = map[string]build.CommandFunc{
 	"build/crust":                            crust.BuildCrust,
 	"build/cored":                            coreum.BuildCored,
 	"build/faucet":                           faucet.Build,
+	"build/gaiad":                            gaia.Build,
 	"build/znet":                             crust.BuildZNet,
 	"build/integration-tests":                buildIntegrationTests,
 	"build/integration-tests/coreum":         coreum.BuildAllIntegrationTests,
@@ -74,7 +75,7 @@ func test(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildBinaries(ctx context.Context, deps build.DepsFunc) error {
-	deps(coreum.BuildCored, faucet.Build, crust.BuildZNet, buildIntegrationTests)
+	deps(coreum.BuildCored, faucet.Build, crust.BuildZNet, buildIntegrationTests, gaia.Build)
 	return nil
 }
 

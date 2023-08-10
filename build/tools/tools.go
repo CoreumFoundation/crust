@@ -180,6 +180,7 @@ var tools = map[Name]Tool{
 	// Before upgrading verify in go.mod that they use the same version of IBC
 	Gaia: {
 		Version: "v10.0.1",
+		Local:   true,
 		Sources: Sources{
 			PlatformDockerAMD64: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-amd64",
@@ -193,6 +194,27 @@ var tools = map[Name]Tool{
 				Hash: "sha256:db9b69cf224b410c669fa4f820192890357534e74d4693a744ef915028567462",
 				Binaries: map[string]string{
 					"bin/gaiad": "gaiad-v10.0.1-linux-arm64",
+				},
+			},
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-amd64",
+				Hash: "sha256:fcb8210308223d78bc36f3d4c89e2578dcf784994c052cea97efd61f1672cf72",
+				Binaries: map[string]string{
+					"bin/gaiad": "gaiad-v10.0.1-linux-arm64",
+				},
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-darwin-amd64",
+				Hash: "sha256:d0bee3b4b243fe1f88ad3258f4648de3a73787434702bcac6e31ca38f81a283a",
+				Binaries: map[string]string{
+					"bin/gaiad": "gaiad-v10.0.1-darwin-amd64",
+				},
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-darwin-arm64",
+				Hash: "sha256:c8124d66ffa99b51da274656f6c3401b1ec9e165a76f3f01699761672e83a136",
+				Binaries: map[string]string{
+					"bin/gaiad": "gaiad-v10.0.1-darwin-arm64",
 				},
 			},
 		},
@@ -389,6 +411,11 @@ func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
 // EnsureProtocGenDoc ensures that protoc-gen-doc is available.
 func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
 	return EnsureTool(ctx, ProtocGenDoc)
+}
+
+// EnsureGaiad ensures that gaiad is available.
+func EnsureGaiad(ctx context.Context, deps build.DepsFunc) error {
+	return EnsureTool(ctx, Gaia)
 }
 
 // EnsureTool ensures that tool is installed and available in bin folder.
