@@ -198,25 +198,48 @@ var tools = map[Name]Tool{
 		},
 	},
 
+	// https://github.com/cosmos/relayer/releases
 	RelayerCosmos: {
-		Version: "v2.4.0",
+		Version: "v2.3.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_amd64.tar.gz",
-				Hash: "sha256:6c7b197656643ecb16dabaae67dfda943c4ccffe46baac4ab606762bf78b9a30",
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.3.1/Cosmos.Relayer_2.3.1_linux_amd64.tar.gz",
+				Hash: "sha256:68c94403959239683cc80f17e50ca99c7e5caff8d70a17d2171009969d4c2692",
 				Binaries: map[string]string{
-					"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_amd64/rly",
+					"bin/relayercosmos": "Cosmos Relayer_2.3.1_linux_amd64/rly",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_arm64.tar.gz",
-				Hash: "sha256:b7c1f4109db5fc8a095cf6a673233adc76103b4fa8e9aae9c79323e6ddb00687",
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.3.1/Cosmos.Relayer_2.3.1_linux_arm64.tar.gz",
+				Hash: "sha256:5466606e6d1186ce70321a7ae421b7da121308960719caf6cc7c5a4923585230",
 				Binaries: map[string]string{
-					"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_arm64/rly",
+					"bin/relayercosmos": "Cosmos Relayer_2.3.1_linux_arm64/rly",
 				},
 			},
 		},
 	},
+
+	// FIXME (wojtek): When using v2.4.0 tests TestIBCTransferFromSmartContract and TestIBCAssetFTSendCommissionAndBurnRate don't pass.
+
+	// RelayerCosmos: {
+	//	Version: "v2.4.0",
+	//	Sources: Sources{
+	//		PlatformDockerAMD64: {
+	//			URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_amd64.tar.gz",
+	//			Hash: "sha256:6c7b197656643ecb16dabaae67dfda943c4ccffe46baac4ab606762bf78b9a30",
+	//			Binaries: map[string]string{
+	//				"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_amd64/rly",
+	//			},
+	//		},
+	//		PlatformDockerARM64: {
+	//			URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_arm64.tar.gz",
+	//			Hash: "sha256:b7c1f4109db5fc8a095cf6a673233adc76103b4fa8e9aae9c79323e6ddb00687",
+	//			Binaries: map[string]string{
+	//				"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_arm64/rly",
+	//			},
+	//		},
+	//	},
+	// },
 
 	// https://github.com/informalsystems/hermes/releases
 	Hermes: {
