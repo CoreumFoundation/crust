@@ -1,6 +1,6 @@
 module github.com/CoreumFoundation/crust
 
-go 1.20
+go 1.21
 
 replace (
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.1 // workaround for the btcd import conflicts
@@ -11,7 +11,7 @@ replace (
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v2 v2.0.0
+	github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230809094605-79de52cdf4d0
 	github.com/cosmos/cosmos-sdk v0.45.16
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/jackc/pgx/v4 v4.16.1
