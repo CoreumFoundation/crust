@@ -215,9 +215,9 @@ fi
 
 exec %s --node %s --home %s "$@" $OPTS
 `,
-		filepath.Join(tools.BinariesRootPath(tools.PlatformLocal), "bin", ba.appTypeConfig.ExecName),
-		infra.JoinNetAddr("tcp", hostname, ba.appConfig.Ports.RPC),
-		filepath.Dir(ba.appConfig.HomeDir),
+		filepath.Join(tools.BinariesRootPath(tools.PlatformLocal), "bin", ba.appTypeConfig.ExecName), // client's path
+		infra.JoinNetAddr("tcp", hostname, ba.appConfig.Ports.RPC),                                   // rpc endpoint
+		filepath.Dir(ba.appConfig.HomeDir),                                                           // home dir
 	)
 
 	return errors.WithStack(os.WriteFile(filepath.Join(ba.appConfig.WrapperDir, ba.appConfig.Name), []byte(baClient), 0o700))
