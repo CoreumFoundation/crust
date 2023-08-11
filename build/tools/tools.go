@@ -217,8 +217,7 @@ var tools = map[Name]Tool{
 		},
 	},
 
-	// https://github.com/cosmos/gaia/releases
-	// Before upgrading verify in go.mod that they use the same version of IBC
+	// https://github.com/osmosis-labs/osmosis/releases
 	Osmosis: {
 		Version: "16.1.1",
 		Sources: Sources{
