@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"os"
 	"path"
@@ -12,10 +11,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/targets"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -23,6 +18,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
 const dockerEntrypoint = "run.sh"
