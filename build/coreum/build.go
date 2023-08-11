@@ -96,7 +96,8 @@ func Tidy(ctx context.Context, deps build.DepsFunc) error {
 
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureRepo, Generate, CompileAllSmartContracts)
+	// FIXME(v47-generators) fix generator and add Generate to lint
+	deps(ensureRepo, CompileAllSmartContracts)
 	return golang.Lint(ctx, repoPath, deps)
 }
 

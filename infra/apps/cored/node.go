@@ -4,7 +4,7 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 
-	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
+	tmed25519 "github.com/cometbft/cometbft/crypto/ed25519"
 )
 
 // NodeID computes node ID from node public key.
