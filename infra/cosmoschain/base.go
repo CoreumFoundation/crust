@@ -24,6 +24,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
@@ -214,7 +215,7 @@ fi
 
 exec %s --node %s --home %s "$@" $OPTS
 `,
-		filepath.Join(ba.appConfig.BinDir, ba.appTypeConfig.ExecName),
+		filepath.Join(tools.BinariesRootPath(tools.PlatformLocal), "bin", ba.appTypeConfig.ExecName),
 		infra.JoinNetAddr("tcp", hostname, ba.appConfig.Ports.RPC),
 		filepath.Dir(ba.appConfig.HomeDir),
 	)

@@ -12,6 +12,7 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230809094605-79de52cdf4d0
+	github.com/CoreumFoundation/crust/build v0.0.0-20230811092000-ae7df2ee56b7
 	github.com/cosmos/cosmos-sdk v0.45.16
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/jackc/pgx/v4 v4.16.1

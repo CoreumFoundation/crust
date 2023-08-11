@@ -1,4 +1,4 @@
-package gaia
+package osmosis
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
-// EnsureBinary installs gaiad binary to crust cache.
+// EnsureBinary installs osmosis binary to crust cache.
 func EnsureBinary(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureBinaries(ctx, tools.Gaia, tools.PlatformLocal)
+	return tools.EnsureBinaries(ctx, tools.Osmosis, tools.PlatformLocal)
 }

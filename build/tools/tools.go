@@ -33,6 +33,7 @@ const (
 	Aarch64LinuxMuslCross Name = "aarch64-linux-musl-cross"
 	LibWASMMuslC          Name = "libwasmvm_muslc"
 	Gaia                  Name = "gaia"
+	Osmosis               Name = "osmosis"
 	RelayerCosmos         Name = "relayercosmos"
 	Hermes                Name = "hermes"
 	CoredV100             Name = "cored-v1.0.0"
@@ -180,7 +181,6 @@ var tools = map[Name]Tool{
 	// Before upgrading verify in go.mod that they use the same version of IBC
 	Gaia: {
 		Version: "v11.0.0",
-		Local:   true,
 		Sources: Sources{
 			PlatformDockerAMD64: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
@@ -215,6 +215,35 @@ var tools = map[Name]Tool{
 				Hash: "sha256:c8124d66ffa99b51da274656f6c3401b1ec9e165a76f3f01699761672e83a136",
 				Binaries: map[string]string{
 					"bin/gaiad": "gaiad-v10.0.1-darwin-arm64",
+				},
+			},
+		},
+	},
+
+	// https://github.com/cosmos/gaia/releases
+	// Before upgrading verify in go.mod that they use the same version of IBC
+	Osmosis: {
+		Version: "16.1.1",
+		Sources: Sources{
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
+				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
+				Binaries: map[string]string{
+					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
+				},
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-darwin-amd64",
+				Hash: "sha256:d856ebda9c31f052d10a78443967a93374f2033292f0afdb6434b82b4ed79790",
+				Binaries: map[string]string{
+					"bin/osmosisd": "osmosisd-16.1.1-darwin-amd64",
+				},
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-darwin-arm64",
+				Hash: "sha256:c743da4d3632a2bc3ea0ce784bbd13383492a4a34d53295eb2c96987bacf8e8c",
+				Binaries: map[string]string{
+					"bin/osmosisd": "osmosisd-16.1.1-darwin-arm64",
 				},
 			},
 		},
@@ -433,11 +462,6 @@ func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
 // EnsureProtocGenDoc ensures that protoc-gen-doc is available.
 func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
 	return EnsureTool(ctx, ProtocGenDoc)
-}
-
-// EnsureGaiad ensures that gaiad is available.
-func EnsureGaiad(ctx context.Context, deps build.DepsFunc) error {
-	return EnsureTool(ctx, Gaia)
 }
 
 // EnsureTool ensures that tool is installed and available in bin folder.
