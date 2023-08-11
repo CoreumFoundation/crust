@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"fmt"
 	"net"
 	"os"
 	"path"
@@ -205,13 +206,18 @@ func newBasicManager() module.BasicManager {
 }
 
 func (ba BaseApp) saveClientWrapper(wrapperDir, hostname string) error {
-	baClient := `#!/bin/bash
+	baClient := fmt.Sprintf(`#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
 fi
 
-exec "` + ba.appConfig.BinDir + `"/gaiad --node "` + infra.JoinNetAddr("tcp", hostname, ba.appConfig.Ports.RPC) + `" --home "` + filepath.Dir(ba.appConfig.HomeDir) + `" "$@" $OPTS
-`
+exec %s --node %s --home %s "$@" $OPTS
+`,
+		filepath.Join(ba.appConfig.BinDir, ba.appTypeConfig.ExecName),
+		infra.JoinNetAddr("tcp", hostname, ba.appConfig.Ports.RPC),
+		filepath.Dir(ba.appConfig.HomeDir),
+	)
+
 	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, ba.appConfig.Name), []byte(baClient), 0o700))
 }
