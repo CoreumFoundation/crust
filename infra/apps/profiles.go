@@ -54,9 +54,7 @@ var profiles = []string{
 	ProfileIntegrationTestsModules,
 }
 
-var (
-	defaultProfiles = []string{Profile1Cored}
-)
+var defaultProfiles = []string{Profile1Cored}
 
 var availableProfiles = func() map[string]struct{} {
 	v := map[string]struct{}{}

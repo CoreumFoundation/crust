@@ -12,14 +12,13 @@ import (
 	"time"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
@@ -114,15 +113,14 @@ func (ba BaseApp) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", ba.Info().HostFromHost, ba.appConfig.Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC), grpc.WithInsecure())
+	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	must.OK(err)
 
 	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
 		WithChainID(ba.appConfig.ChainID).
 		WithRPCClient(rpcClient).
-		WithGRPCClient(grpcClient).
-		WithKeyring(keyring.NewInMemory()).
-		WithBroadcastMode(flags.BroadcastBlock)
+		WithGRPCClient(grpcClient)
 }
 
 // HealthCheck checks if chain is ready.
