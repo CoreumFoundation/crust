@@ -120,19 +120,16 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/cosmos/cosmos-sdk/releases
-	// There is 1.4.0, but it is a dummy release without changes as described here:
-	// https://github.com/cosmos/cosmos-sdk/issues/13654
-	// and they didn't even provide compiled binaries for it.
 	Cosmovisor: {
-		Version: "1.3.0",
+		Version: "1.5.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-amd64.tar.gz",
-				Hash: "sha256:34d7c9fbaa03f49b8278e13768d0fd82e28101dfa9625e25379c36a86d558826",
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-amd64.tar.gz",
+				Hash: "sha256:7f4bebfb18a170bff1c725f13dda326e0158132deef9f037ab0c2a48727c3077",
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.3.0/cosmovisor-v1.3.0-linux-arm64.tar.gz",
-				Hash: "sha256:8d7de2a18eb2cc4a749efbdbe060ecb34c3e5ca12354b7118a6966fa46d3a33d",
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-arm64.tar.gz",
+				Hash: "sha256:e15f2625b1d208ac2fed51bc84ae75678009888648ac2186fd0ed5ab6177dc14",
 			},
 		},
 		Binaries: map[string]string{
@@ -475,6 +472,10 @@ func EnsureBinaries(ctx context.Context, tool Name, platform Platform) error {
 
 	toolDir := toolDir(tool, platform)
 	for dst, src := range lo.Assign(info.Binaries, source.Binaries) {
+		// todo: IMO in this loop we should also verify that checksum of binary matches & if it doesn't - reinstall it.
+		// If I'm not mistaken, crust wasn't downloading new cosmovisor binary when I changed version in tools.
+		// I had to remove old one before.
+
 		srcPath, err := filepath.Abs(toolDir + "/" + src)
 		if err != nil {
 			return installBinary(ctx, tool, info, platform)
