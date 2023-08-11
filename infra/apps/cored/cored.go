@@ -16,6 +16,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -216,11 +217,11 @@ func (c Cored) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	mm := newBasicManager()
+	grpcClient, err := dialGRPCClient(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), mm)
 	must.OK(err)
 
-	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
+	return client.NewContext(client.DefaultContextConfig(), mm).
 		WithChainID(string(c.config.NetworkConfig.ChainID())).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient)
@@ -437,4 +438,23 @@ func copyFile(src, dst string, perm os.FileMode) error {
 	}
 
 	return nil
+}
+
+func dialGRPCClient(url string, mm module.BasicManager) (*grpc.ClientConn, error) {
+	encodingConfig := config.NewEncodingConfig(mm)
+	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		return nil, errors.New("failed to cast codec to codec.GRPCCodecProvider)")
+	}
+
+	grpClient, err := grpc.Dial(
+		url,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return grpClient, nil
 }

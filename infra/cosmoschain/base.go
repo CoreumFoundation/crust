@@ -12,6 +12,7 @@ import (
 	"time"
 
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
+	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
@@ -113,11 +115,11 @@ func (ba BaseApp) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", ba.Info().HostFromHost, ba.appConfig.Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	mm := newBasicManager()
+	grpcClient, err := dialGRPCClient(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC), mm)
 	must.OK(err)
 
-	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
+	return client.NewContext(client.DefaultContextConfig(), mm).
 		WithChainID(ba.appConfig.ChainID).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient)
@@ -187,6 +189,25 @@ func (ba BaseApp) prepare() error {
 	}
 
 	return nil
+}
+
+func dialGRPCClient(url string, mm module.BasicManager) (*grpc.ClientConn, error) {
+	encodingConfig := config.NewEncodingConfig(mm)
+	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
+	if !ok {
+		return nil, errors.New("failed to cast codec to codec.GRPCCodecProvider)")
+	}
+
+	grpClient, err := grpc.Dial(
+		url,
+		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return grpClient, nil
 }
 
 func newBasicManager() module.BasicManager {
