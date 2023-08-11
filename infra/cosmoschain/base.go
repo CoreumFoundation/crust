@@ -151,7 +151,7 @@ func (ba BaseApp) Deployment() infra.Deployment {
 		PrepareFunc: ba.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
 		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
-			return ba.saveClientWrapper(ba.appConfig.WrapperDir, deployment.HostFromHost)
+			return ba.saveClientWrapper(deployment.HostFromHost)
 		},
 	}
 }
@@ -206,7 +206,7 @@ func newBasicManager() module.BasicManager {
 	)
 }
 
-func (ba BaseApp) saveClientWrapper(wrapperDir, hostname string) error {
+func (ba BaseApp) saveClientWrapper(hostname string) error {
 	baClient := fmt.Sprintf(`#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
@@ -220,5 +220,5 @@ exec %s --node %s --home %s "$@" $OPTS
 		filepath.Dir(ba.appConfig.HomeDir),
 	)
 
-	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, ba.appConfig.Name), []byte(baClient), 0o700))
+	return errors.WithStack(os.WriteFile(filepath.Join(ba.appConfig.WrapperDir, ba.appConfig.Name), []byte(baClient), 0o700))
 }
