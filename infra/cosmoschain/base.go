@@ -206,6 +206,8 @@ func newBasicManager() module.BasicManager {
 	)
 }
 
+// TODO: [Artem S] Fix ibc-gaiad status (Err: unknown flag: --node)
+
 func (ba BaseApp) saveClientWrapper(hostname string) error {
 	baClient := fmt.Sprintf(`#!/bin/bash
 OPTS=""

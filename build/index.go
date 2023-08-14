@@ -75,15 +75,7 @@ func test(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildBinaries(ctx context.Context, deps build.DepsFunc) error {
-	deps(
-		coreum.BuildCored,
-		faucet.Build,
-		crust.BuildZNet,
-		buildIntegrationTests,
-		gaia.EnsureBinary,
-		osmosis.EnsureBinary,
-	)
-
+	deps(coreum.BuildCored, faucet.Build, crust.BuildZNet, buildIntegrationTests)
 	return nil
 }
 
@@ -93,8 +85,15 @@ func buildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
-	deps(coreum.BuildCoredDockerImage, faucet.BuildDockerImage, gaia.BuildDockerImage, hermes.BuildDockerImage,
-		relayer.BuildDockerImage)
+	deps(
+		coreum.BuildCoredDockerImage,
+		faucet.BuildDockerImage,
+		gaia.BuildDockerImage,
+		hermes.BuildDockerImage,
+		relayer.BuildDockerImage,
+		osmosis.BuildDockerImage,
+	)
+
 	return nil
 }
 

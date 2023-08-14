@@ -9,7 +9,9 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/golang"
+	"github.com/CoreumFoundation/crust/build/osmosis"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -27,7 +29,8 @@ func BuildCrust(ctx context.Context, deps build.DepsFunc) error {
 
 // BuildZNet builds znet.
 func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo)
+	deps(golang.EnsureGo, gaia.EnsureBinary, osmosis.EnsureBinary)
+
 	return golang.Build(ctx, golang.BinaryBuildConfig{
 		Platform:      tools.PlatformLocal,
 		PackagePath:   "cmd/znet",
