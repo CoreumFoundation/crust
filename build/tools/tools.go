@@ -624,11 +624,7 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform Platform) error {
 		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
 	}
 
-	if err := linkTool(dst); err != nil {
-		return err
-	}
-
-	return nil
+	return linkTool(dst)
 }
 
 // Source represents source where tool is fetched from.
@@ -955,15 +951,15 @@ func shouldRelink(dst string) (bool, error) {
 
 	absDstPath, err := filepath.Abs(dst)
 	if err != nil {
-		return true, nil
+		return true, nil //nolint:nilerr // this is ok
 	}
 	realDstPath, err := filepath.EvalSymlinks(absDstPath)
 	if err != nil {
-		return true, nil
+		return true, nil //nolint:nilerr // this is ok
 	}
 
 	if realSrcPath != realDstPath {
-		return true, nil
+		return true, nil //nolint:nilerr // this is ok
 	}
 
 	return false, nil
