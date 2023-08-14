@@ -194,24 +194,24 @@ var tools = map[Name]Tool{
 				},
 			},
 			PlatformLinuxAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-linux-amd64",
-				Hash: "sha256:fcb8210308223d78bc36f3d4c89e2578dcf784994c052cea97efd61f1672cf72",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
+				Hash: "sha256:258df2eec5b22f8baadc988e184fbfd2ae6f9f888e9f4461a110cc365fe86300",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v10.0.1-linux-arm64",
+					"bin/gaiad": "gaiad-v11.0.0-linux-arm64",
 				},
 			},
 			PlatformDarwinAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-darwin-amd64",
-				Hash: "sha256:d0bee3b4b243fe1f88ad3258f4648de3a73787434702bcac6e31ca38f81a283a",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-darwin-amd64",
+				Hash: "sha256:f115875122386496254905a1de0c0cb45f1b731536281586f77a41be55458505",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v10.0.1-darwin-amd64",
+					"bin/gaiad": "gaiad-v11.0.0-darwin-amd64",
 				},
 			},
 			PlatformDarwinARM64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v10.0.1/gaiad-v10.0.1-darwin-arm64",
-				Hash: "sha256:c8124d66ffa99b51da274656f6c3401b1ec9e165a76f3f01699761672e83a136",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-darwin-arm64",
+				Hash: "sha256:53d0ffe4d8353e51d0be543edf764de033e24d703d4c408244a141e635b27628",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v10.0.1-darwin-arm64",
+					"bin/gaiad": "gaiad-v11.0.0-darwin-arm64",
 				},
 			},
 		},

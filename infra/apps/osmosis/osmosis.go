@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	dockerImage = "osmolabs/osmosis:15.2.0-alpine" // FIXME (wojtek): version 16.1.2-alpine is available but it breaks our scripts.
-	//dockerImage   = "osmosisd:znet"
+	//dockerImage = "osmolabs/osmosis:15.2.0-alpine" // FIXME (wojtek): version 16.1.2-alpine is available but it breaks our scripts.
+	dockerImage   = "osmosisd:znet"
 	accountPrefix = "osmo"
 	execName      = "osmosisd"
 
