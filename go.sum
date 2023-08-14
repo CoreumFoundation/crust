@@ -60,8 +60,6 @@ github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab h1
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
 github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230809094605-79de52cdf4d0 h1:ybaadUexmCgBqv94cA3b769D5MAkdYv+uW8ngk4MIOY=
 github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230809094605-79de52cdf4d0/go.mod h1:RQEqopi/udeg5GuvzwKQCm4WCuX6JkPqFgrCRYsR5ws=
-github.com/CoreumFoundation/crust/build v0.0.0-20230811092000-ae7df2ee56b7 h1:bhz8BJH8i9wAgnpcymXBUKki9lEZ97JxVL5obFzfe4g=
-github.com/CoreumFoundation/crust/build v0.0.0-20230811092000-ae7df2ee56b7/go.mod h1:I6+PX6niLFDjtNcQG185XUmbqTlM6K1xl22I3Mx8m3U=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.4.5/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
 github.com/DataDog/zstd v1.5.0 h1:+K/VEwIAaPcHiMtQvpLD4lqW7f0Gk3xdYZmI1hD+CXo=

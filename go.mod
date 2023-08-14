@@ -12,7 +12,6 @@ replace (
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230809094605-79de52cdf4d0
-	github.com/CoreumFoundation/crust/build v0.0.0-20230811092000-ae7df2ee56b7
 	github.com/cosmos/cosmos-sdk v0.45.16
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/jackc/pgx/v4 v4.16.1
@@ -129,6 +128,7 @@ require (
 	github.com/zondax/ledger-go v0.14.1 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
+	go.uber.org/goleak v1.1.12 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/exp v0.0.0-20221230185412-738e83a70c30 // indirect

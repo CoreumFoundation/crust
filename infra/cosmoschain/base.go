@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/CoreumFoundation/crust/pkg/tools"
 	"net"
 	"os"
 	"path"
@@ -24,7 +25,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
-	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
@@ -206,8 +206,6 @@ func newBasicManager() module.BasicManager {
 	)
 }
 
-// TODO: [Artem S] Fix ibc-gaiad status (Err: unknown flag: --node)
-
 func (ba BaseApp) saveClientWrapper(hostname string) error {
 	baClient := fmt.Sprintf(`#!/bin/bash
 OPTS=""
@@ -215,10 +213,14 @@ if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
 fi
 
-exec %s --node %s --home %s "$@" $OPTS
+if [ "$1" == "status" ] || [ "$1" == "tx" ] || [ "$1" == "q" ]; then
+	OPTS="$OPTS --node ""%s"""
+fi
+
+exec %s --home %s "$@" $OPTS
 `,
-		filepath.Join(tools.BinariesRootPath(tools.PlatformLocal), "bin", ba.appTypeConfig.ExecName), // client's path
 		infra.JoinNetAddr("tcp", hostname, ba.appConfig.Ports.RPC),                                   // rpc endpoint
+		filepath.Join(tools.BinariesRootPath(tools.PlatformLocal), "bin", ba.appTypeConfig.ExecName), // client's path
 		filepath.Dir(ba.appConfig.HomeDir),                                                           // home dir
 	)
 
