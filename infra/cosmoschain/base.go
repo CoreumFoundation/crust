@@ -5,7 +5,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/CoreumFoundation/crust/pkg/tools"
 	"net"
 	"os"
 	"path"
@@ -27,6 +26,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
+	"github.com/CoreumFoundation/crust/pkg/tools"
 )
 
 const dockerEntrypoint = "run.sh"

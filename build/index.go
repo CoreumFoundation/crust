@@ -89,9 +89,9 @@ func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
 		coreum.BuildCoredDockerImage,
 		faucet.BuildDockerImage,
 		gaia.BuildDockerImage,
+		osmosis.BuildDockerImage,
 		hermes.BuildDockerImage,
 		relayer.BuildDockerImage,
-		osmosis.BuildDockerImage,
 	)
 
 	return nil
