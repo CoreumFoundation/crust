@@ -2,7 +2,6 @@ module github.com/CoreumFoundation/crust
 
 go 1.21
 
-// FIXME(v47-dependencies): try to remove that replacement
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
