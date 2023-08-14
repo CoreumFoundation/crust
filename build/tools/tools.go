@@ -959,7 +959,7 @@ func shouldRelink(dst string) (bool, error) {
 	}
 
 	if realSrcPath != realDstPath {
-		return true, nil //nolint:nilerr // this is ok
+		return true, nil
 	}
 
 	return false, nil
