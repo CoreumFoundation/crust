@@ -197,7 +197,7 @@ var tools = map[Name]Tool{
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
 				Hash: "sha256:258df2eec5b22f8baadc988e184fbfd2ae6f9f888e9f4461a110cc365fe86300",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v11.0.0-linux-arm64",
+					"bin/gaiad": "gaiad-v11.0.0-linux-amd64",
 				},
 			},
 			PlatformDarwinAMD64: {
