@@ -218,7 +218,7 @@ var tools = map[Name]Tool{
 	},
 
 	// https://github.com/osmosis-labs/osmosis/releases
-	// FIXME [Artem S] make it work with v16 or compile v15 for darwin
+	// FIXME [Artem S] make it work with v16 or compile v15 for darwin https://app.clickup.com/t/8685af9am
 	Osmosis: {
 		Version: "15.2.0",
 		Sources: Sources{
@@ -228,11 +228,6 @@ var tools = map[Name]Tool{
 				Binaries: map[string]string{
 					"bin/osmosisd": "osmosisd-15.2.0-linux-amd64",
 				},
-				// 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
-				//				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
-				//				Binaries: map[string]string{
-				//					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
-				//				},
 			},
 			PlatformDockerARM64: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v15.2.0/osmosisd-15.2.0-linux-arm64",
@@ -240,11 +235,6 @@ var tools = map[Name]Tool{
 				Binaries: map[string]string{
 					"bin/osmosisd": "osmosisd-15.2.0-linux-arm64",
 				},
-				// 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-arm64",
-				//				Hash: "sha256:e2ccc743dd66da91d1df1ae4ecf92b36d658575f4ff507d5056eb640804e0401",
-				//				Binaries: map[string]string{
-				//					"bin/osmosisd": "osmosisd-16.1.1-linux-arm64",
-				//				},c
 			},
 			PlatformLinuxAMD64: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v15.2.0/osmosisd-15.2.0-linux-amd64",
@@ -252,11 +242,6 @@ var tools = map[Name]Tool{
 				Binaries: map[string]string{
 					"bin/osmosisd": "osmosisd-15.2.0-linux-amd64",
 				},
-				// 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
-				//				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
-				//				Binaries: map[string]string{
-				//					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
-				//				},
 			},
 			PlatformDarwinAMD64: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-darwin-amd64",
