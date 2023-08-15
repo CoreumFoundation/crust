@@ -220,27 +220,42 @@ var tools = map[Name]Tool{
 	// https://github.com/osmosis-labs/osmosis/releases
 	// FIXME [Artem S] make it work with v16 or compile v15 for darwin https://app.clickup.com/t/8685af9am
 	Osmosis: {
-		Version: "15.2.0",
+		Version: "16.1.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v15.2.0/osmosisd-15.2.0-linux-amd64",
-				Hash: "sha256:3aab2f2668cb5a713d5770e46a777ef01c433753378702d9ae941aa2d1ee5618",
+				//URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v15.2.0/osmosisd-15.2.0-linux-amd64",
+				//Hash: "sha256:3aab2f2668cb5a713d5770e46a777ef01c433753378702d9ae941aa2d1ee5618",
+				//Binaries: map[string]string{
+				//	"bin/osmosisd": "osmosisd-15.2.0-linux-amd64",
+				//},
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
+				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
 				Binaries: map[string]string{
-					"bin/osmosisd": "osmosisd-15.2.0-linux-amd64",
+					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v15.2.0/osmosisd-15.2.0-linux-arm64",
-				Hash: "sha256:e158d30707a0ea51482237f99676223e81ce5a353966a5c83791d2662a930f35",
+				//URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v15.2.0/osmosisd-15.2.0-linux-arm64",
+				//Hash: "sha256:e158d30707a0ea51482237f99676223e81ce5a353966a5c83791d2662a930f35",
+				//Binaries: map[string]string{
+				//	"bin/osmosisd": "osmosisd-15.2.0-linux-arm64",
+				//},
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-arm64",
+				Hash: "sha256:e2ccc743dd66da91d1df1ae4ecf92b36d658575f4ff507d5056eb640804e0401",
 				Binaries: map[string]string{
-					"bin/osmosisd": "osmosisd-15.2.0-linux-arm64",
+					"bin/osmosisd": "osmosisd-16.1.1-linux-arm64",
 				},
 			},
 			PlatformLinuxAMD64: {
-				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v15.2.0/osmosisd-15.2.0-linux-amd64",
-				Hash: "sha256:3aab2f2668cb5a713d5770e46a777ef01c433753378702d9ae941aa2d1ee5618",
+				//URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v15.2.0/osmosisd-15.2.0-linux-amd64",
+				//Hash: "sha256:3aab2f2668cb5a713d5770e46a777ef01c433753378702d9ae941aa2d1ee5618",
+				//Binaries: map[string]string{
+				//	"bin/osmosisd": "osmosisd-15.2.0-linux-amd64",
+				//},
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
+				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
 				Binaries: map[string]string{
-					"bin/osmosisd": "osmosisd-15.2.0-linux-amd64",
+					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
 				},
 			},
 			PlatformDarwinAMD64: {
