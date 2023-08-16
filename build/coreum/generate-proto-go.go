@@ -66,7 +66,12 @@ func executeGoProtocCommand(ctx context.Context, deps build.DepsFunc, pathList [
 		args = append(args, "--proto_path", path)
 	}
 
-	allProtoFiles, err := findAllProtoFiles([]string{pathList[0]})
+	absPath, err := filepath.Abs(repoPath)
+	if err != nil {
+		return err
+	}
+
+	allProtoFiles, err := findAllProtoFiles([]string{filepath.Join(absPath, "proto")})
 	if err != nil {
 		return err
 	}

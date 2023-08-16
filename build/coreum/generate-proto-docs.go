@@ -52,9 +52,7 @@ func getProtoDirs(moduleDirs []string) ([]string, error) {
 		return nil, err
 	}
 
-	result := []string{
-		filepath.Join(absPath, "proto"),
-	}
+	result := []string{}
 
 	// This is the list of subdirectories scanned in each module for proto files.
 	protoDirs := []string{
@@ -78,6 +76,8 @@ func getProtoDirs(moduleDirs []string) ([]string, error) {
 			}
 		}
 	}
+
+	result = append(result, filepath.Join(absPath, "proto"))
 
 	return result, nil
 }
