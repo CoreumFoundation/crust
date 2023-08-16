@@ -94,8 +94,11 @@ func executeGoProtocCommand(ctx context.Context, deps build.DepsFunc, pathList [
 		}
 	}
 
-	// FIXME (wojtek): dehardcode the module path
-	rootDir := filepath.Join(outDir, "github.com", "CoreumFoundation", "coreum", "v2")
+	modulePath, err := golang.ModuleName(repoPath)
+	if err != nil {
+		return err
+	}
+	rootDir := filepath.Join(outDir, modulePath)
 	err = filepath.Walk(rootDir,
 		func(srcPath string, info fs.FileInfo, err error) error {
 			if err != nil {

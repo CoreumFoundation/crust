@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/rand"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -406,6 +408,28 @@ func ModuleDirs(ctx context.Context, deps build.DepsFunc, repoPath string, modul
 	}
 
 	return res, nil
+}
+
+// ModuleName returns name of the go module.
+func ModuleName(modulePath string) (string, error) {
+	f, err := os.Open(filepath.Join(modulePath, "go.mod"))
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	defer f.Close()
+
+	rx := regexp.MustCompile("^module (.+?)$")
+
+	s := bufio.NewScanner(f)
+	s.Split(bufio.ScanLines)
+	for s.Scan() {
+		matches := rx.FindStringSubmatch(s.Text())
+		if len(matches) < 2 {
+			continue
+		}
+		return matches[1], nil
+	}
+	return "", nil
 }
 
 // GoPath returns $GOPATH.
