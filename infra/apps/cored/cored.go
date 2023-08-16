@@ -29,8 +29,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v2/app"
@@ -38,6 +36,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -216,11 +215,11 @@ func (c Cored) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	mm := newBasicManager()
+	grpcClient, err := cosmoschain.GRPCClient(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), mm)
 	must.OK(err)
 
-	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
+	return client.NewContext(client.DefaultContextConfig(), mm).
 		WithChainID(string(c.config.NetworkConfig.ChainID())).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient)
