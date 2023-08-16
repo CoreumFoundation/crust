@@ -33,6 +33,7 @@ const (
 	Aarch64LinuxMuslCross Name = "aarch64-linux-musl-cross"
 	LibWASMMuslC          Name = "libwasmvm_muslc"
 	Gaia                  Name = "gaia"
+	Osmosis               Name = "osmosis"
 	RelayerCosmos         Name = "relayercosmos"
 	Hermes                Name = "hermes"
 	CoredV100             Name = "cored-v1.0.0"
@@ -190,6 +191,69 @@ var tools = map[Name]Tool{
 				Hash: "sha256:688e3ae4aa5ed91978f537798e012322336c7309fe5ee9169fdd607ab6c348b8",
 				Binaries: map[string]string{
 					"bin/gaiad": "gaiad-v11.0.0-linux-arm64",
+				},
+			},
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
+				Hash: "sha256:258df2eec5b22f8baadc988e184fbfd2ae6f9f888e9f4461a110cc365fe86300",
+				Binaries: map[string]string{
+					"bin/gaiad": "gaiad-v11.0.0-linux-amd64",
+				},
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-darwin-amd64",
+				Hash: "sha256:f115875122386496254905a1de0c0cb45f1b731536281586f77a41be55458505",
+				Binaries: map[string]string{
+					"bin/gaiad": "gaiad-v11.0.0-darwin-amd64",
+				},
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-darwin-arm64",
+				Hash: "sha256:53d0ffe4d8353e51d0be543edf764de033e24d703d4c408244a141e635b27628",
+				Binaries: map[string]string{
+					"bin/gaiad": "gaiad-v11.0.0-darwin-arm64",
+				},
+			},
+		},
+	},
+
+	// https://github.com/osmosis-labs/osmosis/releases
+	Osmosis: {
+		Version: "16.1.1",
+		Sources: Sources{
+			PlatformDockerAMD64: {
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
+				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
+				Binaries: map[string]string{
+					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
+				},
+			},
+			PlatformDockerARM64: {
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-arm64",
+				Hash: "sha256:e2ccc743dd66da91d1df1ae4ecf92b36d658575f4ff507d5056eb640804e0401",
+				Binaries: map[string]string{
+					"bin/osmosisd": "osmosisd-16.1.1-linux-arm64",
+				},
+			},
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
+				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
+				Binaries: map[string]string{
+					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
+				},
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-darwin-amd64",
+				Hash: "sha256:d856ebda9c31f052d10a78443967a93374f2033292f0afdb6434b82b4ed79790",
+				Binaries: map[string]string{
+					"bin/osmosisd": "osmosisd-16.1.1-darwin-amd64",
+				},
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-darwin-arm64",
+				Hash: "sha256:c743da4d3632a2bc3ea0ce784bbd13383492a4a34d53295eb2c96987bacf8e8c",
+				Binaries: map[string]string{
+					"bin/osmosisd": "osmosisd-16.1.1-darwin-arm64",
 				},
 			},
 		},

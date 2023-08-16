@@ -1,4 +1,4 @@
-package gaia
+package osmosis
 
 import (
 	"context"
@@ -12,18 +12,18 @@ import (
 )
 
 const (
-	binaryName = "gaiad"
+	binaryName = "osmosisd"
 	binaryPath = "bin/" + binaryName
 )
 
-// BuildDockerImage builds docker image of the gaia.
+// BuildDockerImage builds docker image of the osmosis.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	if err := tools.EnsureBinaries(ctx, tools.Gaia, tools.PlatformDockerLocal); err != nil {
+	if err := tools.EnsureBinaries(ctx, tools.Osmosis, tools.PlatformDockerLocal); err != nil {
 		return err
 	}
 
-	gaiaLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
-	if err := tools.CopyToolBinaries(tools.Gaia, tools.PlatformDockerLocal, gaiaLocalPath, binaryPath); err != nil {
+	binaryLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
+	if err := tools.CopyToolBinaries(tools.Osmosis, tools.PlatformDockerLocal, binaryLocalPath, binaryPath); err != nil {
 		return err
 	}
 
@@ -36,7 +36,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		ContextDir: gaiaLocalPath,
+		ContextDir: binaryLocalPath,
 		ImageName:  binaryName,
 		Dockerfile: dockerfile,
 		Versions:   []string{config.ZNetVersion},

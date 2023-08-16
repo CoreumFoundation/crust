@@ -9,6 +9,7 @@ import (
 	"github.com/CoreumFoundation/crust/build/faucet"
 	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/hermes"
+	"github.com/CoreumFoundation/crust/build/osmosis"
 	"github.com/CoreumFoundation/crust/build/relayer"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
@@ -84,8 +85,15 @@ func buildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
-	deps(coreum.BuildCoredDockerImage, faucet.BuildDockerImage, gaia.BuildDockerImage, hermes.BuildDockerImage,
-		relayer.BuildDockerImage)
+	deps(
+		coreum.BuildCoredDockerImage,
+		faucet.BuildDockerImage,
+		gaia.BuildDockerImage,
+		osmosis.BuildDockerImage,
+		hermes.BuildDockerImage,
+		relayer.BuildDockerImage,
+	)
+
 	return nil
 }
 
