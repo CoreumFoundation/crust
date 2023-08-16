@@ -377,8 +377,8 @@ var tools = []Tool{
 
 var toolsMap = func(tools []Tool) map[Name]Tool {
 	res := make(map[Name]Tool, len(tools))
-	for _, t := range tools {
-		res[t.GetName()] = t
+	for _, tool := range tools {
+		res[tool.GetName()] = tool
 	}
 	return res
 }(tools)
@@ -652,38 +652,22 @@ func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 
 // EnsureProtoc ensures that protoc is available.
 func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
-	t, err := Get(Protoc)
-	if err != nil {
-		return err
-	}
-	return t.Ensure(ctx, PlatformLocal)
+	return Ensure(ctx, Protoc, PlatformLocal)
 }
 
 // EnsureProtocGenDoc ensures that protoc-gen-doc is available.
 func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
-	t, err := Get(ProtocGenDoc)
-	if err != nil {
-		return err
-	}
-	return t.Ensure(ctx, PlatformLocal)
+	return Ensure(ctx, ProtocGenDoc, PlatformLocal)
 }
 
 // EnsureProtocGenGRPCGateway ensures that protoc-gen-grpc-gateway is available.
 func EnsureProtocGenGRPCGateway(ctx context.Context, deps build.DepsFunc) error {
-	t, err := Get(ProtocGenGRPCGateway)
-	if err != nil {
-		return err
-	}
-	return t.Ensure(ctx, PlatformLocal)
+	return Ensure(ctx, ProtocGenGRPCGateway, PlatformLocal)
 }
 
 // EnsureProtocGenGoCosmos ensures that protoc-gen-gocosmos is available.
 func EnsureProtocGenGoCosmos(ctx context.Context, deps build.DepsFunc) error {
-	t, err := Get(ProtocGenGoCosmos)
-	if err != nil {
-		return err
-	}
-	return t.Ensure(ctx, PlatformLocal)
+	return Ensure(ctx, ProtocGenGoCosmos, PlatformLocal)
 }
 
 func linkTool(dst string) error {
@@ -897,8 +881,8 @@ func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
 
-func toolDir(t Tool, platform Platform) string {
-	return filepath.Join(BinariesRootPath(platform), "downloads", string(t.GetName())+"-"+t.GetVersion())
+func toolDir(tool Tool, platform Platform) string {
+	return filepath.Join(BinariesRootPath(platform), "downloads", string(tool.GetName())+"-"+tool.GetVersion())
 }
 
 func ensureDir(file string) error {
@@ -976,14 +960,14 @@ func Get(name Name) (Tool, error) {
 
 // CopyToolBinaries moves the toolsMap artifacts from the local cache to the target local location.
 // In case the binPath doesn't exist the method will create it.
-func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...string) error {
-	t, err := Get(tool)
+func CopyToolBinaries(toolName Name, platform Platform, path string, binaryNames ...string) error {
+	tool, err := Get(toolName)
 	if err != nil {
 		return err
 	}
 
-	if !t.IsCompatible(platform) {
-		return errors.Errorf("tool %s is not defined for platform %s", tool, platform)
+	if !tool.IsCompatible(platform) {
+		return errors.Errorf("tool %s is not defined for platform %s", toolName, platform)
 	}
 
 	if len(binaryNames) == 0 {
@@ -992,14 +976,14 @@ func CopyToolBinaries(tool Name, platform Platform, path string, binaryNames ...
 
 	storedBinaryNames := map[string]struct{}{}
 	// combine binaries
-	for _, b := range t.GetBinaries(platform) {
+	for _, b := range tool.GetBinaries(platform) {
 		storedBinaryNames[b] = struct{}{}
 	}
 
 	// initial validation to check that we have all binaries
 	for _, binaryName := range binaryNames {
 		if _, ok := storedBinaryNames[binaryName]; !ok {
-			return errors.Errorf("the binary %q doesn't exist for the requested tool %q", binaryName, tool)
+			return errors.Errorf("the binary %q doesn't exist for the requested tool %q", binaryName, toolName)
 		}
 	}
 
@@ -1039,4 +1023,13 @@ func BinariesRootPath(platform Platform) string {
 // Path returns path to the installed binary.
 func Path(binary string, platform Platform) string {
 	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(filepath.Join(BinariesRootPath(platform), binary)))))
+}
+
+// Ensure ensures tool exists for the platform.
+func Ensure(ctx context.Context, toolName Name, platform Platform) error {
+	tool, err := Get(toolName)
+	if err != nil {
+		return err
+	}
+	return tool.Ensure(ctx, platform)
 }

@@ -18,11 +18,7 @@ const (
 
 // BuildDockerImage builds docker image of the gaia.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	tGaia, err := tools.Get(tools.Gaia)
-	if err != nil {
-		return err
-	}
-	if err := tGaia.Ensure(ctx, tools.PlatformDockerLocal); err != nil {
+	if err := tools.Ensure(ctx, tools.Gaia, tools.PlatformDockerLocal); err != nil {
 		return err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -66,20 +67,12 @@ type TestBuildConfig struct {
 
 // EnsureGo ensures that go is available.
 func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
-	t, err := tools.Get(tools.Go)
-	if err != nil {
-		return err
-	}
-	return t.Ensure(ctx, tools.PlatformLocal)
+	return tools.Ensure(ctx, tools.Go, tools.PlatformLocal)
 }
 
 // EnsureGolangCI ensures that go linter is available.
 func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
-	t, err := tools.Get(tools.GolangCI)
-	if err != nil {
-		return err
-	}
-	return t.Ensure(ctx, tools.PlatformLocal)
+	return tools.Ensure(ctx, tools.GolangCI, tools.PlatformLocal)
 }
 
 // Build builds go binary.
@@ -386,47 +379,33 @@ func containsGoCode(path string) (bool, error) {
 	return false, errors.WithStack(err)
 }
 
-// GetModuleVersions returns a map[moduleName]version with version from go.mod for the specified module within the given repo.
-func GetModuleVersions(deps build.DepsFunc, repoPath string, modules []string) (map[string]string, error) {
-	moduleToVersion := make(map[string]string, len(modules))
-
-	var version string
-	var err error
-	for _, module := range modules {
-		version, err = getModuleVersion(deps, repoPath, module)
-		if err != nil {
-			return nil, err
-		}
-
-		moduleToVersion[module] = version
-	}
-
-	return moduleToVersion, nil
-}
-
-func getModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string, error) {
+// ModuleDirs return directories where modules are kept.
+func ModuleDirs(ctx context.Context, deps build.DepsFunc, repoPath string, modules ...string) ([]string, error) {
 	deps(EnsureGo)
 
-	args := []string{
-		"list",
-		"-m",
-		moduleName,
-	}
-
-	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), args...)
+	out := &bytes.Buffer{}
+	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), append([]string{"list", "-m", "-json"}, modules...)...)
+	cmd.Stdout = out
 	cmd.Dir = repoPath
 
-	output, err := cmd.Output()
-	if err != nil {
-		return "", err
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return nil, err
 	}
 
-	parts := strings.Fields(string(output))
-	if len(parts) < 2 {
-		return "", errors.New("no module version")
+	var info struct {
+		Dir string
 	}
 
-	return parts[1], nil
+	res := []string{}
+	dec := json.NewDecoder(out)
+	for dec.More() {
+		if err := dec.Decode(&info); err != nil {
+			return nil, errors.WithStack(err)
+		}
+		res = append(res, info.Dir)
+	}
+
+	return res, nil
 }
 
 // GoPath returns $GOPATH.

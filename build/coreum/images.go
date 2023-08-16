@@ -68,14 +68,9 @@ func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
 		tools.CoredV100,
 		tools.CoredV200,
 	} {
-		t, err := tools.Get(binaryTool)
-		if err != nil {
+		if err := tools.Ensure(ctx, binaryTool, tools.PlatformDockerLocal); err != nil {
 			return err
 		}
-		if err := t.Ensure(ctx, tools.PlatformDockerLocal); err != nil {
-			return err
-		}
-
 		if err := tools.CopyToolBinaries(binaryTool, tools.PlatformDockerLocal, filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String()), fmt.Sprintf("bin/%s", binaryTool)); err != nil {
 			return err
 		}

@@ -8,11 +8,7 @@ import (
 )
 
 func ensureCosmovisor(ctx context.Context, platform tools.Platform) error {
-	t, err := tools.Get(tools.Cosmovisor)
-	if err != nil {
-		return err
-	}
-	if err := t.Ensure(ctx, platform); err != nil {
+	if err := tools.Ensure(ctx, tools.Cosmovisor, platform); err != nil {
 		return err
 	}
 
