@@ -116,7 +116,7 @@ func (ba BaseApp) ClientContext() client.Context {
 	must.OK(err)
 
 	mm := newBasicManager()
-	grpcClient, err := dialGRPCClient(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC), mm)
+	grpcClient, err := GRPCClient(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC), mm)
 	must.OK(err)
 
 	return client.NewContext(client.DefaultContextConfig(), mm).
@@ -191,7 +191,8 @@ func (ba BaseApp) prepare() error {
 	return nil
 }
 
-func dialGRPCClient(url string, mm module.BasicManager) (*grpc.ClientConn, error) {
+// GRPCClient prepares GRPC client.
+func GRPCClient(url string, mm module.BasicManager) (*grpc.ClientConn, error) {
 	encodingConfig := config.NewEncodingConfig(mm)
 	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
 	if !ok {

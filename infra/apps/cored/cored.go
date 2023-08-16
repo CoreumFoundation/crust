@@ -16,7 +16,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -30,8 +29,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v2/app"
@@ -39,6 +36,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -218,7 +216,7 @@ func (c Cored) ClientContext() client.Context {
 	must.OK(err)
 
 	mm := newBasicManager()
-	grpcClient, err := dialGRPCClient(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), mm)
+	grpcClient, err := cosmoschain.GRPCClient(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), mm)
 	must.OK(err)
 
 	return client.NewContext(client.DefaultContextConfig(), mm).
@@ -438,23 +436,4 @@ func copyFile(src, dst string, perm os.FileMode) error {
 	}
 
 	return nil
-}
-
-func dialGRPCClient(url string, mm module.BasicManager) (*grpc.ClientConn, error) {
-	encodingConfig := config.NewEncodingConfig(mm)
-	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
-	if !ok {
-		return nil, errors.New("failed to cast codec to codec.GRPCCodecProvider)")
-	}
-
-	grpClient, err := grpc.Dial(
-		url,
-		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return grpClient, nil
 }
