@@ -27,7 +27,7 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 		cosmosSdkModule,
 		cosmosProtoModule,
 		gogoProtobufModule,
-		gogoGoogleAPIsModule,
+		grpcGatewayModule,
 	)
 	if err != nil {
 		return err
@@ -42,8 +42,8 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 		absPath,
 		filepath.Join(moduleDirs[cosmosSdkModule], "proto"),
 		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
-		filepath.Join(moduleDirs[gogoProtobufModule]),
-		filepath.Join(moduleDirs[gogoGoogleAPIsModule]),
+		moduleDirs[gogoProtobufModule],
+		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
 	generateDirs := []string{

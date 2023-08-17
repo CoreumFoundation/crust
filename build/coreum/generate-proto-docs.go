@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	cosmosSdkModule      = "github.com/cosmos/cosmos-sdk"
-	cosmosProtoModule    = "github.com/cosmos/cosmos-proto"
-	cosmWasmModule       = "github.com/CosmWasm/wasmd"
-	gogoProtobufModule   = "github.com/cosmos/gogoproto"
-	gogoGoogleAPIsModule = "github.com/gogo/googleapis"
+	cosmosSdkModule    = "github.com/cosmos/cosmos-sdk"
+	cosmosProtoModule  = "github.com/cosmos/cosmos-proto"
+	cosmWasmModule     = "github.com/CosmWasm/wasmd"
+	gogoProtobufModule = "github.com/cosmos/gogoproto"
+	grpcGatewayModule  = "github.com/grpc-ecosystem/grpc-gateway"
 )
 
 // generateProtoDocs collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
@@ -35,7 +35,7 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 		cosmosProtoModule,
 		cosmWasmModule,
 		gogoProtobufModule,
-		gogoGoogleAPIsModule,
+		grpcGatewayModule,
 	)
 	if err != nil {
 		return err
@@ -51,8 +51,8 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 		filepath.Join(moduleDirs[cosmosSdkModule], "proto"),
 		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
 		filepath.Join(moduleDirs[cosmWasmModule], "proto"),
-		filepath.Join(moduleDirs[gogoProtobufModule]),
-		filepath.Join(moduleDirs[gogoGoogleAPIsModule]),
+		moduleDirs[gogoProtobufModule],
+		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
 	generateDirs := []string{
