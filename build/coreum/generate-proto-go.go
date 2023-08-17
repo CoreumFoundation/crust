@@ -23,17 +23,34 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
 	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
-	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath, cosmosSdkModule)
+	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
+		cosmosSdkModule,
+		cosmosProtoModule,
+		gogoProtobufModule,
+		grpcGatewayModule,
+	)
 	if err != nil {
 		return err
 	}
 
-	protoPathList, err := getProtoDirs(moduleDirs)
+	absPath, err := filepath.Abs(filepath.Join(repoPath, "proto"))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
-	err = executeGoProtocCommand(ctx, deps, protoPathList)
+	includeDirs := []string{
+		absPath,
+		filepath.Join(moduleDirs[cosmosSdkModule], "proto"),
+		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
+		moduleDirs[gogoProtobufModule],
+		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
+	}
+
+	generateDirs := []string{
+		absPath,
+	}
+
+	err = executeGoProtocCommand(ctx, deps, includeDirs, generateDirs)
 	if err != nil {
 		return err
 	}
@@ -42,7 +59,7 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // executeGoProtocCommand generates go code from proto files.
-func executeGoProtocCommand(ctx context.Context, deps build.DepsFunc, pathList []string) error {
+func executeGoProtocCommand(ctx context.Context, deps build.DepsFunc, includeDirs, generateDirs []string) error {
 	deps(tools.EnsureProtoc, tools.EnsureProtocGenGRPCGateway, tools.EnsureProtocGenGoCosmos)
 
 	outDir, err := os.MkdirTemp("", "")
@@ -62,16 +79,11 @@ func executeGoProtocCommand(ctx context.Context, deps build.DepsFunc, pathList [
 		"--plugin", must.String(filepath.Abs("bin/protoc-gen-grpc-gateway")),
 	}
 
-	for _, path := range pathList {
+	for _, path := range includeDirs {
 		args = append(args, "--proto_path", path)
 	}
 
-	absPath, err := filepath.Abs(repoPath)
-	if err != nil {
-		return err
-	}
-
-	allProtoFiles, err := findAllProtoFiles([]string{filepath.Join(absPath, "proto")})
+	allProtoFiles, err := findAllProtoFiles(generateDirs)
 	if err != nil {
 		return err
 	}

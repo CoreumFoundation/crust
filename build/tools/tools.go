@@ -370,8 +370,8 @@ var tools = []Tool{
 	// https://github.com/regen-network/cosmos-proto/releases
 	GoPackageTool{
 		Name:    ProtocGenGoCosmos,
-		Version: "v0.3.1",
-		Package: "github.com/regen-network/cosmos-proto/protoc-gen-gocosmos",
+		Version: "v1.4.10",
+		Package: "github.com/cosmos/gogoproto/protoc-gen-gocosmos",
 	},
 }
 
