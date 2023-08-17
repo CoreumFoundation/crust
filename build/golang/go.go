@@ -374,7 +374,7 @@ func containsGoCode(path string) (bool, error) {
 }
 
 // ModuleDirs return directories where modules are kept.
-func ModuleDirs(ctx context.Context, deps build.DepsFunc, repoPath string, modules ...string) ([]string, error) {
+func ModuleDirs(ctx context.Context, deps build.DepsFunc, repoPath string, modules ...string) (map[string]string, error) {
 	deps(EnsureGo)
 
 	out := &bytes.Buffer{}
@@ -387,16 +387,17 @@ func ModuleDirs(ctx context.Context, deps build.DepsFunc, repoPath string, modul
 	}
 
 	var info struct {
-		Dir string
+		Dir  string
+		Path string
 	}
 
-	res := []string{}
+	res := map[string]string{}
 	dec := json.NewDecoder(out)
 	for dec.More() {
 		if err := dec.Decode(&info); err != nil {
 			return nil, errors.WithStack(err)
 		}
-		res = append(res, info.Dir)
+		res[info.Path] = info.Dir
 	}
 
 	return res, nil

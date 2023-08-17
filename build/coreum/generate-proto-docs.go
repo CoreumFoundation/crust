@@ -17,8 +17,11 @@ import (
 )
 
 const (
-	cosmosSdkModule = "github.com/cosmos/cosmos-sdk"
-	cosmWasmModule  = "github.com/CosmWasm/wasmd"
+	cosmosSdkModule      = "github.com/cosmos/cosmos-sdk"
+	cosmosProtoModule    = "github.com/cosmos/cosmos-proto"
+	cosmWasmModule       = "github.com/CosmWasm/wasmd"
+	gogoProtobufModule   = "github.com/cosmos/gogoproto"
+	gogoGoogleAPIsModule = "github.com/gogo/googleapis"
 )
 
 // generateProtoDocs collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
@@ -27,17 +30,39 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
 	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
-	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath, cosmosSdkModule, cosmWasmModule)
+	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
+		cosmosSdkModule,
+		cosmosProtoModule,
+		cosmWasmModule,
+		gogoProtobufModule,
+		gogoGoogleAPIsModule,
+	)
 	if err != nil {
 		return err
 	}
 
-	protoPathList, err := getProtoDirs(moduleDirs)
+	absPath, err := filepath.Abs(filepath.Join(repoPath, "proto"))
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 
-	err = executeProtocCommand(ctx, deps, protoPathList)
+	includeDirs := []string{
+		absPath,
+		filepath.Join(moduleDirs[cosmosSdkModule], "proto"),
+		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
+		filepath.Join(moduleDirs[cosmWasmModule], "proto"),
+		filepath.Join(moduleDirs[gogoProtobufModule]),
+		filepath.Join(moduleDirs[gogoGoogleAPIsModule]),
+	}
+
+	generateDirs := []string{
+		absPath,
+		// FIXME(v47-generators) we must switch to cosmos sdk nft module before uncommenting this
+		// filepath.Join(moduleDirs[cosmosSdkModule], "proto"),
+		filepath.Join(moduleDirs[cosmWasmModule], "proto"),
+	}
+
+	err = executeProtocCommand(ctx, deps, includeDirs, generateDirs)
 	if err != nil {
 		return err
 	}
@@ -45,45 +70,8 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	return nil
 }
 
-// getProtoDirs returns a list of absolute paths to needed proto directories.
-func getProtoDirs(moduleDirs []string) ([]string, error) {
-	absPath, err := filepath.Abs(repoPath)
-	if err != nil {
-		return nil, err
-	}
-
-	result := []string{}
-
-	// This is the list of subdirectories scanned in each module for proto files.
-	protoDirs := []string{
-		"proto",
-		"third_party/proto",
-	}
-
-	// In this loop all the proto directories from requested modules are collected.
-	for _, modDir := range moduleDirs {
-		// Iterate over defined well-known proto dirs. If dir exists, add it to the results.
-		for _, dir := range protoDirs {
-			dir = filepath.Join(modDir, dir)
-			info, err := os.Stat(dir)
-			switch {
-			case err == nil:
-				result = append(result, dir)
-			case errors.Is(err, os.ErrNotExist) || !info.IsDir():
-				continue
-			default:
-				return nil, errors.WithStack(err)
-			}
-		}
-	}
-
-	result = append(result, filepath.Join(absPath, "proto"))
-
-	return result, nil
-}
-
 // executeProtocCommand ensures needed dependencies, composes the protoc command and executes it.
-func executeProtocCommand(ctx context.Context, deps build.DepsFunc, pathList []string) error {
+func executeProtocCommand(ctx context.Context, deps build.DepsFunc, includeDirs, generateDirs []string) error {
 	deps(tools.EnsureProtoc, tools.EnsureProtocGenDoc)
 
 	args := []string{
@@ -91,11 +79,11 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, pathList []s
 		fmt.Sprintf("%s=%s,api.md", "--doc_opt", filepath.Join("docs", "api.tmpl.md")),
 	}
 
-	for _, path := range pathList {
+	for _, path := range includeDirs {
 		args = append(args, "--proto_path", path)
 	}
 
-	allProtoFiles, err := findAllProtoFiles(pathList)
+	allProtoFiles, err := findAllProtoFiles(generateDirs)
 	if err != nil {
 		return err
 	}
@@ -125,7 +113,7 @@ func findAllProtoFiles(pathList []string) (finalResult []string, err error) {
 func listFilesByPath(path, extension string) (fileList []string, err error) {
 	err = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 
 		if info.IsDir() {
