@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,6 +30,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v2/app"
@@ -361,9 +364,9 @@ func (c Cored) prepare() error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		// To test upgrade plan v2 for mainnet and v2patch1 for testnet both plans must target the newest binary
-		"v2":       "cored",
-		"v2patch1": "cored", // TODO update to next version once the binary is ready
+		"v2":       "cored-v2.0.2",
+		"v2patch1": "cored-v2.0.2",
+		"v3":       "cored",
 	}
 	for upgrade, binary := range upgrades {
 		err := copyFile(filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", binary),
@@ -406,12 +409,41 @@ func (c Cored) SaveGenesis(homeDir string) error {
 		return err
 	}
 
+	if strings.HasPrefix(c.config.BinaryVersion, "v2") {
+		genDocBytes = applyV2PatchToV3Genesis(genDocBytes)
+	}
+
 	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
 		return errors.Wrap(err, "unable to make config directory")
 	}
 
 	err = os.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
 	return errors.Wrap(err, "unable to write genesis bytes to file")
+}
+
+// This is temporary solution to make both v2 & v3 cored version work.
+// Since cosmos SDK changed structure of genesis file, we need to apply some patches to v3 (sdk v47)
+// to make it compatible with v2 (sdk v45) binary.
+func applyV2PatchToV3Genesis(originalGenDocBytes []byte) []byte {
+	// Deleting "send_enabled" from "bank"
+	modifiedGenDocStr, _ := sjson.Delete(string(originalGenDocBytes), "app_state.bank.send_enabled")
+
+	// Iterating over "denom_metadata" in "bank"
+	denomMetadataCount := gjson.Get(modifiedGenDocStr, "app_state.bank.denom_metadata.#").Int()
+	for i := 0; i < int(denomMetadataCount); i++ {
+		// Removing "uri" and "uri_hash" fields
+		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.bank.denom_metadata.%d.uri", i))
+		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.bank.denom_metadata.%d.uri_hash", i))
+	}
+
+	// Iterating over "gen_txs" in "genutil"
+	genTxsCount := gjson.Get(modifiedGenDocStr, "app_state.genutil.gen_txs.#").Int()
+	for i := 0; i < int(genTxsCount); i++ {
+		// Deleting "tip" from "auth_info" in each "gen_txs" item
+		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.genutil.gen_txs.%d.auth_info.tip", i))
+	}
+
+	return []byte(modifiedGenDocStr)
 }
 
 func copyFile(src, dst string, perm os.FileMode) error {

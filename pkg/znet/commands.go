@@ -299,7 +299,7 @@ func coredVersionToGenesisTemplate(coredVersion string) (string, error) {
 	switch coredVersion {
 	case "", "v3.0.0":
 		return coreumconfig.GenesisV3Template, nil
-	case "v2.0.0":
+	case "v2.0.0", "v2.0.2":
 		return coreumconfig.GenesisV2Template, nil
 	case "v1.0.0":
 		return coreumconfig.GenesisV1Template, nil
