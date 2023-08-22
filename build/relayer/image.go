@@ -18,7 +18,7 @@ const (
 
 // BuildDockerImage builds docker image of the ibc relayer.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	if err := tools.EnsureBinaries(ctx, tools.RelayerCosmos, tools.PlatformDockerLocal); err != nil {
+	if err := tools.Ensure(ctx, tools.RelayerCosmos, tools.PlatformDockerLocal); err != nil {
 		return err
 	}
 
