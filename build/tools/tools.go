@@ -212,17 +212,17 @@ var tools = []Tool{
 		Version: "v2.3.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.3.1/Cosmos.Relayer_2.3.1_linux_amd64.tar.gz",
-				Hash: "sha256:68c94403959239683cc80f17e50ca99c7e5caff8d70a17d2171009969d4c2692",
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.1/Cosmos.Relayer_2.4.1_linux_amd64.tar.gz",
+				Hash: "sha256:b7b1b74276dd8c6407159e05135f90efc6b896126d2c7bd56579c32a23914bee",
 				Binaries: map[string]string{
-					"bin/relayercosmos": "Cosmos Relayer_2.3.1_linux_amd64/rly",
+					"bin/relayercosmos": "Cosmos Relayer_2.4.1_linux_amd64/rly",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.3.1/Cosmos.Relayer_2.3.1_linux_arm64.tar.gz",
-				Hash: "sha256:5466606e6d1186ce70321a7ae421b7da121308960719caf6cc7c5a4923585230",
+				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.1/Cosmos.Relayer_2.4.1_linux_arm64.tar.gz",
+				Hash: "sha256:904df3337517118c3cf696502deb1acae191264186c1543cd11f50b8afd16242",
 				Binaries: map[string]string{
-					"bin/relayercosmos": "Cosmos Relayer_2.3.1_linux_arm64/rly",
+					"bin/relayercosmos": "Cosmos Relayer_2.4.1_linux_arm64/rly",
 				},
 			},
 		},
