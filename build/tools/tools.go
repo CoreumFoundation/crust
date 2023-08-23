@@ -313,7 +313,7 @@ var tools = []Tool{
 		},
 	},
 	BinaryTool{
-		Name:    CoredV200,
+		Name:    CoredV202,
 		Version: "v2.0.2",
 		Sources: Sources{
 			PlatformDockerAMD64: {
