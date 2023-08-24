@@ -209,7 +209,7 @@ var tools = []Tool{
 	// https://github.com/cosmos/relayer/releases
 	BinaryTool{
 		Name:    RelayerCosmos,
-		Version: "v2.3.1",
+		Version: "v2.4.1",
 		Sources: Sources{
 			PlatformDockerAMD64: {
 				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.1/Cosmos.Relayer_2.4.1_linux_amd64.tar.gz",
