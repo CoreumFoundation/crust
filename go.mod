@@ -4,8 +4,6 @@ go 1.20
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-replace github.com/CoreumFoundation/coreum/v2 => ../coreum/
-
 require (
 	cosmossdk.io/math v1.0.1
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
