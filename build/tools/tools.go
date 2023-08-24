@@ -37,8 +37,7 @@ const (
 	Gaia                  Name = "gaia"
 	RelayerCosmos         Name = "relayercosmos"
 	Hermes                Name = "hermes"
-	CoredV100             Name = "cored-v1.0.0"
-	CoredV200             Name = "cored-v2.0.0"
+	CoredV202             Name = "cored-v2.0.2"
 	Protoc                Name = "protoc"
 	ProtocGenDoc          Name = "protoc-gen-doc"
 	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
@@ -272,41 +271,21 @@ var tools = []Tool{
 
 	// https://github.com/CoreumFoundation/coreum/releases
 	BinaryTool{
-		Name:    CoredV100,
-		Version: "v1.0.0",
+		Name:    CoredV202,
+		Version: "v2.0.2",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-amd64",
-				Hash: "sha256:34098ad7586bda364b1b2e7c4569cbcefb630cd4ed7c8f68eb5bced834082c57",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-amd64",
+				Hash: "sha256:3facf55f7ff795719f68b9bcf76ea08262bc7c9e9cd735c660257ba73678250e",
 				Binaries: map[string]string{
-					"bin/cored-v1.0.0": "cored-linux-amd64",
+					"bin/cored-v2.0.2": "cored-linux-amd64",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-arm64",
-				Hash: "sha256:3ced97f06607f0cdaf77e7ff0b36b2011d101c660684e4f3e54c2ac6bf344dd6",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-arm64",
+				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
 				Binaries: map[string]string{
-					"bin/cored-v1.0.0": "cored-linux-arm64",
-				},
-			},
-		},
-	},
-	BinaryTool{
-		Name:    CoredV200,
-		Version: "v2.0.0",
-		Sources: Sources{
-			PlatformDockerAMD64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.0/cored-linux-amd64",
-				Hash: "sha256:7848022a3a35723ecef02eb835fbf139989aace8d780186018dbcdebdc57d694",
-				Binaries: map[string]string{
-					"bin/cored-v2.0.0": "cored-linux-amd64",
-				},
-			},
-			PlatformDockerARM64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.0/cored-linux-arm64",
-				Hash: "sha256:c082eeebbc206633f1b71ef9c16a7f390f5ea5b27ce06c735ed7a632f38b5891",
-				Binaries: map[string]string{
-					"bin/cored-v2.0.0": "cored-linux-arm64",
+					"bin/cored-v2.0.2": "cored-linux-arm64",
 				},
 			},
 		},
