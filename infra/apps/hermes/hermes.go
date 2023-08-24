@@ -96,7 +96,6 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 		return retry.Retryable(errors.Errorf("realyer hasn't started yet"))
 	}
 
-	//nolint:govet // ignored intentionally
 	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", h.Info().HostFromHost, h.config.TelemetryPort), Path: "/metrics"}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	resp, err := http.DefaultClient.Do(req)

@@ -87,6 +87,7 @@ func (r Relayer) Config() Config {
 	return r.config
 }
 
+// HealthCheck checks if cosmos relayer is operating.
 func (r Relayer) HealthCheck(ctx context.Context) error {
 	const cosmosHeightMetricName = "cosmos_relayer_chain_latest_height"
 
