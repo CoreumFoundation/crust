@@ -96,9 +96,6 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 		return retry.Retryable(errors.Errorf("realyer hasn't started yet"))
 	}
 
-	// TODO: remove once we use ibc-enabled version of cored in integration tests
-	return nil
-
 	//nolint:govet // ignored intentionally
 	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", h.Info().HostFromHost, h.config.TelemetryPort), Path: "/metrics"}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
@@ -176,9 +173,6 @@ func (h Hermes) Deployment() infra.Deployment {
 		},
 		PrepareFunc: h.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
-		DockerArgs: []string{
-			"--restart", "on-failure:1000", // TODO: remove after we enable health check
-		},
 	}
 }
 
