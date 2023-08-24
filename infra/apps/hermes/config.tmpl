@@ -108,7 +108,7 @@ port = {{ .TelemetryPort }}
 id = '{{ .CoreumChanID }}'
 rpc_addr = '{{ .CoreumRPCURL }}'
 grpc_addr = '{{ .CoreumGRPCURL }}'
-websocket_addr = '{{ .CoreumWebsocketURL }}'
+event_source = { mode = 'push', url = '{{ .CoreumWebsocketURL }}', batch_delay = '500ms' }
 rpc_timeout = '10s'
 account_prefix = '{{ .CoreumAccountPrefix }}'
 key_name = 'coreum-key'
@@ -129,7 +129,7 @@ address_type = { derivation = 'cosmos' }
 id = '{{ .PeerChanID }}'
 rpc_addr = '{{ .PeerRPCURL }}'
 grpc_addr = '{{ .PeerGRPCURL }}'
-websocket_addr = '{{ .PeerWebsocketURL }}'
+event_source = { mode = 'push', url = '{{ .PeerWebsocketURL }}', batch_delay = '500ms' }
 rpc_timeout = '10s'
 account_prefix = '{{ .PeerAccountPrefix }}'
 key_name = 'peer-key'
