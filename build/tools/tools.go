@@ -41,6 +41,7 @@ const (
 	Protoc                Name = "protoc"
 	ProtocGenDoc          Name = "protoc-gen-doc"
 	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
+	ProtocGenOpenAPIV2    Name = "protoc-gen-openapiv2"
 	ProtocGenGoCosmos     Name = "protoc-gen-gocosmos"
 )
 
@@ -364,6 +365,13 @@ var tools = []Tool{
 		Name:    ProtocGenGRPCGateway,
 		Version: "v1.16.0",
 		Package: "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway",
+	},
+
+	// https://github.com/grpc-ecosystem/grpc-gateway/releases
+	GoPackageTool{
+		Name:    ProtocGenOpenAPIV2,
+		Version: "v2.17.0",
+		Package: "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2",
 	},
 
 	// https://github.com/regen-network/cosmos-proto/releases
