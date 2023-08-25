@@ -17,10 +17,7 @@ if [ ! -d "$RELAYER_KEYS_PATH" ]; then
 
   echo "Adding relayer paths."
   relayercosmos paths new {{ .CoreumChanID }} {{ .PeerChanID }} coreum-peer-ibc-path
-fi
 
-# TODO move it back to the prev if once we add the relayer healthcheck back.
-if [ $(relayercosmos query channels coreum | wc -l) -eq 0 ]; then
   echo "Connecting the chains."
   relayercosmos transact link coreum-peer-ibc-path
 fi

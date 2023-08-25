@@ -290,6 +290,26 @@ var tools = []Tool{
 			},
 		},
 	},
+	BinaryTool{
+		Name:    CoredV202,
+		Version: "v2.0.2",
+		Sources: Sources{
+			PlatformDockerAMD64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-amd64",
+				Hash: "sha256:3facf55f7ff795719f68b9bcf76ea08262bc7c9e9cd735c660257ba73678250e",
+				Binaries: map[string]string{
+					"bin/cored-v2.0.2": "cored-linux-amd64",
+				},
+			},
+			PlatformDockerARM64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-arm64",
+				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
+				Binaries: map[string]string{
+					"bin/cored-v2.0.2": "cored-linux-arm64",
+				},
+			},
+		},
+	},
 
 	// https://github.com/protocolbuffers/protobuf/releases
 	BinaryTool{
