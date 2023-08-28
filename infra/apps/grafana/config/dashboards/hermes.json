@@ -42,7 +42,6 @@
           "custom": {
             "axisLabel": "",
             "axisPlacement": "auto",
-            "axisSoftMin": 0,
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
@@ -88,7 +87,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 0
+        "y": 17
       },
       "id": 1,
       "options": {
@@ -98,8 +97,7 @@
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "orientation": "horizontal",
         "showValue": "auto",
@@ -193,15 +191,14 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 0
+        "y": 17
       },
       "id": 52,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -215,7 +212,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(client_updates_submitted{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(client_updates_submitted_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{src_chain}} -> {{dst_chain}}:{{client}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -284,15 +281,14 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 0
+        "y": 17
       },
       "id": 40,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -306,13 +302,13 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(total_messages_submitted{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(messages_submitted_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{instance}}:{{chain}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "total_messages_submitted over 1 minute",
+      "title": "messages_submitted over 1 minute",
       "type": "timeseries"
     },
     {
@@ -375,15 +371,14 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 7
+        "y": 24
       },
       "id": 3,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -466,15 +461,14 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 7
+        "y": 24
       },
       "id": 42,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -560,15 +554,14 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 7
+        "y": 24
       },
       "id": 35,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -597,19 +590,14 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 15
+        "y": 32
       },
       "id": 25,
       "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
         "content": "# Are transaction successful ?\n",
         "mode": "markdown"
       },
-      "pluginVersion": "9.0.2",
+      "pluginVersion": "9.0.7",
       "type": "text"
     },
     {
@@ -781,7 +769,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 34
       },
       "id": 9,
       "options": {
@@ -796,7 +784,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "9.0.2",
+      "pluginVersion": "9.0.7",
       "targets": [
         {
           "datasource": {
@@ -973,15 +961,14 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 43
       },
       "id": 5,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1068,15 +1055,14 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 43
       },
       "id": 23,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1090,7 +1076,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(receive_packets_confirmed{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(receive_packets_confirmed_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{src_chain}}:{{src_channel}}/{{src_port}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -1159,15 +1145,14 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 52
       },
       "id": 21,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1181,7 +1166,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(timeout_packets_confirmed{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(timeout_packets_confirmed_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{src_chain}}:{{src_channel}}/{{src_port}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -1250,15 +1235,14 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 52
       },
       "id": 17,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1272,7 +1256,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(acknowledgment_packets_confirmed{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(acknowledgment_packets_confirmed_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{src_chain}}:{{src_channel}}/{{src_port}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -1287,19 +1271,14 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 61
       },
       "id": 31,
       "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
         "content": "# What is the overall IBC status of each network?\r\n\r\n",
         "mode": "markdown"
       },
-      "pluginVersion": "9.0.2",
+      "pluginVersion": "9.0.7",
       "targets": [
         {
           "expr": "",
@@ -1369,15 +1348,14 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 46
+        "y": 63
       },
       "id": 11,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1391,7 +1369,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(send_packet_events{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(send_packet_events_total{job=\"ibc-relayer-hermes\"}[1m])",
           "interval": "",
           "legendFormat": "{{chain}}:{{channel}}/{{port}}-{{counterparty}} ({{instance}})",
           "range": true,
@@ -1461,15 +1439,14 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 46
+        "y": 63
       },
       "id": 15,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1483,7 +1460,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(acknowledgement_events{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(acknowledgement_events_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{chain}}:{{channel}}/{{port}}-{{counterparty}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -1552,15 +1529,14 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 46
+        "y": 63
       },
       "id": 19,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1574,7 +1550,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(timeout_events{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(timeout_events_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{chain}}:{{channel}}/{{port}}-{{counterparty}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -1643,15 +1619,14 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 54
+        "y": 71
       },
       "id": 44,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1665,7 +1640,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(ws_events{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(ws_events_total{job=\"ibc-relayer-hermes\"}[1m])",
           "interval": "",
           "legendFormat": "{{instance}}:{{chain}}",
           "range": true,
@@ -1735,15 +1710,14 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 54
+        "y": 71
       },
       "id": 46,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1757,7 +1731,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(ws_reconnect{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(ws_reconnect_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{instance}}:{{chain}}",
           "range": true,
           "refId": "A"
@@ -1826,15 +1800,14 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 54
+        "y": 71
       },
       "id": 48,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1848,7 +1821,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "code",
-          "expr": "sum(delta(queries{job=\"ibc-relayer-hermes\"}[1m])) by(instance,chain)",
+          "expr": "sum(delta(queries_total{job=\"ibc-relayer-hermes\"}[1m])) by(instance,chain)",
           "legendFormat": "{{instance}}:{{chain}}",
           "range": true,
           "refId": "A"
@@ -1863,19 +1836,14 @@
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 79
       },
       "id": 36,
       "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
         "content": "# How efficient and how secure is the IBC status on each network ?\n\n",
         "mode": "markdown"
       },
-      "pluginVersion": "9.0.2",
+      "pluginVersion": "9.0.7",
       "type": "text"
     },
     {
@@ -1938,15 +1906,14 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 64
+        "y": 81
       },
       "id": 33,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -1960,7 +1927,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(cleared_acknowledgment_events{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(cleared_acknowledgment_events_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{chain}}:{{channel}}/{{port}}-{{counterparty}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -2029,15 +1996,14 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 64
+        "y": 81
       },
       "id": 13,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -2051,7 +2017,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(cleared_send_packet_events{job=\"ibc-relayer-hermes\"}[1m])",
+          "expr": "delta(cleared_send_packet_events_total{job=\"ibc-relayer-hermes\"}[1m])",
           "legendFormat": "{{chain}}:{{channel}}/{{port}}-{{counterparty}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -2121,15 +2087,14 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 90
       },
       "id": 37,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -2212,15 +2177,14 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 90
       },
       "id": 54,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -2234,7 +2198,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "sum by(chain, instance) (delta(queries_cache_hits{job=\"ibc-relayer-hermes\"}[1m]))",
+          "expr": "sum by(chain, instance) (delta(queries_cache_hits_total{job=\"ibc-relayer-hermes\"}[1m]))",
           "legendFormat": "{{instance}}:{{chain}}",
           "range": true,
           "refId": "A"
@@ -2244,23 +2208,150 @@
       "type": "timeseries"
     },
     {
+      "description": "Indicates the latency rate for all transactions submitted from ibc-0",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 98
+      },
+      "id": 63,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true
+      },
+      "pluginVersion": "9.0.7",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P168AE35C7276FF55"
+          },
+          "editorMode": "builder",
+          "exemplar": true,
+          "expr": "increase(tx_latency_submitted_bucket{chain=\"ibc-0\"}[$__range])",
+          "format": "heatmap",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "{{le}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "tx_latency_submitted histogram ibc-0",
+      "transformations": [],
+      "type": "bargauge"
+    },
+    {
+      "description": "Indicates the latency rate for all transactions confirmed from ibc-0",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 98
+      },
+      "id": 64,
+      "options": {
+        "displayMode": "gradient",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true
+      },
+      "pluginVersion": "9.0.7",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "P168AE35C7276FF55"
+          },
+          "editorMode": "builder",
+          "exemplar": true,
+          "expr": "increase(tx_latency_confirmed_bucket{chain=\"ibc-0\"}[$__range])",
+          "format": "heatmap",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "{{le}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "tx_latency_confirmed_bucket histogram ibc-0",
+      "transformations": [],
+      "type": "bargauge"
+    },
+    {
       "gridPos": {
         "h": 2,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 106
       },
       "id": 58,
       "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
         "content": "# Extra",
         "mode": "markdown"
       },
-      "pluginVersion": "9.0.2",
+      "pluginVersion": "9.0.7",
       "type": "text"
     },
     {
@@ -2323,15 +2414,14 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 83
+        "y": 100
       },
       "id": 56,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "bottom"
         },
         "tooltip": {
           "mode": "single",
@@ -2345,7 +2435,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "builder",
-          "expr": "delta(client_misbehaviours_submitted[5m])",
+          "expr": "delta(client_misbehaviours_submitted_total[5m])",
           "legendFormat": "{{src_chain}}-{{dst_chain}}:{{client}} ({{instance}})",
           "range": true,
           "refId": "A"
@@ -2363,7 +2453,7 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
