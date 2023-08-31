@@ -3,7 +3,7 @@
 
 # Specify the verbosity for the relayer logging output. Default: 'info'
 # Valid options are 'error', 'warn', 'info', 'debug', 'trace'.
-log_level = 'info'
+log_level = 'debug'
 
 
 # Specify the mode to be used by the relayer. [Required]
@@ -24,7 +24,7 @@ enabled = true
 refresh = true
 
 # Whether or not to enable misbehaviour detection for clients. [Default: true]
-misbehaviour = true
+misbehaviour = false
 
 # Specify the connections mode.
 [mode.connections]
@@ -62,7 +62,7 @@ clear_on_start = true
 # If set to `false`, the following telemetry metrics will be disabled:
 # `acknowledgment_packets_confirmed`, `receive_packets_confirmed` and `timeout_packets_confirmed`.
 # [Default: false]
-tx_confirmation = false
+tx_confirmation = true
 
 # Auto register the counterparty payee on a destination chain to
 # the relayer's address on the source chain. This can be used
@@ -78,7 +78,7 @@ auto_register_counterparty_payee = false
 [rest]
 
 # Whether or not to enable the REST service. Default: false
-enabled = true
+enabled = false
 
 # Specify the IPv4/6 host over which the built-in HTTP server will serve the RESTful
 # API requests. Default: 127.0.0.1
@@ -107,41 +107,35 @@ port = {{ .TelemetryPort }}
 [[chains]]
 id = '{{ .CoreumChanID }}'
 rpc_addr = '{{ .CoreumRPCURL }}'
+rpc_timeout = '30s'
 grpc_addr = '{{ .CoreumGRPCURL }}'
 event_source = { mode = 'push', url = '{{ .CoreumWebsocketURL }}', batch_delay = '500ms' }
-rpc_timeout = '10s'
 account_prefix = '{{ .CoreumAccountPrefix }}'
 key_name = 'coreum-key'
 store_prefix = 'ibc'
 default_gas = 100000
 max_gas = 4000000
 gas_price = { price = {{ .CoreumGasPrice.Amount }}, denom = '{{ .CoreumGasPrice.Denom }}' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '30s'
-max_block_time = '30s'
-trusting_period = '6days'
+gas_multiplier = 1.5
+clock_drift = '60s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
+packet_filter = { policy = 'allow', list = [['transfer', '*']] }
 
 [[chains]]
 id = '{{ .PeerChanID }}'
 rpc_addr = '{{ .PeerRPCURL }}'
+rpc_timeout = '30s'
 grpc_addr = '{{ .PeerGRPCURL }}'
 event_source = { mode = 'push', url = '{{ .PeerWebsocketURL }}', batch_delay = '500ms' }
-rpc_timeout = '10s'
 account_prefix = '{{ .PeerAccountPrefix }}'
 key_name = 'peer-key'
 store_prefix = 'ibc'
 default_gas = 100000
 max_gas = 4000000
 gas_price = { price = {{ .PeerGasPrice.Amount }}, denom = '{{ .PeerGasPrice.Denom }}' }
-gas_multiplier = 1.1
-max_msg_num = 30
-max_tx_size = 2097152
-clock_drift = '30s'
-max_block_time = '30s'
-trusting_period = '6days'
+gas_multiplier = 1.5
+clock_drift = '60s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
+packet_filter = { policy = 'allow', list = [['transfer', '*']] }

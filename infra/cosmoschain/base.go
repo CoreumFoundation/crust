@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"fmt"
 	"net"
 	"os"
 	"path"
@@ -26,6 +27,7 @@ import (
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/targets"
+	"github.com/CoreumFoundation/crust/pkg/tools"
 )
 
 const dockerEntrypoint = "run.sh"
@@ -48,6 +50,7 @@ type Ports struct {
 // AppConfig defines configuration of the application.
 type AppConfig struct {
 	Name            string
+	BinDir          string
 	HomeDir         string
 	HomeName        string
 	ChainID         string
@@ -56,6 +59,7 @@ type AppConfig struct {
 	RelayerMnemonic string
 	FundingMnemonic string
 	TimeoutCommit   time.Duration
+	WrapperDir      string
 }
 
 // AppTypeConfig defines configuration of the application type.
@@ -146,6 +150,9 @@ func (ba BaseApp) Deployment() infra.Deployment {
 		Ports:       infra.PortsToMap(ba.appConfig.Ports),
 		PrepareFunc: ba.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
+		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
+			return ba.saveClientWrapper(deployment.HostFromHost)
+		},
 	}
 }
 
@@ -217,4 +224,25 @@ func newBasicManager() module.BasicManager {
 		bank.AppModuleBasic{},
 		staking.AppModuleBasic{},
 	)
+}
+
+func (ba BaseApp) saveClientWrapper(hostname string) error {
+	baClient := fmt.Sprintf(`#!/bin/bash
+OPTS=""
+if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
+	OPTS="$OPTS --keyring-backend ""test"""
+fi
+
+if [ "$1" == "status" ] || [ "$1" == "tx" ] || [ "$1" == "q" ]; then
+	OPTS="$OPTS --node ""%s"""
+fi
+
+exec %s --home %s "$@" $OPTS
+`,
+		infra.JoinNetAddr("tcp", hostname, ba.appConfig.Ports.RPC),                                   // rpc endpoint
+		filepath.Join(tools.BinariesRootPath(tools.PlatformLocal), "bin", ba.appTypeConfig.ExecName), // client's path
+		filepath.Dir(ba.appConfig.HomeDir),                                                           // home dir
+	)
+
+	return errors.WithStack(os.WriteFile(filepath.Join(ba.appConfig.WrapperDir, ba.appConfig.Name), []byte(baClient), 0o700))
 }
