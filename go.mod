@@ -7,7 +7,7 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 require (
 	cosmossdk.io/math v1.0.1
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230824100636-a81392f4cf9d
+	github.com/CoreumFoundation/coreum/v2 v2.0.3-0.20230831135216-8a963a69c84f
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cosmos/cosmos-sdk v0.47.4
 	github.com/fsnotify/fsnotify v1.6.0
