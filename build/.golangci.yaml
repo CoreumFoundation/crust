@@ -57,6 +57,7 @@ linters:
     - wrapcheck
     - wsl
     - depguard
+    - musttag
     # deprecated:
     - golint
     - interfacer

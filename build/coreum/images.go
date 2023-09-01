@@ -65,13 +65,11 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 // ensureReleasedBinaries ensures that all previous cored versions are installed.
 func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
 	for _, binaryTool := range []tools.Name{
-		tools.CoredV100,
-		tools.CoredV200,
+		tools.CoredV202,
 	} {
-		if err := tools.EnsureBinaries(ctx, binaryTool, tools.PlatformDockerLocal); err != nil {
+		if err := tools.Ensure(ctx, binaryTool, tools.PlatformDockerLocal); err != nil {
 			return err
 		}
-
 		if err := tools.CopyToolBinaries(binaryTool, tools.PlatformDockerLocal, filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String()), fmt.Sprintf("bin/%s", binaryTool)); err != nil {
 			return err
 		}

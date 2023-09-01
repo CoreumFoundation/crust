@@ -4,16 +4,18 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"fmt"
 	"io"
 	"net"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -28,13 +30,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/coreum/v2/app"
 	"github.com/CoreumFoundation/coreum/v2/pkg/client"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config"
 	"github.com/CoreumFoundation/coreum/v2/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
+	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
@@ -115,7 +120,7 @@ func prepareTxStakingCreateValidator(
 	validatorPublicKey ed25519.PublicKey,
 	stakerPrivateKey cosmossecp256k1.PrivKey,
 	stakedBalance sdk.Coin,
-	selfDelegation sdk.Int,
+	selfDelegation sdkmath.Int,
 ) ([]byte, error) {
 	// the passphrase here is the trick to import the private key into the keyring
 	const passphrase = "tmp"
@@ -143,7 +148,7 @@ func prepareTxStakingCreateValidator(
 		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
 	}
 
-	inMemKeyring := keyring.NewInMemory()
+	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
 
 	armor := crypto.EncryptArmorPrivKey(&stakerPrivateKey, passphrase, string(hd.Secp256k1Type))
 	if err := inMemKeyring.ImportPrivKey(stakerAddress.String(), armor, passphrase); err != nil {
@@ -213,15 +218,14 @@ func (c Cored) ClientContext() client.Context {
 	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
-	grpcClient, err := grpc.Dial(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), grpc.WithInsecure())
+	mm := newBasicManager()
+	grpcClient, err := cosmoschain.GRPCClient(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), mm)
 	must.OK(err)
 
-	return client.NewContext(client.DefaultContextConfig(), newBasicManager()).
+	return client.NewContext(client.DefaultContextConfig(), mm).
 		WithChainID(string(c.config.NetworkConfig.ChainID())).
 		WithRPCClient(rpcClient).
-		WithGRPCClient(grpcClient).
-		WithKeyring(keyring.NewInMemory()).
-		WithBroadcastMode(flags.BroadcastBlock)
+		WithGRPCClient(grpcClient)
 }
 
 // TxFactory returns factory with present values for the chain.
@@ -287,6 +291,7 @@ func (c Cored) Deployment() infra.Deployment {
 				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
 				"--inv-check-period", "1",
 				"--chain-id", string(c.config.NetworkConfig.ChainID()),
+				"--minimum-gas-prices", fmt.Sprintf("0.000000000000000001%s", c.config.NetworkConfig.Denom()),
 			}
 			if c.config.RootNode != nil {
 				args = append(args,
@@ -359,9 +364,7 @@ func (c Cored) prepare() error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		// To test upgrade plan v2 for mainnet and v2patch1 for testnet both plans must target the newest binary
-		"v2":       "cored",
-		"v2patch1": "cored", // TODO update to next version once the binary is ready
+		"v3": "cored",
 	}
 	for upgrade, binary := range upgrades {
 		err := copyFile(filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", binary),
@@ -404,12 +407,41 @@ func (c Cored) SaveGenesis(homeDir string) error {
 		return err
 	}
 
+	if strings.HasPrefix(c.config.BinaryVersion, "v2") {
+		genDocBytes = applyV2PatchToV3Genesis(genDocBytes)
+	}
+
 	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
 		return errors.Wrap(err, "unable to make config directory")
 	}
 
 	err = os.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
 	return errors.Wrap(err, "unable to write genesis bytes to file")
+}
+
+// This is temporary solution to make both v2 & v3 cored version work.
+// Since cosmos SDK changed structure of genesis file, we need to apply some patches to v3 (sdk v47)
+// to make it compatible with v2 (sdk v45) binary.
+func applyV2PatchToV3Genesis(originalGenDocBytes []byte) []byte {
+	// Deleting "send_enabled" from "bank"
+	modifiedGenDocStr, _ := sjson.Delete(string(originalGenDocBytes), "app_state.bank.send_enabled")
+
+	// Iterating over "denom_metadata" in "bank"
+	denomMetadataCount := gjson.Get(modifiedGenDocStr, "app_state.bank.denom_metadata.#").Int()
+	for i := 0; i < int(denomMetadataCount); i++ {
+		// Removing "uri" and "uri_hash" fields
+		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.bank.denom_metadata.%d.uri", i))
+		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.bank.denom_metadata.%d.uri_hash", i))
+	}
+
+	// Iterating over "gen_txs" in "genutil"
+	genTxsCount := gjson.Get(modifiedGenDocStr, "app_state.genutil.gen_txs.#").Int()
+	for i := 0; i < int(genTxsCount); i++ {
+		// Deleting "tip" from "auth_info" in each "gen_txs" item
+		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.genutil.gen_txs.%d.auth_info.tip", i))
+	}
+
+	return []byte(modifiedGenDocStr)
 }
 
 func copyFile(src, dst string, perm os.FileMode) error {

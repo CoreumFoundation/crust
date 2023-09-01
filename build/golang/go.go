@@ -1,17 +1,20 @@
 package golang
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -66,12 +69,12 @@ type TestBuildConfig struct {
 
 // EnsureGo ensures that go is available.
 func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureTool(ctx, tools.Go)
+	return tools.Ensure(ctx, tools.Go, tools.PlatformLocal)
 }
 
 // EnsureGolangCI ensures that go linter is available.
 func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
-	return tools.EnsureTool(ctx, tools.GolangCI)
+	return tools.Ensure(ctx, tools.GolangCI, tools.PlatformLocal)
 }
 
 // Build builds go binary.
@@ -205,12 +208,16 @@ var dockerfileTemplate string
 var dockerfileTemplateParsed = template.Must(template.New("Dockerfile").Parse(dockerfileTemplate))
 
 func ensureBuildDockerImage(ctx context.Context) (string, error) {
+	goTool, err := tools.Get(tools.Go)
+	if err != nil {
+		return "", err
+	}
 	dockerfileBuf := &bytes.Buffer{}
-	err := dockerfileTemplateParsed.Execute(dockerfileBuf, struct {
+	err = dockerfileTemplateParsed.Execute(dockerfileBuf, struct {
 		GOVersion     string
 		AlpineVersion string
 	}{
-		GOVersion:     tools.ByName(tools.Go).Version,
+		GOVersion:     goTool.GetVersion(),
 		AlpineVersion: goAlpineVersion,
 	})
 	if err != nil {
@@ -374,47 +381,56 @@ func containsGoCode(path string) (bool, error) {
 	return false, errors.WithStack(err)
 }
 
-// GetModuleVersions returns a map[moduleName]version with version from go.mod for the specified module within the given repo.
-func GetModuleVersions(deps build.DepsFunc, repoPath string, modules []string) (map[string]string, error) {
-	moduleToVersion := make(map[string]string, len(modules))
-
-	var version string
-	var err error
-	for _, module := range modules {
-		version, err = getModuleVersion(deps, repoPath, module)
-		if err != nil {
-			return nil, err
-		}
-
-		moduleToVersion[module] = version
-	}
-
-	return moduleToVersion, nil
-}
-
-func getModuleVersion(deps build.DepsFunc, repoPath, moduleName string) (string, error) {
+// ModuleDirs return directories where modules are kept.
+func ModuleDirs(ctx context.Context, deps build.DepsFunc, repoPath string, modules ...string) (map[string]string, error) {
 	deps(EnsureGo)
 
-	args := []string{
-		"list",
-		"-m",
-		moduleName,
-	}
-
-	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), args...)
+	out := &bytes.Buffer{}
+	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), append([]string{"list", "-m", "-json"}, modules...)...)
+	cmd.Stdout = out
 	cmd.Dir = repoPath
 
-	output, err := cmd.Output()
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return nil, err
+	}
+
+	var info struct {
+		Dir  string
+		Path string
+	}
+
+	res := map[string]string{}
+	dec := json.NewDecoder(out)
+	for dec.More() {
+		if err := dec.Decode(&info); err != nil {
+			return nil, errors.WithStack(err)
+		}
+		res[info.Path] = info.Dir
+	}
+
+	return res, nil
+}
+
+// ModuleName returns name of the go module.
+func ModuleName(modulePath string) (string, error) {
+	f, err := os.Open(filepath.Join(modulePath, "go.mod"))
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
+	defer f.Close()
 
-	parts := strings.Fields(string(output))
-	if len(parts) < 2 {
-		return "", errors.New("no module version")
+	rx := regexp.MustCompile("^module (.+?)$")
+
+	s := bufio.NewScanner(f)
+	s.Split(bufio.ScanLines)
+	for s.Scan() {
+		matches := rx.FindStringSubmatch(s.Text())
+		if len(matches) < 2 {
+			continue
+		}
+		return matches[1], nil
 	}
-
-	return parts[1], nil
+	return "", nil
 }
 
 // GoPath returns $GOPATH.
