@@ -36,7 +36,7 @@ type swaggerInfo struct {
 func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
-	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
+	// We need versions to derive paths to protoc for given modules installed by `go mod tidy`
 	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
 		cosmosSDKModule,
 		cosmosIBCModule,
