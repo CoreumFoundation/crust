@@ -64,37 +64,35 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
+	coreumPath := filepath.Join(absPath, "coreum")
+	cosmosPath := filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos")
+	ibcPath := filepath.Join(moduleDirs[cosmosIBCModule], "proto", "ibc", "core")
 	generateDirs := []string{
-		filepath.Join(absPath, "coreum", "asset", "ft", "v1"),
-		filepath.Join(absPath, "coreum", "asset", "nft", "v1"),
-		filepath.Join(absPath, "coreum", "customparams", "v1"),
-		filepath.Join(absPath, "coreum", "feemodel", "v1"),
-		filepath.Join(absPath, "coreum", "nft", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "auth", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "authz", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "bank", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "consensus", "v1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "distribution", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "evidence", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "feegrant", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "gov", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "gov", "v1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "mint", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "slashing", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "staking", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos", "upgrade", "v1beta1"),
-		filepath.Join(moduleDirs[cosmosIBCModule], "proto", "ibc", "core", "channel", "v1"),
-		filepath.Join(moduleDirs[cosmosIBCModule], "proto", "ibc", "core", "client", "v1"),
-		filepath.Join(moduleDirs[cosmosIBCModule], "proto", "ibc", "core", "connection", "v1"),
+		filepath.Join(coreumPath, "asset", "ft", "v1"),
+		filepath.Join(coreumPath, "asset", "nft", "v1"),
+		filepath.Join(coreumPath, "customparams", "v1"),
+		filepath.Join(coreumPath, "feemodel", "v1"),
+		filepath.Join(coreumPath, "nft", "v1beta1"),
+		filepath.Join(cosmosPath, "auth", "v1beta1"),
+		filepath.Join(cosmosPath, "authz", "v1beta1"),
+		filepath.Join(cosmosPath, "bank", "v1beta1"),
+		filepath.Join(cosmosPath, "consensus", "v1"),
+		filepath.Join(cosmosPath, "distribution", "v1beta1"),
+		filepath.Join(cosmosPath, "evidence", "v1beta1"),
+		filepath.Join(cosmosPath, "feegrant", "v1beta1"),
+		filepath.Join(cosmosPath, "gov", "v1beta1"),
+		filepath.Join(cosmosPath, "gov", "v1"),
+		filepath.Join(cosmosPath, "mint", "v1beta1"),
+		filepath.Join(cosmosPath, "slashing", "v1beta1"),
+		filepath.Join(cosmosPath, "staking", "v1beta1"),
+		filepath.Join(cosmosPath, "upgrade", "v1beta1"),
+		filepath.Join(ibcPath, "channel", "v1"),
+		filepath.Join(ibcPath, "client", "v1"),
+		filepath.Join(ibcPath, "connection", "v1"),
 		filepath.Join(moduleDirs[cosmWASMModule], "proto", "cosmwasm", "wasm", "v1"),
 	}
 
-	err = executeOpenAPIProtocCommand(ctx, deps, includeDirs, generateDirs)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return executeOpenAPIProtocCommand(ctx, deps, includeDirs, generateDirs)
 }
 
 // executeGoProtocCommand generates go code from proto files.
@@ -160,13 +158,14 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 				return errors.WithStack(err)
 			}
 
+			const operationIDField = "operationId"
 			for k, v := range sd.Paths {
 				for opK, opV := range v {
 					var opID string
-					if err := json.Unmarshal(opV["operationId"], &opID); err != nil {
+					if err := json.Unmarshal(opV[operationIDField], &opID); err != nil {
 						return errors.WithStack(err)
 					}
-					v[opK]["operationId"] = json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(pkg, "/", ".")), opID))
+					v[opK][operationIDField] = json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(pkg, "/", ".")), opID))
 				}
 				finalDoc.Paths[k] = v
 			}
