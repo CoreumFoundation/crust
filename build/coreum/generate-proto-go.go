@@ -33,13 +33,14 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	absPath, err := filepath.Abs(filepath.Join(repoPath, "proto"))
+	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	includeDirs := []string{
-		absPath,
+		filepath.Join(absPath, "proto"),
+		filepath.Join(absPath, "third_party", "proto"),
 		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
 		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
 		moduleDirs[gogoProtobufModule],
@@ -47,7 +48,7 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	generateDirs := []string{
-		absPath,
+		filepath.Join(absPath, "proto"),
 	}
 
 	err = executeGoProtocCommand(ctx, deps, includeDirs, generateDirs)

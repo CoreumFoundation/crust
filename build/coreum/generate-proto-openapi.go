@@ -49,13 +49,14 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	absPath, err := filepath.Abs(filepath.Join(repoPath, "proto"))
+	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	includeDirs := []string{
-		absPath,
+		filepath.Join(absPath, "proto"),
+		filepath.Join(absPath, "third_party", "proto"),
 		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
 		filepath.Join(moduleDirs[cosmosIBCModule], "proto"),
 		filepath.Join(moduleDirs[cosmWASMModule], "proto"),
@@ -64,7 +65,7 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
-	coreumPath := filepath.Join(absPath, "coreum")
+	coreumPath := filepath.Join(absPath, "proto", "coreum")
 	cosmosPath := filepath.Join(moduleDirs[cosmosSDKModule], "proto", "cosmos")
 	ibcPath := filepath.Join(moduleDirs[cosmosIBCModule], "proto", "ibc", "core")
 	generateDirs := []string{
