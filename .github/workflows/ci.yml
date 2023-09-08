@@ -45,7 +45,6 @@ jobs:
             command: |
               crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/ibc images
               crust znet test --cored-version=v2.0.2 --test-groups=coreum-upgrade,coreum-ibc --timeout-commit 1s
-              crust znet test --test-groups=coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true
             linter-cache: false
