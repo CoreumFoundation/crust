@@ -19,6 +19,9 @@ type Data struct {
 
 	// Binary is the name of binary file to copy from build context
 	Binary string
+
+	// Run is an extra command to be run during image build. RUN directive will be used to execute it.
+	Run string
 }
 
 // Execute executes dockerfile template and returns complete dockerfile.
