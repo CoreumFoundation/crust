@@ -172,6 +172,12 @@ func (h Hermes) Deployment() infra.Deployment {
 		},
 		PrepareFunc: h.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
+		DockerArgs: []string{
+			// Restart is needed to handle chain upgrade by Hermes.
+			// Since v2.0.2 -> v3 upgrade changes IBC version we have to restart Hermes because it stops working.
+			// https://github.com/informalsystems/hermes/issues/3579
+			"--restart", "on-failure:1000",
+		},
 	}
 }
 
@@ -208,7 +214,7 @@ func (h Hermes) saveConfigFile() error {
 		CoreumGRPCURL:       infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.GRPC),
 		CoreumWebsocketURL:  infra.JoinNetAddr("ws", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC) + "/websocket",
 		CoreumAccountPrefix: h.config.Cored.Config().NetworkConfig.Provider.GetAddressPrefix(),
-		// TODO(dzmitryhil) move gas price for host and peed chains to prams
+		// TODO(dzmitryhil) move gas price for host and peer chains to prams
 		CoreumGasPrice: sdk.NewDecCoinFromDec("udevcore", sdk.MustNewDecFromStr("0.0625")),
 
 		PeerChanID:        h.config.PeeredChain.AppConfig().ChainID,
@@ -244,6 +250,7 @@ func (h Hermes) saveRunScriptFile() error {
 
 		CoreumChanID          string
 		CoreumRelayerMnemonic string
+		CoreumRPCURL          string
 		CoreumRelayerCoinType uint32
 
 		PeerChanID          string
@@ -253,6 +260,7 @@ func (h Hermes) saveRunScriptFile() error {
 
 		CoreumChanID:          string(h.config.Cored.Config().NetworkConfig.ChainID()),
 		CoreumRelayerMnemonic: h.config.CoreumRelayerMnemonic,
+		CoreumRPCURL:          infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
 		CoreumRelayerCoinType: coreumconstant.CoinType,
 
 		PeerChanID:          h.config.PeeredChain.AppConfig().ChainID,

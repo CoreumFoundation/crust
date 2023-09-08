@@ -1,5 +1,9 @@
 FROM {{ .From }}
 
+{{ if .Run }}
+RUN {{ .Run }}
+{{ end }}
+
 COPY {{ .Binary }} /{{ .Binary }}
 
 ENTRYPOINT ["/{{ .Binary }}"]

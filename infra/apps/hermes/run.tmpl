@@ -19,6 +19,35 @@ if [ ! -d "$RELAYER_KEYS_PATH" ]; then
 
 fi
 
-
 echo "Starting the relayer."
-hermes start
+hermes start &
+
+# Capture the process ID to kill it later if needed
+PID=$!
+
+INITIAL_VERSION=$(curl -s {{ .CoreumRPCURL }}/abci_info\? | jq '.result.response.version')
+
+# If initial version is empty kill the process.
+if [ -z "$INITIAL_VERSION" ]; then
+  echo "Failed to fetch the initial API version. Exiting."
+  kill $PID
+  exit 1
+fi
+
+while true; do
+  sleep 3
+
+  CURRENT_VERSION=$(curl -s {{ .CoreumRPCURL }}/abci_info\? | jq '.result.response.version')
+
+  # If fetching of version fails, skip this iteration
+  if [ -z "$CURRENT_VERSION" ]; then
+    echo "API version is not available. Skipping this check."
+    continue
+  fi
+
+  if [ "$INITIAL_VERSION" != "$CURRENT_VERSION" ]; then
+    kill $PID
+    echo "API version changed from $INITIAL_VERSION to $CURRENT_VERSION. Process killed."
+    exit 1
+  fi
+done

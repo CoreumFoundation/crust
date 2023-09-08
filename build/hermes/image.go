@@ -30,6 +30,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	dockerfile, err := dockerbasic.Execute(dockerbasic.Data{
 		From:   docker.UbuntuImage,
 		Binary: binaryPath,
+		Run:    "apt update && apt install curl jq -y",
 	})
 	if err != nil {
 		return err
