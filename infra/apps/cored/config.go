@@ -52,7 +52,7 @@ func NetworkConfig(genesisTemplate string, blockTimeIota time.Duration) (config.
 			GovConfig: config.GovConfig{
 				ProposalConfig: config.GovProposalConfig{
 					MinDepositAmount: "1000",
-					VotingPeriod:     (time.Second * 5).String(),
+					VotingPeriod:     (time.Second * 10).String(),
 				},
 			},
 			CustomParamsConfig: config.CustomParamsConfig{
