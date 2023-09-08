@@ -131,7 +131,7 @@ func (p Prometheus) Deployment() infra.Deployment {
 			"metrics": p.config.Port,
 		},
 		Requires: infra.Prerequisites{
-			Timeout: 20 * time.Second,
+			Timeout: time.Minute, // relayers are slow
 			Dependencies: func() []infra.HealthCheckCapable {
 				containers := make([]infra.HealthCheckCapable, 0, len(p.config.CoredNodes))
 				for _, node := range p.config.CoredNodes {
