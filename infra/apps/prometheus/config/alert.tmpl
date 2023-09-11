@@ -112,15 +112,6 @@ groups:
       annotations:
         description: 'IBC relayer Hermes: IBC client "{{ `{{ $labels.src_chain }}` }}->{{ `{{ $labels.dst_chain }}` }}:{{ `{{ $labels.client }}` }}" update is outdated.'
 
-    - alert: IBCRelayerCosmosLowBalance
-      expr: cosmos_relayer_wallet_balance{job="ibc-relayer-cosmos"} < 10000000
-      for: 5s
-      labels:
-        severity: major
-        service: cosmos-monitoring
-      annotations:
-        description: 'IBC relayer Cosmos: Balance for chain {{ `{{ $labels.chain }}` }} is less then 10.000.000'
-
     - alert: DeterministicGasFactorExceedExpectedMax
       expr: max_over_time(deterministic_gas_factor_exceed_expected_max{job="cosmos"}[1m]) > 0
       for: 1s

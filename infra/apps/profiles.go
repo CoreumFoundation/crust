@@ -9,8 +9,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 	"github.com/CoreumFoundation/crust/infra/apps/hermes"
-	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
-	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
 )
 
 // TestGroup constant values.
@@ -139,20 +137,12 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 			hermesApp = hermesAppSetApp
 		}
 
-		var relayerCosmosApp relayercosmos.Relayer
-		if relayerCosmosAppSetApp, ok := appSet.FindAppByName(
-			BuildPrefixedAppName(AppPrefixIBC, string(relayercosmos.AppType), string(osmosis.AppType)),
-		).(relayercosmos.Relayer); ok {
-			relayerCosmosApp = relayerCosmosAppSetApp
-		}
-
 		appSet = append(appSet, appF.Monitoring(
 			AppPrefixMonitoring,
 			coredNodes,
 			faucetApp,
 			bdJunoApp,
 			hermesApp,
-			relayerCosmosApp,
 		)...)
 	}
 

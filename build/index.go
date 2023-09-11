@@ -10,7 +10,6 @@ import (
 	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/hermes"
 	"github.com/CoreumFoundation/crust/build/osmosis"
-	"github.com/CoreumFoundation/crust/build/relayer"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -34,7 +33,6 @@ var Commands = map[string]build.CommandFunc{
 	"images/faucet":                          faucet.BuildDockerImage,
 	"images/gaiad":                           gaia.BuildDockerImage,
 	"images/hermes":                          hermes.BuildDockerImage,
-	"images/relayer":                         relayer.BuildDockerImage,
 	"lint":                                   lint,
 	"lint/current-dir":                       crust.LintCurrentDir,
 	"lint/coreum":                            coreum.Lint,
@@ -91,7 +89,6 @@ func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
 		gaia.BuildDockerImage,
 		osmosis.BuildDockerImage,
 		hermes.BuildDockerImage,
-		relayer.BuildDockerImage,
 	)
 
 	return nil

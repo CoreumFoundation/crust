@@ -14,7 +14,6 @@ import (
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/hermes"
 	"github.com/CoreumFoundation/crust/build/osmosis"
-	"github.com/CoreumFoundation/crust/build/relayer"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -39,7 +38,6 @@ func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 		gaia.BuildDockerImage,
 		osmosis.EnsureBinary,
 		osmosis.BuildDockerImage,
-		relayer.BuildDockerImage,
 		hermes.BuildDockerImage,
 	)
 
