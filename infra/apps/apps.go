@@ -21,7 +21,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
-	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
 	"github.com/CoreumFoundation/crust/infra/apps/xrpl"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
@@ -172,7 +171,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 	nameGaia := BuildPrefixedAppName(prefix, string(gaiad.AppType))
 	nameOsmosis := BuildPrefixedAppName(prefix, string(osmosis.AppType))
 	nameRelayerHermesGaia := BuildPrefixedAppName(prefix, string(hermes.AppType), string(gaiad.AppType))
-	nameRelayerCosmosOsmosis := BuildPrefixedAppName(prefix, string(relayercosmos.AppType), string(osmosis.AppType))
+	nameRelayerHermesOsmosis := BuildPrefixedAppName(prefix, string(hermes.AppType), string(osmosis.AppType))
 
 	gaiaApp := gaiad.New(cosmoschain.AppConfig{
 		Name:            nameGaia,
@@ -202,7 +201,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		WrapperDir:      f.config.WrapperDir,
 	})
 
-	relayerGaiaApp := hermes.New(hermes.Config{
+	relayerHermesGaiaApp := hermes.New(hermes.Config{
 		Name:                  nameRelayerHermesGaia,
 		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerHermesGaia),
 		AppInfo:               f.spec.DescribeApp(hermes.AppType, nameRelayerHermesGaia),
@@ -212,11 +211,11 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		PeeredChain:           gaiaApp,
 	})
 
-	relayerOsmosisApp := relayercosmos.New(relayercosmos.Config{
-		Name:                  nameRelayerCosmosOsmosis,
-		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerCosmosOsmosis),
-		AppInfo:               f.spec.DescribeApp(relayercosmos.AppType, nameRelayerCosmosOsmosis),
-		DebugPort:             relayercosmos.DefaultDebugPort,
+	relayerHermesOsmosisApp := hermes.New(hermes.Config{
+		Name:                  nameRelayerHermesOsmosis,
+		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerHermesOsmosis),
+		AppInfo:               f.spec.DescribeApp(hermes.AppType, nameRelayerHermesOsmosis),
+		TelemetryPort:         hermes.DefaultTelemetryPort + 100, // avoid conflicts with another Hermes.
 		Cored:                 coredApp,
 		CoreumRelayerMnemonic: cored.RelayerMnemonicOsmosis,
 		PeeredChain:           osmosisApp,
@@ -225,8 +224,8 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 	return infra.AppSet{
 		gaiaApp,
 		osmosisApp,
-		relayerGaiaApp,
-		relayerOsmosisApp,
+		relayerHermesGaiaApp,
+		relayerHermesOsmosisApp,
 	}
 }
 
@@ -237,21 +236,19 @@ func (f *Factory) Monitoring(
 	faucet faucet.Faucet,
 	bdJuno bdjuno.BDJuno,
 	hermes hermes.Hermes,
-	relayerCosmos relayercosmos.Relayer,
 ) infra.AppSet {
 	namePrometheus := BuildPrefixedAppName(prefix, string(prometheus.AppType))
 	nameGrafana := BuildPrefixedAppName(prefix, string(grafana.AppType))
 
 	prometheusApp := prometheus.New(prometheus.Config{
-		Name:          namePrometheus,
-		HomeDir:       filepath.Join(f.config.AppDir, namePrometheus),
-		Port:          prometheus.DefaultPort,
-		AppInfo:       f.spec.DescribeApp(prometheus.AppType, namePrometheus),
-		CoredNodes:    coredNodes,
-		Faucet:        faucet,
-		BDJuno:        bdJuno,
-		Hermes:        hermes,
-		RelayerCosmos: relayerCosmos,
+		Name:       namePrometheus,
+		HomeDir:    filepath.Join(f.config.AppDir, namePrometheus),
+		Port:       prometheus.DefaultPort,
+		AppInfo:    f.spec.DescribeApp(prometheus.AppType, namePrometheus),
+		CoredNodes: coredNodes,
+		Faucet:     faucet,
+		BDJuno:     bdJuno,
+		Hermes:     hermes,
 	})
 
 	grafanaApp := grafana.New(grafana.Config{

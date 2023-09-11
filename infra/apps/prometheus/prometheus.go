@@ -21,7 +21,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/hermes"
-	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
 )
 
 var (
@@ -47,15 +46,14 @@ const (
 
 // Config stores prometheus app config.
 type Config struct {
-	Name          string
-	HomeDir       string
-	Port          int
-	AppInfo       *infra.AppInfo
-	CoredNodes    []cored.Cored
-	Faucet        faucet.Faucet
-	BDJuno        bdjuno.BDJuno
-	Hermes        hermes.Hermes
-	RelayerCosmos relayercosmos.Relayer
+	Name       string
+	HomeDir    string
+	Port       int
+	AppInfo    *infra.AppInfo
+	CoredNodes []cored.Cored
+	Faucet     faucet.Faucet
+	BDJuno     bdjuno.BDJuno
+	Hermes     hermes.Hermes
 }
 
 // New creates new prometheus app.
@@ -145,10 +143,6 @@ func (p Prometheus) Deployment() infra.Deployment {
 				if p.config.Hermes.Name() != "" {
 					containers = append(containers, p.config.Hermes)
 				}
-				// determine whether the relayer cosmos is provided
-				if p.config.RelayerCosmos.Name() != "" {
-					containers = append(containers, p.config.RelayerCosmos)
-				}
 
 				return containers
 			}(),
@@ -190,11 +184,10 @@ func (p Prometheus) saveConfigFile() error {
 	}
 
 	configArgs := struct {
-		Nodes         []nodesConfigArgs
-		Faucet        hostPortConfig
-		BDJuno        hostPortConfig
-		Hermes        hostPortConfig
-		RelayerCosmos hostPortConfig
+		Nodes  []nodesConfigArgs
+		Faucet hostPortConfig
+		BDJuno hostPortConfig
+		Hermes hostPortConfig
 	}{
 		Nodes: nodesConfig,
 	}
@@ -220,14 +213,6 @@ func (p Prometheus) saveConfigFile() error {
 		configArgs.Hermes = hostPortConfig{
 			Host: p.config.Hermes.Info().HostFromContainer,
 			Port: p.config.Hermes.Config().TelemetryPort,
-		}
-	}
-
-	// determine whether the relayer cosmos is provided
-	if p.config.RelayerCosmos.Name() != "" {
-		configArgs.RelayerCosmos = hostPortConfig{
-			Host: p.config.RelayerCosmos.Info().HostFromContainer,
-			Port: p.config.RelayerCosmos.Config().DebugPort,
 		}
 	}
 
