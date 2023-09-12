@@ -162,7 +162,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	if pMap[ProfileXRPL] {
 		appSet = append(appSet, appF.XRPL(
 			AppPrefixXRPL,
-		)...)
+		))
 	}
 
 	return appSet, nil

@@ -270,21 +270,17 @@ func (f *Factory) Monitoring(
 }
 
 // XRPL returns xrpl node app set.
-func (f *Factory) XRPL(prefix string) infra.AppSet {
+func (f *Factory) XRPL(prefix string) infra.App {
 	nameXRPL := BuildPrefixedAppName(prefix, string(xrpl.AppType))
 
-	xrplsApp := xrpl.New(xrpl.Config{
+	return xrpl.New(xrpl.Config{
 		Name:       nameXRPL,
 		HomeDir:    filepath.Join(f.config.AppDir, nameXRPL),
-		AppInfo:    f.spec.DescribeApp(grafana.AppType, nameXRPL),
+		AppInfo:    f.spec.DescribeApp(xrpl.AppType, nameXRPL),
 		RPCPort:    xrpl.DefaultRPCPort,
 		WSPort:     xrpl.DefaultWSPort,
 		FaucetSeed: xrpl.DefaultFaucetSeed,
 	})
-
-	return infra.AppSet{
-		xrplsApp,
-	}
 }
 
 // BuildPrefixedAppName builds the app name based on its prefix and name.

@@ -100,7 +100,7 @@ func (x XRPL) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", x.Info().HostFromHost, x.config.RPCPort), Path: ""}
+	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", x.Info().HostFromHost, x.config.RPCPort)}
 	statusBody := `{"method":"server_info","params":[{"api_version": 1}]}`
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodPost, statusURL.String(), strings.NewReader(statusBody)))
 	resp, err := http.DefaultClient.Do(req)
@@ -174,12 +174,13 @@ func (x XRPL) saveConfigFile() error {
 		WSPort:   x.config.WSPort,
 	}
 
-	buf := &bytes.Buffer{}
-	if err := configTemplate.Execute(buf, configArgs); err != nil {
+	configFile, err := os.OpenFile(filepath.Join(x.config.HomeDir, "rippled.cfg"), os.O_CREATE|os.O_RDWR, 0o700)
+	if err != nil {
 		return errors.WithStack(err)
 	}
+	defer configFile.Close()
 
-	if err := os.WriteFile(filepath.Join(x.config.HomeDir, "rippled.cfg"), buf.Bytes(), 0o700); err != nil {
+	if err := configTemplate.Execute(configFile, configArgs); err != nil {
 		return errors.WithStack(err)
 	}
 
