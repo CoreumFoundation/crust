@@ -235,7 +235,7 @@ func (f *Factory) Monitoring(
 	coredNodes []cored.Cored,
 	faucet faucet.Faucet,
 	bdJuno bdjuno.BDJuno,
-	hermes hermes.Hermes,
+	hermesApps []hermes.Hermes,
 ) infra.AppSet {
 	namePrometheus := BuildPrefixedAppName(prefix, string(prometheus.AppType))
 	nameGrafana := BuildPrefixedAppName(prefix, string(grafana.AppType))
@@ -248,7 +248,7 @@ func (f *Factory) Monitoring(
 		CoredNodes: coredNodes,
 		Faucet:     faucet,
 		BDJuno:     bdJuno,
-		Hermes:     hermes,
+		HermesApps: hermesApps,
 	})
 
 	grafanaApp := grafana.New(grafana.Config{

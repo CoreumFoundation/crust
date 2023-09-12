@@ -53,7 +53,7 @@ type Config struct {
 	CoredNodes []cored.Cored
 	Faucet     faucet.Faucet
 	BDJuno     bdjuno.BDJuno
-	Hermes     hermes.Hermes
+	HermesApps []hermes.Hermes
 }
 
 // New creates new prometheus app.
@@ -139,9 +139,9 @@ func (p Prometheus) Deployment() infra.Deployment {
 				if p.config.BDJuno.Name() != "" {
 					containers = append(containers, p.config.BDJuno)
 				}
-				// determine whether the hermes is provided
-				if p.config.Hermes.Name() != "" {
-					containers = append(containers, p.config.Hermes)
+				// append hermes apps
+				for _, h := range p.config.HermesApps {
+					containers = append(containers, h)
 				}
 
 				return containers
@@ -184,10 +184,10 @@ func (p Prometheus) saveConfigFile() error {
 	}
 
 	configArgs := struct {
-		Nodes  []nodesConfigArgs
-		Faucet hostPortConfig
-		BDJuno hostPortConfig
-		Hermes hostPortConfig
+		Nodes      []nodesConfigArgs
+		Faucet     hostPortConfig
+		BDJuno     hostPortConfig
+		HermesApps []hostPortConfig
 	}{
 		Nodes: nodesConfig,
 	}
@@ -208,12 +208,11 @@ func (p Prometheus) saveConfigFile() error {
 		}
 	}
 
-	// determine whether the hermes is provided
-	if p.config.Hermes.Name() != "" {
-		configArgs.Hermes = hostPortConfig{
-			Host: p.config.Hermes.Info().HostFromContainer,
-			Port: p.config.Hermes.Config().TelemetryPort,
-		}
+	for _, h := range p.config.HermesApps {
+		configArgs.HermesApps = append(configArgs.HermesApps, hostPortConfig{
+			Host: h.Info().HostFromContainer,
+			Port: h.Config().TelemetryPort,
+		})
 	}
 
 	buf := &bytes.Buffer{}

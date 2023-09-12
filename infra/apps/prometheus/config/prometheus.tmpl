@@ -35,12 +35,14 @@ scrape_configs:
           instance: "bdjuno"
 {{ end }}
 
-{{ if .Hermes.Host }}
+{{ if (ne (len .HermesApps) 0) }}
   - job_name: 'ibc-relayer-hermes'
     metrics_path: /metrics
     static_configs:
-      - targets: [ "{{.Hermes.Host}}:{{.Hermes.Port}}" ]
+      {{ range $i, $hermes := .HermesApps }}
+      - targets: [ "{{$hermes.Host}}:{{$hermes.Port}}" ]
         labels:
           environment: znet
-          instance: "ibc-relayer-hermes"
-{{ end }}
+          instance: "ibc-relayer-hermes-{{$i}}"
+      {{ end }}
+{{end}}
