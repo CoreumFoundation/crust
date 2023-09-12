@@ -58,7 +58,7 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	log.Info("Waiting until all applications start...")
 	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer waitCancel()
-	if err := infra.WaitUntilHealthy(waitCtx, buildWaitForApps(appSet)...); err != nil {
+	if err := infra.WaitUntilHealthy(waitCtx, infra.BuildWaitForApps(appSet)...); err != nil {
 		return err
 	}
 
@@ -154,16 +154,4 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	}
 	log.Info("All tests succeeded")
 	return nil
-}
-
-func buildWaitForApps(appSet infra.AppSet) []infra.HealthCheckCapable {
-	waitForApps := make([]infra.HealthCheckCapable, 0, len(appSet))
-	for _, app := range appSet {
-		withHealthCheck, ok := app.(infra.HealthCheckCapable)
-		if !ok {
-			withHealthCheck = infra.IsRunning(app)
-		}
-		waitForApps = append(waitForApps, withHealthCheck)
-	}
-	return waitForApps
 }

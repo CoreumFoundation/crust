@@ -27,6 +27,7 @@ const (
 	AppPrefixIBC        = "ibc"
 	AppPrefixExplorer   = "explorer"
 	AppPrefixMonitoring = "monitoring"
+	AppPrefixXRPL       = "xrpl"
 )
 
 // Predefined Profiles.
@@ -38,6 +39,7 @@ const (
 	ProfileFaucet                  = "faucet"
 	ProfileExplorer                = "explorer"
 	ProfileMonitoring              = "monitoring"
+	ProfileXRPL                    = "xrpl"
 	ProfileIntegrationTestsIBC     = "integration-tests-ibc"
 	ProfileIntegrationTestsModules = "integration-tests-modules"
 )
@@ -50,6 +52,7 @@ var profiles = []string{
 	ProfileFaucet,
 	ProfileExplorer,
 	ProfileMonitoring,
+	ProfileXRPL,
 	ProfileIntegrationTestsIBC,
 	ProfileIntegrationTestsModules,
 }
@@ -153,6 +156,12 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 			bdJunoApp,
 			hermesApp,
 			relayerCosmosApp,
+		)...)
+	}
+
+	if pMap[ProfileXRPL] {
+		appSet = append(appSet, appF.XRPL(
+			AppPrefixXRPL,
 		)...)
 	}
 
