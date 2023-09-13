@@ -129,9 +129,10 @@ func (d *Docker) Deploy(ctx context.Context, appSet infra.AppSet) error {
 	}
 
 	log := logger.Get(ctx)
-	log.Info("Waiting until all applications start...")
+	log.Info("Waiting until all applications start.")
 	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer waitCancel()
+	defer log.Info("All applications are healthy.")
 
 	return infra.WaitUntilHealthy(waitCtx, infra.BuildWaitForApps(appSet)...)
 }

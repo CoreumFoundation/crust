@@ -174,7 +174,7 @@ func (x XRPL) saveConfigFile() error {
 		WSPort:   x.config.WSPort,
 	}
 
-	configFile, err := os.OpenFile(filepath.Join(x.config.HomeDir, "rippled.cfg"), os.O_CREATE|os.O_RDWR, 0o700)
+	configFile, err := os.OpenFile(filepath.Join(x.config.HomeDir, "rippled.cfg"), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		return errors.WithStack(err)
 	}
