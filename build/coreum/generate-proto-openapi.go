@@ -98,7 +98,7 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 
 // executeGoProtocCommand generates go code from proto files.
 func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, includeDirs, generateDirs []string) error {
-	deps(tools.EnsureProtoc, tools.EnsureProtocGenGRPCGateway, tools.EnsureProtocGenGoCosmos)
+	deps(tools.EnsureProtoc, tools.EnsureProtocGenOpenAPIV2)
 
 	outDir, err := os.MkdirTemp("", "")
 	if err != nil {
