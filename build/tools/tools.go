@@ -30,7 +30,6 @@ import (
 const (
 	Go                    Name = "go"
 	GolangCI              Name = "golangci"
-	Ignite                Name = "ignite"
 	Cosmovisor            Name = "cosmovisor"
 	Aarch64LinuxMuslCross Name = "aarch64-linux-musl-cross"
 	LibWASMMuslC          Name = "libwasmvm_muslc"
@@ -42,6 +41,7 @@ const (
 	Protoc                Name = "protoc"
 	ProtocGenDoc          Name = "protoc-gen-doc"
 	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
+	ProtocGenOpenAPIV2    Name = "protoc-gen-openapiv2"
 	ProtocGenGoCosmos     Name = "protoc-gen-gocosmos"
 )
 
@@ -98,31 +98,6 @@ var tools = []Tool{
 					"bin/golangci-lint": "golangci-lint-1.54.0-darwin-arm64/golangci-lint",
 				},
 			},
-		},
-	},
-
-	// https://github.com/ignite/cli/releases/
-	// v0.27.1 is the last version based on Cosmos v0.47.x
-	BinaryTool{
-		Name:    Ignite,
-		Version: "0.27.1",
-		Local:   true,
-		Sources: Sources{
-			PlatformLinuxAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.27.1/ignite_0.27.1_linux_amd64.tar.gz",
-				Hash: "sha256:040a898521d1bd7d6521d2d85151ae8c8821c19492a8c0d0cb21c5cddcf56df0",
-			},
-			PlatformDarwinAMD64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.27.1/ignite_0.27.1_darwin_amd64.tar.gz",
-				Hash: "sha256:e836ff1a854594cdb9a1c6fc13fff057eaf364da97a1cbeb1fa24285036eb131",
-			},
-			PlatformDarwinARM64: {
-				URL:  "https://github.com/ignite/cli/releases/download/v0.27.1/ignite_0.27.1_darwin_arm64.tar.gz",
-				Hash: "sha256:376f1a25d134b1f7a8fc31d58f4185fca50a81efbfd57e041d435fb2ee2ee6ed",
-			},
-		},
-		Binaries: map[string]string{
-			"bin/ignite": "ignite",
 		},
 	},
 
@@ -428,6 +403,13 @@ var tools = []Tool{
 		Name:    ProtocGenGRPCGateway,
 		Version: "v1.16.0",
 		Package: "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway",
+	},
+
+	// https://github.com/grpc-ecosystem/grpc-gateway/releases
+	GoPackageTool{
+		Name:    ProtocGenOpenAPIV2,
+		Version: "v2.17.0",
+		Package: "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2",
 	},
 
 	// https://github.com/regen-network/cosmos-proto/releases
