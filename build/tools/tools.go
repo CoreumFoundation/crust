@@ -715,6 +715,11 @@ func EnsureProtocGenGoCosmos(ctx context.Context, deps build.DepsFunc) error {
 	return Ensure(ctx, ProtocGenGoCosmos, PlatformLocal)
 }
 
+// EnsureProtocGenOpenAPIV2 ensures that protoc-gen-openapiv2 is available.
+func EnsureProtocGenOpenAPIV2(ctx context.Context, deps build.DepsFunc) error {
+	return Ensure(ctx, ProtocGenOpenAPIV2, PlatformLocal)
+}
+
 func linkTool(dst string) error {
 	relink, err := shouldRelink(dst)
 	if err != nil {
