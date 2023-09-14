@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	cosmosSdkModule    = "github.com/cosmos/cosmos-sdk"
+	cosmosSDKModule    = "github.com/cosmos/cosmos-sdk"
+	cosmosIBCModule    = "github.com/cosmos/ibc-go/v7"
 	cosmosProtoModule  = "github.com/cosmos/cosmos-proto"
-	cosmWasmModule     = "github.com/CosmWasm/wasmd"
+	cosmWASMModule     = "github.com/CosmWasm/wasmd"
 	gogoProtobufModule = "github.com/cosmos/gogoproto"
 	grpcGatewayModule  = "github.com/grpc-ecosystem/grpc-gateway"
 )
@@ -31,9 +32,9 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 
 	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
 	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
-		cosmosSdkModule,
+		cosmosSDKModule,
 		cosmosProtoModule,
-		cosmWasmModule,
+		cosmWASMModule,
 		gogoProtobufModule,
 		grpcGatewayModule,
 	)
@@ -41,25 +42,26 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	absPath, err := filepath.Abs(filepath.Join(repoPath, "proto"))
+	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	includeDirs := []string{
-		absPath,
-		filepath.Join(moduleDirs[cosmosSdkModule], "proto"),
+		filepath.Join(absPath, "proto"),
+		filepath.Join(absPath, "third_party", "proto"),
+		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
 		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
-		filepath.Join(moduleDirs[cosmWasmModule], "proto"),
+		filepath.Join(moduleDirs[cosmWASMModule], "proto"),
 		moduleDirs[gogoProtobufModule],
 		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
 	generateDirs := []string{
-		absPath,
+		filepath.Join(absPath, "proto"),
 		// FIXME(v47-generators) we must switch to cosmos sdk nft module before uncommenting this
-		// filepath.Join(moduleDirs[cosmosSdkModule], "proto"),
-		filepath.Join(moduleDirs[cosmWasmModule], "proto"),
+		// filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
+		filepath.Join(moduleDirs[cosmWASMModule], "proto"),
 	}
 
 	err = executeProtocCommand(ctx, deps, includeDirs, generateDirs)

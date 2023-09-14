@@ -24,7 +24,7 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 
 	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
 	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
-		cosmosSdkModule,
+		cosmosSDKModule,
 		cosmosProtoModule,
 		gogoProtobufModule,
 		grpcGatewayModule,
@@ -33,21 +33,22 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
-	absPath, err := filepath.Abs(filepath.Join(repoPath, "proto"))
+	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	includeDirs := []string{
-		absPath,
-		filepath.Join(moduleDirs[cosmosSdkModule], "proto"),
+		filepath.Join(absPath, "proto"),
+		filepath.Join(absPath, "third_party", "proto"),
+		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
 		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
 		moduleDirs[gogoProtobufModule],
 		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
 	generateDirs := []string{
-		absPath,
+		filepath.Join(absPath, "proto"),
 	}
 
 	err = executeGoProtocCommand(ctx, deps, includeDirs, generateDirs)
