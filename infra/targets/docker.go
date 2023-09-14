@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -122,7 +123,18 @@ func (d *Docker) Remove(ctx context.Context) error {
 
 // Deploy deploys environment to docker target.
 func (d *Docker) Deploy(ctx context.Context, appSet infra.AppSet) error {
-	return appSet.Deploy(ctx, d, d.config, d.spec)
+	err := appSet.Deploy(ctx, d, d.config, d.spec)
+	if err != nil {
+		return err
+	}
+
+	log := logger.Get(ctx)
+	log.Info("Waiting until all applications start.")
+	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer waitCancel()
+	defer log.Info("All applications are healthy.")
+
+	return infra.WaitUntilHealthy(waitCtx, infra.BuildWaitForApps(appSet)...)
 }
 
 // DeployContainer starts container in docker.
