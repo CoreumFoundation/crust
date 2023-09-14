@@ -3,6 +3,7 @@ package infra
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -28,9 +29,11 @@ type HealthCheckCapable interface {
 
 // WaitUntilHealthy waits until app is healthy or context expires.
 func WaitUntilHealthy(ctx context.Context, apps ...HealthCheckCapable) error {
+	log := logger.Get(ctx)
 	for _, app := range apps {
 		app := app
 		ctx = logger.With(ctx, zap.String("app", app.Name()))
+		log.Info(fmt.Sprintf("Waiting for %s start.", app.Name()))
 		if err := retry.Do(ctx, time.Second, func() error {
 			return app.HealthCheck(ctx)
 		}); err != nil {
@@ -122,4 +125,17 @@ func CheckCosmosNodeHealth(ctx context.Context, clientCtx client.Context, appInf
 	}
 
 	return nil
+}
+
+// BuildWaitForApps builds a list of HealthCheckCapable objects from the given AppSet.
+func BuildWaitForApps(appSet AppSet) []HealthCheckCapable {
+	waitForApps := make([]HealthCheckCapable, 0, len(appSet))
+	for _, app := range appSet {
+		withHealthCheck, ok := app.(HealthCheckCapable)
+		if !ok {
+			withHealthCheck = IsRunning(app)
+		}
+		waitForApps = append(waitForApps, withHealthCheck)
+	}
+	return waitForApps
 }

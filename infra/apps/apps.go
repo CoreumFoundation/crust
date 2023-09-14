@@ -22,6 +22,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 	"github.com/CoreumFoundation/crust/infra/apps/prometheus"
 	"github.com/CoreumFoundation/crust/infra/apps/relayercosmos"
+	"github.com/CoreumFoundation/crust/infra/apps/xrpl"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
@@ -266,6 +267,20 @@ func (f *Factory) Monitoring(
 		prometheusApp,
 		grafanaApp,
 	}
+}
+
+// XRPL returns xrpl node app set.
+func (f *Factory) XRPL(prefix string) infra.App {
+	nameXRPL := BuildPrefixedAppName(prefix, string(xrpl.AppType))
+
+	return xrpl.New(xrpl.Config{
+		Name:       nameXRPL,
+		HomeDir:    filepath.Join(f.config.AppDir, nameXRPL),
+		AppInfo:    f.spec.DescribeApp(xrpl.AppType, nameXRPL),
+		RPCPort:    xrpl.DefaultRPCPort,
+		WSPort:     xrpl.DefaultWSPort,
+		FaucetSeed: xrpl.DefaultFaucetSeed,
+	})
 }
 
 // BuildPrefixedAppName builds the app name based on its prefix and name.

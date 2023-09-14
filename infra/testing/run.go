@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -54,15 +53,6 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		return err
 	}
 
-	log := logger.Get(ctx)
-	log.Info("Waiting until all applications start...")
-	waitCtx, waitCancel := context.WithTimeout(ctx, 5*time.Minute)
-	defer waitCancel()
-	if err := infra.WaitUntilHealthy(waitCtx, buildWaitForApps(appSet)...); err != nil {
-		return err
-	}
-
-	log.Info("All the applications are ready")
 	coredApp := appSet.FindRunningAppByName("cored-00")
 	if coredApp == nil {
 		return errors.New("no running cored app found")
@@ -75,6 +65,8 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 		"-test.v", "-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
 		"-coreum-grpc-address", infra.JoinNetAddr("", coredNode.Info().HostFromHost, coredNode.Config().Ports.GRPC),
 	}
+
+	log := logger.Get(ctx)
 	if config.TestFilter != "" {
 		log.Info("Running only tests matching filter", zap.String("filter", config.TestFilter))
 		args = append(args, "-test.run", config.TestFilter)
@@ -154,16 +146,4 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, config i
 	}
 	log.Info("All tests succeeded")
 	return nil
-}
-
-func buildWaitForApps(appSet infra.AppSet) []infra.HealthCheckCapable {
-	waitForApps := make([]infra.HealthCheckCapable, 0, len(appSet))
-	for _, app := range appSet {
-		withHealthCheck, ok := app.(infra.HealthCheckCapable)
-		if !ok {
-			withHealthCheck = infra.IsRunning(app)
-		}
-		waitForApps = append(waitForApps, withHealthCheck)
-	}
-	return waitForApps
 }
