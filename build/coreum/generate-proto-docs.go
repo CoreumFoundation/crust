@@ -20,7 +20,7 @@ import (
 func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
-	moduleDirs, includeDirs, err := protoCDirectories(ctx, deps)
+	moduleDirs, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {
 		return err
 	}

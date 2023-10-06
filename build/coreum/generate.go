@@ -26,7 +26,7 @@ func Generate(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Generate(ctx, repoPath, deps)
 }
 
-func protoCDirectories(ctx context.Context, deps build.DepsFunc) (map[string]string, []string, error) {
+func protoCDirectories(ctx context.Context, repoPath string, deps build.DepsFunc) (map[string]string, []string, error) {
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)

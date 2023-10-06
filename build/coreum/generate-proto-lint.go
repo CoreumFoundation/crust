@@ -21,7 +21,7 @@ var configLint []byte
 func lintProto(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
-	_, includeDirs, err := protoCDirectories(ctx, deps)
+	_, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {
 		return err
 	}
