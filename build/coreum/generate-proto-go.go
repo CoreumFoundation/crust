@@ -23,12 +23,7 @@ func generateProtoGo(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
 	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
-	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
-		cosmosSDKModule,
-		cosmosProtoModule,
-		gogoProtobufModule,
-		grpcGatewayModule,
-	)
+	moduleDirs, err := moduleDirectories(ctx, deps)
 	if err != nil {
 		return err
 	}

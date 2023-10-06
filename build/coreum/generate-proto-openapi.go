@@ -15,7 +15,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -37,14 +36,7 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
 	// We need versions to derive paths to protoc for given modules installed by `go mod tidy`
-	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
-		cosmosSDKModule,
-		cosmosIBCModule,
-		cosmWASMModule,
-		cosmosProtoModule,
-		gogoProtobufModule,
-		grpcGatewayModule,
-	)
+	moduleDirs, err := moduleDirectories(ctx, deps)
 	if err != nil {
 		return err
 	}
