@@ -20,8 +20,7 @@ import (
 func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
-	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
-	moduleDirs, err := moduleDirectories(ctx, deps)
+	moduleDirs, includeDirs, err := protoCDirectories(ctx, deps)
 	if err != nil {
 		return err
 	}
@@ -29,16 +28,6 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return errors.WithStack(err)
-	}
-
-	includeDirs := []string{
-		filepath.Join(absPath, "proto"),
-		filepath.Join(absPath, "third_party", "proto"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
-		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
-		filepath.Join(moduleDirs[cosmWASMModule], "proto"),
-		moduleDirs[gogoProtobufModule],
-		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
 	generateDirs := []string{

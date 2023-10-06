@@ -2,6 +2,9 @@ package coreum
 
 import (
 	"context"
+	"path/filepath"
+
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/golang"
@@ -23,8 +26,13 @@ func Generate(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Generate(ctx, repoPath, deps)
 }
 
-func moduleDirectories(ctx context.Context, deps build.DepsFunc) (map[string]string, error) {
-	return golang.ModuleDirs(ctx, deps, repoPath,
+func protoCDirectories(ctx context.Context, deps build.DepsFunc) (map[string]string, []string, error) {
+	absPath, err := filepath.Abs(repoPath)
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+
+	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
 		cosmosSDKModule,
 		cosmosIBCModule,
 		cosmWASMModule,
@@ -32,4 +40,18 @@ func moduleDirectories(ctx context.Context, deps build.DepsFunc) (map[string]str
 		gogoProtobufModule,
 		grpcGatewayModule,
 	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return moduleDirs, []string{
+		filepath.Join(absPath, "proto"),
+		filepath.Join(absPath, "third_party", "proto"),
+		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
+		filepath.Join(moduleDirs[cosmosIBCModule], "proto"),
+		filepath.Join(moduleDirs[cosmWASMModule], "proto"),
+		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
+		moduleDirs[gogoProtobufModule],
+		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
+	}, nil
 }
