@@ -2,6 +2,8 @@ package coreum
 
 import (
 	"context"
+	_ "embed"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 
@@ -12,6 +14,9 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
+
+//go:embed proto-lint.json
+var configLint []byte
 
 func lintProto(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
@@ -45,21 +50,7 @@ func executeLintProtocCommand(ctx context.Context, deps build.DepsFunc, includeD
 
 	args := []string{
 		"--buf-lint_out=.",
-		`--buf-lint_opt={
-			"input_config": {
-				"version": "v1",
-				"lint": {
-					"use": [
-						"BASIC"
-					],
-					"except": [
-						"ENUM_VALUE_UPPER_SNAKE_CASE",
-						"FIELD_LOWER_SNAKE_CASE"
-					]
-				}
-			},
-			"error_format": "json"
-		}`,
+		fmt.Sprintf("--buf-lint_opt=%s", configLint),
 		"--plugin", must.String(filepath.Abs("bin/protoc-gen-buf-lint")),
 	}
 
