@@ -71,7 +71,8 @@ Defines the list of available application profiles to run. Available profiles:
 - faucet - runs faucet
 - explorer - runs block explorer
 - monitoring - runs the monitoring stack
-- integration-tests - runs setup required by integration tests (3cored and faucet)
+- integration-tests-ibc - runs setup required by IBC integration tests
+- integration-tests-modules - runs setup required by modules integration tests
 
 To start fully-featured set you may run:
 
