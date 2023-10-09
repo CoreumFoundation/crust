@@ -23,7 +23,7 @@ func breakingProto(ctx context.Context, deps build.DepsFunc) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	defer os.RemoveAll(masterDir)
+	defer os.RemoveAll(masterDir) //nolint:errcheck // error doesn't matter
 
 	if err := git.Clone(ctx, masterDir, repoPath, "master"); err != nil {
 		return err
@@ -43,7 +43,7 @@ func breakingProto(ctx context.Context, deps build.DepsFunc) error {
 	if err := os.MkdirAll(filepath.Dir(imageFile), 0o700); err != nil {
 		return err
 	}
-	defer os.Remove(imageFile)
+	defer os.Remove(imageFile) //nolint:errcheck // error doesn't matter
 
 	masterProtoFiles, err := findAllProtoFiles([]string{filepath.Join(masterDir, "proto")})
 	if err != nil {
