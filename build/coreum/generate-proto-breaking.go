@@ -1,11 +1,14 @@
 package coreum
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"text/template"
 
 	"github.com/pkg/errors"
 
@@ -15,6 +18,9 @@ import (
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
+
+//go:embed proto-breaking.tmpl.json
+var configBreakingTmpl string
 
 func breakingProto(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy, tools.EnsureProtoc, tools.EnsureProtocGenBufBreaking)
@@ -77,15 +83,16 @@ func breakingProto(ctx context.Context, deps build.DepsFunc) error {
 		return err
 	}
 
+	configBuf := &bytes.Buffer{}
+	must.OK(template.Must(template.New("config").Parse(configBreakingTmpl)).Execute(configBuf, struct {
+		AgainstInput string
+	}{
+		AgainstInput: imageFile,
+	}))
+
 	args := []string{
 		"--buf-breaking_out=.",
-		fmt.Sprintf(`--buf-breaking_opt={
-			"against_input": "%s",
-			"limit_to_input_files": true,
-			"input_config": {"version": "v1", "breaking": {"use": ["FILE"]}},
-			"against_input_config": {"version": "v1", "breaking": {"use": ["FILE"]}},
-			"log_level": "debug"
-		}`, imageFile),
+		fmt.Sprintf("--buf-breaking_opt=%s", configBuf),
 		"--plugin", must.String(filepath.Abs("bin/protoc-gen-buf-breaking")),
 	}
 
