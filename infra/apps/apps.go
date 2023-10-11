@@ -210,6 +210,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		CoreumRelayerMnemonic: cored.RelayerMnemonicGaia,
 		PeeredChain:           gaiaApp,
 	})
+	relayerHermesGaiaApp = relayerHermesGaiaApp
 
 	relayerHermesOsmosisApp := hermes.New(hermes.Config{
 		Name:                  nameRelayerHermesOsmosis,
@@ -224,7 +225,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 	return infra.AppSet{
 		gaiaApp,
 		osmosisApp,
-		relayerHermesGaiaApp,
+		//relayerHermesGaiaApp,
 		relayerHermesOsmosisApp,
 	}
 }
