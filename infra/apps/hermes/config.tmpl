@@ -120,7 +120,6 @@ gas_multiplier = 1.5
 clock_drift = '60s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
-packet_filter = { policy = 'allow', list = [['transfer', '*'], ['wasm*', '*']] }
 
 [[chains]]
 id = '{{ .PeerChanID }}'
@@ -138,4 +137,3 @@ gas_multiplier = 1.5
 clock_drift = '60s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
-packet_filter = { policy = 'allow', list = [['transfer', '*'], ['wasm*', '*']] }
