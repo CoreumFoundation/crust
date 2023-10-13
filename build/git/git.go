@@ -127,7 +127,7 @@ func Clone(ctx context.Context, dstDir, srcDir string, branch string) error {
 	}
 
 	cmd1 := exec.Command("git", "fetch", "origin", branch+":"+branch)
-	cmd1.Dir = dstAbs
+	cmd1.Dir = srcDir
 
 	cmd2 := exec.Command("git", "clone", "--single-branch", "--no-tags", "-b", branch, srcAbs, ".")
 	cmd2.Dir = dstAbs
