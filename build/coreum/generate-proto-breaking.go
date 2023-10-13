@@ -31,7 +31,7 @@ func breakingProto(ctx context.Context, deps build.DepsFunc) error {
 	}
 	defer os.RemoveAll(masterDir) //nolint:errcheck // error doesn't matter
 
-	if err := git.Clone(ctx, masterDir, repoPath, "master"); err != nil {
+	if err := git.Clone(ctx, masterDir, repoPath, "origin/master"); err != nil {
 		return err
 	}
 
