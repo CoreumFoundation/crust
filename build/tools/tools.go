@@ -42,6 +42,8 @@ const (
 	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
 	ProtocGenOpenAPIV2    Name = "protoc-gen-openapiv2"
 	ProtocGenGoCosmos     Name = "protoc-gen-gocosmos"
+	ProtocGenBufLint      Name = "protoc-gen-buf-lint"
+	ProtocGenBufBreaking  Name = "protoc-gen-buf-breaking"
 )
 
 var tools = []Tool{
@@ -372,6 +374,20 @@ var tools = []Tool{
 		Version: "v1.4.10",
 		Package: "github.com/cosmos/gogoproto/protoc-gen-gocosmos",
 	},
+
+	// https://github.com/bufbuild/buf/releases
+	GoPackageTool{
+		Name:    ProtocGenBufLint,
+		Version: "v1.26.1",
+		Package: "github.com/bufbuild/buf/cmd/protoc-gen-buf-lint",
+	},
+
+	// https://github.com/bufbuild/buf/releases
+	GoPackageTool{
+		Name:    ProtocGenBufBreaking,
+		Version: "v1.26.1",
+		Package: "github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking",
+	},
 }
 
 var toolsMap = func(tools []Tool) map[Name]Tool {
@@ -672,6 +688,16 @@ func EnsureProtocGenGoCosmos(ctx context.Context, deps build.DepsFunc) error {
 // EnsureProtocGenOpenAPIV2 ensures that protoc-gen-openapiv2 is available.
 func EnsureProtocGenOpenAPIV2(ctx context.Context, deps build.DepsFunc) error {
 	return Ensure(ctx, ProtocGenOpenAPIV2, PlatformLocal)
+}
+
+// EnsureProtocGenBufLint ensures that protoc-gen-buf-lint is available.
+func EnsureProtocGenBufLint(ctx context.Context, deps build.DepsFunc) error {
+	return Ensure(ctx, ProtocGenBufLint, PlatformLocal)
+}
+
+// EnsureProtocGenBufBreaking ensures that protoc-gen-buf-breaking is available.
+func EnsureProtocGenBufBreaking(ctx context.Context, deps build.DepsFunc) error {
+	return Ensure(ctx, ProtocGenBufBreaking, PlatformLocal)
 }
 
 func linkTool(dst string) error {

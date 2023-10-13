@@ -15,7 +15,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -36,15 +35,7 @@ type swaggerInfo struct {
 func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
-	// We need versions to derive paths to protoc for given modules installed by `go mod tidy`
-	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
-		cosmosSDKModule,
-		cosmosIBCModule,
-		cosmWASMModule,
-		cosmosProtoModule,
-		gogoProtobufModule,
-		grpcGatewayModule,
-	)
+	moduleDirs, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {
 		return err
 	}
@@ -52,17 +43,6 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return errors.WithStack(err)
-	}
-
-	includeDirs := []string{
-		filepath.Join(absPath, "proto"),
-		filepath.Join(absPath, "third_party", "proto"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
-		filepath.Join(moduleDirs[cosmosIBCModule], "proto"),
-		filepath.Join(moduleDirs[cosmWASMModule], "proto"),
-		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
-		moduleDirs[gogoProtobufModule],
-		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
 	coreumPath := filepath.Join(absPath, "proto", "coreum")

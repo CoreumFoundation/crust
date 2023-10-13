@@ -109,3 +109,25 @@ func VersionFromTag(ctx context.Context, repoPath string) (string, error) {
 	}
 	return "", nil
 }
+
+// Clone clones specific branch from repo to another directory.
+func Clone(ctx context.Context, dstDir, srcDir string, branch string) error {
+	srcAbs, err := filepath.Abs(srcDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := os.MkdirAll(dstDir, 0o700); err != nil {
+		return err
+	}
+
+	dstAbs, err := filepath.Abs(dstDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	cmd := exec.Command("git", "clone", "--single-branch", "--no-tags", "-b", branch, srcAbs, ".")
+	cmd.Dir = dstAbs
+
+	return libexec.Exec(ctx, cmd)
+}

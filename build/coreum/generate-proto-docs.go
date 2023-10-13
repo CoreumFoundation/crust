@@ -12,17 +12,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
-)
-
-const (
-	cosmosSDKModule    = "github.com/cosmos/cosmos-sdk"
-	cosmosIBCModule    = "github.com/cosmos/ibc-go/v7"
-	cosmosProtoModule  = "github.com/cosmos/cosmos-proto"
-	cosmWASMModule     = "github.com/CosmWasm/wasmd"
-	gogoProtobufModule = "github.com/cosmos/gogoproto"
-	grpcGatewayModule  = "github.com/grpc-ecosystem/grpc-gateway"
 )
 
 // generateProtoDocs collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
@@ -30,14 +20,7 @@ const (
 func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
-	//  We need versions to derive paths to protoc for given modules installed by `go mod tidy`
-	moduleDirs, err := golang.ModuleDirs(ctx, deps, repoPath,
-		cosmosSDKModule,
-		cosmosProtoModule,
-		cosmWASMModule,
-		gogoProtobufModule,
-		grpcGatewayModule,
-	)
+	moduleDirs, includeDirs, err := protoCDirectories(ctx, repoPath, deps)
 	if err != nil {
 		return err
 	}
@@ -45,16 +28,6 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	absPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return errors.WithStack(err)
-	}
-
-	includeDirs := []string{
-		filepath.Join(absPath, "proto"),
-		filepath.Join(absPath, "third_party", "proto"),
-		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
-		filepath.Join(moduleDirs[cosmosProtoModule], "proto"),
-		filepath.Join(moduleDirs[cosmWASMModule], "proto"),
-		moduleDirs[gogoProtobufModule],
-		filepath.Join(moduleDirs[grpcGatewayModule], "third_party", "googleapis"),
 	}
 
 	generateDirs := []string{
