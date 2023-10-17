@@ -212,7 +212,6 @@ func (h Hermes) saveConfigFile() error {
 		CoreumChanID:        string(h.config.Cored.Config().NetworkConfig.ChainID()),
 		CoreumRPCURL:        infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
 		CoreumGRPCURL:       infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.GRPC),
-		CoreumWebsocketURL:  infra.JoinNetAddr("ws", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC) + "/websocket",
 		CoreumAccountPrefix: h.config.Cored.Config().NetworkConfig.Provider.GetAddressPrefix(),
 		// TODO(dzmitryhil) move gas price for host and peer chains to prams
 		CoreumGasPrice: sdk.NewDecCoinFromDec("udevcore", sdk.MustNewDecFromStr("0.0625")),
@@ -220,7 +219,6 @@ func (h Hermes) saveConfigFile() error {
 		PeerChanID:        h.config.PeeredChain.AppConfig().ChainID,
 		PeerRPCURL:        infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC),
 		PeerGRPCURL:       infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.GRPC),
-		PeerWebsocketURL:  infra.JoinNetAddr("ws", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC) + "/websocket",
 		PeerAccountPrefix: h.config.PeeredChain.AppTypeConfig().AccountPrefix,
 		PeerGasPrice:      sdk.NewDecCoinFromDec("stake", sdk.MustNewDecFromStr("0.1")),
 	}
