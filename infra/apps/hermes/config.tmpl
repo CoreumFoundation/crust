@@ -109,6 +109,7 @@ id = '{{ .CoreumChanID }}'
 rpc_addr = '{{ .CoreumRPCURL }}'
 rpc_timeout = '30s'
 grpc_addr = '{{ .CoreumGRPCURL }}'
+# Only pull mode works with WASM channels: https://hermes.informal.systems/documentation/configuration/configure-hermes.html?highlight=wasm#configuring-support-for-wasm-relaying
 event_source = { mode = 'pull', interval = '1s' }
 account_prefix = '{{ .CoreumAccountPrefix }}'
 key_name = 'coreum-key'
@@ -127,6 +128,7 @@ id = '{{ .PeerChanID }}'
 rpc_addr = '{{ .PeerRPCURL }}'
 rpc_timeout = '30s'
 grpc_addr = '{{ .PeerGRPCURL }}'
+# Only pull mode works with WASM channels: https://hermes.informal.systems/documentation/configuration/configure-hermes.html?highlight=wasm#configuring-support-for-wasm-relaying
 event_source = { mode = 'pull', interval = '1s' }
 account_prefix = '{{ .PeerAccountPrefix }}'
 key_name = 'peer-key'
