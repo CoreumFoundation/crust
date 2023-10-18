@@ -35,7 +35,6 @@ const (
 	LibWASMMuslC          Name = "libwasmvm_muslc"
 	Gaia                  Name = "gaia"
 	Osmosis               Name = "osmosis"
-	RelayerCosmos         Name = "relayercosmos"
 	Hermes                Name = "hermes"
 	CoredV202             Name = "cored-v2.0.2"
 	Protoc                Name = "protoc"
@@ -245,51 +244,6 @@ var tools = []Tool{
 			},
 		},
 	},
-
-	// https://github.com/cosmos/relayer/releases
-	BinaryTool{
-		Name:    RelayerCosmos,
-		Version: "v2.4.1",
-		Sources: Sources{
-			PlatformDockerAMD64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.1/Cosmos.Relayer_2.4.1_linux_amd64.tar.gz",
-				Hash: "sha256:b7b1b74276dd8c6407159e05135f90efc6b896126d2c7bd56579c32a23914bee",
-				Binaries: map[string]string{
-					"bin/relayercosmos": "Cosmos Relayer_2.4.1_linux_amd64/rly",
-				},
-			},
-			PlatformDockerARM64: {
-				URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.1/Cosmos.Relayer_2.4.1_linux_arm64.tar.gz",
-				Hash: "sha256:904df3337517118c3cf696502deb1acae191264186c1543cd11f50b8afd16242",
-				Binaries: map[string]string{
-					"bin/relayercosmos": "Cosmos Relayer_2.4.1_linux_arm64/rly",
-				},
-			},
-		},
-	},
-
-	// FIXME (wojtek): When using v2.4.0 tests TestIBCTransferFromSmartContract and TestIBCAssetFTSendCommissionAndBurnRate don't pass.
-
-	//  {
-	//  Name: RelayerCosmos,
-	//	Version: "v2.4.0",
-	//	Sources: Sources{
-	//		PlatformDockerAMD64: {
-	//			URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_amd64.tar.gz",
-	//			Hash: "sha256:6c7b197656643ecb16dabaae67dfda943c4ccffe46baac4ab606762bf78b9a30",
-	//			Binaries: map[string]string{
-	//				"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_amd64/rly",
-	//			},
-	//		},
-	//		PlatformDockerARM64: {
-	//			URL:  "https://github.com/cosmos/relayer/releases/download/v2.4.0/Cosmos.Relayer_2.4.0_linux_arm64.tar.gz",
-	//			Hash: "sha256:b7c1f4109db5fc8a095cf6a673233adc76103b4fa8e9aae9c79323e6ddb00687",
-	//			Binaries: map[string]string{
-	//				"bin/relayercosmos": "Cosmos Relayer_2.4.0_linux_arm64/rly",
-	//			},
-	//		},
-	//	},
-	// },
 
 	// https://github.com/informalsystems/hermes/releases
 	BinaryTool{
