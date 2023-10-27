@@ -295,7 +295,7 @@ func (c Cored) Deployment() infra.Deployment {
 			}
 			if c.config.RootNode != nil {
 				args = append(args,
-					"--p2p.persistent_peers", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Config().Ports.P2P),
+					"--p2p.seeds", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Config().Ports.P2P),
 				)
 			}
 
