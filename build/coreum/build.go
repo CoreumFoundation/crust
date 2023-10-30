@@ -2,10 +2,12 @@ package coreum
 
 import (
 	"context"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/tools"
@@ -95,7 +97,7 @@ func Tidy(ctx context.Context, deps build.DepsFunc) error {
 
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureRepo, Generate, CompileAllSmartContracts, lintProto, breakingProto)
+	deps(ensureRepo, Generate, CompileAllSmartContracts, formatProto, lintProto, breakingProto)
 	return golang.Lint(ctx, repoPath, deps)
 }
 
@@ -144,4 +146,12 @@ func coredVersionParams(ctx context.Context, buildTags []string) (params, error)
 	}
 
 	return ps, nil
+}
+
+func formatProto(ctx context.Context, deps build.DepsFunc) error {
+	deps(tools.EnsureBuf)
+
+	cmd := exec.Command(tools.Path("bin/buf", tools.PlatformLocal), "format", "-w")
+	cmd.Dir = filepath.Join(repoPath, "proto", "coreum")
+	return libexec.Exec(ctx, cmd)
 }
