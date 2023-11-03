@@ -95,6 +95,7 @@ func (f *Factory) CoredNetwork(
 			},
 			FundingMnemonic: cored.FundingMnemonic,
 			FaucetMnemonic:  cored.FaucetMnemonic,
+			GasPriceStr:     cored.DefaultGasPriceStr,
 			BinaryVersion:   binaryVersion,
 			TimeoutCommit:   f.spec.TimeoutCommit,
 		})
@@ -185,6 +186,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		FundingMnemonic: gaiad.FundingMnemonic,
 		TimeoutCommit:   f.config.TimeoutCommit,
 		WrapperDir:      f.config.WrapperDir,
+		GasPriceStr:     gaiad.DefaultGasPriceStr,
 	})
 
 	osmosisApp := osmosis.New(cosmoschain.AppConfig{
@@ -199,6 +201,7 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		FundingMnemonic: osmosis.FundingMnemonic,
 		TimeoutCommit:   f.config.TimeoutCommit,
 		WrapperDir:      f.config.WrapperDir,
+		GasPriceStr:     osmosis.DefaultGasPriceStr,
 	})
 
 	relayerHermesGaiaApp := hermes.New(hermes.Config{

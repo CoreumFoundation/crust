@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/common/expfmt"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
@@ -213,14 +214,13 @@ func (h Hermes) saveConfigFile() error {
 		CoreumRPCURL:        infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
 		CoreumGRPCURL:       infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.GRPC),
 		CoreumAccountPrefix: h.config.Cored.Config().NetworkConfig.Provider.GetAddressPrefix(),
-		// TODO(dzmitryhil) move gas price for host and peer chains to prams
-		CoreumGasPrice: sdk.NewDecCoinFromDec("udevcore", sdk.MustNewDecFromStr("0.0625")),
+		CoreumGasPrice:      lo.Must1(sdk.ParseDecCoin(h.config.Cored.Config().GasPriceStr)),
 
 		PeerChanID:        h.config.PeeredChain.AppConfig().ChainID,
 		PeerRPCURL:        infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC),
 		PeerGRPCURL:       infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.GRPC),
 		PeerAccountPrefix: h.config.PeeredChain.AppTypeConfig().AccountPrefix,
-		PeerGasPrice:      sdk.NewDecCoinFromDec("stake", sdk.MustNewDecFromStr("0.1")),
+		PeerGasPrice:      lo.Must1(sdk.ParseDecCoin(h.config.PeeredChain.AppConfig().GasPriceStr)),
 	}
 
 	buf := &bytes.Buffer{}
