@@ -520,10 +520,6 @@ func (bt BinaryTool) Ensure(ctx context.Context, platform Platform) error {
 		return errors.Errorf("tool %s is not configured for platform %s", bt.Name, platform)
 	}
 
-	// TODO: we should also verify that checksum of binary matches & if it doesn't - reinstall it.
-	// If I'm not mistaken, crust wasn't downloading new cosmovisor binary when I changed version in toolsMap.
-	// I had to remove old one before.
-
 	var install bool
 	for dst, src := range lo.Assign(bt.Binaries, source.Binaries) {
 		if shouldReinstall(bt, platform, src, dst) {
