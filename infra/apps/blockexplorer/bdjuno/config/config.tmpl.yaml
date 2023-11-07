@@ -42,6 +42,7 @@ parsing:
   average_block_time: 1.5s
 
 database:
+  url: postgresql://{{ .Postgres.User }}@{{ .Postgres.Host }}:{{ .Postgres.Port }}/{{ .Postgres.DB }}?sslmode=disable&search_path=public
   name: {{ .Postgres.DB }}
   host: {{ .Postgres.Host }}
   port: {{ .Postgres.Port }}
