@@ -301,6 +301,8 @@ func coredVersionToGenesisTemplate(coredVersion string) (string, error) {
 		return coreumconfig.GenesisV3Template, nil
 	case "v2.0.2":
 		return coreumconfig.GenesisV2Template, nil
+	case "v1.0.0":
+		return coreumconfig.GenesisV1Template, nil
 	default:
 		return "", errors.Errorf("not supported version of cored: %s", coredVersion)
 	}
