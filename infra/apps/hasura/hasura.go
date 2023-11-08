@@ -98,6 +98,8 @@ func (h Hasura) Deployment() infra.Deployment {
 			Timeout: 20 * time.Second,
 			Dependencies: []infra.HealthCheckCapable{
 				h.config.Postgres,
+				// BDJuno loads SQL schema required by Hasura. If Hasura starts before completing this, it gets crazy.
+				h.config.BDJuno,
 			},
 		},
 	}
