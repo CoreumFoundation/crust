@@ -111,7 +111,7 @@ func VersionFromTag(ctx context.Context, repoPath string) (string, error) {
 }
 
 // Clone clones specific branch from repo to another directory.
-func Clone(ctx context.Context, dstDir, srcDir string, branch string) error {
+func Clone(ctx context.Context, dstDir, srcDir string, localBranch, remoteBranch string) error {
 	srcAbs, err := filepath.Abs(srcDir)
 	if err != nil {
 		return errors.WithStack(err)
@@ -126,10 +126,10 @@ func Clone(ctx context.Context, dstDir, srcDir string, branch string) error {
 		return errors.WithStack(err)
 	}
 
-	cmd1 := exec.Command("git", "fetch", "origin", branch+":"+branch)
+	cmd1 := exec.Command("git", "fetch", "origin", remoteBranch+":"+localBranch)
 	cmd1.Dir = srcDir
 
-	cmd2 := exec.Command("git", "clone", "--single-branch", "--no-tags", "-b", branch, srcAbs, ".")
+	cmd2 := exec.Command("git", "clone", "--single-branch", "--no-tags", "-b", localBranch, srcAbs, ".")
 	cmd2.Dir = dstAbs
 
 	return libexec.Exec(ctx, cmd1, cmd2)

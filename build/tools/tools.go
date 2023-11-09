@@ -36,7 +36,9 @@ const (
 	Gaia                  Name = "gaia"
 	Osmosis               Name = "osmosis"
 	Hermes                Name = "hermes"
+	CoredV100             Name = "cored-v1.0.0"
 	CoredV202             Name = "cored-v2.0.2"
+	Buf                   Name = "buf"
 	Protoc                Name = "protoc"
 	ProtocGenDoc          Name = "protoc-gen-doc"
 	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
@@ -266,21 +268,21 @@ var tools = []Tool{
 
 	// https://github.com/CoreumFoundation/coreum/releases
 	BinaryTool{
-		Name:    CoredV202,
-		Version: "v2.0.2",
+		Name:    CoredV100,
+		Version: "v1.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-amd64",
-				Hash: "sha256:3facf55f7ff795719f68b9bcf76ea08262bc7c9e9cd735c660257ba73678250e",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-amd64",
+				Hash: "sha256:34098ad7586bda364b1b2e7c4569cbcefb630cd4ed7c8f68eb5bced834082c57",
 				Binaries: map[string]string{
-					"bin/cored-v2.0.2": "cored-linux-amd64",
+					"bin/cored-v1.0.0": "cored-linux-amd64",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-arm64",
-				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-arm64",
+				Hash: "sha256:3ced97f06607f0cdaf77e7ff0b36b2011d101c660684e4f3e54c2ac6bf344dd6",
 				Binaries: map[string]string{
-					"bin/cored-v2.0.2": "cored-linux-arm64",
+					"bin/cored-v1.0.0": "cored-linux-arm64",
 				},
 			},
 		},
@@ -301,6 +303,36 @@ var tools = []Tool{
 				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
 				Binaries: map[string]string{
 					"bin/cored-v2.0.2": "cored-linux-arm64",
+				},
+			},
+		},
+	},
+
+	// https://github.com/bufbuild/buf/releases
+	BinaryTool{
+		Name:    Buf,
+		Version: "v1.27.2",
+		Local:   true,
+		Sources: Sources{
+			PlatformLinuxAMD64: {
+				URL:  "https://github.com/bufbuild/buf/releases/download/v1.27.2/buf-Linux-x86_64",
+				Hash: "sha256:512893e5802eff80611104fb0aa75cc3729d95ef7697deddf5e7e86f468408b3",
+				Binaries: map[string]string{
+					"bin/buf": "buf-Linux-x86_64",
+				},
+			},
+			PlatformDarwinAMD64: {
+				URL:  "https://github.com/bufbuild/buf/releases/download/v1.27.2/buf-Darwin-x86_64",
+				Hash: "sha256:7f22d4e102b91624fd8bc18899a0c0c467790ab12b421a21617fad8a9ca7d5b6",
+				Binaries: map[string]string{
+					"bin/buf": "buf-Darwin-x86_64",
+				},
+			},
+			PlatformDarwinARM64: {
+				URL:  "https://github.com/bufbuild/buf/releases/download/v1.27.2/buf-Darwin-arm64",
+				Hash: "sha256:1d8a49c12890830bdeb2839b4903af4695700a11c787c4e2f683a1eb3352badd",
+				Binaries: map[string]string{
+					"bin/buf": "buf-Darwin-arm64",
 				},
 			},
 		},
@@ -663,6 +695,11 @@ func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 		}
 	}
 	return nil
+}
+
+// EnsureBuf ensures that buf is available.
+func EnsureBuf(ctx context.Context, deps build.DepsFunc) error {
+	return Ensure(ctx, Buf, PlatformLocal)
 }
 
 // EnsureProtoc ensures that protoc is available.
