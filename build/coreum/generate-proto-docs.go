@@ -16,7 +16,7 @@ import (
 )
 
 // generateProtoDocs collects cosmos-sdk, cosmwasm and tendermint proto files from coreum go.mod,
-// generates documentation using above proto files + coreum/proto, and places the result to docs/src/api.md.
+// generates documentation using above proto files + coreum/proto, and places the result to docs/api.md.
 func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy)
 
@@ -32,8 +32,7 @@ func generateProtoDocs(ctx context.Context, deps build.DepsFunc) error {
 
 	generateDirs := []string{
 		filepath.Join(absPath, "proto"),
-		// FIXME(v47-generators) we must switch to cosmos sdk nft module before uncommenting this
-		// filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
+		filepath.Join(moduleDirs[cosmosSDKModule], "proto"),
 		filepath.Join(moduleDirs[cosmWASMModule], "proto"),
 	}
 
