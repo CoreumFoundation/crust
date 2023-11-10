@@ -36,6 +36,7 @@ const (
 	Gaia                  Name = "gaia"
 	Osmosis               Name = "osmosis"
 	Hermes                Name = "hermes"
+	CoredV100             Name = "cored-v1.0.0"
 	CoredV202             Name = "cored-v2.0.2"
 	Buf                   Name = "buf"
 	Protoc                Name = "protoc"
@@ -141,18 +142,18 @@ var tools = []Tool{
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	BinaryTool{
 		Name:    LibWASMMuslC,
-		Version: "v1.3.0",
+		Version: "v1.5.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.3.0/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:b4aad4480f9b4c46635b4943beedbb72c929eab1d1b9467fe3b43e6dbf617e32",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.0/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:465e3a088e96fd009a11bfd234c69fb8a0556967677e54511c084f815cf9ce63",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.3.0/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:b1610f9c8ad8bdebf5b8f819f71d238466f83521c74a2deb799078932e862722",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.0/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:2687afbdae1bc6c7c8b05ae20dfb8ffc7ddc5b4e056697d0f37853dfe294e913",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
 				},
@@ -267,21 +268,21 @@ var tools = []Tool{
 
 	// https://github.com/CoreumFoundation/coreum/releases
 	BinaryTool{
-		Name:    CoredV202,
-		Version: "v2.0.2",
+		Name:    CoredV100,
+		Version: "v1.0.0",
 		Sources: Sources{
 			PlatformDockerAMD64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-amd64",
-				Hash: "sha256:3facf55f7ff795719f68b9bcf76ea08262bc7c9e9cd735c660257ba73678250e",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-amd64",
+				Hash: "sha256:34098ad7586bda364b1b2e7c4569cbcefb630cd4ed7c8f68eb5bced834082c57",
 				Binaries: map[string]string{
-					"bin/cored-v2.0.2": "cored-linux-amd64",
+					"bin/cored-v1.0.0": "cored-linux-amd64",
 				},
 			},
 			PlatformDockerARM64: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-arm64",
-				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-arm64",
+				Hash: "sha256:3ced97f06607f0cdaf77e7ff0b36b2011d101c660684e4f3e54c2ac6bf344dd6",
 				Binaries: map[string]string{
-					"bin/cored-v2.0.2": "cored-linux-arm64",
+					"bin/cored-v1.0.0": "cored-linux-arm64",
 				},
 			},
 		},
