@@ -18,6 +18,9 @@ const (
 
 	// DefaultHomeName is the gaia's default home name.
 	DefaultHomeName = ".osmosisd"
+
+	// DefaultGasPriceStr defines default gas price to be used inside IBC relayer.
+	DefaultGasPriceStr = "0.1stake"
 )
 
 // DefaultPorts are the default ports listens on.

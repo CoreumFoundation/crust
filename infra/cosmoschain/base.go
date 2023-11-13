@@ -60,6 +60,7 @@ type AppConfig struct {
 	FundingMnemonic string
 	TimeoutCommit   time.Duration
 	WrapperDir      string
+	GasPriceStr     string
 }
 
 // AppTypeConfig defines configuration of the application type.

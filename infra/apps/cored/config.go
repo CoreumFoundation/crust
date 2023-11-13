@@ -11,6 +11,9 @@ import (
 	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
 )
 
+// DefaultGasPriceStr defines default gas price to be used inside IBC relayer.
+const DefaultGasPriceStr = "0.0625udevcore"
+
 func saveTendermintConfig(nodeConfig config.NodeConfig, timeoutCommit time.Duration, homeDir string) {
 	err := nodeConfig.SavePrivateKeys(homeDir)
 	must.OK(err)
