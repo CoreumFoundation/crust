@@ -408,8 +408,8 @@ func (c Cored) SaveGenesis(homeDir string) error {
 		return err
 	}
 
-	if strings.HasPrefix(c.config.BinaryVersion, "v2") {
-		genDocBytes = applyV2PatchToV3Genesis(genDocBytes)
+	if strings.HasPrefix(c.config.BinaryVersion, "v1") || strings.HasPrefix(c.config.BinaryVersion, "v2") {
+		genDocBytes = applyPatchToV3Genesis(genDocBytes)
 	}
 
 	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
@@ -420,10 +420,10 @@ func (c Cored) SaveGenesis(homeDir string) error {
 	return errors.Wrap(err, "unable to write genesis bytes to file")
 }
 
-// This is temporary solution to make both v2 & v3 cored version work.
+// This is temporary solution to make both v1 & v2 & v3 cored version work.
 // Since cosmos SDK changed structure of genesis file, we need to apply some patches to v3 (sdk v47)
 // to make it compatible with v2 (sdk v45) binary.
-func applyV2PatchToV3Genesis(originalGenDocBytes []byte) []byte {
+func applyPatchToV3Genesis(originalGenDocBytes []byte) []byte {
 	// Deleting "send_enabled" from "bank"
 	modifiedGenDocStr, _ := sjson.Delete(string(originalGenDocBytes), "app_state.bank.send_enabled")
 
