@@ -124,18 +124,11 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 		string(h.config.Cored.Config().NetworkConfig.ChainID()): {},
 	}
 
-	for _, metricItem := range metricFamily.Metric {
-		for _, label := range metricItem.Label {
-			if label.Value == nil {
-				continue
-			}
-			if _, found := chainIDs[*label.Value]; found {
-				metricCounter := metricItem.Counter
-				if metricCounter.Value == nil {
-					continue
-				}
-				if *metricCounter.Value > 0 {
-					delete(chainIDs, *label.Value)
+	for _, metricItem := range metricFamily.GetMetric() {
+		for _, label := range metricItem.GetLabel() {
+			if _, found := chainIDs[label.GetValue()]; found {
+				if metricItem.GetCounter().GetValue() > 0 {
+					delete(chainIDs, label.GetValue())
 				}
 			}
 		}
