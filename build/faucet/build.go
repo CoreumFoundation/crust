@@ -20,7 +20,7 @@ const (
 
 // Build builds faucet in docker.
 func Build(ctx context.Context, deps build.DepsFunc) error {
-	return buildFaucet(ctx, deps, tools.PlatformDockerLocal)
+	return buildFaucet(ctx, deps, tools.PlatformLinuxLocalArchInDocker)
 }
 
 func buildFaucet(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {

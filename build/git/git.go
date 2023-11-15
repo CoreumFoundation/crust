@@ -111,7 +111,7 @@ func VersionFromTag(ctx context.Context, repoPath string) (string, error) {
 }
 
 // Clone clones specific branch from repo to another directory.
-func Clone(ctx context.Context, dstDir, srcDir string, localBranch, remoteBranch string) error {
+func Clone(ctx context.Context, dstDir, srcDir, localBranch, remoteBranch string) error {
 	srcAbs, err := filepath.Abs(srcDir)
 	if err != nil {
 		return errors.WithStack(err)

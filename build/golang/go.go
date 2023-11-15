@@ -79,7 +79,7 @@ func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
 
 // Build builds go binary.
 func Build(ctx context.Context, config BinaryBuildConfig) error {
-	if config.Platform.OS == tools.DockerOS {
+	if config.Platform.InDocker {
 		return buildInDocker(ctx, config)
 	}
 	return buildLocally(ctx, config)
@@ -159,9 +159,9 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		"--name", "crust-build-" + filepath.Base(config.BinOutputPath) + "-" + hex.EncodeToString(nameSuffix),
 	}
-	if tools.PlatformLocal == tools.PlatformLinuxAMD64 && config.Platform == tools.PlatformDockerARM64 {
-		crossCompilerPath := filepath.Dir(filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.PlatformDockerAMD64)))
-		libWasmVMPath := tools.Path("lib/libwasmvm_muslc.a", tools.PlatformDockerARM64)
+	if tools.PlatformLocal == tools.PlatformLinuxAMD64 && config.Platform == tools.PlatformLinuxARM64InDocker {
+		crossCompilerPath := filepath.Dir(filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.PlatformLinuxAMD64InDocker)))
+		libWasmVMPath := tools.Path("lib/libwasmvm_muslc.a", tools.PlatformLinuxARM64InDocker)
 		runArgs = append(runArgs,
 			"-v", crossCompilerPath+":/aarch64-linux-musl-cross",
 			"-v", libWasmVMPath+":/aarch64-linux-musl-cross/aarch64-linux-musl/lib/libwasmvm_muslc.a",
@@ -256,12 +256,13 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	var crossCompileARM64 bool
 	switch config.Platform {
 	case tools.PlatformLocal:
-	case tools.PlatformDockerLocal:
-	case tools.PlatformDockerARM64:
+	case tools.PlatformLinuxLocalArchInDocker:
+	case tools.PlatformLinuxARM64InDocker:
 		if tools.PlatformLocal != tools.PlatformLinuxAMD64 {
 			return nil, nil, errors.Errorf("crosscompiling for %s is possible only on platform %s", config.Platform, tools.PlatformLinuxAMD64)
 		}
 		crossCompileARM64 = true
+	case tools.PlatformDarwinARM64InDocker:
 	default:
 		return nil, nil, errors.Errorf("building is not possible for platform %s on platform %s", config.Platform, tools.PlatformLocal)
 	}
@@ -290,10 +291,12 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	if config.CGOEnabled {
 		cgoEnabled = "1"
 	}
-	envs = append(envs, "CGO_ENABLED="+cgoEnabled)
+	envs = append(envs, fmt.Sprintf("CGO_ENABLED=%s", cgoEnabled))
 	if crossCompileARM64 {
-		envs = append(envs, "GOARCH=arm64", "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
+		envs = append(envs, "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
 	}
+	envs = append(envs, fmt.Sprintf("GOOS=%s", config.Platform.OS))
+	envs = append(envs, fmt.Sprintf("GOARCH=%s", config.Platform.Arch))
 
 	return args, envs, nil
 }

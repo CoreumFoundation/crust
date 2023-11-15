@@ -25,7 +25,7 @@ func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(BuildCoredInDocker, ensureReleasedBinaries)
 
 	return buildCoredDockerImage(ctx, imageConfig{
-		Platforms: []tools.Platform{tools.PlatformDockerLocal},
+		Platforms: []tools.Platform{tools.PlatformLinuxLocalArchInDocker},
 		Action:    docker.ActionLoad,
 		Versions:  []string{config.ZNetVersion},
 	})
@@ -68,10 +68,10 @@ func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
 		tools.CoredV202,
 		tools.CoredV100,
 	} {
-		if err := tools.Ensure(ctx, binaryTool, tools.PlatformDockerLocal); err != nil {
+		if err := tools.Ensure(ctx, binaryTool, tools.PlatformLinuxLocalArchInDocker); err != nil {
 			return err
 		}
-		if err := tools.CopyToolBinaries(binaryTool, tools.PlatformDockerLocal, filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String()), fmt.Sprintf("bin/%s", binaryTool)); err != nil {
+		if err := tools.CopyToolBinaries(binaryTool, tools.PlatformLinuxLocalArchInDocker, filepath.Join("bin", ".cache", binaryName, tools.PlatformLinuxLocalArchInDocker.String()), fmt.Sprintf("bin/%s", binaryTool)); err != nil {
 			return err
 		}
 	}

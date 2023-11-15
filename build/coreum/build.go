@@ -2,6 +2,7 @@ package coreum
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -58,7 +59,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 
 // BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
-	return buildCoredInDocker(ctx, deps, tools.PlatformDockerLocal)
+	return buildCoredInDocker(ctx, deps, tools.PlatformLinuxLocalArchInDocker)
 }
 
 func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {
@@ -69,8 +70,8 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 		return err
 	}
 
-	if tools.PlatformLocal == tools.PlatformLinuxAMD64 && platform == tools.PlatformDockerARM64 {
-		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.PlatformDockerAMD64); err != nil {
+	if tools.PlatformLocal == tools.PlatformLinuxAMD64 && platform == tools.PlatformLinuxARM64InDocker {
+		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.PlatformLinuxAMD64InDocker); err != nil {
 			return err
 		}
 	}
@@ -84,6 +85,27 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, platform.String(), "bin", binaryName),
 		Parameters:     parameters,
 		CGOEnabled:     true,
+		Tags:           tagsDocker,
+		LinkStatically: true,
+	})
+}
+
+// buildCoredClientInDocker builds cored binary without the wasm VM and with CGO enabled. The result binary might be
+// used for the CLI on target platform, but can't be used to run the node.
+func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {
+	deps(golang.EnsureGo, ensureRepo)
+
+	parameters, err := coredVersionParams(ctx, tagsDocker)
+	if err != nil {
+		return err
+	}
+
+	return golang.Build(ctx, golang.BinaryBuildConfig{
+		Platform:       platform,
+		PackagePath:    "../coreum/cmd/cored",
+		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, platform.String(), "bin", fmt.Sprintf("%s-client", binaryName)),
+		Parameters:     parameters,
+		CGOEnabled:     false,
 		Tags:           tagsDocker,
 		LinkStatically: true,
 	})

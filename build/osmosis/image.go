@@ -18,12 +18,12 @@ const (
 
 // BuildDockerImage builds docker image of the osmosis.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	if err := tools.Ensure(ctx, tools.Osmosis, tools.PlatformDockerLocal); err != nil {
+	if err := tools.Ensure(ctx, tools.Osmosis, tools.PlatformLinuxLocalArchInDocker); err != nil {
 		return err
 	}
 
-	binaryLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
-	if err := tools.CopyToolBinaries(tools.Osmosis, tools.PlatformDockerLocal, binaryLocalPath, binaryPath); err != nil {
+	binaryLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformLinuxLocalArchInDocker.String())
+	if err := tools.CopyToolBinaries(tools.Osmosis, tools.PlatformLinuxLocalArchInDocker, binaryLocalPath, binaryPath); err != nil {
 		return err
 	}
 

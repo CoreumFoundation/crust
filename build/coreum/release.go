@@ -30,10 +30,14 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 		return errors.New("no version present on released commit")
 	}
 
-	if err := buildCoredInDocker(ctx, deps, tools.PlatformDockerAMD64); err != nil {
+	if err := buildCoredClientInDocker(ctx, deps, tools.PlatformDarwinARM64InDocker); err != nil {
 		return err
 	}
-	return buildCoredInDocker(ctx, deps, tools.PlatformDockerARM64)
+
+	if err := buildCoredInDocker(ctx, deps, tools.PlatformLinuxAMD64InDocker); err != nil {
+		return err
+	}
+	return buildCoredInDocker(ctx, deps, tools.PlatformLinuxARM64InDocker)
 }
 
 // ReleaseCoredImage releases cored docker images for amd64 and arm64.
@@ -41,7 +45,7 @@ func ReleaseCoredImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(ReleaseCored)
 
 	return buildCoredDockerImage(ctx, imageConfig{
-		Platforms: []tools.Platform{tools.PlatformDockerAMD64, tools.PlatformDockerARM64},
+		Platforms: []tools.Platform{tools.PlatformLinuxAMD64InDocker, tools.PlatformLinuxARM64InDocker},
 		Action:    docker.ActionPush,
 		Username:  config.DockerHubUsername,
 	})

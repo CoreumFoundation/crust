@@ -109,11 +109,11 @@ var tools = []Tool{
 		Name:    Cosmovisor,
 		Version: "1.5.0",
 		Sources: Sources{
-			PlatformDockerAMD64: {
+			PlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-amd64.tar.gz",
 				Hash: "sha256:7f4bebfb18a170bff1c725f13dda326e0158132deef9f037ab0c2a48727c3077",
 			},
-			PlatformDockerARM64: {
+			PlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-arm64.tar.gz",
 				Hash: "sha256:e15f2625b1d208ac2fed51bc84ae75678009888648ac2186fd0ed5ab6177dc14",
 			},
@@ -128,7 +128,7 @@ var tools = []Tool{
 		Name:    Aarch64LinuxMuslCross,
 		Version: "11.2.1",
 		Sources: Sources{
-			PlatformDockerAMD64: {
+			PlatformLinuxAMD64InDocker: {
 				URL:  "http://musl.cc/aarch64-linux-musl-cross.tgz",
 				Hash: "sha256:c909817856d6ceda86aa510894fa3527eac7989f0ef6e87b5721c58737a06c38",
 			},
@@ -144,14 +144,14 @@ var tools = []Tool{
 		Name:    LibWASMMuslC,
 		Version: "v1.5.0",
 		Sources: Sources{
-			PlatformDockerAMD64: {
+			PlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.0/libwasmvm_muslc.x86_64.a",
 				Hash: "sha256:465e3a088e96fd009a11bfd234c69fb8a0556967677e54511c084f815cf9ce63",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
-			PlatformDockerARM64: {
+			PlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.0/libwasmvm_muslc.aarch64.a",
 				Hash: "sha256:2687afbdae1bc6c7c8b05ae20dfb8ffc7ddc5b4e056697d0f37853dfe294e913",
 				Binaries: map[string]string{
@@ -167,14 +167,14 @@ var tools = []Tool{
 		Name:    Gaia,
 		Version: "v11.0.0",
 		Sources: Sources{
-			PlatformDockerAMD64: {
+			PlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
 				Hash: "sha256:258df2eec5b22f8baadc988e184fbfd2ae6f9f888e9f4461a110cc365fe86300",
 				Binaries: map[string]string{
 					"bin/gaiad": "gaiad-v11.0.0-linux-amd64",
 				},
 			},
-			PlatformDockerARM64: {
+			PlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-arm64",
 				Hash: "sha256:688e3ae4aa5ed91978f537798e012322336c7309fe5ee9169fdd607ab6c348b8",
 				Binaries: map[string]string{
@@ -209,14 +209,14 @@ var tools = []Tool{
 		Name:    Osmosis,
 		Version: "16.1.1",
 		Sources: Sources{
-			PlatformDockerAMD64: {
+			PlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
 				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
 				Binaries: map[string]string{
 					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
 				},
 			},
-			PlatformDockerARM64: {
+			PlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-arm64",
 				Hash: "sha256:e2ccc743dd66da91d1df1ae4ecf92b36d658575f4ff507d5056eb640804e0401",
 				Binaries: map[string]string{
@@ -252,11 +252,11 @@ var tools = []Tool{
 		Name:    Hermes,
 		Version: "v1.6.0",
 		Sources: Sources{
-			PlatformDockerAMD64: {
+			PlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.6.0/hermes-v1.6.0-x86_64-unknown-linux-gnu.tar.gz",
 				Hash: "sha256:20d2798e221a6b90956bfd237bb171b5ca5fd3e1368fb58d4fbac3dc0093aadb",
 			},
-			PlatformDockerARM64: {
+			PlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.6.0/hermes-v1.6.0-aarch64-unknown-linux-gnu.tar.gz",
 				Hash: "sha256:3d4939aef95886d5016f1346de62a16e18469326ecf9b1159aa571ab8682b38d",
 			},
@@ -271,14 +271,14 @@ var tools = []Tool{
 		Name:    CoredV100,
 		Version: "v1.0.0",
 		Sources: Sources{
-			PlatformDockerAMD64: {
+			PlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-amd64",
 				Hash: "sha256:34098ad7586bda364b1b2e7c4569cbcefb630cd4ed7c8f68eb5bced834082c57",
 				Binaries: map[string]string{
 					"bin/cored-v1.0.0": "cored-linux-amd64",
 				},
 			},
-			PlatformDockerARM64: {
+			PlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-arm64",
 				Hash: "sha256:3ced97f06607f0cdaf77e7ff0b36b2011d101c660684e4f3e54c2ac6bf344dd6",
 				Binaries: map[string]string{
@@ -291,14 +291,14 @@ var tools = []Tool{
 		Name:    CoredV202,
 		Version: "v2.0.2",
 		Sources: Sources{
-			PlatformDockerAMD64: {
+			PlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-amd64",
 				Hash: "sha256:3facf55f7ff795719f68b9bcf76ea08262bc7c9e9cd735c660257ba73678250e",
 				Binaries: map[string]string{
 					"bin/cored-v2.0.2": "cored-linux-amd64",
 				},
 			},
-			PlatformDockerARM64: {
+			PlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-arm64",
 				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
 				Binaries: map[string]string{
@@ -422,6 +422,9 @@ var tools = []Tool{
 	},
 }
 
+// Name is the type used for defining tool names.
+type Name string
+
 var toolsMap = func(tools []Tool) map[Name]Tool {
 	res := make(map[Name]Tool, len(tools))
 	for _, tool := range tools {
@@ -430,31 +433,39 @@ var toolsMap = func(tools []Tool) map[Name]Tool {
 	return res
 }(tools)
 
-// Name is the type used for defining tool names.
-type Name string
+// OS constants.
+const (
+	OSLinux  = "linux"
+	OSDarwin = "darwin"
+)
 
 // Platform defines platform to install tool on.
 type Platform struct {
-	OS   string
-	Arch string
+	InDocker bool
+	OS       string
+	Arch     string
 }
 
 func (p Platform) String() string {
-	return p.OS + "." + p.Arch
-}
+	path := make([]string, 0)
+	if p.InDocker {
+		path = append(path, "docker")
+	}
+	path = append(path, p.OS, p.Arch)
 
-// DockerOS represents docker environment.
-const DockerOS = "docker"
+	return strings.Join(path, ".")
+}
 
 // Platform definitions.
 var (
-	PlatformLocal       = Platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
-	PlatformLinuxAMD64  = Platform{OS: "linux", Arch: "amd64"}
-	PlatformDarwinAMD64 = Platform{OS: "darwin", Arch: "amd64"}
-	PlatformDarwinARM64 = Platform{OS: "darwin", Arch: "arm64"}
-	PlatformDockerAMD64 = Platform{OS: DockerOS, Arch: "amd64"}
-	PlatformDockerARM64 = Platform{OS: DockerOS, Arch: "arm64"}
-	PlatformDockerLocal = Platform{OS: DockerOS, Arch: runtime.GOARCH}
+	PlatformLocal                  = Platform{InDocker: false, OS: runtime.GOOS, Arch: runtime.GOARCH}
+	PlatformLinuxAMD64             = Platform{InDocker: false, OS: OSLinux, Arch: "amd64"}
+	PlatformDarwinAMD64            = Platform{InDocker: false, OS: OSDarwin, Arch: "amd64"}
+	PlatformDarwinARM64            = Platform{InDocker: false, OS: OSDarwin, Arch: "arm64"}
+	PlatformLinuxAMD64InDocker     = Platform{InDocker: true, OS: OSLinux, Arch: "amd64"}
+	PlatformLinuxARM64InDocker     = Platform{InDocker: true, OS: OSLinux, Arch: "arm64"}
+	PlatformLinuxLocalArchInDocker = Platform{InDocker: true, OS: OSLinux, Arch: runtime.GOARCH}
+	PlatformDarwinARM64InDocker    = Platform{InDocker: true, OS: OSDarwin, Arch: "arm64"}
 )
 
 var (

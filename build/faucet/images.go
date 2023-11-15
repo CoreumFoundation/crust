@@ -23,7 +23,7 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(Build)
 
 	return buildDockerImage(ctx, imageConfig{
-		Platforms: []tools.Platform{tools.PlatformDockerLocal},
+		Platforms: []tools.Platform{tools.PlatformLinuxLocalArchInDocker},
 		Action:    docker.ActionLoad,
 		Versions:  []string{config.ZNetVersion},
 	})
