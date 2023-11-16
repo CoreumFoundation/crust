@@ -4,7 +4,10 @@
 ## Prerequisites
 To use `crust` you need:
 - `go 1.18` or newer
-- `docker`
+- `docker` (if you are installing from pacakge manager make sure that `docker-buildx` is installed.
+    for docker version >23 it must be installed separately.
+    Or you can alternatively follow the official installation guide to install docker-desktop
+    , from this [link](https://docs.docker.com/engine/install/))
 
 Install them manually before continuing.
 
