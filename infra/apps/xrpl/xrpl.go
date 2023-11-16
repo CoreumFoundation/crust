@@ -137,7 +137,7 @@ func (x XRPL) HealthCheck(ctx context.Context) error {
 func (x XRPL) Deployment() infra.Deployment {
 	return infra.Deployment{
 		RunAsUser: true,
-		Image:     "xrpllabsofficial/xrpld:1.11.0",
+		Image:     "xrpllabsofficial/xrpld:1.12.0",
 		Name:      x.Name(),
 		Info:      x.config.AppInfo,
 		Volumes: []infra.Volume{
