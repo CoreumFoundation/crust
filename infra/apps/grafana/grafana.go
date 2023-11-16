@@ -3,11 +3,11 @@ package grafana
 import (
 	"bytes"
 	"embed"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"text/template"
 	"time"
 
@@ -78,7 +78,7 @@ func (g Grafana) Info() infra.DeploymentInfo {
 // Deployment returns deployment of grafana.
 func (g Grafana) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image:     "grafana/grafana:10.0.3",
+		Image:     "grafana/grafana:10.2.1",
 		RunAsUser: true,
 		Name:      g.Name(),
 		Info:      g.config.AppInfo,
@@ -100,7 +100,7 @@ func (g Grafana) Deployment() infra.Deployment {
 				},
 				{
 					Name:  "GF_SERVER_HTTP_PORT",
-					Value: fmt.Sprintf("%d", g.config.Port),
+					Value: strconv.Itoa(g.config.Port),
 				},
 			}
 		},
