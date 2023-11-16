@@ -30,6 +30,10 @@ func ReleaseCored(ctx context.Context, deps build.DepsFunc) error {
 		return errors.New("no version present on released commit")
 	}
 
+	if err := buildCoredClientInDocker(ctx, deps, tools.PlatformDarwinAMD64InDocker); err != nil {
+		return err
+	}
+
 	if err := buildCoredClientInDocker(ctx, deps, tools.PlatformDarwinARM64InDocker); err != nil {
 		return err
 	}

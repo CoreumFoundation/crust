@@ -262,6 +262,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 			return nil, nil, errors.Errorf("crosscompiling for %s is possible only on platform %s", config.Platform, tools.PlatformLinuxAMD64)
 		}
 		crossCompileARM64 = true
+	case tools.PlatformDarwinAMD64InDocker:
 	case tools.PlatformDarwinARM64InDocker:
 	default:
 		return nil, nil, errors.Errorf("building is not possible for platform %s on platform %s", config.Platform, tools.PlatformLocal)

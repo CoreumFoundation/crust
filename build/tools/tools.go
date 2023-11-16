@@ -439,6 +439,12 @@ const (
 	OSDarwin = "darwin"
 )
 
+// Arch constants.
+const (
+	ArchAMD64 = "amd64"
+	ArchARM64 = "arm64"
+)
+
 // Platform defines platform to install tool on.
 type Platform struct {
 	BuildInDocker bool
@@ -459,13 +465,14 @@ func (p Platform) String() string {
 // Platform definitions.
 var (
 	PlatformLocal                  = Platform{BuildInDocker: false, OS: runtime.GOOS, Arch: runtime.GOARCH}
-	PlatformLinuxAMD64             = Platform{BuildInDocker: false, OS: OSLinux, Arch: "amd64"}
-	PlatformDarwinAMD64            = Platform{BuildInDocker: false, OS: OSDarwin, Arch: "amd64"}
-	PlatformDarwinARM64            = Platform{BuildInDocker: false, OS: OSDarwin, Arch: "arm64"}
-	PlatformLinuxAMD64InDocker     = Platform{BuildInDocker: true, OS: OSLinux, Arch: "amd64"}
-	PlatformLinuxARM64InDocker     = Platform{BuildInDocker: true, OS: OSLinux, Arch: "arm64"}
+	PlatformLinuxAMD64             = Platform{BuildInDocker: false, OS: OSLinux, Arch: ArchAMD64}
+	PlatformDarwinAMD64            = Platform{BuildInDocker: false, OS: OSDarwin, Arch: ArchAMD64}
+	PlatformDarwinARM64            = Platform{BuildInDocker: false, OS: OSDarwin, Arch: ArchARM64}
+	PlatformLinuxAMD64InDocker     = Platform{BuildInDocker: true, OS: OSLinux, Arch: ArchAMD64}
+	PlatformLinuxARM64InDocker     = Platform{BuildInDocker: true, OS: OSLinux, Arch: ArchARM64}
 	PlatformLinuxLocalArchInDocker = Platform{BuildInDocker: true, OS: OSLinux, Arch: runtime.GOARCH}
-	PlatformDarwinARM64InDocker    = Platform{BuildInDocker: true, OS: OSDarwin, Arch: "arm64"}
+	PlatformDarwinAMD64InDocker    = Platform{BuildInDocker: true, OS: OSDarwin, Arch: ArchAMD64}
+	PlatformDarwinARM64InDocker    = Platform{BuildInDocker: true, OS: OSDarwin, Arch: ArchARM64}
 )
 
 var (
