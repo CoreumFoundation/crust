@@ -79,7 +79,7 @@ func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
 
 // Build builds go binary.
 func Build(ctx context.Context, config BinaryBuildConfig) error {
-	if config.Platform.InDocker {
+	if config.Platform.BuildInDocker {
 		return buildInDocker(ctx, config)
 	}
 	return buildLocally(ctx, config)

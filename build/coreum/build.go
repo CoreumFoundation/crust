@@ -90,7 +90,7 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 	})
 }
 
-// buildCoredClientInDocker builds cored binary without the wasm VM and with CGO enabled. The result binary might be
+// buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
 // used for the CLI on target platform, but can't be used to run the node.
 func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {
 	deps(golang.EnsureGo, ensureRepo)
