@@ -30,10 +30,10 @@ func Release(ctx context.Context, deps build.DepsFunc) error {
 		return errors.New("no version present on released commit")
 	}
 
-	if err := buildFaucet(ctx, deps, tools.PlatformLinuxAMD64InDocker); err != nil {
+	if err := buildFaucet(ctx, deps, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
 		return err
 	}
-	return buildFaucet(ctx, deps, tools.PlatformLinuxARM64InDocker)
+	return buildFaucet(ctx, deps, tools.TargetPlatformLinuxARM64InDocker)
 }
 
 // ReleaseImage releases faucet docker images for amd64 and arm64.
@@ -41,8 +41,8 @@ func ReleaseImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(Release)
 
 	return buildDockerImage(ctx, imageConfig{
-		Platforms: []tools.Platform{tools.PlatformLinuxAMD64InDocker, tools.PlatformLinuxARM64InDocker},
-		Action:    docker.ActionPush,
-		Username:  config.DockerHubUsername,
+		TargetPlatforms: []tools.TargetPlatform{tools.TargetPlatformLinuxAMD64InDocker, tools.TargetPlatformLinuxARM64InDocker},
+		Action:          docker.ActionPush,
+		Username:        config.DockerHubUsername,
 	})
 }

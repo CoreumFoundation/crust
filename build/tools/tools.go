@@ -55,15 +55,15 @@ var tools = []Tool{
 		Version: "1.21.0",
 		Local:   true,
 		Sources: Sources{
-			PlatformLinuxAMD64: {
+			TargetPlatformLinuxAMD64: {
 				URL:  "https://go.dev/dl/go1.21.0.linux-amd64.tar.gz",
 				Hash: "sha256:d0398903a16ba2232b389fb31032ddf57cac34efda306a0eebac34f0965a0742",
 			},
-			PlatformDarwinAMD64: {
+			TargetPlatformDarwinAMD64: {
 				URL:  "https://go.dev/dl/go1.21.0.darwin-amd64.tar.gz",
 				Hash: "sha256:b314de9f704ab122c077d2ec8e67e3670affe8865479d1f01991e7ac55d65e70",
 			},
-			PlatformDarwinARM64: {
+			TargetPlatformDarwinARM64: {
 				URL:  "https://go.dev/dl/go1.21.0.darwin-arm64.tar.gz",
 				Hash: "sha256:3aca44de55c5e098de2f406e98aba328898b05d509a2e2a356416faacf2c4566",
 			},
@@ -80,21 +80,21 @@ var tools = []Tool{
 		Version: "1.54.0",
 		Local:   true,
 		Sources: Sources{
-			PlatformLinuxAMD64: {
+			TargetPlatformLinuxAMD64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-linux-amd64.tar.gz",
 				Hash: "sha256:a694f19dbfab3ea4d3956cb105d2e74c1dc49cb4c06ece903a3c534bce86b3dc",
 				Binaries: map[string]string{
 					"bin/golangci-lint": "golangci-lint-1.54.0-linux-amd64/golangci-lint",
 				},
 			},
-			PlatformDarwinAMD64: {
+			TargetPlatformDarwinAMD64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-darwin-amd64.tar.gz",
 				Hash: "sha256:0a76fcb91bca94c0b3bcb931662eafd320fbe458b3a29ce368b0bffbd4eff2fb",
 				Binaries: map[string]string{
 					"bin/golangci-lint": "golangci-lint-1.54.0-darwin-amd64/golangci-lint",
 				},
 			},
-			PlatformDarwinARM64: {
+			TargetPlatformDarwinARM64: {
 				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.54.0/golangci-lint-1.54.0-darwin-arm64.tar.gz",
 				Hash: "sha256:aeb77a00c24720e223ef73da18eea3afb29ea46356db33e1f503c66f2799d387",
 				Binaries: map[string]string{
@@ -109,11 +109,11 @@ var tools = []Tool{
 		Name:    Cosmovisor,
 		Version: "1.5.0",
 		Sources: Sources{
-			PlatformLinuxAMD64InDocker: {
+			TargetPlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-amd64.tar.gz",
 				Hash: "sha256:7f4bebfb18a170bff1c725f13dda326e0158132deef9f037ab0c2a48727c3077",
 			},
-			PlatformLinuxARM64InDocker: {
+			TargetPlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-arm64.tar.gz",
 				Hash: "sha256:e15f2625b1d208ac2fed51bc84ae75678009888648ac2186fd0ed5ab6177dc14",
 			},
@@ -128,7 +128,7 @@ var tools = []Tool{
 		Name:    Aarch64LinuxMuslCross,
 		Version: "11.2.1",
 		Sources: Sources{
-			PlatformLinuxAMD64InDocker: {
+			TargetPlatformLinuxAMD64InDocker: {
 				URL:  "http://musl.cc/aarch64-linux-musl-cross.tgz",
 				Hash: "sha256:c909817856d6ceda86aa510894fa3527eac7989f0ef6e87b5721c58737a06c38",
 			},
@@ -144,14 +144,14 @@ var tools = []Tool{
 		Name:    LibWASMMuslC,
 		Version: "v1.5.0",
 		Sources: Sources{
-			PlatformLinuxAMD64InDocker: {
+			TargetPlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.0/libwasmvm_muslc.x86_64.a",
 				Hash: "sha256:465e3a088e96fd009a11bfd234c69fb8a0556967677e54511c084f815cf9ce63",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
-			PlatformLinuxARM64InDocker: {
+			TargetPlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.0/libwasmvm_muslc.aarch64.a",
 				Hash: "sha256:2687afbdae1bc6c7c8b05ae20dfb8ffc7ddc5b4e056697d0f37853dfe294e913",
 				Binaries: map[string]string{
@@ -167,35 +167,35 @@ var tools = []Tool{
 		Name:    Gaia,
 		Version: "v11.0.0",
 		Sources: Sources{
-			PlatformLinuxAMD64InDocker: {
+			TargetPlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
 				Hash: "sha256:258df2eec5b22f8baadc988e184fbfd2ae6f9f888e9f4461a110cc365fe86300",
 				Binaries: map[string]string{
 					"bin/gaiad": "gaiad-v11.0.0-linux-amd64",
 				},
 			},
-			PlatformLinuxARM64InDocker: {
+			TargetPlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-arm64",
 				Hash: "sha256:688e3ae4aa5ed91978f537798e012322336c7309fe5ee9169fdd607ab6c348b8",
 				Binaries: map[string]string{
 					"bin/gaiad": "gaiad-v11.0.0-linux-arm64",
 				},
 			},
-			PlatformLinuxAMD64: {
+			TargetPlatformLinuxAMD64: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-linux-amd64",
 				Hash: "sha256:258df2eec5b22f8baadc988e184fbfd2ae6f9f888e9f4461a110cc365fe86300",
 				Binaries: map[string]string{
 					"bin/gaiad": "gaiad-v11.0.0-linux-amd64",
 				},
 			},
-			PlatformDarwinAMD64: {
+			TargetPlatformDarwinAMD64: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-darwin-amd64",
 				Hash: "sha256:f115875122386496254905a1de0c0cb45f1b731536281586f77a41be55458505",
 				Binaries: map[string]string{
 					"bin/gaiad": "gaiad-v11.0.0-darwin-amd64",
 				},
 			},
-			PlatformDarwinARM64: {
+			TargetPlatformDarwinARM64: {
 				URL:  "https://github.com/cosmos/gaia/releases/download/v11.0.0/gaiad-v11.0.0-darwin-arm64",
 				Hash: "sha256:53d0ffe4d8353e51d0be543edf764de033e24d703d4c408244a141e635b27628",
 				Binaries: map[string]string{
@@ -209,35 +209,35 @@ var tools = []Tool{
 		Name:    Osmosis,
 		Version: "16.1.1",
 		Sources: Sources{
-			PlatformLinuxAMD64InDocker: {
+			TargetPlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
 				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
 				Binaries: map[string]string{
 					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
 				},
 			},
-			PlatformLinuxARM64InDocker: {
+			TargetPlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-arm64",
 				Hash: "sha256:e2ccc743dd66da91d1df1ae4ecf92b36d658575f4ff507d5056eb640804e0401",
 				Binaries: map[string]string{
 					"bin/osmosisd": "osmosisd-16.1.1-linux-arm64",
 				},
 			},
-			PlatformLinuxAMD64: {
+			TargetPlatformLinuxAMD64: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-linux-amd64",
 				Hash: "sha256:0ec66e32584fff24b6d62fc9938c69ff1a1bbdd8641d2ec9e0fd084aaa767ed3",
 				Binaries: map[string]string{
 					"bin/osmosisd": "osmosisd-16.1.1-linux-amd64",
 				},
 			},
-			PlatformDarwinAMD64: {
+			TargetPlatformDarwinAMD64: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-darwin-amd64",
 				Hash: "sha256:d856ebda9c31f052d10a78443967a93374f2033292f0afdb6434b82b4ed79790",
 				Binaries: map[string]string{
 					"bin/osmosisd": "osmosisd-16.1.1-darwin-amd64",
 				},
 			},
-			PlatformDarwinARM64: {
+			TargetPlatformDarwinARM64: {
 				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v16.1.1/osmosisd-16.1.1-darwin-arm64",
 				Hash: "sha256:c743da4d3632a2bc3ea0ce784bbd13383492a4a34d53295eb2c96987bacf8e8c",
 				Binaries: map[string]string{
@@ -252,11 +252,11 @@ var tools = []Tool{
 		Name:    Hermes,
 		Version: "v1.6.0",
 		Sources: Sources{
-			PlatformLinuxAMD64InDocker: {
+			TargetPlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.6.0/hermes-v1.6.0-x86_64-unknown-linux-gnu.tar.gz",
 				Hash: "sha256:20d2798e221a6b90956bfd237bb171b5ca5fd3e1368fb58d4fbac3dc0093aadb",
 			},
-			PlatformLinuxARM64InDocker: {
+			TargetPlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.6.0/hermes-v1.6.0-aarch64-unknown-linux-gnu.tar.gz",
 				Hash: "sha256:3d4939aef95886d5016f1346de62a16e18469326ecf9b1159aa571ab8682b38d",
 			},
@@ -271,14 +271,14 @@ var tools = []Tool{
 		Name:    CoredV100,
 		Version: "v1.0.0",
 		Sources: Sources{
-			PlatformLinuxAMD64InDocker: {
+			TargetPlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-amd64",
 				Hash: "sha256:34098ad7586bda364b1b2e7c4569cbcefb630cd4ed7c8f68eb5bced834082c57",
 				Binaries: map[string]string{
 					"bin/cored-v1.0.0": "cored-linux-amd64",
 				},
 			},
-			PlatformLinuxARM64InDocker: {
+			TargetPlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-arm64",
 				Hash: "sha256:3ced97f06607f0cdaf77e7ff0b36b2011d101c660684e4f3e54c2ac6bf344dd6",
 				Binaries: map[string]string{
@@ -291,14 +291,14 @@ var tools = []Tool{
 		Name:    CoredV202,
 		Version: "v2.0.2",
 		Sources: Sources{
-			PlatformLinuxAMD64InDocker: {
+			TargetPlatformLinuxAMD64InDocker: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-amd64",
 				Hash: "sha256:3facf55f7ff795719f68b9bcf76ea08262bc7c9e9cd735c660257ba73678250e",
 				Binaries: map[string]string{
 					"bin/cored-v2.0.2": "cored-linux-amd64",
 				},
 			},
-			PlatformLinuxARM64InDocker: {
+			TargetPlatformLinuxARM64InDocker: {
 				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-arm64",
 				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
 				Binaries: map[string]string{
@@ -314,21 +314,21 @@ var tools = []Tool{
 		Version: "v1.27.2",
 		Local:   true,
 		Sources: Sources{
-			PlatformLinuxAMD64: {
+			TargetPlatformLinuxAMD64: {
 				URL:  "https://github.com/bufbuild/buf/releases/download/v1.27.2/buf-Linux-x86_64",
 				Hash: "sha256:512893e5802eff80611104fb0aa75cc3729d95ef7697deddf5e7e86f468408b3",
 				Binaries: map[string]string{
 					"bin/buf": "buf-Linux-x86_64",
 				},
 			},
-			PlatformDarwinAMD64: {
+			TargetPlatformDarwinAMD64: {
 				URL:  "https://github.com/bufbuild/buf/releases/download/v1.27.2/buf-Darwin-x86_64",
 				Hash: "sha256:7f22d4e102b91624fd8bc18899a0c0c467790ab12b421a21617fad8a9ca7d5b6",
 				Binaries: map[string]string{
 					"bin/buf": "buf-Darwin-x86_64",
 				},
 			},
-			PlatformDarwinARM64: {
+			TargetPlatformDarwinARM64: {
 				URL:  "https://github.com/bufbuild/buf/releases/download/v1.27.2/buf-Darwin-arm64",
 				Hash: "sha256:1d8a49c12890830bdeb2839b4903af4695700a11c787c4e2f683a1eb3352badd",
 				Binaries: map[string]string{
@@ -344,15 +344,15 @@ var tools = []Tool{
 		Version: "v24.0",
 		Local:   true,
 		Sources: Sources{
-			PlatformLinuxAMD64: {
+			TargetPlatformLinuxAMD64: {
 				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-linux-x86_64.zip",
 				Hash: "sha256:4feef12d91c4e452eac8c45bd11f43d51541db7fc6c18b4ca7bdd38af52c9d15",
 			},
-			PlatformDarwinAMD64: {
+			TargetPlatformDarwinAMD64: {
 				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-osx-x86_64.zip",
 				Hash: "sha256:c438ae68427aa848f4e2dbf7d6cbd4e6a13e30a6bcc61007fd95cfc90451264a",
 			},
-			PlatformDarwinARM64: {
+			TargetPlatformDarwinARM64: {
 				URL:  "https://github.com/protocolbuffers/protobuf/releases/download/v24.0/protoc-24.0-osx-aarch_64.zip",
 				Hash: "sha256:e4cc0739f0f8ae31633fb11335f11e6fbe067ecda8fd1b4716e80cfe3661ee1d",
 			},
@@ -368,15 +368,15 @@ var tools = []Tool{
 		Version: "v1.5.1",
 		Local:   true,
 		Sources: Sources{
-			PlatformLinuxAMD64: {
+			TargetPlatformLinuxAMD64: {
 				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_linux_amd64.tar.gz",
 				Hash: "sha256:47cd72b07e6dab3408d686a65d37d3a6ab616da7d8b564b2bd2a2963a72b72fd",
 			},
-			PlatformDarwinAMD64: {
+			TargetPlatformDarwinAMD64: {
 				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_amd64.tar.gz",
 				Hash: "sha256:f429e5a5ddd886bfb68265f2f92c1c6a509780b7adcaf7a8b3be943f28e144ba",
 			},
-			PlatformDarwinARM64: {
+			TargetPlatformDarwinARM64: {
 				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_arm64.tar.gz",
 				Hash: "sha256:6e8c737d9a67a6a873a3f1d37ed8bb2a0a9996f6dcf6701aa1048c7bd798aaf9",
 			},
@@ -445,14 +445,14 @@ const (
 	ArchARM64 = "arm64"
 )
 
-// Platform defines platform to install tool on.
-type Platform struct {
+// TargetPlatform defines platform to install tool on.
+type TargetPlatform struct {
 	BuildInDocker bool
 	OS            string
 	Arch          string
 }
 
-func (p Platform) String() string {
+func (p TargetPlatform) String() string {
 	path := make([]string, 0)
 	if p.BuildInDocker {
 		path = append(path, "docker")
@@ -462,17 +462,17 @@ func (p Platform) String() string {
 	return strings.Join(path, ".")
 }
 
-// Platform definitions.
+// TargetPlatform definitions.
 var (
-	PlatformLocal                  = Platform{BuildInDocker: false, OS: runtime.GOOS, Arch: runtime.GOARCH}
-	PlatformLinuxAMD64             = Platform{BuildInDocker: false, OS: OSLinux, Arch: ArchAMD64}
-	PlatformDarwinAMD64            = Platform{BuildInDocker: false, OS: OSDarwin, Arch: ArchAMD64}
-	PlatformDarwinARM64            = Platform{BuildInDocker: false, OS: OSDarwin, Arch: ArchARM64}
-	PlatformLinuxAMD64InDocker     = Platform{BuildInDocker: true, OS: OSLinux, Arch: ArchAMD64}
-	PlatformLinuxARM64InDocker     = Platform{BuildInDocker: true, OS: OSLinux, Arch: ArchARM64}
-	PlatformLinuxLocalArchInDocker = Platform{BuildInDocker: true, OS: OSLinux, Arch: runtime.GOARCH}
-	PlatformDarwinAMD64InDocker    = Platform{BuildInDocker: true, OS: OSDarwin, Arch: ArchAMD64}
-	PlatformDarwinARM64InDocker    = Platform{BuildInDocker: true, OS: OSDarwin, Arch: ArchARM64}
+	TargetPlatformLocal                  = TargetPlatform{BuildInDocker: false, OS: runtime.GOOS, Arch: runtime.GOARCH}
+	TargetPlatformLinuxAMD64             = TargetPlatform{BuildInDocker: false, OS: OSLinux, Arch: ArchAMD64}
+	TargetPlatformDarwinAMD64            = TargetPlatform{BuildInDocker: false, OS: OSDarwin, Arch: ArchAMD64}
+	TargetPlatformDarwinARM64            = TargetPlatform{BuildInDocker: false, OS: OSDarwin, Arch: ArchARM64}
+	TargetPlatformLinuxAMD64InDocker     = TargetPlatform{BuildInDocker: true, OS: OSLinux, Arch: ArchAMD64}
+	TargetPlatformLinuxARM64InDocker     = TargetPlatform{BuildInDocker: true, OS: OSLinux, Arch: ArchARM64}
+	TargetPlatformLinuxLocalArchInDocker = TargetPlatform{BuildInDocker: true, OS: OSLinux, Arch: runtime.GOARCH}
+	TargetPlatformDarwinAMD64InDocker    = TargetPlatform{BuildInDocker: true, OS: OSDarwin, Arch: ArchAMD64}
+	TargetPlatformDarwinARM64InDocker    = TargetPlatform{BuildInDocker: true, OS: OSDarwin, Arch: ArchARM64}
 )
 
 var (
@@ -485,9 +485,9 @@ type Tool interface {
 	GetName() Name
 	GetVersion() string
 	IsLocal() bool
-	IsCompatible(platform Platform) bool
-	GetBinaries(platform Platform) []string
-	Ensure(ctx context.Context, platform Platform) error
+	IsCompatible(platform TargetPlatform) bool
+	GetBinaries(platform TargetPlatform) []string
+	Ensure(ctx context.Context, platform TargetPlatform) error
 }
 
 // BinaryTool is the tool having compiled binaries available on the internet.
@@ -515,13 +515,13 @@ func (bt BinaryTool) IsLocal() bool {
 }
 
 // IsCompatible tells if tool is defined for the platform.
-func (bt BinaryTool) IsCompatible(platform Platform) bool {
+func (bt BinaryTool) IsCompatible(platform TargetPlatform) bool {
 	_, exists := bt.Sources[platform]
 	return exists
 }
 
 // GetBinaries returns binaries defined for the platform.
-func (bt BinaryTool) GetBinaries(platform Platform) []string {
+func (bt BinaryTool) GetBinaries(platform TargetPlatform) []string {
 	res := make([]string, 0, len(bt.Binaries)+len(bt.Sources[platform].Binaries))
 	for k := range bt.Binaries {
 		res = append(res, k)
@@ -533,7 +533,7 @@ func (bt BinaryTool) GetBinaries(platform Platform) []string {
 }
 
 // Ensure ensures that tool is installed.
-func (bt BinaryTool) Ensure(ctx context.Context, platform Platform) error {
+func (bt BinaryTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 	source, exists := bt.Sources[platform]
 	if !exists {
 		return errors.Errorf("tool %s is not configured for platform %s", bt.Name, platform)
@@ -564,7 +564,7 @@ func (bt BinaryTool) Ensure(ctx context.Context, platform Platform) error {
 	return nil
 }
 
-func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr error) {
+func (bt BinaryTool) install(ctx context.Context, platform TargetPlatform) (retErr error) {
 	source, exists := bt.Sources[platform]
 	if !exists {
 		panic(errors.Errorf("tool %s is not configured for platform %s", bt.Name, platform))
@@ -647,24 +647,24 @@ func (gpt GoPackageTool) IsLocal() bool {
 }
 
 // IsCompatible tells if tool is defined for the platform.
-func (gpt GoPackageTool) IsCompatible(_ Platform) bool {
+func (gpt GoPackageTool) IsCompatible(_ TargetPlatform) bool {
 	return true
 }
 
 // GetBinaries returns binaries defined for the platform.
-func (gpt GoPackageTool) GetBinaries(_ Platform) []string {
+func (gpt GoPackageTool) GetBinaries(_ TargetPlatform) []string {
 	return []string{
 		"bin/" + filepath.Base(gpt.Package),
 	}
 }
 
 // Ensure ensures that tool is installed.
-func (gpt GoPackageTool) Ensure(ctx context.Context, platform Platform) error {
+func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 	binName := filepath.Base(gpt.Package)
 	toolDir := toolDir(gpt, platform)
 	dst := filepath.Join("bin", binName)
 	if shouldReinstall(gpt, platform, binName, dst) {
-		cmd := exec.Command(Path("bin/go", PlatformLocal), "install", "-tags=tools", gpt.Package)
+		cmd := exec.Command(Path("bin/go", TargetPlatformLocal), "install", "-tags=tools", gpt.Package)
 		cmd.Dir = "build/tools"
 		cmd.Env = append(os.Environ(), "GOBIN="+toolDir)
 
@@ -696,14 +696,14 @@ type Source struct {
 }
 
 // Sources is the map of sources.
-type Sources map[Platform]Source
+type Sources map[TargetPlatform]Source
 
 // InstallAll installs all the toolsMap.
 func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 	for toolName := range toolsMap {
 		tool := toolsMap[toolName]
 		if tool.IsLocal() {
-			if err := tool.Ensure(ctx, PlatformLocal); err != nil {
+			if err := tool.Ensure(ctx, TargetPlatformLocal); err != nil {
 				return err
 			}
 		}
@@ -713,42 +713,42 @@ func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 
 // EnsureBuf ensures that buf is available.
 func EnsureBuf(ctx context.Context, deps build.DepsFunc) error {
-	return Ensure(ctx, Buf, PlatformLocal)
+	return Ensure(ctx, Buf, TargetPlatformLocal)
 }
 
 // EnsureProtoc ensures that protoc is available.
 func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
-	return Ensure(ctx, Protoc, PlatformLocal)
+	return Ensure(ctx, Protoc, TargetPlatformLocal)
 }
 
 // EnsureProtocGenDoc ensures that protoc-gen-doc is available.
 func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
-	return Ensure(ctx, ProtocGenDoc, PlatformLocal)
+	return Ensure(ctx, ProtocGenDoc, TargetPlatformLocal)
 }
 
 // EnsureProtocGenGRPCGateway ensures that protoc-gen-grpc-gateway is available.
 func EnsureProtocGenGRPCGateway(ctx context.Context, deps build.DepsFunc) error {
-	return Ensure(ctx, ProtocGenGRPCGateway, PlatformLocal)
+	return Ensure(ctx, ProtocGenGRPCGateway, TargetPlatformLocal)
 }
 
 // EnsureProtocGenGoCosmos ensures that protoc-gen-gocosmos is available.
 func EnsureProtocGenGoCosmos(ctx context.Context, deps build.DepsFunc) error {
-	return Ensure(ctx, ProtocGenGoCosmos, PlatformLocal)
+	return Ensure(ctx, ProtocGenGoCosmos, TargetPlatformLocal)
 }
 
 // EnsureProtocGenOpenAPIV2 ensures that protoc-gen-openapiv2 is available.
 func EnsureProtocGenOpenAPIV2(ctx context.Context, deps build.DepsFunc) error {
-	return Ensure(ctx, ProtocGenOpenAPIV2, PlatformLocal)
+	return Ensure(ctx, ProtocGenOpenAPIV2, TargetPlatformLocal)
 }
 
 // EnsureProtocGenBufLint ensures that protoc-gen-buf-lint is available.
 func EnsureProtocGenBufLint(ctx context.Context, deps build.DepsFunc) error {
-	return Ensure(ctx, ProtocGenBufLint, PlatformLocal)
+	return Ensure(ctx, ProtocGenBufLint, TargetPlatformLocal)
 }
 
 // EnsureProtocGenBufBreaking ensures that protoc-gen-buf-breaking is available.
 func EnsureProtocGenBufBreaking(ctx context.Context, deps build.DepsFunc) error {
-	return Ensure(ctx, ProtocGenBufBreaking, PlatformLocal)
+	return Ensure(ctx, ProtocGenBufBreaking, TargetPlatformLocal)
 }
 
 func linkTool(dst string) error {
@@ -761,7 +761,7 @@ func linkTool(dst string) error {
 		return nil
 	}
 
-	src := filepath.Join(BinariesRootPath(PlatformLocal), dst)
+	src := filepath.Join(BinariesRootPath(TargetPlatformLocal), dst)
 	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -962,7 +962,7 @@ func CacheDir() string {
 	return must.String(os.UserCacheDir()) + "/crust"
 }
 
-func toolDir(tool Tool, platform Platform) string {
+func toolDir(tool Tool, platform TargetPlatform) string {
 	return filepath.Join(BinariesRootPath(platform), "downloads", string(tool.GetName())+"-"+tool.GetVersion())
 }
 
@@ -973,7 +973,7 @@ func ensureDir(file string) error {
 	return nil
 }
 
-func shouldReinstall(t Tool, platform Platform, src, dst string) bool {
+func shouldReinstall(t Tool, platform TargetPlatform, src, dst string) bool {
 	toolDir := toolDir(t, platform)
 
 	srcPath, err := filepath.Abs(toolDir + "/" + src)
@@ -1003,7 +1003,7 @@ func shouldReinstall(t Tool, platform Platform, src, dst string) bool {
 }
 
 func shouldRelink(dst string) (bool, error) {
-	dstPath := filepath.Join(BinariesRootPath(PlatformLocal), dst)
+	dstPath := filepath.Join(BinariesRootPath(TargetPlatformLocal), dst)
 
 	absSrcPath, err := filepath.Abs(dstPath)
 	if err != nil {
@@ -1041,7 +1041,7 @@ func Get(name Name) (Tool, error) {
 
 // CopyToolBinaries moves the toolsMap artifacts from the local cache to the target local location.
 // In case the binPath doesn't exist the method will create it.
-func CopyToolBinaries(toolName Name, platform Platform, path string, binaryNames ...string) error {
+func CopyToolBinaries(toolName Name, platform TargetPlatform, path string, binaryNames ...string) error {
 	tool, err := Get(toolName)
 	if err != nil {
 		return err
@@ -1097,17 +1097,17 @@ func CopyToolBinaries(toolName Name, platform Platform, path string, binaryNames
 }
 
 // BinariesRootPath returns the root path of cached binaries.
-func BinariesRootPath(platform Platform) string {
+func BinariesRootPath(platform TargetPlatform) string {
 	return filepath.Join(CacheDir(), "bin", platform.String())
 }
 
 // Path returns path to the installed binary.
-func Path(binary string, platform Platform) string {
+func Path(binary string, platform TargetPlatform) string {
 	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(filepath.Join(BinariesRootPath(platform), binary)))))
 }
 
 // Ensure ensures tool exists for the platform.
-func Ensure(ctx context.Context, toolName Name, platform Platform) error {
+func Ensure(ctx context.Context, toolName Name, platform TargetPlatform) error {
 	tool, err := Get(toolName)
 	if err != nil {
 		return err

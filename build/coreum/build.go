@@ -48,21 +48,21 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	return golang.Build(ctx, golang.BinaryBuildConfig{
-		Platform:      tools.PlatformLocal,
-		PackagePath:   "../coreum/cmd/cored",
-		BinOutputPath: binaryPath,
-		Parameters:    parameters,
-		CGOEnabled:    true,
-		Tags:          tagsLocal,
+		TargetPlatform: tools.TargetPlatformLocal,
+		PackagePath:    "../coreum/cmd/cored",
+		BinOutputPath:  binaryPath,
+		Parameters:     parameters,
+		CGOEnabled:     true,
+		Tags:           tagsLocal,
 	})
 }
 
 // BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
-	return buildCoredInDocker(ctx, deps, tools.PlatformLinuxLocalArchInDocker)
+	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker)
 }
 
-func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {
+func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
 	deps(golang.EnsureGo, ensureRepo)
 
 	parameters, err := coredVersionParams(ctx, tagsDocker)
@@ -70,19 +70,19 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 		return err
 	}
 
-	if tools.PlatformLocal == tools.PlatformLinuxAMD64 && platform == tools.PlatformLinuxARM64InDocker {
-		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.PlatformLinuxAMD64InDocker); err != nil {
+	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 && targetPlatform == tools.TargetPlatformLinuxARM64InDocker {
+		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
 			return err
 		}
 	}
-	if err := tools.Ensure(ctx, tools.LibWASMMuslC, platform); err != nil {
+	if err := tools.Ensure(ctx, tools.LibWASMMuslC, targetPlatform); err != nil {
 		return err
 	}
 
 	return golang.Build(ctx, golang.BinaryBuildConfig{
-		Platform:       platform,
+		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
-		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, platform.String(), "bin", binaryName),
+		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsDocker,
@@ -92,7 +92,7 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, platform tools
 
 // buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
 // used for the CLI on target platform, but can't be used to run the node.
-func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {
+func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
 	deps(golang.EnsureGo, ensureRepo)
 
 	parameters, err := coredVersionParams(ctx, tagsDocker)
@@ -101,9 +101,9 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, platform
 	}
 
 	return golang.Build(ctx, golang.BinaryBuildConfig{
-		Platform:       platform,
+		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
-		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, platform.String(), "bin", fmt.Sprintf("%s-client", binaryName)),
+		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", fmt.Sprintf("%s-client", binaryName)),
 		Parameters:     parameters,
 		CGOEnabled:     false,
 		Tags:           tagsDocker,
@@ -173,7 +173,7 @@ func coredVersionParams(ctx context.Context, buildTags []string) (params, error)
 func formatProto(ctx context.Context, deps build.DepsFunc) error {
 	deps(tools.EnsureBuf)
 
-	cmd := exec.Command(tools.Path("bin/buf", tools.PlatformLocal), "format", "-w")
+	cmd := exec.Command(tools.Path("bin/buf", tools.TargetPlatformLocal), "format", "-w")
 	cmd.Dir = filepath.Join(repoPath, "proto", "coreum")
 	return libexec.Exec(ctx, cmd)
 }

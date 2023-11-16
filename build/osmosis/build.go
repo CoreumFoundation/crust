@@ -9,5 +9,5 @@ import (
 
 // EnsureBinary installs osmosis binary to crust cache.
 func EnsureBinary(ctx context.Context, deps build.DepsFunc) error {
-	return tools.Ensure(ctx, tools.Osmosis, tools.PlatformLocal)
+	return tools.Ensure(ctx, tools.Osmosis, tools.TargetPlatformLocal)
 }

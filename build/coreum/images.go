@@ -14,10 +14,10 @@ import (
 )
 
 type imageConfig struct {
-	Platforms []tools.Platform
-	Action    docker.Action
-	Username  string
-	Versions  []string
+	TargetPlatforms []tools.TargetPlatform
+	Action          docker.Action
+	Username        string
+	Versions        []string
 }
 
 // BuildCoredDockerImage builds cored docker image.
@@ -25,14 +25,14 @@ func BuildCoredDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(BuildCoredInDocker, ensureReleasedBinaries)
 
 	return buildCoredDockerImage(ctx, imageConfig{
-		Platforms: []tools.Platform{tools.PlatformLinuxLocalArchInDocker},
-		Action:    docker.ActionLoad,
-		Versions:  []string{config.ZNetVersion},
+		TargetPlatforms: []tools.TargetPlatform{tools.TargetPlatformLinuxLocalArchInDocker},
+		Action:          docker.ActionLoad,
+		Versions:        []string{config.ZNetVersion},
 	})
 }
 
 func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
-	for _, platform := range cfg.Platforms {
+	for _, platform := range cfg.TargetPlatforms {
 		if err := ensureCosmovisor(ctx, platform); err != nil {
 			return err
 		}
@@ -51,14 +51,14 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		RepoPath:   repoPath,
-		ContextDir: filepath.Join("bin", ".cache", binaryName),
-		ImageName:  binaryName,
-		Platforms:  cfg.Platforms,
-		Action:     cfg.Action,
-		Versions:   cfg.Versions,
-		Username:   cfg.Username,
-		Dockerfile: dockerfile,
+		RepoPath:        repoPath,
+		ContextDir:      filepath.Join("bin", ".cache", binaryName),
+		ImageName:       binaryName,
+		TargetPlatforms: cfg.TargetPlatforms,
+		Action:          cfg.Action,
+		Versions:        cfg.Versions,
+		Username:        cfg.Username,
+		Dockerfile:      dockerfile,
 	})
 }
 
@@ -68,10 +68,10 @@ func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
 		tools.CoredV202,
 		tools.CoredV100,
 	} {
-		if err := tools.Ensure(ctx, binaryTool, tools.PlatformLinuxLocalArchInDocker); err != nil {
+		if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 			return err
 		}
-		if err := tools.CopyToolBinaries(binaryTool, tools.PlatformLinuxLocalArchInDocker, filepath.Join("bin", ".cache", binaryName, tools.PlatformLinuxLocalArchInDocker.String()), fmt.Sprintf("bin/%s", binaryTool)); err != nil {
+		if err := tools.CopyToolBinaries(binaryTool, tools.TargetPlatformLinuxLocalArchInDocker, filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String()), fmt.Sprintf("bin/%s", binaryTool)); err != nil {
 			return err
 		}
 	}
