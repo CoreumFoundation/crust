@@ -36,7 +36,6 @@ func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 		coreum.BuildCored,
 		gaia.EnsureBinary,
 		gaia.BuildDockerImage,
-		osmosis.EnsureBinary,
 		osmosis.BuildDockerImage,
 		hermes.BuildDockerImage,
 	)

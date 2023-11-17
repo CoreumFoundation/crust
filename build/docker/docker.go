@@ -20,7 +20,7 @@ import (
 
 // Tags used to build our docker images.
 const (
-	AlpineImage = "alpine:3.18.3"
+	AlpineImage = "alpine:3.18.4"
 	UbuntuImage = "ubuntu:23.10"
 )
 
