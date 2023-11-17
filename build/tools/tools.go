@@ -662,6 +662,7 @@ type Sources map[Platform]Source
 
 // InstallAll installs all the toolsMap.
 func InstallAll(ctx context.Context, deps build.DepsFunc) error {
+	Ensure(ctx, Go, PlatformLocal)
 	for toolName := range toolsMap {
 		tool := toolsMap[toolName]
 		if tool.IsLocal() {
