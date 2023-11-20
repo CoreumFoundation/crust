@@ -18,12 +18,12 @@ const (
 
 // BuildDockerImage builds docker image of the gaia.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	if err := tools.Ensure(ctx, tools.Gaia, tools.PlatformDockerLocal); err != nil {
+	if err := tools.Ensure(ctx, tools.Gaia, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 		return err
 	}
 
-	gaiaLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
-	if err := tools.CopyToolBinaries(tools.Gaia, tools.PlatformDockerLocal, gaiaLocalPath, binaryPath); err != nil {
+	gaiaLocalPath := filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String())
+	if err := tools.CopyToolBinaries(tools.Gaia, tools.TargetPlatformLinuxLocalArchInDocker, gaiaLocalPath, binaryPath); err != nil {
 		return err
 	}
 

@@ -67,7 +67,7 @@ func lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 		}
 
 		log.Info("Running linter", zap.String("path", path))
-		cmd := exec.Command(tools.Path("bin/golangci-lint", tools.PlatformLocal), "run", "--config", config)
+		cmd := exec.Command(tools.Path("bin/golangci-lint", tools.TargetPlatformLocal), "run", "--config", config)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "linter errors found in module '%s'", path)

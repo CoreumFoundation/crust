@@ -18,9 +18,6 @@ func (p Platform) String() string {
 	return p.OS + "." + p.Arch
 }
 
-// DockerOS represents docker environment.
-const DockerOS = "docker"
-
 // Platform definitions.
 var (
 	PlatformLocal = Platform{OS: runtime.GOOS, Arch: runtime.GOARCH}

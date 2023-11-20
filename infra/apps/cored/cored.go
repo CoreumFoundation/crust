@@ -353,9 +353,10 @@ func (c Cored) prepare() error {
 	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin"), 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-
+	// the path is defined by the build
+	dockerLinuxBinaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
 	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
-	binaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", "cored")
+	binaryPath := filepath.Join(dockerLinuxBinaryPath, "cored")
 	if c.Config().BinaryVersion != "" {
 		binaryPath += "-" + c.Config().BinaryVersion
 	}
@@ -368,7 +369,7 @@ func (c Cored) prepare() error {
 		"v3": "cored",
 	}
 	for upgrade, binary := range upgrades {
-		err := copyFile(filepath.Join(c.config.BinDir, ".cache", "cored", "docker."+runtime.GOARCH, "bin", binary),
+		err := copyFile(filepath.Join(dockerLinuxBinaryPath, binary),
 			filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", upgrade, "bin", "cored"), 0o755)
 		if err != nil {
 			return err

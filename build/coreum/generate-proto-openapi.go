@@ -121,7 +121,7 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 		}
 		args := append([]string{}, args...)
 		args = append(args, pf)
-		cmd := exec.Command(tools.Path("bin/protoc", tools.PlatformLocal), args...)
+		cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
 		cmd.Dir = dir
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err

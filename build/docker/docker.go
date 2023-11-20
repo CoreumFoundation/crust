@@ -52,8 +52,8 @@ type BuildImageConfig struct {
 	// ImageName is the name of the image
 	ImageName string
 
-	// Platforms is the list of platforms to build the image for
-	Platforms []tools.Platform
+	// TargetPlatforms is the list of platforms to build the image for
+	TargetPlatforms []tools.TargetPlatform
 
 	// Dockerfile contains dockerfile for build
 	Dockerfile []byte
@@ -76,7 +76,7 @@ type dockerBuildParamsInput struct {
 	gitVersions   []string
 	otherVersions []string
 	username      string
-	platforms     []tools.Platform
+	platforms     []tools.TargetPlatform
 	action        Action
 }
 
@@ -112,7 +112,7 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 		gitVersions:   versionsFromGit,
 		otherVersions: config.Versions,
 		username:      config.Username,
-		platforms:     config.Platforms,
+		platforms:     config.TargetPlatforms,
 		action:        config.Action,
 	})
 

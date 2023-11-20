@@ -18,12 +18,12 @@ const (
 
 // BuildDockerImage builds docker image of the ibc relayer.
 func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
-	if err := tools.Ensure(ctx, tools.Hermes, tools.PlatformDockerLocal); err != nil {
+	if err := tools.Ensure(ctx, tools.Hermes, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 		return err
 	}
 
-	hermesLocalPath := filepath.Join("bin", ".cache", binaryName, tools.PlatformDockerLocal.String())
-	if err := tools.CopyToolBinaries(tools.Hermes, tools.PlatformDockerLocal, hermesLocalPath, binaryPath); err != nil {
+	hermesLocalPath := filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String())
+	if err := tools.CopyToolBinaries(tools.Hermes, tools.TargetPlatformLinuxLocalArchInDocker, hermesLocalPath, binaryPath); err != nil {
 		return err
 	}
 

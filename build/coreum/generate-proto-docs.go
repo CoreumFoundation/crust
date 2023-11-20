@@ -63,7 +63,7 @@ func executeProtocCommand(ctx context.Context, deps build.DepsFunc, includeDirs,
 	}
 	args = append(args, allProtoFiles...)
 
-	cmd := exec.Command(tools.Path("bin/protoc", tools.PlatformLocal), args...)
+	cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
 	cmd.Dir = repoPath
 
 	return libexec.Exec(ctx, cmd)
