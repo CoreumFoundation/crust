@@ -8,7 +8,6 @@ chain:
     - bank
     - consensus
     - gov
-    - group
     - mint
     - slashing
     - staking
@@ -19,7 +18,7 @@ chain:
     - assetft
     - assetnft
     - pricefeed
-    - wasm
+    - addresses
 
 node:
   type: remote
