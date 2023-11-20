@@ -20,16 +20,16 @@ const (
 
 // Build builds faucet in docker.
 func Build(ctx context.Context, deps build.DepsFunc) error {
-	return buildFaucet(ctx, deps, tools.PlatformDockerLocal)
+	return buildFaucet(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker)
 }
 
-func buildFaucet(ctx context.Context, deps build.DepsFunc, platform tools.Platform) error {
+func buildFaucet(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
 	deps(golang.EnsureGo, ensureRepo)
 
 	return golang.Build(ctx, golang.BinaryBuildConfig{
-		Platform:      platform,
-		PackagePath:   repoPath,
-		BinOutputPath: filepath.Join("bin", ".cache", binaryName, platform.String(), "bin", binaryName),
+		TargetPlatform: targetPlatform,
+		PackagePath:    repoPath,
+		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
 	})
 }
 

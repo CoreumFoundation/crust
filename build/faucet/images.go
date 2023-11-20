@@ -12,10 +12,10 @@ import (
 )
 
 type imageConfig struct {
-	Platforms []tools.Platform
-	Action    docker.Action
-	Username  string
-	Versions  []string
+	TargetPlatforms []tools.TargetPlatform
+	Action          docker.Action
+	Username        string
+	Versions        []string
 }
 
 // BuildDockerImage builds docker image of the faucet.
@@ -23,9 +23,9 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(Build)
 
 	return buildDockerImage(ctx, imageConfig{
-		Platforms: []tools.Platform{tools.PlatformDockerLocal},
-		Action:    docker.ActionLoad,
-		Versions:  []string{config.ZNetVersion},
+		TargetPlatforms: []tools.TargetPlatform{tools.TargetPlatformLinuxLocalArchInDocker},
+		Action:          docker.ActionLoad,
+		Versions:        []string{config.ZNetVersion},
 	})
 }
 
@@ -39,13 +39,13 @@ func buildDockerImage(ctx context.Context, cfg imageConfig) error {
 	}
 
 	return docker.BuildImage(ctx, docker.BuildImageConfig{
-		RepoPath:   repoPath,
-		ContextDir: filepath.Join("bin", ".cache", binaryName),
-		ImageName:  binaryName,
-		Platforms:  cfg.Platforms,
-		Action:     cfg.Action,
-		Versions:   cfg.Versions,
-		Username:   cfg.Username,
-		Dockerfile: dockerfile,
+		RepoPath:        repoPath,
+		ContextDir:      filepath.Join("bin", ".cache", binaryName),
+		ImageName:       binaryName,
+		TargetPlatforms: cfg.TargetPlatforms,
+		Action:          cfg.Action,
+		Versions:        cfg.Versions,
+		Username:        cfg.Username,
+		Dockerfile:      dockerfile,
 	})
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
-func ensureCosmovisor(ctx context.Context, platform tools.Platform) error {
+func ensureCosmovisor(ctx context.Context, platform tools.TargetPlatform) error {
 	if err := tools.Ensure(ctx, tools.Cosmovisor, platform); err != nil {
 		return err
 	}

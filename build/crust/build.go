@@ -23,9 +23,9 @@ const repoPath = "."
 func BuildCrust(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
 	return golang.Build(ctx, golang.BinaryBuildConfig{
-		Platform:      tools.PlatformLocal,
-		PackagePath:   "build/cmd",
-		BinOutputPath: must.String(filepath.EvalSymlinks(must.String(os.Executable()))),
+		TargetPlatform: tools.TargetPlatformLocal,
+		PackagePath:    "build/cmd",
+		BinOutputPath:  must.String(filepath.EvalSymlinks(must.String(os.Executable()))),
 	})
 }
 
@@ -41,10 +41,10 @@ func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 	)
 
 	return golang.Build(ctx, golang.BinaryBuildConfig{
-		Platform:      tools.PlatformLocal,
-		PackagePath:   "cmd/znet",
-		BinOutputPath: "bin/.cache/znet",
-		CGOEnabled:    true,
+		TargetPlatform: tools.TargetPlatformLocal,
+		PackagePath:    "cmd/znet",
+		BinOutputPath:  "bin/.cache/znet",
+		CGOEnabled:     true,
 	})
 }
 

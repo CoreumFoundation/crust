@@ -9,5 +9,5 @@ import (
 
 // EnsureBinary installs gaiad binary to crust cache.
 func EnsureBinary(ctx context.Context, deps build.DepsFunc) error {
-	return tools.Ensure(ctx, tools.Gaia, tools.PlatformLocal)
+	return tools.Ensure(ctx, tools.Gaia, tools.TargetPlatformLocal)
 }

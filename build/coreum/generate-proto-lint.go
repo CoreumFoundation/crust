@@ -74,7 +74,7 @@ func executeLintProtocCommand(ctx context.Context, deps build.DepsFunc, includeD
 	for _, files := range packages {
 		args := append([]string{}, args...)
 		args = append(args, files...)
-		cmd := exec.Command(tools.Path("bin/protoc", tools.PlatformLocal), args...)
+		cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err
 		}

@@ -33,8 +33,8 @@ const goAlpineVersion = "3.18"
 
 // BinaryBuildConfig is the configuration for `go build`.
 type BinaryBuildConfig struct {
-	// Platform is the platform to build the binary for
-	Platform tools.Platform
+	// TargetPlatform is the platform to build the binary for
+	TargetPlatform tools.TargetPlatform
 
 	// PackagePath is the path to package to build
 	PackagePath string
@@ -69,17 +69,17 @@ type TestBuildConfig struct {
 
 // EnsureGo ensures that go is available.
 func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
-	return tools.Ensure(ctx, tools.Go, tools.PlatformLocal)
+	return tools.Ensure(ctx, tools.Go, tools.TargetPlatformLocal)
 }
 
 // EnsureGolangCI ensures that go linter is available.
 func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
-	return tools.Ensure(ctx, tools.GolangCI, tools.PlatformLocal)
+	return tools.Ensure(ctx, tools.GolangCI, tools.TargetPlatformLocal)
 }
 
 // Build builds go binary.
 func Build(ctx context.Context, config BinaryBuildConfig) error {
-	if config.Platform.OS == tools.DockerOS {
+	if config.TargetPlatform.BuildInDocker {
 		return buildInDocker(ctx, config)
 	}
 	return buildLocally(ctx, config)
@@ -89,9 +89,9 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
 		zap.String("binary", config.BinOutputPath))
 
-	if config.Platform != tools.PlatformLocal {
+	if config.TargetPlatform != tools.TargetPlatformLocal {
 		return errors.Errorf("building requested for platform %s while only %s is supported",
-			config.Platform, tools.PlatformLocal)
+			config.TargetPlatform, tools.TargetPlatformLocal)
 	}
 
 	libDir := filepath.Join(tools.CacheDir(), "lib")
@@ -105,7 +105,7 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
-	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), args...)
+	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 	cmd.Env = envs
 
@@ -135,7 +135,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	cacheDir := tools.BinariesRootPath(config.Platform)
+	cacheDir := tools.BinariesRootPath(config.TargetPlatform)
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -159,9 +159,9 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		"--name", "crust-build-" + filepath.Base(config.BinOutputPath) + "-" + hex.EncodeToString(nameSuffix),
 	}
-	if tools.PlatformLocal == tools.PlatformLinuxAMD64 && config.Platform == tools.PlatformDockerARM64 {
-		crossCompilerPath := filepath.Dir(filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.PlatformDockerAMD64)))
-		libWasmVMPath := tools.Path("lib/libwasmvm_muslc.a", tools.PlatformDockerARM64)
+	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 && config.TargetPlatform == tools.TargetPlatformLinuxARM64InDocker {
+		crossCompilerPath := filepath.Dir(filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.TargetPlatformLinuxAMD64InDocker)))
+		libWasmVMPath := tools.Path("lib/libwasmvm_muslc.a", tools.TargetPlatformLinuxARM64InDocker)
 		runArgs = append(runArgs,
 			"-v", crossCompilerPath+":/aarch64-linux-musl-cross",
 			"-v", libWasmVMPath+":/aarch64-linux-musl-cross/aarch64-linux-musl/lib/libwasmvm_muslc.a",
@@ -193,7 +193,7 @@ func BuildTests(ctx context.Context, config TestBuildConfig) error {
 		args = append(args, "-tags="+strings.Join(config.Tags, ","))
 	}
 
-	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), args...)
+	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
@@ -254,16 +254,18 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 
 func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []string, err error) {
 	var crossCompileARM64 bool
-	switch config.Platform {
-	case tools.PlatformLocal:
-	case tools.PlatformDockerLocal:
-	case tools.PlatformDockerARM64:
-		if tools.PlatformLocal != tools.PlatformLinuxAMD64 {
-			return nil, nil, errors.Errorf("crosscompiling for %s is possible only on platform %s", config.Platform, tools.PlatformLinuxAMD64)
+	switch config.TargetPlatform {
+	case tools.TargetPlatformLocal:
+	case tools.TargetPlatformLinuxLocalArchInDocker:
+	case tools.TargetPlatformLinuxARM64InDocker:
+		if tools.TargetPlatformLocal != tools.TargetPlatformLinuxAMD64 {
+			return nil, nil, errors.Errorf("crosscompiling for %s is possible only on platform %s", config.TargetPlatform, tools.TargetPlatformLinuxAMD64)
 		}
 		crossCompileARM64 = true
+	case tools.TargetPlatformDarwinAMD64InDocker:
+	case tools.TargetPlatformDarwinARM64InDocker:
 	default:
-		return nil, nil, errors.Errorf("building is not possible for platform %s on platform %s", config.Platform, tools.PlatformLocal)
+		return nil, nil, errors.Errorf("building is not possible for platform %s on platform %s", config.TargetPlatform, tools.TargetPlatformLocal)
 	}
 
 	ldFlags := []string{"-w", "-s"}
@@ -290,10 +292,12 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	if config.CGOEnabled {
 		cgoEnabled = "1"
 	}
-	envs = append(envs, "CGO_ENABLED="+cgoEnabled)
+	envs = append(envs, fmt.Sprintf("CGO_ENABLED=%s", cgoEnabled))
 	if crossCompileARM64 {
-		envs = append(envs, "GOARCH=arm64", "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
+		envs = append(envs, "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
 	}
+	envs = append(envs, fmt.Sprintf("GOOS=%s", config.TargetPlatform.OS))
+	envs = append(envs, fmt.Sprintf("GOARCH=%s", config.TargetPlatform.Arch))
 
 	return args, envs, nil
 }
@@ -304,7 +308,7 @@ func Generate(ctx context.Context, path string, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	log.Info("Running go generate", zap.String("path", path))
 
-	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), "generate", "./...")
+	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "generate", "./...")
 	cmd.Dir = path
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "generation failed in package '%s'", path)
@@ -327,7 +331,7 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 		}
 
 		log.Info("Running go tests", zap.String("path", path))
-		cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), "test", "-count=1", "-shuffle=on", "-race", "./...")
+		cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "test", "-count=1", "-shuffle=on", "-race", "./...")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "unit tests failed in module '%s'", path)
@@ -343,7 +347,7 @@ func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	return onModule(repoPath, func(path string) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
 
-		cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), "mod", "tidy")
+		cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "mod", "tidy")
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "'go mod tidy' failed in module '%s'", path)
@@ -386,7 +390,7 @@ func ModuleDirs(ctx context.Context, deps build.DepsFunc, repoPath string, modul
 	deps(EnsureGo)
 
 	out := &bytes.Buffer{}
-	cmd := exec.Command(tools.Path("bin/go", tools.PlatformLocal), append([]string{"list", "-m", "-json"}, modules...)...)
+	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), append([]string{"list", "-m", "-json"}, modules...)...)
 	cmd.Stdout = out
 	cmd.Dir = repoPath
 
