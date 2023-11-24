@@ -48,6 +48,7 @@ const (
 	ProtocGenBufBreaking  Name = "protoc-gen-buf-breaking"
 )
 
+// Tool versions.
 const (
 	GoVersion       = "1.21.4"
 	GolangCIVersion = "1.55.2"
