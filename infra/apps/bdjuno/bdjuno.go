@@ -112,7 +112,7 @@ func (j BDJuno) Deployment() infra.Deployment {
 			"telemetry": j.config.TelemetryPort,
 		},
 		Requires: infra.Prerequisites{
-			Timeout: 20 * time.Second,
+			Timeout: 40 * time.Second,
 			Dependencies: []infra.HealthCheckCapable{
 				j.config.Cored,
 				j.config.Postgres,
