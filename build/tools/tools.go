@@ -1042,11 +1042,7 @@ func shouldReinstall(t Tool, platform TargetPlatform, src, dst string) bool {
 	}
 
 	actualChecksum := hex.EncodeToString(hasher.Sum(nil))
-	if actualChecksum != expectedChecksum {
-		return true
-	}
-
-	return false
+	return actualChecksum != expectedChecksum
 }
 
 func shouldRelink(dst string) (bool, error) {
