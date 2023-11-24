@@ -48,11 +48,16 @@ const (
 	ProtocGenBufBreaking  Name = "protoc-gen-buf-breaking"
 )
 
+const (
+	GoVersion       = "1.21.4"
+	GolangCIVersion = "1.55.2"
+)
+
 var tools = []Tool{
 	// https://go.dev/dl/
 	BinaryTool{
 		Name:    Go,
-		Version: "1.21.4",
+		Version: GoVersion,
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
@@ -77,7 +82,7 @@ var tools = []Tool{
 	// https://github.com/golangci/golangci-lint/releases/
 	BinaryTool{
 		Name:    GolangCI,
-		Version: "1.55.2",
+		Version: GolangCIVersion,
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {

@@ -84,7 +84,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-1.21.4
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-{{ .GoVersion }}
       - name: Setup WASM cache
         uses: actions/cache@v3
         if: ${{ matrix.wasm-cache }}
@@ -100,7 +100,7 @@ jobs:
         if: ${{ matrix.linter-cache }}
         with:
           path: ~/.cache/golangci-lint
-          key: ${{ runner.os }}-linter-cache-1.55.2
+          key: ${{ runner.os }}-linter-cache-{{ .GolangCIVersion }}
       - name: Get Date
         id: get-year-week
         run: |

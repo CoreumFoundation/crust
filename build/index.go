@@ -28,6 +28,7 @@ var Commands = map[string]build.CommandFunc{
 	"build/integration-tests/faucet":         faucet.BuildIntegrationTests,
 	"generate":                               generate,
 	"generate/coreum":                        coreum.Generate,
+	"generate/crust":                         crust.Generate,
 	"images":                                 buildDockerImages,
 	"images/cored":                           coreum.BuildCoredDockerImage,
 	"images/faucet":                          faucet.BuildDockerImage,
@@ -105,6 +106,6 @@ func releaseImages(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func generate(ctx context.Context, deps build.DepsFunc) error {
-	deps(coreum.Generate)
+	deps(coreum.Generate, crust.Generate)
 	return nil
 }
