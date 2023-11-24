@@ -119,7 +119,8 @@ func Tidy(ctx context.Context, deps build.DepsFunc) error {
 
 // Lint lints coreum repo.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
-	deps(ensureRepo, Generate, CompileAllSmartContracts, formatProto, lintProto, breakingProto)
+	// FIXME(wojtek): Unblock `breakingProto` once coreum v4 is merged
+	deps(ensureRepo, Generate, CompileAllSmartContracts, formatProto, lintProto) //, breakingProto)
 	return golang.Lint(ctx, repoPath, deps)
 }
 
