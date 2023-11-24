@@ -366,7 +366,7 @@ func (c Cored) prepare() error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		"v3": "cored",
+		"v4": "cored",
 	}
 	for upgrade, binary := range upgrades {
 		err := copyFile(filepath.Join(dockerLinuxBinaryPath, binary),
