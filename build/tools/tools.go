@@ -1126,7 +1126,7 @@ func CopyToolBinaries(toolName Name, platform TargetPlatform, path string, binar
 			return errors.WithStack(err)
 		}
 		defer fr.Close()
-		fw, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
+		fw, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
 		if err != nil {
 			return errors.WithStack(err)
 		}
