@@ -108,7 +108,7 @@ func (g Grafana) Deployment() infra.Deployment {
 			"web": g.config.Port,
 		},
 		Requires: infra.Prerequisites{
-			Timeout: 20 * time.Second,
+			Timeout: 40 * time.Second,
 			Dependencies: []infra.HealthCheckCapable{
 				g.config.Prometheus,
 			},
