@@ -158,7 +158,7 @@ func (h Hermes) Deployment() infra.Deployment {
 			"debug": h.config.TelemetryPort,
 		},
 		Requires: infra.Prerequisites{
-			Timeout: 20 * time.Second,
+			Timeout: 40 * time.Second,
 			Dependencies: []infra.HealthCheckCapable{
 				h.config.Cored,
 				h.config.PeeredChain,

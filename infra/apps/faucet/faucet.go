@@ -126,7 +126,7 @@ func (f Faucet) Deployment() infra.Deployment {
 			"monitoring": f.config.MonitoringPort,
 		},
 		Requires: infra.Prerequisites{
-			Timeout: 20 * time.Second,
+			Timeout: 40 * time.Second,
 			Dependencies: []infra.HealthCheckCapable{
 				f.config.Cored,
 			},
