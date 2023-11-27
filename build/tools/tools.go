@@ -6,7 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 	"hash"
 	"io"
 	"net/http"
@@ -579,7 +579,7 @@ func (bt BinaryTool) install(ctx context.Context, platform TargetPlatform) (retE
 		return err
 	}
 
-	actualChecksum := fmt.Sprintf("%02x", hasher.Sum(nil))
+	actualChecksum := hex.EncodeToString(hasher.Sum(nil))
 	if actualChecksum != expectedChecksum {
 		return errors.Errorf("checksum does not match for tool %s, expected: %s, actual: %s, url: %s", bt.Name,
 			expectedChecksum, actualChecksum, source.URL)
@@ -588,15 +588,26 @@ func (bt BinaryTool) install(ctx context.Context, platform TargetPlatform) (retE
 	dstDir := BinariesRootPath(platform)
 	for dst, src := range lo.Assign(bt.Binaries, source.Binaries) {
 		srcPath := toolDir + "/" + src
-		dstPath := dstDir + "/" + dst
-		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
-			panic(err)
+
+		binChecksum, err := checksum(srcPath)
+		if err != nil {
+			return err
 		}
+
+		dstPath := dstDir + "/" + dst
+		dstPathChecksum := dstPath + ":" + binChecksum
+		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
+			return errors.WithStack(err)
+		}
+		if err := os.Remove(dstPathChecksum); err != nil && !os.IsNotExist(err) {
+			return errors.WithStack(err)
+		}
+
 		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
 		must.OK(os.Chmod(srcPath, 0o700))
 		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), "downloads", string(bt.Name)+"-"+bt.Version, src)
-		must.OK(os.Symlink(srcLinkPath, dstPath))
-		must.Any(filepath.EvalSymlinks(dstPath))
+		must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
+		must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
 		log.Info("Binary installed to path", zap.String("path", dstPath))
 	}
 
@@ -653,14 +664,27 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 		}
 
 		srcPath := toolDir + "/" + binName
+
+		binChecksum, err := checksum(srcPath)
+		if err != nil {
+			return err
+		}
+
 		dstPath := BinariesRootPath(platform) + "/" + dst
+		dstPathChecksum := dstPath + ":" + binChecksum
+
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
 			panic(err)
 		}
+		if err := os.Remove(dstPathChecksum); err != nil && !os.IsNotExist(err) {
+			return errors.WithStack(err)
+		}
+
 		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
 		must.OK(os.Chmod(srcPath, 0o700))
 		srcLinkPath := filepath.Join("..", "downloads", string(gpt.Name)+"-"+gpt.Version, binName)
-		must.OK(os.Symlink(srcLinkPath, dstPath))
+		must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
+		must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
 		must.Any(filepath.EvalSymlinks(dstPath))
 		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
 	}
@@ -773,6 +797,21 @@ func hasher(hashStr string) (hash.Hash, string) {
 	}
 
 	return hasher, strings.ToLower(checksum)
+}
+
+func checksum(file string) (string, error) {
+	f, err := os.OpenFile(file, os.O_RDONLY, 0o600)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	defer f.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, f); err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	return "sha256:" + hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 func save(url string, reader io.Reader, path string) error {
@@ -982,7 +1021,28 @@ func shouldReinstall(t Tool, platform TargetPlatform, src, dst string) bool {
 		return true
 	}
 
-	return false
+	linkedPath, err := os.Readlink(dstPath)
+	if err != nil {
+		return true
+	}
+	linkNameParts := strings.Split(filepath.Base(linkedPath), ":")
+	if len(linkNameParts) < 3 {
+		return true
+	}
+
+	hasher, expectedChecksum := hasher(linkNameParts[len(linkNameParts)-2] + ":" + linkNameParts[len(linkNameParts)-1])
+	f, err := os.Open(realPath)
+	if err != nil {
+		return true
+	}
+	defer f.Close()
+
+	if _, err := io.Copy(hasher, f); err != nil {
+		return true
+	}
+
+	actualChecksum := hex.EncodeToString(hasher.Sum(nil))
+	return actualChecksum != expectedChecksum
 }
 
 func shouldRelink(dst string) (bool, error) {
@@ -1066,7 +1126,7 @@ func CopyToolBinaries(toolName Name, platform TargetPlatform, path string, binar
 			return errors.WithStack(err)
 		}
 		defer fr.Close()
-		fw, err := os.OpenFile(dstPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o777)
+		fw, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
 		if err != nil {
 			return errors.WithStack(err)
 		}
