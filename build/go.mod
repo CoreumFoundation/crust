@@ -6,7 +6,7 @@ go 1.20
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v3 v3.0.0-20230913131835-50a674fc212c
+	github.com/CoreumFoundation/coreum/v3 v3.0.1-0.20231124115256-093d78cd8b5c
 	github.com/bufbuild/buf v1.26.1
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -40,7 +40,6 @@ require (
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
