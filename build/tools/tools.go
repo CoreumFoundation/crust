@@ -38,6 +38,7 @@ const (
 	Hermes                Name = "hermes"
 	CoredV100             Name = "cored-v1.0.0"
 	CoredV202             Name = "cored-v2.0.2"
+	CoredV300             Name = "cored-v3.0.0"
 	Buf                   Name = "buf"
 	Protoc                Name = "protoc"
 	ProtocGenDoc          Name = "protoc-gen-doc"
@@ -283,6 +284,26 @@ var tools = []Tool{
 				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
 				Binaries: map[string]string{
 					"bin/cored-v2.0.2": "cored-linux-arm64",
+				},
+			},
+		},
+	},
+	BinaryTool{
+		Name:    CoredV300,
+		Version: "v3.0.0",
+		Sources: Sources{
+			TargetPlatformLinuxAMD64InDocker: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.0/cored-linux-amd64",
+				Hash: "sha256:0198b5bf7a32b0e76c57f5fe30bcb27bdc69ba91cd6e4fc8c416bea3a1251a24",
+				Binaries: map[string]string{
+					"bin/cored-v3.0.0": "cored-linux-amd64",
+				},
+			},
+			TargetPlatformLinuxARM64InDocker: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.0/cored-linux-arm64",
+				Hash: "sha256:192eaf4fcc49c3ea3339d12f53c905420575d00d605048e526a994a0c4368768",
+				Binaries: map[string]string{
+					"bin/cored-v3.0.0": "cored-linux-arm64",
 				},
 			},
 		},
