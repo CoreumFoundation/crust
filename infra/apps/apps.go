@@ -61,7 +61,7 @@ func (f *Factory) CoredNetwork(
 	for i := 0; i < cap(nodes); i++ {
 		name = namePrefix + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
-		isValidator := i < validatorsCount
+		isValidator := i >= sentriesCount
 
 		node := cored.New(cored.Config{
 			Name:          name,
