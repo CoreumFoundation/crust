@@ -3,8 +3,8 @@ cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab h1:XPcSzlQ06tor/py1LkEM9FX70LIeDWB++vLuAO6eAYI=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/coreum/v3 v3.0.1-0.20231124115256-093d78cd8b5c h1:1mvatwnLh/K22sVegxyTfGR9NRZW9jaffFaAMxIUj1U=
-github.com/CoreumFoundation/coreum/v3 v3.0.1-0.20231124115256-093d78cd8b5c/go.mod h1:7P6l26od1SLwtqANiKB89cgXTrBicKdZmv+v007/Exk=
+github.com/CoreumFoundation/coreum/v4 v4.0.0-20231128071941-710434b13177 h1:pkFuvD4s0PMgDER7ZFfHKVaRd49B5rn7FMVDY0mFOxM=
+github.com/CoreumFoundation/coreum/v4 v4.0.0-20231128071941-710434b13177/go.mod h1:GbgxZk7RO775MGNs99zW7RsH9FnK1RPRgUwUv3ut5WM=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/benbjohnson/clock v1.3.5 h1:VvXlSJBzZpA/zum6Sj74hxwYI2DIxRWuNIoXAzHZz5o=

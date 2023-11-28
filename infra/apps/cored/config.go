@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v3/pkg/config"
-	"github.com/CoreumFoundation/coreum/v3/pkg/config/constant"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 )
 
 // DefaultGasPriceStr defines default gas price to be used inside IBC relayer.
