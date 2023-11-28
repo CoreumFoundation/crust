@@ -125,7 +125,7 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	}
 	networkConfig.SetSDKConfig()
 	appF := apps.NewFactory(config, spec, networkConfig)
-	appSet, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
+	appSet, _, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
 		return err
 	}
@@ -194,12 +194,12 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	}
 	networkConfig.SetSDKConfig()
 	appF := apps.NewFactory(config, spec, networkConfig)
-	appSet, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
+	appSet, coredApp, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
 		return err
 	}
 
-	return testing.Run(ctx, target, appSet, config, config.TestGroups...)
+	return testing.Run(ctx, target, appSet, coredApp, config, config.TestGroups...)
 }
 
 // Spec prints specification of running environment.

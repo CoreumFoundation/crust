@@ -77,15 +77,15 @@ func DefaultProfiles() []string {
 }
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
-func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, error) {
+func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, cored.Cored, error) {
 	pMap, err := checkProfiles(profiles)
 	if err != nil {
-		return nil, err
+		return nil, cored.Cored{}, err
 	}
 
 	if pMap[ProfileIntegrationTestsIBC] || pMap[ProfileIntegrationTestsModules] {
 		if pMap[Profile1Cored] {
-			return nil, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored or 5cored")
+			return nil, cored.Cored{}, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored or 5cored")
 		}
 		if !pMap[Profile5Cored] {
 			pMap[Profile3Cored] = true
@@ -105,9 +105,9 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	var coredApp cored.Cored
 	var appSet infra.AppSet
 
-	coredApp, coredNodes, err := appF.CoredNetwork(AppPrefixCored, cored.DefaultPorts, numOfCoredValidators, 1, coredVersion)
+	coredApp, coredNodes, err := appF.CoredNetwork(AppPrefixCored, cored.DefaultPorts, numOfCoredValidators, coredVersion)
 	if err != nil {
-		return nil, err
+		return nil, cored.Cored{}, err
 	}
 	for _, coredNode := range coredNodes {
 		appSet = append(appSet, coredNode)
@@ -162,7 +162,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		))
 	}
 
-	return appSet, nil
+	return appSet, coredApp, nil
 }
 
 func decideNumOfCoredValidators(pMap map[string]bool) int {
