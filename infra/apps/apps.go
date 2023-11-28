@@ -51,7 +51,7 @@ func (f *Factory) CoredNetwork(
 	const (
 		sentryCount = 1
 		seedCount   = 1
-		fullCount   = 1
+		fullCount   = 2
 	)
 
 	wallet, networkConfig := cored.NewFundedWallet(f.networkConfig)
