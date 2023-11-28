@@ -294,6 +294,8 @@ func (c Cored) Deployment() infra.Deployment {
 				"--inv-check-period", "1",
 				"--chain-id", string(c.config.NetworkConfig.ChainID()),
 				"--minimum-gas-prices", fmt.Sprintf("0.000000000000000001%s", c.config.NetworkConfig.Denom()),
+				"--wasm.memory_cache_size", "100",
+				"--wasm.query_gas_limit", "3000000",
 			}
 			if len(c.config.ValidatorNodes) > 0 {
 				peers := make([]string, 0, len(c.config.ValidatorNodes))
@@ -368,6 +370,14 @@ func (c Cored) prepare() error {
 	}
 
 	appCfg := srvconfig.DefaultConfig()
+
+	if c.config.IsValidator {
+		appCfg.Pruning = "everything"
+		appCfg.MinRetainBlocks = 10
+	} else {
+		appCfg.StateSync.SnapshotInterval = 500
+		appCfg.StateSync.SnapshotKeepRecent = 3
+	}
 	appCfg.API.Enable = true
 	appCfg.API.Swagger = true
 	appCfg.API.EnableUnsafeCORS = true
