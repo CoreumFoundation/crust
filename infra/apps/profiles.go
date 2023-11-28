@@ -105,7 +105,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	var coredApp cored.Cored
 	var appSet infra.AppSet
 
-	coredApp, coredNodes, err := appF.CoredNetwork(AppPrefixCored, cored.DefaultPorts, numOfCoredValidators, 0, coredVersion)
+	coredApp, coredNodes, err := appF.CoredNetwork(AppPrefixCored, cored.DefaultPorts, numOfCoredValidators, 1, coredVersion)
 	if err != nil {
 		return nil, err
 	}
