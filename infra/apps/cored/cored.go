@@ -330,6 +330,10 @@ func (c Cored) prepare() error {
 		ValidatorKey:   c.validatorPrivateKey,
 	}, c.config.TimeoutCommit, c.config.HomeDir)
 
+	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "data"), 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+
 	appCfg := srvconfig.DefaultConfig()
 	appCfg.API.Enable = true
 	appCfg.API.Swagger = true
