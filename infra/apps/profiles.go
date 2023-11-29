@@ -34,6 +34,7 @@ const (
 	Profile1Cored                  = "1cored"
 	Profile3Cored                  = "3cored"
 	Profile5Cored                  = "5cored"
+	ProfileDevNet                  = "devnet"
 	ProfileIBC                     = "ibc"
 	ProfileFaucet                  = "faucet"
 	ProfileExplorer                = "explorer"
@@ -47,6 +48,7 @@ var profiles = []string{
 	Profile1Cored,
 	Profile3Cored,
 	Profile5Cored,
+	ProfileDevNet,
 	ProfileIBC,
 	ProfileFaucet,
 	ProfileExplorer,
@@ -77,17 +79,17 @@ func DefaultProfiles() []string {
 }
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
-func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, error) {
+func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, cored.Cored, error) {
 	pMap, err := checkProfiles(profiles)
 	if err != nil {
-		return nil, err
+		return nil, cored.Cored{}, err
 	}
 
 	if pMap[ProfileIntegrationTestsIBC] || pMap[ProfileIntegrationTestsModules] {
 		if pMap[Profile1Cored] {
-			return nil, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored or 5cored")
+			return nil, cored.Cored{}, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored, 5cored or devnet")
 		}
-		if !pMap[Profile5Cored] {
+		if !pMap[Profile5Cored] && !pMap[ProfileDevNet] {
 			pMap[Profile3Cored] = true
 		}
 	}
@@ -96,18 +98,23 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		pMap[ProfileIBC] = true
 	}
 
-	if (pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileExplorer] || pMap[ProfileMonitoring]) && !pMap[Profile3Cored] && !pMap[Profile5Cored] {
+	if (pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileExplorer] || pMap[ProfileMonitoring]) && !pMap[Profile3Cored] && !pMap[Profile5Cored] && !pMap[ProfileDevNet] {
 		pMap[Profile1Cored] = true
 	}
 
-	numOfCoredValidators := decideNumOfCoredValidators(pMap)
+	validatorCount, sentryCount, seedCount, fullCount := decideNumOfCoredNodes(pMap)
 
 	var coredApp cored.Cored
 	var appSet infra.AppSet
 
-	coredApp, coredNodes, err := appF.CoredNetwork(AppPrefixCored, cored.DefaultPorts, numOfCoredValidators, 0, coredVersion)
+	coredApp, coredNodes, err := appF.CoredNetwork(
+		AppPrefixCored,
+		cored.DefaultPorts,
+		validatorCount, sentryCount, seedCount, fullCount,
+		coredVersion,
+	)
 	if err != nil {
-		return nil, err
+		return nil, cored.Cored{}, err
 	}
 	for _, coredNode := range coredNodes {
 		appSet = append(appSet, coredNode)
@@ -162,17 +169,19 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		))
 	}
 
-	return appSet, nil
+	return appSet, coredApp, nil
 }
 
-func decideNumOfCoredValidators(pMap map[string]bool) int {
+func decideNumOfCoredNodes(pMap map[string]bool) (validatorCount, sentryCount, seedCount, fullCount int) {
 	switch {
 	case pMap[Profile1Cored]:
-		return 1
+		return 1, 0, 0, 0
 	case pMap[Profile3Cored]:
-		return 3
+		return 3, 0, 0, 0
 	case pMap[Profile5Cored]:
-		return 5
+		return 5, 0, 0, 0
+	case pMap[ProfileDevNet]:
+		return 3, 1, 1, 2
 	default:
 		panic("no cored profile specified.")
 	}

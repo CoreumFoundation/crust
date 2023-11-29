@@ -61,7 +61,8 @@ type Config struct {
 	FundingMnemonic   string
 	FaucetMnemonic    string
 	GasPriceStr       string
-	RootNode          *Cored
+	ValidatorNodes    []Cored
+	SeedNodes         []Cored
 	ImportedMnemonics map[string]string
 	BinaryVersion     string
 	TimeoutCommit     time.Duration
@@ -293,10 +294,36 @@ func (c Cored) Deployment() infra.Deployment {
 				"--inv-check-period", "1",
 				"--chain-id", string(c.config.NetworkConfig.ChainID()),
 				"--minimum-gas-prices", fmt.Sprintf("0.000000000000000001%s", c.config.NetworkConfig.Denom()),
+				"--wasm.memory_cache_size", "100",
+				"--wasm.query_gas_limit", "3000000",
 			}
-			if c.config.RootNode != nil {
+			if len(c.config.ValidatorNodes) > 0 {
+				peers := make([]string, 0, len(c.config.ValidatorNodes))
+				peerIDs := make([]string, 0, len(c.config.ValidatorNodes))
+
+				for _, valNode := range c.config.ValidatorNodes {
+					peers = append(peers,
+						valNode.NodeID()+"@"+infra.JoinNetAddr("", valNode.Info().HostFromContainer, valNode.Config().Ports.P2P),
+					)
+					peerIDs = append(peerIDs, valNode.NodeID())
+				}
+
 				args = append(args,
-					"--p2p.seeds", c.config.RootNode.NodeID()+"@"+infra.JoinNetAddr("", c.config.RootNode.Info().HostFromContainer, c.config.RootNode.Config().Ports.P2P),
+					"--p2p.persistent_peers", strings.Join(peers, ","),
+					"--p2p.private_peer_ids", strings.Join(peerIDs, ","),
+				)
+			}
+			if len(c.config.SeedNodes) > 0 {
+				seeds := make([]string, 0, len(c.config.SeedNodes))
+
+				for _, seedNode := range c.config.SeedNodes {
+					seeds = append(seeds,
+						seedNode.NodeID()+"@"+infra.JoinNetAddr("", seedNode.Info().HostFromContainer, seedNode.Config().Ports.P2P),
+					)
+				}
+
+				args = append(args,
+					"--p2p.seeds", strings.Join(seeds, ","),
 				)
 			}
 
@@ -308,14 +335,22 @@ func (c Cored) Deployment() infra.Deployment {
 			return c.saveClientWrapper(c.config.WrapperDir, deployment.HostFromHost)
 		},
 	}
-	if c.config.RootNode != nil {
+
+	if len(c.config.ValidatorNodes) > 0 || len(c.config.SeedNodes) > 0 {
+		dependencies := make([]infra.HealthCheckCapable, 0, len(c.config.ValidatorNodes)+len(c.config.SeedNodes))
+		for _, valNode := range c.config.ValidatorNodes {
+			dependencies = append(dependencies, infra.IsRunning(valNode))
+		}
+		for _, seedNode := range c.config.SeedNodes {
+			dependencies = append(dependencies, infra.IsRunning(seedNode))
+		}
+
 		deployment.Requires = infra.Prerequisites{
-			Timeout: 20 * time.Second,
-			Dependencies: []infra.HealthCheckCapable{
-				infra.IsRunning(*c.config.RootNode),
-			},
+			Timeout:      20 * time.Second,
+			Dependencies: dependencies,
 		}
 	}
+
 	return deployment
 }
 
