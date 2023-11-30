@@ -244,6 +244,8 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 }
 
 // Deployment returns deployment of cored.
+//
+//nolint:funlen
 func (c Cored) Deployment() infra.Deployment {
 	deployment := infra.Deployment{
 		RunAsUser: true,
