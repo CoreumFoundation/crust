@@ -62,7 +62,7 @@ jobs:
         id: goversion
         run: echo "GO_VERSION=$(go version)" >> $GITHUB_OUTPUT
       - name: Go version used to build crust tool
-        run: echo $GO_VERSION
+        run: echo ${{ steps.goversion.outputs.GO_VERSION }}
       - name: Checkout crust
         uses: actions/checkout@v3
         with:
