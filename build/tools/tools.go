@@ -288,7 +288,6 @@ var tools = []Tool{
 			},
 		},
 	},
-
 	BinaryTool{
 		Name:    CoredV300,
 		Version: "v3.0.0",
