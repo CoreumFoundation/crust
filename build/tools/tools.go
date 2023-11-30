@@ -301,7 +301,7 @@ var tools = []Tool{
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.0/cored-client-darwin-arm64",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.0/cored-linux-arm64",
 				Hash: "sha256:192eaf4fcc49c3ea3339d12f53c905420575d00d605048e526a994a0c4368768",
 				Binaries: map[string]string{
 					"bin/cored-v3.0.0": "cored-linux-arm64",
