@@ -71,7 +71,7 @@ Each environment is independent, you may create many of them and work with them 
 Defines the list of available application profiles to run. Available profiles:
 - `1cored` - runs one cored validator (default one)
 - `3cored` - runs three cored validators
-- `5cored` - runs five cored validators mutually exclusive)
+- `5cored` - runs five cored validators
 - `devnet` - runs environment similar to our devnet - 3 validators, 1 sentry node, 1 seed node, 2 full nodes
 - `faucet` - runs faucet
 - `explorer` - runs block explorer
