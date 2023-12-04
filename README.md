@@ -69,13 +69,17 @@ Each environment is independent, you may create many of them and work with them 
 ### --profiles
 
 Defines the list of available application profiles to run. Available profiles:
-- 1cored - runs one cored validator (default one)
-- 3cored - runs three cored validators (1cored and 3cored are mutually exclusive)
-- faucet - runs faucet
-- explorer - runs block explorer
-- monitoring - runs the monitoring stack
-- integration-tests-ibc - runs setup required by IBC integration tests
-- integration-tests-modules - runs setup required by modules integration tests
+- `1cored` - runs one cored validator (default one)
+- `3cored` - runs three cored validators
+- `5cored` - runs five cored validators
+- `devnet` - runs environment similar to our devnet - 3 validators, 1 sentry node, 1 seed node, 2 full nodes
+- `faucet` - runs faucet
+- `explorer` - runs block explorer
+- `monitoring` - runs the monitoring stack
+- `integration-tests-ibc` - runs setup required by IBC integration tests
+- `integration-tests-modules` - runs setup required by modules integration tests
+
+NOTE: `1cored`, `3cored`, `5cored` and `devnet` are mutually exclusive.
 
 To start fully-featured set you may run:
 

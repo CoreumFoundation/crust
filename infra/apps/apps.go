@@ -45,23 +45,38 @@ type Factory struct {
 func (f *Factory) CoredNetwork(
 	namePrefix string,
 	firstPorts cored.Ports,
-	validatorsCount, sentriesCount int,
+	validatorCount, sentryCount, seedCount, fullCount int,
 	binaryVersion string,
 ) (cored.Cored, []cored.Cored, error) {
 	wallet, networkConfig := cored.NewFundedWallet(f.networkConfig)
 
-	if validatorsCount > wallet.GetStakersMnemonicsCount() {
-		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorsCount, wallet.GetStakersMnemonicsCount())
+	if validatorCount > wallet.GetStakersMnemonicsCount() {
+		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorCount, wallet.GetStakersMnemonicsCount())
 	}
 
-	nodes := make([]cored.Cored, 0, validatorsCount+sentriesCount)
-	var node0 *cored.Cored
+	nodes := make([]cored.Cored, 0, validatorCount+seedCount+sentryCount+fullCount)
+	valNodes := make([]cored.Cored, 0, validatorCount)
+	seedNodes := make([]cored.Cored, 0, seedCount)
 	var lastNode cored.Cored
 	var name string
 	for i := 0; i < cap(nodes); i++ {
-		name = namePrefix + fmt.Sprintf("-%02d", i)
 		portDelta := i * 100
-		isValidator := i < validatorsCount
+		isValidator := i < validatorCount
+		isSeed := !isValidator && i < validatorCount+seedCount
+		isSentry := !isValidator && !isSeed && i < validatorCount+seedCount+sentryCount
+		isFull := !isValidator && !isSeed && !isSentry
+
+		name = namePrefix + fmt.Sprintf("-%02d", i)
+		switch {
+		case isValidator:
+			name += "-val"
+		case isSentry:
+			name += "-sentry"
+		case isSeed:
+			name += "-seed"
+		default:
+			name += "-full"
+		}
 
 		node := cored.New(cored.Config{
 			Name:          name,
@@ -87,7 +102,20 @@ func (f *Factory) CoredNetwork(
 				return ""
 			}(),
 			StakerBalance: wallet.GetStakerMnemonicsBalance(),
-			RootNode:      node0,
+			ValidatorNodes: func() []cored.Cored {
+				if isSentry || sentryCount == 0 {
+					return valNodes
+				}
+
+				return nil
+			}(),
+			SeedNodes: func() []cored.Cored {
+				if isSentry || isFull {
+					return seedNodes
+				}
+
+				return nil
+			}(),
 			ImportedMnemonics: map[string]string{
 				"alice":   cored.AliceMnemonic,
 				"bob":     cored.BobMnemonic,
@@ -99,9 +127,13 @@ func (f *Factory) CoredNetwork(
 			BinaryVersion:   binaryVersion,
 			TimeoutCommit:   f.spec.TimeoutCommit,
 		})
-		if node0 == nil {
-			node0 = &node
+		if isValidator {
+			valNodes = append(valNodes, node)
 		}
+		if isSeed {
+			seedNodes = append(seedNodes, node)
+		}
+
 		lastNode = node
 		nodes = append(nodes, node)
 	}
