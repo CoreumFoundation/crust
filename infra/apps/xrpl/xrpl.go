@@ -102,7 +102,9 @@ func (x XRPL) HealthCheck(ctx context.Context) error {
 
 	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", x.Info().HostFromHost, x.config.RPCPort)}
 	statusBody := `{"method":"server_info","params":[{"api_version": 1}]}`
-	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodPost, statusURL.String(), strings.NewReader(statusBody)))
+	req := must.HTTPRequest(
+		http.NewRequestWithContext(ctx, http.MethodPost, statusURL.String(), strings.NewReader(statusBody)),
+	)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return retry.Retryable(errors.WithStack(err))

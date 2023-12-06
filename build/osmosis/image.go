@@ -23,7 +23,12 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	binaryLocalPath := filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String())
-	if err := tools.CopyToolBinaries(tools.Osmosis, tools.TargetPlatformLinuxLocalArchInDocker, binaryLocalPath, binaryPath); err != nil {
+	if err := tools.CopyToolBinaries(
+		tools.Osmosis,
+		tools.TargetPlatformLinuxLocalArchInDocker,
+		binaryLocalPath,
+		binaryPath,
+	); err != nil {
 		return err
 	}
 

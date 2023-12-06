@@ -156,7 +156,11 @@ func (g Grafana) saveConfigFiles() error {
 		}
 		defer source.Close()
 
-		destination, err := os.OpenFile(filepath.Join(g.config.HomeDir, dashboardsFolder, d.Name()), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+		destination, err := os.OpenFile(
+			filepath.Join(g.config.HomeDir, dashboardsFolder, d.Name()),
+			os.O_CREATE|os.O_TRUNC|os.O_WRONLY,
+			0o600,
+		)
 		if err != nil {
 			return errors.WithMessagef(err, "can't create file %q file", d.Name())
 		}

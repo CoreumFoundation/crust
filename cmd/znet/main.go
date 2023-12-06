@@ -48,8 +48,18 @@ func rootCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		}),
 	}
 	logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
-	rootCmd.PersistentFlags().StringVar(&configF.EnvName, "env", defaultString("CRUST_ZNET_ENV", "znet"), "Name of the environment to run in")
-	rootCmd.PersistentFlags().StringVar(&configF.HomeDir, "home", defaultString("CRUST_ZNET_HOME", must.String(os.UserCacheDir())+"/crust/znet"), "Directory where all files created automatically by znet are stored")
+	rootCmd.PersistentFlags().StringVar(
+		&configF.EnvName,
+		"env",
+		defaultString("CRUST_ZNET_ENV", "znet"),
+		"Name of the environment to run in",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&configF.HomeDir,
+		"home",
+		defaultString("CRUST_ZNET_HOME", must.String(os.UserCacheDir())+"/crust/znet"),
+		"Directory where all files created automatically by znet are stored",
+	)
 	addBinDirFlag(rootCmd, configF)
 	addProfileFlag(rootCmd, configF)
 	addCoredVersionFlag(rootCmd, configF)
@@ -104,7 +114,10 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		Use:   "test",
 		Short: "Runs integration tests for all repos",
 		RunE: cmdF.Cmd(func() error {
-			if lo.Some(configF.TestGroups, []string{apps.TestGroupCoreumIBC, apps.TestGroupCoreumUpgrade}) || len(configF.TestGroups) == 0 {
+			if lo.Some(
+				configF.TestGroups,
+				[]string{apps.TestGroupCoreumIBC, apps.TestGroupCoreumUpgrade},
+			) || len(configF.TestGroups) == 0 {
 				configF.Profiles = []string{apps.ProfileIntegrationTestsIBC}
 			} else {
 				configF.Profiles = []string{apps.ProfileIntegrationTestsModules}
@@ -153,7 +166,7 @@ func addTestGroupFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 		&configF.TestGroups,
 		"test-groups",
 		[]string{},
-		"Test groups in supported repositories to run integration test for,empty means all repositories all test groups ,e.g. --test-groups=faucet,coreum-modules or --test-groups=faucet --test-groups=coreum-modules",
+		"Test groups in supported repositories to run integration test for,empty means all repositories all test groups ,e.g. --test-groups=faucet,coreum-modules or --test-groups=faucet --test-groups=coreum-modules", //nolint:lll // we don't care about this description
 	)
 }
 
@@ -164,7 +177,12 @@ func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 }
 
 func addProfileFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringSliceVar(&configF.Profiles, "profiles", defaultStrings("CRUST_ZNET_PROFILES", apps.DefaultProfiles()), "List of application profiles to deploy: "+strings.Join(apps.Profiles(), " | "))
+	cmd.Flags().StringSliceVar(
+		&configF.Profiles,
+		"profiles",
+		defaultStrings("CRUST_ZNET_PROFILES", apps.DefaultProfiles()),
+		"List of application profiles to deploy: "+strings.Join(apps.Profiles(), " | "),
+	)
 }
 
 func addTimeoutCommitFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
@@ -177,11 +195,21 @@ func addTimeoutCommitFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 }
 
 func addCoredVersionFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.CoredVersion, "cored-version", defaultString("CRUST_ZNET_CORED_VERSION", ""), "The version of the binary to be used for deployment")
+	cmd.Flags().StringVar(
+		&configF.CoredVersion,
+		"cored-version",
+		defaultString("CRUST_ZNET_CORED_VERSION", ""),
+		"The version of the binary to be used for deployment",
+	)
 }
 
 func addFilterFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.TestFilter, "filter", defaultString("CRUST_ZNET_FILTER", ""), "Regular expression used to filter tests to run")
+	cmd.Flags().StringVar(
+		&configF.TestFilter,
+		"filter",
+		defaultString("CRUST_ZNET_FILTER", ""),
+		"Regular expression used to filter tests to run",
+	)
 }
 
 func defaultString(env, def string) string {

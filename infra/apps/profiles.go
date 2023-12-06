@@ -87,7 +87,9 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 
 	if pMap[ProfileIntegrationTestsIBC] || pMap[ProfileIntegrationTestsModules] {
 		if pMap[Profile1Cored] {
-			return nil, cored.Cored{}, errors.Errorf("profile 1cored can't be used together with integration-tests as it requires 3cored, 5cored or devnet")
+			return nil, cored.Cored{}, errors.Errorf(
+				"profile 1cored can't be used together with integration-tests as it requires 3cored, 5cored or devnet",
+			)
 		}
 		if !pMap[Profile5Cored] && !pMap[ProfileDevNet] {
 			pMap[Profile3Cored] = true
@@ -98,7 +100,8 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		pMap[ProfileIBC] = true
 	}
 
-	if (pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileExplorer] || pMap[ProfileMonitoring]) && !pMap[Profile3Cored] && !pMap[Profile5Cored] && !pMap[ProfileDevNet] {
+	if (pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileExplorer] || pMap[ProfileMonitoring]) &&
+		!pMap[Profile3Cored] && !pMap[Profile5Cored] && !pMap[ProfileDevNet] {
 		pMap[Profile1Cored] = true
 	}
 

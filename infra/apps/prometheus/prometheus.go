@@ -69,7 +69,11 @@ func (p Prometheus) HealthCheck(ctx context.Context) error {
 		return retry.Retryable(errors.Errorf("prometheus hasn't started yet"))
 	}
 
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", p.Info().HostFromHost, p.config.Port), Path: "/status"}
+	statusURL := url.URL{
+		Scheme: "http",
+		Host:   infra.JoinNetAddr("", p.Info().HostFromHost, p.config.Port),
+		Path:   "/status",
+	}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

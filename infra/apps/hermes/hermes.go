@@ -97,7 +97,11 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 		return retry.Retryable(errors.Errorf("realyer hasn't started yet"))
 	}
 
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", h.Info().HostFromHost, h.config.TelemetryPort), Path: "/metrics"}
+	statusURL := url.URL{
+		Scheme: "http",
+		Host:   infra.JoinNetAddr("", h.Info().HostFromHost, h.config.TelemetryPort),
+		Path:   "/metrics",
+	}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -203,15 +207,27 @@ func (h Hermes) saveConfigFile() error {
 	}{
 		TelemetryPort: h.config.TelemetryPort,
 
-		CoreumChanID:        string(h.config.Cored.Config().NetworkConfig.ChainID()),
-		CoreumRPCURL:        infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
-		CoreumGRPCURL:       infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.GRPC),
+		CoreumChanID: string(h.config.Cored.Config().NetworkConfig.ChainID()),
+		CoreumRPCURL: infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
+		CoreumGRPCURL: infra.JoinNetAddr(
+			"http",
+			h.config.Cored.Info().HostFromContainer,
+			h.config.Cored.Config().Ports.GRPC,
+		),
 		CoreumAccountPrefix: h.config.Cored.Config().NetworkConfig.Provider.GetAddressPrefix(),
 		CoreumGasPrice:      lo.Must1(sdk.ParseDecCoin(h.config.Cored.Config().GasPriceStr)),
 
-		PeerChanID:        h.config.PeeredChain.AppConfig().ChainID,
-		PeerRPCURL:        infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.RPC),
-		PeerGRPCURL:       infra.JoinNetAddr("http", h.config.PeeredChain.Info().HostFromContainer, h.config.PeeredChain.AppConfig().Ports.GRPC),
+		PeerChanID: h.config.PeeredChain.AppConfig().ChainID,
+		PeerRPCURL: infra.JoinNetAddr(
+			"http",
+			h.config.PeeredChain.Info().HostFromContainer,
+			h.config.PeeredChain.AppConfig().Ports.RPC,
+		),
+		PeerGRPCURL: infra.JoinNetAddr(
+			"http",
+			h.config.PeeredChain.Info().HostFromContainer,
+			h.config.PeeredChain.AppConfig().Ports.GRPC,
+		),
 		PeerAccountPrefix: h.config.PeeredChain.AppTypeConfig().AccountPrefix,
 		PeerGasPrice:      lo.Must1(sdk.ParseDecCoin(h.config.PeeredChain.AppConfig().GasPriceStr)),
 	}
@@ -251,7 +267,11 @@ func (h Hermes) saveRunScriptFile() error {
 
 		CoreumChanID:          string(h.config.Cored.Config().NetworkConfig.ChainID()),
 		CoreumRelayerMnemonic: h.config.CoreumRelayerMnemonic,
-		CoreumRPCURL:          infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
+		CoreumRPCURL: infra.JoinNetAddr(
+			"http",
+			h.config.Cored.Info().HostFromContainer,
+			h.config.Cored.Config().Ports.RPC,
+		),
 		CoreumRelayerCoinType: coreumconstant.CoinType,
 
 		PeerChanID:          h.config.PeeredChain.AppConfig().ChainID,

@@ -20,7 +20,12 @@ func TestGetTagsForDockerImage(t *testing.T) {
 			name:              "all_params",
 			versionFromCommit: "35cca0686ef057d1325ad663958e3ab069d8379d",
 			versionsFromGit:   []string{"v0.0.1", "v0.0.1-rc"},
-			expectedBuildTags: []string{"user/my-image:other", "user/my-image:35cca06", "user/my-image:v0.0.1", "user/my-image:v0.0.1-rc"},
+			expectedBuildTags: []string{
+				"user/my-image:other",
+				"user/my-image:35cca06",
+				"user/my-image:v0.0.1",
+				"user/my-image:v0.0.1-rc",
+			},
 		},
 		{
 			name:              "onlyFromCommitAndOther",

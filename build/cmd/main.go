@@ -30,5 +30,7 @@ func main() {
 
 // changeWorkingDir sets working dir to the root directory of repository.
 func changeWorkingDir() {
-	must.OK(os.Chdir(filepath.Dir(filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable()))))))))
+	must.OK(os.Chdir(filepath.Dir(filepath.Dir(filepath.Dir(must.String(
+		filepath.EvalSymlinks(must.String(os.Executable())),
+	))))))
 }

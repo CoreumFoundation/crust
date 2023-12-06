@@ -87,7 +87,8 @@ func New(cfg Config) Cored {
 
 		minimumSelfDelegation := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), 20_000_000_000) // 20k core
 
-		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).WithChainID(string(cfg.NetworkConfig.ChainID()))
+		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).
+			WithChainID(string(cfg.NetworkConfig.ChainID()))
 
 		// leave 10% for slashing and commission
 		stake := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), int64(float64(cfg.StakerBalance)*0.9))
@@ -217,7 +218,8 @@ func (c Cored) Config() Config {
 
 // ClientContext creates new cored ClientContext.
 func (c Cored) ClientContext() client.Context {
-	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
+	rpcClient, err := cosmosclient.
+		NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
 	mm := newBasicManager()
@@ -401,7 +403,10 @@ func (c Cored) prepare() error {
 	if c.Config().BinaryVersion != "" {
 		binaryPath += "-" + c.Config().BinaryVersion
 	}
-	if err := copyFile(binaryPath, filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored"), 0o755); err != nil {
+	if err := copyFile(
+		binaryPath,
+		filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored"),
+		0o755); err != nil {
 		return err
 	}
 
@@ -432,7 +437,13 @@ if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
 	OPTS="$OPTS --keyring-backend ""test"""
 fi
 
-exec "` + c.config.BinDir + `/cored" --chain-id "` + string(c.config.NetworkConfig.ChainID()) + `" --home "` + filepath.Dir(c.config.HomeDir) + `" "$@" $OPTS
+exec "` +
+		c.config.BinDir +
+		`/cored" --chain-id "` +
+		string(c.config.NetworkConfig.ChainID()) +
+		`" --home "` +
+		filepath.Dir(c.config.HomeDir) +
+		`" "$@" $OPTS
 `
 	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
 }

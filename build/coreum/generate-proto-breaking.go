@@ -59,7 +59,9 @@ func breakingProto(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	cmdImage := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal),
-		append(append([]string{"--include_imports", "--include_source_info", "-o", imageFile}, masterIncludeArgs...), masterProtoFiles...)...)
+		append(
+			append([]string{"--include_imports", "--include_source_info", "-o", imageFile}, masterIncludeArgs...),
+			masterProtoFiles...)...)
 
 	if err := libexec.Exec(ctx, cmdImage); err != nil {
 		return err

@@ -51,7 +51,11 @@ func (f *Factory) CoredNetwork(
 	wallet, networkConfig := cored.NewFundedWallet(f.networkConfig)
 
 	if validatorCount > wallet.GetStakersMnemonicsCount() {
-		return cored.Cored{}, nil, errors.Errorf("unsupported validators count: %d, max: %d", validatorCount, wallet.GetStakersMnemonicsCount())
+		return cored.Cored{}, nil, errors.Errorf(
+			"unsupported validators count: %d, max: %d",
+			validatorCount,
+			wallet.GetStakersMnemonicsCount(),
+		)
 	}
 
 	nodes := make([]cored.Cored, 0, validatorCount+seedCount+sentryCount+fullCount)

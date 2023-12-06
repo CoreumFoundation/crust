@@ -49,8 +49,11 @@ func ReleaseCoredImage(ctx context.Context, deps build.DepsFunc) error {
 	deps(ReleaseCored)
 
 	return buildCoredDockerImage(ctx, imageConfig{
-		TargetPlatforms: []tools.TargetPlatform{tools.TargetPlatformLinuxAMD64InDocker, tools.TargetPlatformLinuxARM64InDocker},
-		Action:          docker.ActionPush,
-		Username:        config.DockerHubUsername,
+		TargetPlatforms: []tools.TargetPlatform{
+			tools.TargetPlatformLinuxAMD64InDocker,
+			tools.TargetPlatformLinuxARM64InDocker,
+		},
+		Action:   docker.ActionPush,
+		Username: config.DockerHubUsername,
 	})
 }

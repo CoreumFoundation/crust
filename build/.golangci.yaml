@@ -45,7 +45,6 @@ linters:
     - gochecknoinits
     - gocognit
     - ireturn
-    - lll
     - maintidx
     - nlreturn
     - nonamedreturns

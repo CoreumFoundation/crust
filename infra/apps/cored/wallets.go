@@ -14,12 +14,15 @@ const (
 )
 
 // mnemonics generating well-known keys to create predictable wallets so manual operation is easier.
+//
+//nolint:lll // we don't care about mnemonic strings
 const (
 	AliceMnemonic   = "mandate canyon major bargain bamboo soft fetch aisle extra confirm monster jazz atom ball summer solar tell glimpse square uniform situate body ginger protect"
 	BobMnemonic     = "move equip digital assault wrong speed border multiply knife steel trash donor isolate remember lucky moon cupboard achieve canyon smooth pulp chief hold symptom"
 	CharlieMnemonic = "announce already cherry rotate pull apology banana dignity region horse aspect august country exit connect unit agent curious violin tide town link unable whip"
 )
 
+//nolint:lll // we don't care about mnemonic strings
 const (
 	// FaucetMnemonic is mnemonic used by faucet to broadcast requested transfers.
 	FaucetMnemonic = "pitch basic bundle cause toe sound warm love town crucial divorce shell olympic convince scene middle garment glimpse narrow during fix fruit suffer honey"
@@ -42,6 +45,8 @@ var namedMnemonicsList = []string{
 }
 
 // StakerMnemonics defines the list of the stakers used by validators.
+//
+//nolint:lll // we don't care about mnemonic strings
 var stakerMnemonicsList = []string{
 	"biology rigid design broccoli adult hood modify tissue swallow arctic option improve quiz cliff inject soup ozone suffer fantasy layer negative eagle leader priority",
 	"enemy fix tribe swift alcohol metal salad edge episode dry tired address bless cloth error useful define rough fold swift confirm century wasp acoustic",
@@ -88,12 +93,15 @@ type Wallet struct {
 // NewFundedWallet creates wallet and funds all predefined accounts.
 func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfig) {
 	// distribute the remaining after stakers amount among Alice, Bob, Faucet, etc
-	namedMnemonicsBalance := (desiredTotalSupply - stakerBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicsList))
+	namedMnemonicsBalance :=
+		(desiredTotalSupply - stakerBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicsList))
 	networkProvider := network.Provider.(config.DynamicConfigProvider)
 
 	w := &Wallet{
-		// We have integration tests adding new validators with min self delegation, and then we kill them when test completes.
-		// So if those tests run together and create validators having 33% of voting power, then killing them will halt the chain.
+		// We have integration tests adding new validators with min self delegation,
+		// and then we kill them when test completes.
+		// So if those tests run together and create validators having 33% of voting power,
+		// then killing them will halt the chain.
 		// That's why our main validators created here must have much higher stake.
 		stakerBalance:         stakerBalance,
 		namedMnemonicsBalance: namedMnemonicsBalance,
@@ -104,13 +112,19 @@ func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfi
 	for _, mnemonic := range w.namedMnemonicsList {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
-		networkProvider = networkProvider.WithAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicsBalance)))
+		networkProvider = networkProvider.WithAccount(
+			sdk.AccAddress(privKey.PubKey().Address()),
+			sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicsBalance)),
+		)
 	}
 
 	for _, mnemonic := range w.stakerMnemonicsList {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
-		networkProvider = networkProvider.WithAccount(sdk.AccAddress(privKey.PubKey().Address()), sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerBalance)))
+		networkProvider = networkProvider.WithAccount(
+			sdk.AccAddress(privKey.PubKey().Address()),
+			sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerBalance)),
+		)
 	}
 
 	network.Provider = networkProvider

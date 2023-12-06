@@ -117,7 +117,9 @@ func (ba BaseApp) Info() infra.DeploymentInfo {
 
 // ClientContext creates new cored ClientContext.
 func (ba BaseApp) ClientContext() client.Context {
-	rpcClient, err := cosmosclient.NewClientFromNode(infra.JoinNetAddr("http", ba.Info().HostFromHost, ba.appConfig.Ports.RPC))
+	rpcClient, err := cosmosclient.NewClientFromNode(
+		infra.JoinNetAddr("http", ba.Info().HostFromHost, ba.appConfig.Ports.RPC),
+	)
 	must.OK(err)
 
 	mm := newBasicManager()
@@ -245,5 +247,7 @@ exec %s --home %s "$@" $OPTS
 		filepath.Dir(ba.appConfig.HomeDir),                                                           // home dir
 	)
 
-	return errors.WithStack(os.WriteFile(filepath.Join(ba.appConfig.WrapperDir, ba.appConfig.Name), []byte(baClient), 0o700))
+	return errors.WithStack(
+		os.WriteFile(filepath.Join(ba.appConfig.WrapperDir, ba.appConfig.Name), []byte(baClient), 0o700),
+	)
 }

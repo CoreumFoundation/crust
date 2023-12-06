@@ -85,7 +85,11 @@ func (f Faucet) HealthCheck(ctx context.Context) error {
 		return retry.Retryable(errors.Errorf("faucet hasn't started yet"))
 	}
 
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", f.Info().HostFromHost, f.config.Port), Path: "/api/faucet/v1/status"}
+	statusURL := url.URL{
+		Scheme: "http",
+		Host:   infra.JoinNetAddr("", f.Info().HostFromHost, f.config.Port),
+		Path:   "/api/faucet/v1/status",
+	}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -132,7 +136,11 @@ func (f Faucet) Deployment() infra.Deployment {
 			},
 		},
 		PrepareFunc: func() error {
-			return errors.WithStack(os.WriteFile(filepath.Join(f.config.HomeDir, "mnemonic-key"), []byte(f.config.Cored.Config().FaucetMnemonic), 0o400))
+			return errors.WithStack(os.WriteFile(
+				filepath.Join(f.config.HomeDir, "mnemonic-key"),
+				[]byte(f.config.Cored.Config().FaucetMnemonic),
+				0o400,
+			))
 		},
 	}
 }
