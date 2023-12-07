@@ -25,7 +25,16 @@ import (
 )
 
 // Run deploys testing environment and runs tests there.
-func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, coredApp cored.Cored, config infra.Config, onlyTestGroups ...string) error { //nolint:funlen
+//
+//nolint:funlen
+func Run(
+	ctx context.Context,
+	target infra.Target,
+	appSet infra.AppSet,
+	coredApp cored.Cored,
+	config infra.Config,
+	onlyTestGroups ...string,
+) error {
 	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
 	files, err := os.ReadDir(testDir)
 	if err != nil {
@@ -88,7 +97,11 @@ func Run(ctx context.Context, target infra.Target, appSet infra.AppSet, coredApp
 			}
 
 			if onlyTestGroup == apps.TestGroupCoreumIBC {
-				fullArgs = append(fullArgs, "-coreum-rpc-address", infra.JoinNetAddr("http", coredApp.Info().HostFromHost, coredApp.Config().Ports.RPC))
+				fullArgs = append(
+					fullArgs,
+					"-coreum-rpc-address",
+					infra.JoinNetAddr("http", coredApp.Info().HostFromHost, coredApp.Config().Ports.RPC),
+				)
 
 				gaiaNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixIBC, string(gaiad.AppType)))
 				if gaiaNode == nil {

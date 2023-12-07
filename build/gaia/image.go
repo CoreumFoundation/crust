@@ -23,7 +23,12 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	gaiaLocalPath := filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String())
-	if err := tools.CopyToolBinaries(tools.Gaia, tools.TargetPlatformLinuxLocalArchInDocker, gaiaLocalPath, binaryPath); err != nil {
+	if err := tools.CopyToolBinaries(
+		tools.Gaia,
+		tools.TargetPlatformLinuxLocalArchInDocker,
+		gaiaLocalPath,
+		binaryPath,
+	); err != nil {
 		return err
 	}
 

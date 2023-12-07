@@ -26,9 +26,15 @@ func ShowContainerLogs(ctx context.Context, sessionName, windowName, container s
 
 	cmd := []string{"docker", "logs", "-f", container}
 	if hasSession {
-		return libexec.Exec(ctx, exec.TMux(append([]string{"new-window", "-d", "-n", windowName, "-t", sessionName + ":"}, cmd...)...))
+		return libexec.Exec(
+			ctx,
+			exec.TMux(append([]string{"new-window", "-d", "-n", windowName, "-t", sessionName + ":"}, cmd...)...),
+		)
 	}
-	return libexec.Exec(ctx, exec.TMux(append([]string{"new-session", "-d", "-s", sessionName, "-n", windowName}, cmd...)...))
+	return libexec.Exec(
+		ctx,
+		exec.TMux(append([]string{"new-session", "-d", "-s", sessionName, "-n", windowName}, cmd...)...),
+	)
 }
 
 // Kill kills tmux session.

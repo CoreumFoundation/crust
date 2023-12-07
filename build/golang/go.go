@@ -159,8 +159,11 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		"--name", "crust-build-" + filepath.Base(config.BinOutputPath) + "-" + hex.EncodeToString(nameSuffix),
 	}
-	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 && config.TargetPlatform == tools.TargetPlatformLinuxARM64InDocker {
-		crossCompilerPath := filepath.Dir(filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.TargetPlatformLinuxAMD64InDocker)))
+	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
+		config.TargetPlatform == tools.TargetPlatformLinuxARM64InDocker {
+		crossCompilerPath := filepath.Dir(
+			filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.TargetPlatformLinuxAMD64InDocker)),
+		)
 		libWasmVMPath := tools.Path("lib/libwasmvm_muslc.a", tools.TargetPlatformLinuxARM64InDocker)
 		runArgs = append(runArgs,
 			"-v", crossCompilerPath+":/aarch64-linux-musl-cross",
@@ -259,13 +262,22 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	case tools.TargetPlatformLinuxLocalArchInDocker:
 	case tools.TargetPlatformLinuxARM64InDocker:
 		if tools.TargetPlatformLocal != tools.TargetPlatformLinuxAMD64 {
-			return nil, nil, errors.Errorf("crosscompiling for %s is possible only on platform %s", config.TargetPlatform, tools.TargetPlatformLinuxAMD64)
+			return nil, nil, errors.Errorf(
+				"crosscompiling for %s is possible only on platform %s",
+				config.TargetPlatform,
+				tools.TargetPlatformLinuxAMD64,
+			)
 		}
 		crossCompileARM64 = true
 	case tools.TargetPlatformDarwinAMD64InDocker:
 	case tools.TargetPlatformDarwinARM64InDocker:
 	default:
-		return nil, nil, errors.Errorf("building is not possible for platform %s on platform %s", config.TargetPlatform, tools.TargetPlatformLocal)
+		return nil, nil,
+			errors.Errorf(
+				"building is not possible for platform %s on platform %s",
+				config.TargetPlatform,
+				tools.TargetPlatformLocal,
+			)
 	}
 
 	ldFlags := []string{"-w", "-s"}
@@ -331,7 +343,14 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 		}
 
 		log.Info("Running go tests", zap.String("path", path))
-		cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "test", "-count=1", "-shuffle=on", "-race", "./...")
+		cmd := exec.Command(
+			tools.Path("bin/go", tools.TargetPlatformLocal),
+			"test",
+			"-count=1",
+			"-shuffle=on",
+			"-race",
+			"./...",
+		)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "unit tests failed in module '%s'", path)
@@ -386,11 +405,18 @@ func containsGoCode(path string) (bool, error) {
 }
 
 // ModuleDirs return directories where modules are kept.
-func ModuleDirs(ctx context.Context, deps build.DepsFunc, repoPath string, modules ...string) (map[string]string, error) {
+func ModuleDirs(
+	ctx context.Context,
+	deps build.DepsFunc,
+	repoPath string,
+	modules ...string,
+) (map[string]string, error) {
 	deps(EnsureGo)
 
 	out := &bytes.Buffer{}
-	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), append([]string{"list", "-m", "-json"}, modules...)...)
+	cmd := exec.Command(
+		tools.Path("bin/go", tools.TargetPlatformLocal),
+		append([]string{"list", "-m", "-json"}, modules...)...)
 	cmd.Stdout = out
 	cmd.Dir = repoPath
 

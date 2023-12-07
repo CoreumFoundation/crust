@@ -28,7 +28,8 @@ func HeadHash(ctx context.Context, repoPath string) (string, error) {
 	return strings.TrimSuffix(buf.String(), "\n"), nil
 }
 
-// DirtyHeadHash returns hash of the latest commit in the repository, adding "-dirty" suffix if there are uncommitted changes.
+// DirtyHeadHash returns hash of the latest commit in the repository, adding "-dirty" suffix
+// if there are uncommitted changes.
 func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
 	hash, err := HeadHash(ctx, repoPath)
 	if err != nil {

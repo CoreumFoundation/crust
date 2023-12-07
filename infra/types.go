@@ -291,11 +291,13 @@ type Deployment struct {
 	Requires Prerequisites
 
 	// PrepareFunc is the function called before application is deployed for the first time.
-	// It is a good place to prepare configuration files and other things which must or might be done before application runs.
+	// It is a good place to prepare configuration files and other things which must or might
+	// be done before application runs.
 	PrepareFunc func() error
 
 	// ConfigureFunc is the function called after application is deployed for the first time.
-	// It is a good place to connect to the application to configure it because at this stage the app's IP address is known.
+	// It is a good place to connect to the application to configure it because at this stage
+	// the app's IP address is known.
 	ConfigureFunc func(ctx context.Context, deployment DeploymentInfo) error
 
 	// Image is the url of the container image
@@ -459,7 +461,11 @@ func (s *Spec) Verify() error {
 		return errors.Errorf("env mismatch, spec: %s, config: %s", s.Env, s.configF.EnvName)
 	}
 	if !profilesCompare(s.Profiles, s.configF.Profiles) {
-		return errors.Errorf("profile mismatch, spec: %s, config: %s", strings.Join(s.Profiles, ","), strings.Join(s.configF.Profiles, ","))
+		return errors.Errorf(
+			"profile mismatch, spec: %s, config: %s",
+			strings.Join(s.Profiles, ","),
+			strings.Join(s.configF.Profiles, ","),
+		)
 	}
 	if s.TimeoutCommit != s.configF.TimeoutCommit {
 		return errors.Errorf("timeout commit mismatch, spec: %s, config: %s", s.TimeoutCommit, s.configF.TimeoutCommit)
@@ -475,7 +481,12 @@ func (s *Spec) DescribeApp(appType AppType, name string) *AppInfo {
 
 	if app, exists := s.Apps[name]; exists {
 		if app.data.Type != appType {
-			panic(fmt.Sprintf("app type doesn't match for application existing in spec: %s, expected: %s, got: %s", name, app.data.Type, appType))
+			panic(fmt.Sprintf(
+				"app type doesn't match for application existing in spec: %s, expected: %s, got: %s",
+				name,
+				app.data.Type,
+				appType,
+			))
 		}
 		return app
 	}

@@ -23,7 +23,12 @@ func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	hermesLocalPath := filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String())
-	if err := tools.CopyToolBinaries(tools.Hermes, tools.TargetPlatformLinuxLocalArchInDocker, hermesLocalPath, binaryPath); err != nil {
+	if err := tools.CopyToolBinaries(
+		tools.Hermes,
+		tools.TargetPlatformLinuxLocalArchInDocker,
+		hermesLocalPath,
+		binaryPath,
+	); err != nil {
 		return err
 	}
 

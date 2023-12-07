@@ -78,7 +78,12 @@ func (p Postgres) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	connStr := "postgres://" + User + "@" + infra.JoinNetAddr("", p.config.AppInfo.Info().HostFromHost, p.config.Port) + "/" + DB
+	connStr := "postgres://" +
+		User +
+		"@" +
+		infra.JoinNetAddr("", p.config.AppInfo.Info().HostFromHost, p.config.Port) +
+		"/" +
+		DB
 	db, err := pgx.Connect(ctx, connStr)
 	if err != nil {
 		return retry.Retryable(errors.WithStack(err))

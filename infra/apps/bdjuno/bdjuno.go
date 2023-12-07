@@ -129,7 +129,11 @@ func (j BDJuno) HealthCheck(ctx context.Context) error {
 		return retry.Retryable(errors.Errorf("bdjuno hasn't started yet"))
 	}
 
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", j.Info().HostFromHost, j.config.TelemetryPort), Path: "/metrics"}
+	statusURL := url.URL{
+		Scheme: "http",
+		Host:   infra.JoinNetAddr("", j.Info().HostFromHost, j.config.TelemetryPort),
+		Path:   "/metrics",
+	}
 	req := must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, statusURL.String(), nil))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -210,7 +214,10 @@ func (j BDJuno) saveRunScriptFile() error {
 	}{
 		HomePath: targets.AppHomeDir,
 		PostgresURL: fmt.Sprintf("postgres://%s@%s/%s",
-			postgres.User, net.JoinHostPort(j.config.Postgres.Info().HostFromContainer, strconv.Itoa(j.config.Postgres.Port())), postgres.DB),
+			postgres.User,
+			net.JoinHostPort(j.config.Postgres.Info().HostFromContainer, strconv.Itoa(j.config.Postgres.Port())),
+			postgres.DB,
+		),
 	}
 
 	buf := &bytes.Buffer{}

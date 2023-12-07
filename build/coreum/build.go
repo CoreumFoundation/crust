@@ -70,7 +70,8 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform
 		return err
 	}
 
-	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 && targetPlatform == tools.TargetPlatformLinuxARM64InDocker {
+	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
+		targetPlatform == tools.TargetPlatformLinuxARM64InDocker {
 		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
 			return err
 		}
@@ -103,7 +104,14 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 	return golang.Build(ctx, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
-		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", fmt.Sprintf("%s-client", binaryName)),
+		BinOutputPath: filepath.Join(
+			"bin",
+			".cache",
+			binaryName,
+			targetPlatform.String(),
+			"bin",
+			fmt.Sprintf("%s-client", binaryName),
+		),
 		Parameters:     parameters,
 		CGOEnabled:     false,
 		Tags:           tagsDocker,

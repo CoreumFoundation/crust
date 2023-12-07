@@ -88,7 +88,7 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 	defer os.RemoveAll(outDir) //nolint:errcheck // we don't care
 
 	args := []string{
-		"--openapiv2_out=logtostderr=true,allow_merge=true,json_names_for_fields=false,fqn_for_openapi_name=true,simple_operation_ids=true,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.",
+		"--openapiv2_out=logtostderr=true,allow_merge=true,json_names_for_fields=false,fqn_for_openapi_name=true,simple_operation_ids=true,Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:.", //nolint:lll // breaking down this string will make it more complicated.
 		"--plugin", must.String(filepath.Abs("bin/protoc-gen-openapiv2")),
 	}
 
@@ -146,7 +146,8 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 					if err := json.Unmarshal(opV[operationIDField], &opID); err != nil {
 						return errors.WithStack(err)
 					}
-					v[opK][operationIDField] = json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(pkg, "/", ".")), opID))
+					v[opK][operationIDField] =
+						json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(pkg, "/", ".")), opID))
 				}
 				finalDoc.Paths[k] = v
 			}
@@ -161,7 +162,11 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 		}
 	}
 
-	f, err := os.OpenFile(filepath.Join(repoPath, "docs", "static", "openapi.json"), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+	f, err := os.OpenFile(
+		filepath.Join(repoPath, "docs", "static", "openapi.json"),
+		os.O_CREATE|os.O_TRUNC|os.O_WRONLY,
+		0o600,
+	)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -90,14 +90,14 @@ var tools = []Tool{
 				},
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-amd64.tar.gz",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:632e96e6d5294fbbe7b2c410a49c8fa01c60712a0af85a567de85bcc1623ea21",
 				Binaries: map[string]string{
 					"bin/golangci-lint": "golangci-lint-1.55.2-darwin-amd64/golangci-lint",
 				},
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-arm64.tar.gz",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:234463f059249f82045824afdcdd5db5682d0593052f58f6a3039a0a1c3899f6",
 				Binaries: map[string]string{
 					"bin/golangci-lint": "golangci-lint-1.55.2-darwin-arm64/golangci-lint",
@@ -112,11 +112,11 @@ var tools = []Tool{
 		Version: "1.5.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-amd64.tar.gz",
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:7f4bebfb18a170bff1c725f13dda326e0158132deef9f037ab0c2a48727c3077",
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-arm64.tar.gz",
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.5.0/cosmovisor-v1.5.0-linux-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:e15f2625b1d208ac2fed51bc84ae75678009888648ac2186fd0ed5ab6177dc14",
 			},
 		},
@@ -235,11 +235,11 @@ var tools = []Tool{
 		Version: "v1.7.1",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.7.1/hermes-v1.7.1-x86_64-unknown-linux-gnu.tar.gz",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.7.1/hermes-v1.7.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:10eff785eeb59f730eaa452ebc89236a6ae6aa30be47fcac95cb89682a77decc",
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.7.1/hermes-v1.7.1-aarch64-unknown-linux-gnu.tar.gz",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.7.1/hermes-v1.7.1-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:ecbac11a1ea48ae587ddd4a7abc6a464d706fc1e2efd2f5e1441c72c7570e46a",
 			},
 		},
@@ -391,15 +391,15 @@ var tools = []Tool{
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_linux_amd64.tar.gz",
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_linux_amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:47cd72b07e6dab3408d686a65d37d3a6ab616da7d8b564b2bd2a2963a72b72fd",
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_amd64.tar.gz",
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:f429e5a5ddd886bfb68265f2f92c1c6a509780b7adcaf7a8b3be943f28e144ba",
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_arm64.tar.gz",
+				URL:  "https://github.com/pseudomuto/protoc-gen-doc/releases/download/v1.5.1/protoc-gen-doc_1.5.1_darwin_arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:6e8c737d9a67a6a873a3f1d37ed8bb2a0a9996f6dcf6701aa1048c7bd798aaf9",
 			},
 		},
@@ -647,7 +647,12 @@ func (bt BinaryTool) install(ctx context.Context, platform TargetPlatform) (retE
 
 		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
 		must.OK(os.Chmod(srcPath, 0o700))
-		srcLinkPath := filepath.Join(strings.Repeat("../", strings.Count(dst, "/")), "downloads", string(bt.Name)+"-"+bt.Version, src)
+		srcLinkPath := filepath.Join(
+			strings.Repeat("../", strings.Count(dst, "/")),
+			"downloads",
+			string(bt.Name)+"-"+bt.Version,
+			src,
+		)
 		must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
 		must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
 		log.Info("Binary installed to path", zap.String("path", dstPath))
@@ -892,7 +897,8 @@ func untar(reader io.Reader, path string) error {
 		}
 		header.Name = path + "/" + header.Name
 
-		// We take mode from header.FileInfo().Mode(), not from header.Mode because they may be in different formats (meaning of bits may be different).
+		// We take mode from header.FileInfo().Mode(), not from header.Mode because they may be in
+		// different formats (meaning of bits may be different).
 		// header.FileInfo().Mode() returns compatible value.
 		mode := header.FileInfo().Mode()
 

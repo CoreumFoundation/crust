@@ -73,7 +73,11 @@ func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
 		if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 			return err
 		}
-		if err := tools.CopyToolBinaries(binaryTool, tools.TargetPlatformLinuxLocalArchInDocker, filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String()), fmt.Sprintf("bin/%s", binaryTool)); err != nil {
+		if err := tools.CopyToolBinaries(
+			binaryTool,
+			tools.TargetPlatformLinuxLocalArchInDocker,
+			filepath.Join("bin", ".cache", binaryName, tools.TargetPlatformLinuxLocalArchInDocker.String()),
+			fmt.Sprintf("bin/%s", binaryTool)); err != nil {
 			return err
 		}
 	}
