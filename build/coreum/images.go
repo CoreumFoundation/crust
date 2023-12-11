@@ -63,11 +63,12 @@ func buildCoredDockerImage(ctx context.Context, cfg imageConfig) error {
 }
 
 // ensureReleasedBinaries ensures that all previous cored versions are installed.
-func ensureReleasedBinaries(ctx context.Context, deps build.DepsFunc) error {
+func ensureReleasedBinaries(ctx context.Context, _ build.DepsFunc) error {
 	for _, binaryTool := range []tools.Name{
-		tools.CoredV300,
-		tools.CoredV202,
 		tools.CoredV100,
+		tools.CoredV202,
+		tools.CoredV300,
+		tools.CoredV301,
 	} {
 		if err := tools.Ensure(ctx, binaryTool, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 			return err
