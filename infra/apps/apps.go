@@ -49,6 +49,7 @@ func (f *Factory) CoredNetwork(
 	binaryVersion string,
 ) (cored.Cored, []cored.Cored, error) {
 	wallet, networkConfig := cored.NewFundedWallet(f.networkConfig)
+	genesisConfig := cored.GenesisConfigFromNetworkProvider(networkConfig.Provider)
 
 	if validatorCount > wallet.GetStakersMnemonicsCount() {
 		return cored.Cored{}, nil, errors.Errorf(
@@ -83,12 +84,13 @@ func (f *Factory) CoredNetwork(
 		}
 
 		node := cored.New(cored.Config{
-			Name:          name,
-			HomeDir:       filepath.Join(f.config.AppDir, name, string(networkConfig.ChainID())),
-			BinDir:        f.config.BinDir,
-			WrapperDir:    f.config.WrapperDir,
-			NetworkConfig: &networkConfig,
-			AppInfo:       f.spec.DescribeApp(cored.AppType, name),
+			Name:              name,
+			HomeDir:           filepath.Join(f.config.AppDir, name, string(networkConfig.ChainID())),
+			BinDir:            f.config.BinDir,
+			WrapperDir:        f.config.WrapperDir,
+			NetworkConfig:     &networkConfig,
+			GenesisInitConfig: &genesisConfig,
+			AppInfo:           f.spec.DescribeApp(cored.AppType, name),
 			Ports: cored.Ports{
 				RPC:        firstPorts.RPC + portDelta,
 				P2P:        firstPorts.P2P + portDelta,
