@@ -51,6 +51,7 @@ const (
 	ProtocGenBufBreaking  Name = "protoc-gen-buf-breaking"
 	RustUpInit            Name = "rustup-init"
 	Rust                  Name = "rust"
+	WASMOpt               Name = "wasm-opt"
 )
 
 var tools = []Tool{
@@ -469,8 +470,16 @@ var tools = []Tool{
 		},
 	},
 
+	// https://releases.rs
 	RustInstaller{
 		Version: "1.74.0",
+	},
+
+	// https://crates.io/crates/wasm-opt
+	CargoTool{
+		Name:    WASMOpt,
+		Version: "0.116.0",
+		Tool:    "wasm-opt",
 	},
 }
 
@@ -732,6 +741,10 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 	toolDir := toolDir(gpt, platform)
 	dst := filepath.Join("bin", binName)
 	if shouldReinstall(gpt, platform, binName, dst) {
+		if err := Ensure(ctx, Go, platform); err != nil {
+			return errors.Wrapf(err, "ensuring go failed")
+		}
+
 		cmd := exec.Command(Path("bin/go", TargetPlatformLocal), "install", "-tags=tools", gpt.Package)
 		cmd.Dir = "build/tools"
 		cmd.Env = append(os.Environ(), "GOBIN="+toolDir)
@@ -946,6 +959,85 @@ func (ri RustInstaller) toolchain(platform TargetPlatform) (string, error) {
 	default:
 		return "", errors.WithStack(err)
 	}
+}
+
+// CargoTool is the tool installed using cargo install command.
+type CargoTool struct {
+	Name    Name
+	Version string
+	Tool    string
+}
+
+// GetName returns the name of the tool.
+func (ct CargoTool) GetName() Name {
+	return ct.Name
+}
+
+// GetVersion returns the version of the tool.
+func (ct CargoTool) GetVersion() string {
+	return ct.Version
+}
+
+// IsLocal tells if tool should be installed locally.
+func (ct CargoTool) IsLocal() bool {
+	return true
+}
+
+// IsCompatible tells if tool is defined for the platform.
+func (ct CargoTool) IsCompatible(_ TargetPlatform) bool {
+	return true
+}
+
+// GetBinaries returns binaries defined for the platform.
+func (ct CargoTool) GetBinaries(_ TargetPlatform) []string {
+	return []string{
+		"bin/" + ct.Tool,
+	}
+}
+
+// Ensure ensures that tool is installed.
+func (ct CargoTool) Ensure(ctx context.Context, platform TargetPlatform) error {
+	toolDir := toolDir(ct, platform)
+	binPath := filepath.Join("bin", ct.Tool)
+	if shouldReinstall(ct, platform, binPath, binPath) {
+		if err := Ensure(ctx, Rust, platform); err != nil {
+			return errors.Wrapf(err, "ensuring rust failed")
+		}
+
+		cmd := exec.Command(Path("bin/cargo", TargetPlatformLocal), "install",
+			"--version", ct.Version, "--force", "--locked",
+			"--root", toolDir, ct.Tool)
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return err
+		}
+
+		srcPath := filepath.Join(toolDir, "bin", ct.Tool)
+
+		binChecksum, err := checksum(srcPath)
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(BinariesRootPath(platform), binPath)
+		dstPathChecksum := dstPath + ":" + binChecksum
+
+		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
+			panic(err)
+		}
+		if err := os.Remove(dstPathChecksum); err != nil && !os.IsNotExist(err) {
+			return errors.WithStack(err)
+		}
+
+		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
+		must.OK(os.Chmod(srcPath, 0o700))
+		srcLinkPath := filepath.Join("..", "downloads", string(ct.Name)+"-"+ct.Version, binPath)
+		must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
+		must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
+		must.Any(filepath.EvalSymlinks(dstPath))
+		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
+	}
+
+	return linkTool(binPath)
 }
 
 // Source represents source where tool is fetched from.
