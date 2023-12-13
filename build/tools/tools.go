@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"hash"
 	"io"
 	"net/http"
@@ -48,6 +49,8 @@ const (
 	ProtocGenGoCosmos     Name = "protoc-gen-gocosmos"
 	ProtocGenBufLint      Name = "protoc-gen-buf-lint"
 	ProtocGenBufBreaking  Name = "protoc-gen-buf-breaking"
+	RustUpInit            Name = "rustup-init"
+	Rust                  Name = "rust"
 )
 
 var tools = []Tool{
@@ -442,6 +445,33 @@ var tools = []Tool{
 		Version: "v1.26.1",
 		Package: "github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking",
 	},
+
+	// https://rust-lang.github.io/rustup/installation/other.html
+	BinaryTool{
+		Name:    RustUpInit,
+		Version: "1.26.0",
+		Sources: Sources{
+			TargetPlatformLinuxAMD64: {
+				URL:  "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db",
+			},
+			TargetPlatformDarwinAMD64: {
+				URL:  "https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:f6d1a9fac1a0d0802d87c254f02369a79973bc8c55aa0016d34af4fcdbd67822",
+			},
+			TargetPlatformDarwinARM64: {
+				URL:  "https://static.rust-lang.org/rustup/dist/aarch64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:ed299a8fe762dc28161a99a03cf62836977524ad557ad70e13882d2f375d3983",
+			},
+		},
+		Binaries: map[string]string{
+			"bin/rustup-init": "rustup-init",
+		},
+	},
+
+	RustInstaller{
+		Version: "1.74.0",
+	},
 }
 
 // Name is the type used for defining tool names.
@@ -737,6 +767,185 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 	}
 
 	return linkTool(dst)
+}
+
+type RustInstaller struct {
+	Version string
+}
+
+// GetName returns the name of the tool.
+func (ri RustInstaller) GetName() Name {
+	return Rust
+}
+
+// GetVersion returns the version of the tool.
+func (ri RustInstaller) GetVersion() string {
+	return ri.Version
+}
+
+// IsLocal tells if tool should be installed locally.
+func (ri RustInstaller) IsLocal() bool {
+	return true
+}
+
+// IsCompatible tells if tool is defined for the platform.
+func (ri RustInstaller) IsCompatible(platform TargetPlatform) bool {
+	rustupInit, err := Get(RustUpInit)
+	if err != nil {
+		panic(err)
+	}
+	return rustupInit.IsCompatible(platform)
+}
+
+// GetBinaries returns binaries defined for the platform.
+func (ri RustInstaller) GetBinaries(platform TargetPlatform) []string {
+	return []string{
+		"bin/cargo",
+		"bin/rustc",
+	}
+}
+
+// Ensure ensures that tool is installed.
+func (ri RustInstaller) Ensure(ctx context.Context, platform TargetPlatform) error {
+	binaries := ri.GetBinaries(platform)
+
+	toolchain, err := ri.toolchain(platform)
+	if err != nil {
+		return err
+	}
+
+	install := toolchain == ""
+	if !install {
+		srcDir := filepath.Join(
+			"rustup",
+			"toolchains",
+			toolchain,
+		)
+
+		for _, binary := range binaries {
+			if shouldReinstall(ri, platform, filepath.Join(srcDir, binary), binary) {
+				install = true
+				break
+			}
+		}
+	}
+
+	if install {
+		if err := Ensure(ctx, RustUpInit, platform); err != nil {
+			return errors.Wrapf(err, "ensuring rustup-installer failed")
+		}
+
+		log := logger.Get(ctx)
+		log.Info("Installing binaries")
+
+		toolDir := toolDir(ri, platform)
+		rustupHome := filepath.Join(toolDir, "rustup")
+		toolchainsDir := filepath.Join(rustupHome, "toolchains")
+		cargoHome := filepath.Join(toolDir, "cargo")
+		rustupInstaller := Path("bin/rustup-init", platform)
+		rustup := filepath.Join(cargoHome, "bin", "rustup")
+		env := append(
+			os.Environ(),
+			fmt.Sprintf("RUSTUP_HOME=%s", rustupHome),
+			fmt.Sprintf("CARGO_HOME=%s", cargoHome),
+		)
+
+		cmdRustupInstaller := exec.Command(rustupInstaller,
+			"-y",
+			"--no-update-default-toolchain",
+			"--no-modify-path",
+		)
+		cmdRustupInstaller.Env = env
+
+		cmdRustDefault := exec.Command(rustup,
+			"default",
+			ri.Version,
+		)
+		cmdRustDefault.Env = env
+
+		cmdRustWASM := exec.Command(rustup,
+			"target",
+			"add",
+			"wasm32-unknown-unknown",
+		)
+		cmdRustWASM.Env = env
+
+		if err := libexec.Exec(ctx, cmdRustupInstaller, cmdRustDefault, cmdRustWASM); err != nil {
+			return err
+		}
+
+		toolchain, err := ri.toolchain(platform)
+		if err != nil {
+			return err
+		}
+
+		srcDir := filepath.Join(
+			"rustup",
+			"toolchains",
+			toolchain,
+		)
+
+		for _, binary := range binaries {
+			binChecksum, err := checksum(filepath.Join(toolchainsDir, toolchain, binary))
+			if err != nil {
+				return err
+			}
+
+			dstPath := filepath.Join(BinariesRootPath(platform), binary)
+			dstPathChecksum := dstPath + ":" + binChecksum
+			if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
+				return errors.WithStack(err)
+			}
+			if err := os.Remove(dstPathChecksum); err != nil && !os.IsNotExist(err) {
+				return errors.WithStack(err)
+			}
+
+			must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
+
+			srcLinkPath := filepath.Join(
+				"..",
+				"downloads",
+				string(ri.GetName())+"-"+ri.Version,
+				filepath.Join(srcDir, binary),
+			)
+			must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
+			must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
+
+			log.Info("Binary installed to path", zap.String("path", dstPath))
+		}
+
+		log.Info("Binaries installed")
+	}
+
+	for _, binary := range binaries {
+		if err := linkTool(binary); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (ri RustInstaller) toolchain(platform TargetPlatform) (string, error) {
+	toolDir := toolDir(ri, platform)
+	rustupHome := filepath.Join(toolDir, "rustup")
+	toolchainsDir := filepath.Join(rustupHome, "toolchains")
+
+	toolchains, err := os.ReadDir(toolchainsDir)
+	switch {
+	case err == nil:
+		for _, dir := range toolchains {
+			if dir.IsDir() && strings.HasPrefix(dir.Name(), ri.Version) {
+				return dir.Name(), nil
+			}
+		}
+
+		return "", nil
+	case os.IsNotExist(err):
+		return "", nil
+	default:
+		return "", errors.WithStack(err)
+	}
 }
 
 // Source represents source where tool is fetched from.
