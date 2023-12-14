@@ -42,6 +42,8 @@ type Factory struct {
 }
 
 // CoredNetwork creates new network of cored nodes.
+//
+//nolint:funlen // breaking down this function will make it less readable.
 func (f *Factory) CoredNetwork(
 	namePrefix string,
 	firstPorts cored.Ports,
