@@ -748,6 +748,8 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 	binName := filepath.Base(gpt.Package)
 	toolDir := toolDir(gpt, platform)
 	dst := filepath.Join("bin", binName)
+
+	//nolint:nestif // complexity comes from trivial error-handling ifs.
 	if shouldReinstall(gpt, platform, binName, dst) {
 		if err := Ensure(ctx, Go, platform); err != nil {
 			return errors.Wrapf(err, "ensuring go failed")
@@ -800,6 +802,7 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 	return linkTool(dst)
 }
 
+// RustInstaller installs rust.
 type RustInstaller struct {
 	Version string
 }
@@ -862,96 +865,9 @@ func (ri RustInstaller) Ensure(ctx context.Context, platform TargetPlatform) err
 	}
 
 	if install {
-		if err := Ensure(ctx, RustUpInit, platform); err != nil {
-			return errors.Wrapf(err, "ensuring rustup-installer failed")
-		}
-
-		log := logger.Get(ctx)
-		log.Info("Installing binaries")
-
-		toolDir := toolDir(ri, platform)
-		rustupHome := filepath.Join(toolDir, "rustup")
-		toolchainsDir := filepath.Join(rustupHome, "toolchains")
-		cargoHome := filepath.Join(toolDir, "cargo")
-		rustupInstaller := Path("bin/rustup-init", platform)
-		rustup := filepath.Join(cargoHome, "bin", "rustup")
-		env := append(
-			os.Environ(),
-			fmt.Sprintf("RUSTUP_HOME=%s", rustupHome),
-			fmt.Sprintf("CARGO_HOME=%s", cargoHome),
-		)
-
-		cmdRustupInstaller := exec.Command(rustupInstaller,
-			"-y",
-			"--no-update-default-toolchain",
-			"--no-modify-path",
-		)
-		cmdRustupInstaller.Env = env
-
-		cmdRustDefault := exec.Command(rustup,
-			"default",
-			ri.Version,
-		)
-		cmdRustDefault.Env = env
-
-		cmdRustWASM := exec.Command(rustup,
-			"target",
-			"add",
-			"wasm32-unknown-unknown",
-		)
-		cmdRustWASM.Env = env
-
-		if err := libexec.Exec(ctx, cmdRustupInstaller, cmdRustDefault, cmdRustWASM); err != nil {
+		if err := ri.install(ctx, platform); err != nil {
 			return err
 		}
-
-		toolchain, err := ri.toolchain(platform)
-		if err != nil {
-			return err
-		}
-
-		srcDir := filepath.Join(
-			"rustup",
-			"toolchains",
-			toolchain,
-		)
-
-		for _, binary := range binaries {
-			binChecksum, err := checksum(filepath.Join(toolchainsDir, toolchain, binary))
-			if err != nil {
-				return err
-			}
-
-			dstPath := filepath.Join(BinariesRootPath(platform), binary)
-			dstPathChecksum := dstPath + ":" + binChecksum
-			if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
-				return errors.WithStack(err)
-			}
-			if err := os.Remove(dstPathChecksum); err != nil && !os.IsNotExist(err) {
-				return errors.WithStack(err)
-			}
-
-			if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
-				return errors.WithStack(err)
-			}
-
-			srcLinkPath := filepath.Join(
-				"..",
-				"downloads",
-				string(ri.GetName())+"-"+ri.Version,
-				filepath.Join(srcDir, binary),
-			)
-			if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
-				return errors.WithStack(err)
-			}
-			if err := os.Symlink(filepath.Base(dstPathChecksum), dstPath); err != nil {
-				return errors.WithStack(err)
-			}
-
-			log.Info("Binary installed to path", zap.String("path", dstPath))
-		}
-
-		log.Info("Binaries installed")
 	}
 
 	for _, binary := range binaries {
@@ -959,6 +875,101 @@ func (ri RustInstaller) Ensure(ctx context.Context, platform TargetPlatform) err
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (ri RustInstaller) install(ctx context.Context, platform TargetPlatform) (retErr error) {
+	if err := Ensure(ctx, RustUpInit, platform); err != nil {
+		return errors.Wrapf(err, "ensuring rustup-installer failed")
+	}
+
+	log := logger.Get(ctx)
+	log.Info("Installing binaries")
+
+	toolDir := toolDir(ri, platform)
+	rustupHome := filepath.Join(toolDir, "rustup")
+	toolchainsDir := filepath.Join(rustupHome, "toolchains")
+	cargoHome := filepath.Join(toolDir, "cargo")
+	rustupInstaller := Path("bin/rustup-init", platform)
+	rustup := filepath.Join(cargoHome, "bin", "rustup")
+	env := append(
+		os.Environ(),
+		fmt.Sprintf("RUSTUP_HOME=%s", rustupHome),
+		fmt.Sprintf("CARGO_HOME=%s", cargoHome),
+	)
+
+	cmdRustupInstaller := exec.Command(rustupInstaller,
+		"-y",
+		"--no-update-default-toolchain",
+		"--no-modify-path",
+	)
+	cmdRustupInstaller.Env = env
+
+	cmdRustDefault := exec.Command(rustup,
+		"default",
+		ri.Version,
+	)
+	cmdRustDefault.Env = env
+
+	cmdRustWASM := exec.Command(rustup,
+		"target",
+		"add",
+		"wasm32-unknown-unknown",
+	)
+	cmdRustWASM.Env = env
+
+	if err := libexec.Exec(ctx, cmdRustupInstaller, cmdRustDefault, cmdRustWASM); err != nil {
+		return err
+	}
+
+	toolchain, err := ri.toolchain(platform)
+	if err != nil {
+		return err
+	}
+
+	srcDir := filepath.Join(
+		"rustup",
+		"toolchains",
+		toolchain,
+	)
+
+	for _, binary := range ri.GetBinaries(platform) {
+		binChecksum, err := checksum(filepath.Join(toolchainsDir, toolchain, binary))
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(BinariesRootPath(platform), binary)
+		dstPathChecksum := dstPath + ":" + binChecksum
+		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
+			return errors.WithStack(err)
+		}
+		if err := os.Remove(dstPathChecksum); err != nil && !os.IsNotExist(err) {
+			return errors.WithStack(err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+
+		srcLinkPath := filepath.Join(
+			"..",
+			"downloads",
+			string(ri.GetName())+"-"+ri.Version,
+			filepath.Join(srcDir, binary),
+		)
+		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Symlink(filepath.Base(dstPathChecksum), dstPath); err != nil {
+			return errors.WithStack(err)
+		}
+
+		log.Info("Binary installed to path", zap.String("path", dstPath))
+	}
+
+	log.Info("Binaries installed")
 
 	return nil
 }
@@ -1023,6 +1034,8 @@ func (ct CargoTool) GetBinaries(_ TargetPlatform) []string {
 func (ct CargoTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 	toolDir := toolDir(ct, platform)
 	binPath := filepath.Join("bin", ct.Tool)
+
+	//nolint:nestif // complexity comes from trivial error-handling ifs.
 	if shouldReinstall(ct, platform, binPath, binPath) {
 		if err := Ensure(ctx, Rust, platform); err != nil {
 			return errors.Wrapf(err, "ensuring rust failed")
