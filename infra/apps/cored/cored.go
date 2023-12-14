@@ -553,32 +553,22 @@ func (c Cored) SaveGenesis(homeDir string) error {
 	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
 		return errors.Wrap(err, "unable to make config directory")
 	}
-	tempFile, err := os.CreateTemp("", "*.json")
-	defer func() {
-		tempFile.Close()
-		os.Remove(tempFile.Name()) //nolint:errcheck
-	}()
+
+	inputConfig, err := cmtjson.MarshalIndent(c.config.GenesisInitConfig, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	inuptConfig, err := cmtjson.MarshalIndent(c.config.GenesisInitConfig, "", "  ")
-	if err != nil {
-		return err
-	}
+	inputPath := homeDir + "/config/genesis-creation-input.json"
 
-	if _, err := tempFile.Write(inuptConfig); err != nil {
-		return err
-	}
-
-	if tempFile.Close(); err != nil {
+	if err := os.WriteFile(inputPath, inputConfig, 0644); err != nil {
 		return err
 	}
 
 	fullArgs := []string{
 		"generate-genesis",
 		"--output-path", homeDir + "/config/genesis.json",
-		"--input-path", tempFile.Name(),
+		"--input-path", inputPath,
 		"--chain-id", string(c.config.GenesisInitConfig.ChainID),
 	}
 
