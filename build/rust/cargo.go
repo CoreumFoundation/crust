@@ -2,6 +2,7 @@ package rust
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,7 +38,12 @@ func BuildSmartContract(
 		"--target", "wasm32-unknown-unknown",
 		"--target-dir", targetPath,
 	)
-	cmdCargo.Env = append(os.Environ(), `RUSTFLAGS=-C link-arg=-s`)
+
+	fmt.Println(tools.Path("bin/rustc", tools.TargetPlatformLocal))
+	cmdCargo.Env = append(os.Environ(),
+		"RUSTFLAGS=-C link-arg=-s",
+		fmt.Sprintf("RUSTC=%s", tools.Path("bin/rustc", tools.TargetPlatformLocal)),
+	)
 	cmdCargo.Dir = path
 
 	contractFile := strings.ReplaceAll(filepath.Base(path), "-", "_") + ".wasm"
