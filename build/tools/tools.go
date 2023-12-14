@@ -684,16 +684,24 @@ func (bt BinaryTool) install(ctx context.Context, platform TargetPlatform) (retE
 			return errors.WithStack(err)
 		}
 
-		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
-		must.OK(os.Chmod(srcPath, 0o700))
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Chmod(srcPath, 0o700); err != nil {
+			return errors.WithStack(err)
+		}
 		srcLinkPath := filepath.Join(
 			strings.Repeat("../", strings.Count(dst, "/")),
 			"downloads",
 			string(bt.Name)+"-"+bt.Version,
 			src,
 		)
-		must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
-		must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
+		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Symlink(filepath.Base(dstPathChecksum), dstPath); err != nil {
+			return errors.WithStack(err)
+		}
 		log.Info("Binary installed to path", zap.String("path", dstPath))
 	}
 
@@ -770,12 +778,22 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 			return errors.WithStack(err)
 		}
 
-		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
-		must.OK(os.Chmod(srcPath, 0o700))
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Chmod(srcPath, 0o700); err != nil {
+			return errors.WithStack(err)
+		}
 		srcLinkPath := filepath.Join("..", "downloads", string(gpt.Name)+"-"+gpt.Version, binName)
-		must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
-		must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
-		must.Any(filepath.EvalSymlinks(dstPath))
+		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Symlink(filepath.Base(dstPathChecksum), dstPath); err != nil {
+			return errors.WithStack(err)
+		}
+		if _, err := filepath.EvalSymlinks(dstPath); err != nil {
+			return errors.WithStack(err)
+		}
 		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
 	}
 
@@ -913,7 +931,9 @@ func (ri RustInstaller) Ensure(ctx context.Context, platform TargetPlatform) err
 				return errors.WithStack(err)
 			}
 
-			must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
+			if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
+				return errors.WithStack(err)
+			}
 
 			srcLinkPath := filepath.Join(
 				"..",
@@ -921,8 +941,12 @@ func (ri RustInstaller) Ensure(ctx context.Context, platform TargetPlatform) err
 				string(ri.GetName())+"-"+ri.Version,
 				filepath.Join(srcDir, binary),
 			)
-			must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
-			must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
+			if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
+				return errors.WithStack(err)
+			}
+			if err := os.Symlink(filepath.Base(dstPathChecksum), dstPath); err != nil {
+				return errors.WithStack(err)
+			}
 
 			log.Info("Binary installed to path", zap.String("path", dstPath))
 		}
@@ -1028,12 +1052,22 @@ func (ct CargoTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 			return errors.WithStack(err)
 		}
 
-		must.OK(os.MkdirAll(filepath.Dir(dstPath), 0o700))
-		must.OK(os.Chmod(srcPath, 0o700))
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Chmod(srcPath, 0o700); err != nil {
+			return errors.WithStack(err)
+		}
 		srcLinkPath := filepath.Join("..", "downloads", string(ct.Name)+"-"+ct.Version, binPath)
-		must.OK(os.Symlink(srcLinkPath, dstPathChecksum))
-		must.OK(os.Symlink(filepath.Base(dstPathChecksum), dstPath))
-		must.Any(filepath.EvalSymlinks(dstPath))
+		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Symlink(filepath.Base(dstPathChecksum), dstPath); err != nil {
+			return errors.WithStack(err)
+		}
+		if _, err := filepath.EvalSymlinks(dstPath); err != nil {
+			return errors.WithStack(err)
+		}
 		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
 	}
 
