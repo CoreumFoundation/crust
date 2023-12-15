@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -15,6 +16,9 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	cometbftcrypto "github.com/cometbft/cometbft/crypto"
+	cbfted25519 "github.com/cometbft/cometbft/crypto/ed25519"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto"
@@ -27,12 +31,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
@@ -48,11 +56,13 @@ const AppType infra.AppType = "cored"
 
 // Config stores cored app config.
 type Config struct {
-	Name              string
-	HomeDir           string
-	BinDir            string
-	WrapperDir        string
+	Name       string
+	HomeDir    string
+	BinDir     string
+	WrapperDir string
+	// Deprecated: remove after we drop support for cored v3.
 	NetworkConfig     *config.NetworkConfig
+	GenesisInitConfig *GenesisInitConfig
 	AppInfo           *infra.AppInfo
 	Ports             Ports
 	IsValidator       bool
@@ -68,19 +78,83 @@ type Config struct {
 	TimeoutCommit     time.Duration
 }
 
+// GenesisInitConfig is used to pass parameters for genesis creation to cored binary.
+//
+//nolint:tagliatelle
+type GenesisInitConfig struct {
+	ChainID            constant.ChainID    `json:"chain_id"`
+	Denom              string              `json:"denom"`
+	DisplayDenom       string              `json:"display_denom"`
+	AddressPrefix      string              `json:"address_prefix"`
+	GenesisTime        time.Time           `json:"genesis_time"`
+	GovConfig          govConfig           `json:"gov_config"`
+	CustomParamsConfig customParamsConfig  `json:"custom_params_config"`
+	BankBalances       []banktypes.Balance `json:"bank_balances"`
+	Validators         []genesisValidator  `json:"validators"`
+}
+
+//nolint:tagliatelle
+type govConfig struct {
+	MinDeposit   sdk.Coins     `json:"min_deposit"`
+	VotingPeriod time.Duration `json:"voting_period"`
+}
+
+//nolint:tagliatelle
+type customParamsConfig struct {
+	MinSelfDelegation sdkmath.Int `json:"min_self_delegation"`
+}
+
+//nolint:tagliatelle
+type genesisValidator struct {
+	DelegatorMnemonic string                `json:"delegator_mnemonic"`
+	PubKey            cometbftcrypto.PubKey `json:"pub_key"`
+	ValidatorName     string                `json:"validator_name"`
+}
+
+// GenesisConfigFromNetworkProvider creates a new config from the network provider. We should drop usage of
+// the network provider after we stop support for cored v3 binraries, and initialize GenesisInitConfig directly.
+func GenesisConfigFromNetworkProvider(n config.NetworkConfigProvider) GenesisInitConfig {
+	dnp := n.(config.DynamicConfigProvider)
+	minDeposit, ok := sdk.NewIntFromString(dnp.GovConfig.ProposalConfig.MinDepositAmount)
+	if !ok {
+		panic("unable to prase mint deposit amount")
+	}
+	minSelfDelegation, ok := sdk.NewIntFromString(dnp.GovConfig.ProposalConfig.MinDepositAmount)
+	if !ok {
+		panic("unable to prase mint deposit amount")
+	}
+	var bankBalances []banktypes.Balance
+	for _, fa := range dnp.FundedAccounts {
+		bankBalances = append(bankBalances, banktypes.Balance{
+			Address: fa.Address,
+			Coins:   fa.Balances,
+		})
+	}
+
+	return GenesisInitConfig{
+		ChainID:      dnp.ChainID,
+		Denom:        dnp.Denom,
+		DisplayDenom: "devcore",
+		GenesisTime:  dnp.GenesisTime.UTC(),
+		GovConfig: govConfig{
+			MinDeposit: sdk.NewCoins(
+				sdk.NewCoin(dnp.Denom, minDeposit)),
+		},
+		CustomParamsConfig: customParamsConfig{
+			MinSelfDelegation: minSelfDelegation,
+		},
+		BankBalances: bankBalances,
+	}
+}
+
 // New creates new cored app.
 func New(cfg Config) Cored {
 	nodePublicKey, nodePrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	must.OK(err)
 
-	var valPrivateKey ed25519.PrivateKey
+	valPrivateKey := cbfted25519.GenPrivKey()
 	if cfg.IsValidator {
-		var (
-			err          error
-			valPublicKey ed25519.PublicKey
-		)
-		valPublicKey, valPrivateKey, err = ed25519.GenerateKey(rand.Reader)
-		must.OK(err)
+		valPublicKey := valPrivateKey.PubKey()
 
 		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
 		must.OK(err)
@@ -96,7 +170,7 @@ func New(cfg Config) Cored {
 		createValidatorTx, err := prepareTxStakingCreateValidator(
 			cfg.NetworkConfig.ChainID(),
 			clientCtx.TxConfig(),
-			valPublicKey,
+			cosmosed25519.PubKey{Key: valPublicKey.Bytes()},
 			stakerPrivKey,
 			stake,
 			minimumSelfDelegation.Amount,
@@ -104,13 +178,18 @@ func New(cfg Config) Cored {
 		must.OK(err)
 		networkProvider := cfg.NetworkConfig.Provider.(config.DynamicConfigProvider)
 		cfg.NetworkConfig.Provider = networkProvider.WithGenesisTx(createValidatorTx)
+		cfg.GenesisInitConfig.Validators = append(cfg.GenesisInitConfig.Validators, genesisValidator{
+			DelegatorMnemonic: cfg.StakerMnemonic,
+			PubKey:            valPublicKey,
+			ValidatorName:     NodeID(nodePublicKey),
+		})
 	}
 
 	return Cored{
 		config:              cfg,
 		nodeID:              NodeID(nodePublicKey),
 		nodePrivateKey:      nodePrivateKey,
-		validatorPrivateKey: valPrivateKey,
+		validatorPrivateKey: valPrivateKey.Bytes(),
 		mu:                  &sync.RWMutex{},
 		importedMnemonics:   cfg.ImportedMnemonics,
 	}
@@ -120,7 +199,7 @@ func New(cfg Config) Cored {
 func prepareTxStakingCreateValidator(
 	chainID constant.ChainID,
 	txConfig cosmosclient.TxConfig,
-	validatorPublicKey ed25519.PublicKey,
+	validatorPublicKey cosmosed25519.PubKey,
 	stakerPrivateKey cosmossecp256k1.PrivKey,
 	stakedBalance sdk.Coin,
 	selfDelegation sdkmath.Int,
@@ -137,7 +216,7 @@ func prepareTxStakingCreateValidator(
 	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
 	msg, err := stakingtypes.NewMsgCreateValidator(
 		sdk.ValAddress(stakerAddress),
-		&cosmosed25519.PubKey{Key: validatorPublicKey},
+		&validatorPublicKey,
 		stakedBalance,
 		stakingtypes.Description{Moniker: stakerAddress.String()},
 		commission,
@@ -358,6 +437,17 @@ func (c Cored) Deployment() infra.Deployment {
 	return deployment
 }
 
+func (c Cored) binaryPath() string {
+	// the path is defined by the build
+	dockerLinuxBinaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
+	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
+	binaryPath := filepath.Join(dockerLinuxBinaryPath, "cored")
+	if c.Config().BinaryVersion != "" {
+		binaryPath += "-" + c.Config().BinaryVersion
+	}
+	return binaryPath
+}
+
 func (c Cored) prepare() error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -398,13 +488,8 @@ func (c Cored) prepare() error {
 	}
 	// the path is defined by the build
 	dockerLinuxBinaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
-	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
-	binaryPath := filepath.Join(dockerLinuxBinaryPath, "cored")
-	if c.Config().BinaryVersion != "" {
-		binaryPath += "-" + c.Config().BinaryVersion
-	}
 	if err := copyFile(
-		binaryPath,
+		c.binaryPath(),
 		filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored"),
 		0o755); err != nil {
 		return err
@@ -458,6 +543,43 @@ func newBasicManager() module.BasicManager {
 
 // SaveGenesis saves json encoded representation of the genesis config into file.
 func (c Cored) SaveGenesis(homeDir string) error {
+	// If genesis template is empty we will use the new method of genesis creation and
+	// use cored binary to create genesis. Otherwise we will use the legacy method and
+	// use template files.
+	if c.config.NetworkConfig.Provider.(config.DynamicConfigProvider).GenesisTemplate != "" {
+		return c.SaveLegacyGenesis(homeDir)
+	}
+
+	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
+		return errors.Wrap(err, "unable to make config directory")
+	}
+
+	inputConfig, err := cmtjson.MarshalIndent(c.config.GenesisInitConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	inputPath := homeDir + "/config/genesis-creation-input.json"
+
+	if err := os.WriteFile(inputPath, inputConfig, 0644); err != nil {
+		return err
+	}
+
+	fullArgs := []string{
+		"generate-genesis",
+		"--output-path", homeDir + "/config/genesis.json",
+		"--input-path", inputPath,
+		"--chain-id", string(c.config.GenesisInitConfig.ChainID),
+	}
+
+	return libexec.Exec(
+		logger.WithLogger(context.Background(), zap.NewNop()),
+		exec.Command(c.binaryPath(), fullArgs...),
+	)
+}
+
+// SaveLegacyGenesis saves json encoded representation of the genesis config into file, using templates.
+func (c Cored) SaveLegacyGenesis(homeDir string) error {
 	genDocBytes, err := c.config.NetworkConfig.EncodeGenesis()
 	if err != nil {
 		return err
