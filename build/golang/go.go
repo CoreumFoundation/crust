@@ -332,7 +332,20 @@ func Generate(ctx context.Context, path string, deps build.DepsFunc) error {
 func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
+
+	rootDir := filepath.Dir(must.String(filepath.Abs(must.String(filepath.EvalSymlinks(must.String(os.Getwd()))))))
+	repoPath = must.String(filepath.Abs(must.String(filepath.EvalSymlinks(repoPath))))
+	coverageReportsDir := filepath.Join(repoPath, "coverage")
+	if err := os.MkdirAll(coverageReportsDir, 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+
 	return onModule(repoPath, func(path string) error {
+		relPath, err := filepath.Rel(rootDir, path)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		goCodePresent, err := containsGoCode(path)
 		if err != nil {
 			return err
@@ -342,6 +355,9 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 			return nil
 		}
 
+		coverageName := strings.ReplaceAll(relPath, "/", "-")
+		coverageProfile := filepath.Join(coverageReportsDir, coverageName)
+
 		log.Info("Running go tests", zap.String("path", path))
 		cmd := exec.Command(
 			tools.Path("bin/go", tools.TargetPlatformLocal),
@@ -349,6 +365,9 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 			"-count=1",
 			"-shuffle=on",
 			"-race",
+			"-cover", "./...",
+			"-coverpkg", "./...",
+			"-coverprofile", coverageProfile,
 			"./...",
 		)
 		cmd.Dir = path
