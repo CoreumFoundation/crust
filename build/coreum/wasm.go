@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -15,9 +14,8 @@ import (
 	"golang.org/x/mod/sumdb/dirhash"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
-	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/crust/build/docker"
+	"github.com/CoreumFoundation/crust/build/rust"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
@@ -137,16 +135,7 @@ func CompileSmartContract(codeDirPath string) build.CommandFunc {
 			return errors.WithStack(err)
 		}
 
-		cmd := exec.Command("docker", "run", "--rm",
-			"--label", docker.LabelKey+"="+docker.LabelValue,
-			"-v", codeDirAbsPath+":/code",
-			"-v", registryCachePath+":/usr/local/cargo/registry",
-			"-v", targetCachePath+":/target",
-			"-e", "HOME=/tmp",
-			"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-			"cosmwasm/rust-optimizer:0.14.0")
-
-		if err := libexec.Exec(ctx, cmd); err != nil {
+		if err := rust.BuildSmartContract(ctx, deps, codeDirAbsPath); err != nil {
 			return err
 		}
 
