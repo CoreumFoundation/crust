@@ -56,7 +56,7 @@ func (bd BigDipper) Info() infra.DeploymentInfo {
 // Deployment returns deployment of big dipper.
 func (bd BigDipper) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image: "coreumfoundation/big-dipper-ui:latest",
+		Image: "coreumfoundation/big-dipper-ui:devnet-latest",
 		EnvVarsFunc: func() []infra.EnvVar {
 			return []infra.EnvVar{
 				{
