@@ -54,6 +54,9 @@ func generateProtoOpenAPI(ctx context.Context, deps build.DepsFunc) error {
 		filepath.Join(coreumPath, "customparams", "v1"),
 		filepath.Join(coreumPath, "feemodel", "v1"),
 		filepath.Join(coreumPath, "nft", "v1beta1"),
+		filepath.Join(cosmosPath, "base", "node", "v1beta1"),
+		filepath.Join(cosmosPath, "base", "tendermint", "v1beta1"),
+		filepath.Join(cosmosPath, "tx", "v1beta1"),
 		filepath.Join(cosmosPath, "auth", "v1beta1"),
 		filepath.Join(cosmosPath, "authz", "v1beta1"),
 		filepath.Join(cosmosPath, "bank", "v1beta1"),
@@ -111,56 +114,38 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 	}
 
 	for _, dir := range generateDirs {
-		pf := filepath.Join(dir, "query.proto")
-		pkg, err := goPackage(pf)
-		if err != nil {
-			return err
+		var processed bool
+		for _, protoFile := range []string{"query.proto", "service.proto"} {
+			pf := filepath.Join(dir, protoFile)
+			pkg, err := goPackage(pf)
+			switch {
+			case err == nil:
+				processed = true
+			case errors.Is(err, os.ErrNotExist):
+				continue
+			default:
+				return err
+			}
+
+			dir := filepath.Join(outDir, pkg)
+			if err := os.MkdirAll(dir, 0o700); err != nil {
+				return err
+			}
+			args := append([]string{}, args...)
+			args = append(args, pf)
+			cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
+			cmd.Dir = dir
+			if err := libexec.Exec(ctx, cmd); err != nil {
+				return err
+			}
+
+			if err := mergeSpecFile(filepath.Join(dir, "apidocs.swagger.json"), pkg, finalDoc); err != nil {
+				return err
+			}
 		}
 
-		dir := filepath.Join(outDir, pkg)
-		if err := os.MkdirAll(dir, 0o700); err != nil {
-			return err
-		}
-		args := append([]string{}, args...)
-		args = append(args, pf)
-		cmd := exec.Command(tools.Path("bin/protoc", tools.TargetPlatformLocal), args...)
-		cmd.Dir = dir
-		if err := libexec.Exec(ctx, cmd); err != nil {
-			return err
-		}
-
-		err = func() error {
-			var sd swaggerDoc
-			f, err := os.Open(filepath.Join(dir, "apidocs.swagger.json"))
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			defer f.Close()
-
-			if err := json.NewDecoder(f).Decode(&sd); err != nil {
-				return errors.WithStack(err)
-			}
-
-			const operationIDField = "operationId"
-			for k, v := range sd.Paths {
-				for opK, opV := range v {
-					var opID string
-					if err := json.Unmarshal(opV[operationIDField], &opID); err != nil {
-						return errors.WithStack(err)
-					}
-					v[opK][operationIDField] =
-						json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(pkg, "/", ".")), opID))
-				}
-				finalDoc.Paths[k] = v
-			}
-			for k, v := range sd.Definitions {
-				finalDoc.Definitions[k] = v
-			}
-
-			return nil
-		}()
-		if err != nil {
-			return err
+		if !processed {
+			return errors.Errorf("rpc proto files not found in %s", dir)
 		}
 	}
 
@@ -177,4 +162,35 @@ func executeOpenAPIProtocCommand(ctx context.Context, deps build.DepsFunc, inclu
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "  ")
 	return errors.WithStack(encoder.Encode(finalDoc))
+}
+
+func mergeSpecFile(file string, operationPrefix string, finalDoc swaggerDoc) error {
+	var sd swaggerDoc
+	f, err := os.Open(file)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer f.Close()
+
+	if err := json.NewDecoder(f).Decode(&sd); err != nil {
+		return errors.WithStack(err)
+	}
+
+	const operationIDField = "operationId"
+	for k, v := range sd.Paths {
+		for opK, opV := range v {
+			var opID string
+			if err := json.Unmarshal(opV[operationIDField], &opID); err != nil {
+				return errors.WithStack(err)
+			}
+			v[opK][operationIDField] =
+				json.RawMessage(fmt.Sprintf(`"%s%s"`, strcase.ToCamel(strings.ReplaceAll(operationPrefix, "/", ".")), opID))
+		}
+		finalDoc.Paths[k] = v
+	}
+	for k, v := range sd.Definitions {
+		finalDoc.Definitions[k] = v
+	}
+
+	return nil
 }
