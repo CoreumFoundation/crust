@@ -65,7 +65,7 @@ func Run(
 	args := []string{
 		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
 		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
-		"-test.v", "-test.parallel", strconv.Itoa(2 * runtime.NumCPU()),
+		"-test.v", "-test.parallel", strconv.Itoa(runtime.NumCPU() / 2),
 		"-coreum-grpc-address", infra.JoinNetAddr("", coredApp.Info().HostFromHost, coredApp.Config().Ports.GRPC),
 	}
 
