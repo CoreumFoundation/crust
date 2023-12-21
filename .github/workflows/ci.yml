@@ -36,7 +36,7 @@ jobs:
           - ci_step: "integration tests coreum-upgrade & coreum-modules"
             command: |
               crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules images
-              crust znet test --cored-version=v3.0.0 --test-groups=coreum-upgrade,coreum-modules --timeout-commit 0.5s
+              crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules --timeout-commit 0.5s
             go-cache: true
             wasm-cache: true
             linter-cache: false
@@ -44,7 +44,7 @@ jobs:
           - ci_step: "integration tests coreum-upgrade & coreum-ibc"
             command: |
               crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/ibc images
-              crust znet test --cored-version=v3.0.0 --test-groups=coreum-upgrade,coreum-ibc --timeout-commit 1s
+              crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-ibc --timeout-commit 1s
             go-cache: true
             wasm-cache: true
             linter-cache: false
