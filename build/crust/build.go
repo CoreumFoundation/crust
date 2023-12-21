@@ -19,8 +19,8 @@ import (
 
 const repoPath = "."
 
-// BuildCrust builds crust.
-func BuildCrust(ctx context.Context, deps build.DepsFunc) error {
+// BuildBuilder builds building tool in the current repository.
+func BuildBuilder(ctx context.Context, deps build.DepsFunc) error {
 	deps(golang.EnsureGo)
 	return golang.Build(ctx, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
