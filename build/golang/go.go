@@ -131,6 +131,8 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 
 	srcDir := must.String(filepath.Abs(".."))
+	dockerRepoDir := filepath.Join("/src", filepath.Base(must.String(filepath.Abs("."))))
+
 	goPath := GoPath()
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
@@ -139,7 +141,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	workDir := filepath.Clean(filepath.Join("/src", "crust", config.PackagePath))
+	workDir := filepath.Clean(filepath.Join(dockerRepoDir, config.PackagePath))
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
@@ -175,7 +177,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
-	runArgs = append(runArgs, "-o", "/src/crust/"+config.BinOutputPath, ".")
+	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}

@@ -16,7 +16,7 @@ import (
 // Commands is a definition of commands available in build system.
 var Commands = map[string]build.CommandFunc{
 	"build":                                  buildBinaries,
-	"build/crust":                            crust.BuildCrust,
+	"build/crust":                            crust.BuildBuilder,
 	"build/cored":                            coreum.BuildCored,
 	"build/faucet":                           faucet.Build,
 	"build/znet":                             crust.BuildZNet,
