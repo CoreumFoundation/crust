@@ -62,10 +62,19 @@ func Run(
 		return err
 	}
 
+	// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
+	// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
+	testParallel := runtime.NumCPU() * 2
+
+	// However our CI environment is very limited in terms of resources so running a lot of tests in parallel overloads
+	// nodes CPU and random failures happen.
+	// To detect if tests are running inside CI we use env variable:
+	// https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+	if os.Getenv("CI") == "true" {
+		testParallel = runtime.NumCPU() / 2
+	}
 	args := []string{
-		// The tests themselves are not computationally expensive, most of the time they spend waiting for transactions
-		// to be included in blocks, so it should be safe to run more tests in parallel than we have CPus available.
-		"-test.v", "-test.parallel", strconv.Itoa(runtime.NumCPU() / 2),
+		"-test.v", "-test.parallel", strconv.Itoa(testParallel),
 		"-coreum-grpc-address", infra.JoinNetAddr("", coredApp.Info().HostFromHost, coredApp.Config().Ports.GRPC),
 	}
 
