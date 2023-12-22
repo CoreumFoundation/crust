@@ -175,7 +175,8 @@ func addTestGroupFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 
 func addRootDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringVar(&configF.RootDir, "root-dir", defaultString("CRUST_ZNET_ROOT_DIR",
-		filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable())))))))),
+		filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(
+			must.String(os.Executable())))))))),
 		"Path to directory where all the repositories exist")
 }
 
