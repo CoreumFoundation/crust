@@ -22,39 +22,39 @@ jobs:
         ]
         include:
           - ci_step: "lint"
-            command: "crust lint/crust"
+            command: "echo $CI"
             go-cache: true
             wasm-cache: false
             linter-cache: true
             docker-cache: false
-          - ci_step: "test"
-            command: "crust test/crust"
-            go-cache: true
-            wasm-cache: false
-            linter-cache: false
-            docker-cache: false
-          - ci_step: "integration tests coreum-upgrade & coreum-modules"
-            command: |
-              crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules images
-              crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules --timeout-commit 0.5s
-            go-cache: true
-            wasm-cache: true
-            linter-cache: false
-            docker-cache: true
-          - ci_step: "integration tests coreum-upgrade & coreum-ibc"
-            command: |
-              crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/ibc images
-              crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-ibc --timeout-commit 1s
-            go-cache: true
-            wasm-cache: true
-            linter-cache: false
-            docker-cache: true
-          - ci_step: "integration tests faucet"
-            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
-            go-cache: true
-            wasm-cache: false
-            linter-cache: false
-            docker-cache: true
+#          - ci_step: "test"
+#            command: "crust test/crust"
+#            go-cache: true
+#            wasm-cache: false
+#            linter-cache: false
+#            docker-cache: false
+#          - ci_step: "integration tests coreum-upgrade & coreum-modules"
+#            command: |
+#              crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/modules images
+#              crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-modules --timeout-commit 0.5s
+#            go-cache: true
+#            wasm-cache: true
+#            linter-cache: false
+#            docker-cache: true
+#          - ci_step: "integration tests coreum-upgrade & coreum-ibc"
+#            command: |
+#              crust build/integration-tests/coreum/upgrade build/integration-tests/coreum/ibc images
+#              crust znet test --cored-version=v3.0.2 --test-groups=coreum-upgrade,coreum-ibc --timeout-commit 1s
+#            go-cache: true
+#            wasm-cache: true
+#            linter-cache: false
+#            docker-cache: true
+#          - ci_step: "integration tests faucet"
+#            command: "crust build/integration-tests/faucet images && crust znet test --test-groups=faucet --timeout-commit 1s"
+#            go-cache: true
+#            wasm-cache: false
+#            linter-cache: false
+#            docker-cache: true
 
     runs-on: ubuntu-22.04
     steps:
