@@ -19,6 +19,9 @@ type Config struct {
 	// HomeDir is the path where all the files are kept
 	HomeDir string
 
+	// RootDir is the path where all the repositories are kept
+	RootDir string
+
 	// AppDir is the path where app data are stored
 	AppDir string
 

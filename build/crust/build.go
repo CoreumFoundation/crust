@@ -9,6 +9,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/crust/build/bdjuno"
 	"github.com/CoreumFoundation/crust/build/coreum"
 	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/golang"
@@ -21,8 +22,7 @@ const repoPath = "."
 
 // BuildBuilder builds building tool in the current repository.
 func BuildBuilder(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo)
-	return golang.Build(ctx, golang.BinaryBuildConfig{
+	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "build/cmd",
 		BinOutputPath:  must.String(filepath.EvalSymlinks(must.String(os.Executable()))),
@@ -32,15 +32,14 @@ func BuildBuilder(ctx context.Context, deps build.DepsFunc) error {
 // BuildZNet builds znet.
 func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 	deps(
-		golang.EnsureGo,
-		coreum.BuildCored,
-		gaia.EnsureBinary,
+		bdjuno.BuildDockerImage,
+		coreum.BuildCoredDockerImage,
 		gaia.BuildDockerImage,
 		osmosis.BuildDockerImage,
 		hermes.BuildDockerImage,
 	)
 
-	return golang.Build(ctx, golang.BinaryBuildConfig{
+	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "cmd/znet",
 		BinOutputPath:  "bin/.cache/znet",

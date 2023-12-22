@@ -1,0 +1,9 @@
+FROM {{ .From }}
+
+# TODO: This is needed because we use psql to load schema. If we do it in go we will be able to use basic image.
+RUN apk update && apk add postgresql
+
+ARG TARGETARCH
+COPY {{ .Binary }} /{{ .Binary }}
+
+ENTRYPOINT ["/{{ .Binary }}"]
