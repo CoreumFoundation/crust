@@ -138,7 +138,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	cacheDir := tools.BinariesRootPath(config.TargetPlatform)
+	cacheDir := tools.PlatformRootPath(config.TargetPlatform)
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
@@ -146,7 +146,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
-	args, envs, err := buildArgsAndEnvs(config, "/crust-cache/lib")
+	args, envs, err := buildArgsAndEnvs(config, filepath.Join("/crust-cache", tools.Version(), "lib"))
 	if err != nil {
 		return err
 	}
