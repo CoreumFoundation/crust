@@ -2,6 +2,7 @@ package golang
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"io/fs"
@@ -16,12 +17,13 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
 )
 
 var (
+	//go:embed "golangci.yaml"
+	lintConfig                   []byte
 	lintNewLinesSkipDirsRegexps  = []string{`^\.`, `^vendor$`, `^target$`, `^tmp$`}
 	lintNewLinesSkipFilesRegexps = []string{`\.iml$`, `\.wasm$`, `\.png$`}
 )
@@ -54,7 +56,7 @@ func Lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 func lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	deps(EnsureGo, EnsureGolangCI)
 	log := logger.Get(ctx)
-	config := must.String(filepath.Abs("build/.golangci.yaml"))
+	config := lintConfigPath()
 
 	return onModule(repoPath, func(path string) error {
 		goCodePresent, err := containsGoCode(path)
@@ -150,4 +152,12 @@ func parseRegexps(strRegexps []string) ([]*regexp.Regexp, error) {
 	}
 
 	return compiledRegexps, nil
+}
+
+func lintConfigPath() string {
+	return filepath.Join(tools.CacheDir(), "golangci.yaml")
+}
+
+func storeLintConfig(_ context.Context, _ build.DepsFunc) error {
+	return errors.WithStack(os.WriteFile(lintConfigPath(), lintConfig, 0o600))
 }
