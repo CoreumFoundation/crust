@@ -87,6 +87,10 @@ func (h Hasura) Deployment() infra.Deployment {
 					Name:  "HASURA_GRAPHQL_ENABLE_CONSOLE",
 					Value: "true",
 				},
+				{
+					Name:  "HASURA_GRAPHQL_UNAUTHORIZED_ROLE",
+					Value: "anonymous",
+				},
 			}
 		},
 		Name: h.Name(),
