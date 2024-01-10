@@ -91,6 +91,10 @@ func (h Hasura) Deployment() infra.Deployment {
 					Name:  "HASURA_GRAPHQL_UNAUTHORIZED_ROLE",
 					Value: "anonymous",
 				},
+				{
+					Name:  "HASURA_GRAPHQL_ADMIN_SECRET",
+					Value: "admin",
+				},
 			}
 		},
 		Name: h.Name(),
