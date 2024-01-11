@@ -220,8 +220,8 @@ github.com/CoreumFoundation/coreum/v4 v4.0.0-20231128071941-710434b13177 h1:pkFu
 github.com/CoreumFoundation/coreum/v4 v4.0.0-20231128071941-710434b13177/go.mod h1:GbgxZk7RO775MGNs99zW7RsH9FnK1RPRgUwUv3ut5WM=
 github.com/CosmWasm/wasmd v0.44.0 h1:2sbcoCAvfjCs1O0SWt53xULKjkV06dbSFthEViIC6Zg=
 github.com/CosmWasm/wasmd v0.44.0/go.mod h1:tDyYN050qUcdd7LOxGeo2e185sEShyO3nJGl2Cf59+k=
-github.com/CosmWasm/wasmvm v1.5.0 h1:3hKeT9SfwfLhxTGKH3vXaKFzBz1yuvP8SlfwfQXbQfw=
-github.com/CosmWasm/wasmvm v1.5.0/go.mod h1:fXB+m2gyh4v9839zlIXdMZGeLAxqUdYdFQqYsTha2hc=
+github.com/CosmWasm/wasmvm v1.5.1 h1:2MHN9uFyHP6pxfvpBJ0JW6ujvAIBk9kQk283zyri0Ro=
+github.com/CosmWasm/wasmvm v1.5.1/go.mod h1:fXB+m2gyh4v9839zlIXdMZGeLAxqUdYdFQqYsTha2hc=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
