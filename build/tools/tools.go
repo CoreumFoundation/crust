@@ -147,18 +147,18 @@ var tools = []Tool{
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	BinaryTool{
 		Name:    LibWASMMuslC,
-		Version: "v1.5.0",
+		Version: "v1.5.1",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.0/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:465e3a088e96fd009a11bfd234c69fb8a0556967677e54511c084f815cf9ce63",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.1/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:c0f4614d0835be78ac8f3d647a70ccd7ed9f48632bc1374db04e4df2245cb467",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.0/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:2687afbdae1bc6c7c8b05ae20dfb8ffc7ddc5b4e056697d0f37853dfe294e913",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.1/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:b89c242ffe2c867267621a6469f07ab70fc204091809d9c6f482c3fdf9293830",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
 				},
