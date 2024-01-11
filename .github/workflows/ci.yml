@@ -70,7 +70,8 @@ jobs:
         with:
           repository: CoreumFoundation/coreum
           path: coreum
-          ref: release-v3
+          # ref: release-v3
+          ref: milad/backport-patch-wasmvm # revert back to release-v3 once the coreum side pr is merged.
       - name: Checkout faucet
         uses: actions/checkout@v3
         with:
