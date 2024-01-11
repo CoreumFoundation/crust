@@ -54,6 +54,7 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsLocal,
+		Flags:          map[string]string{"-cover": ""},
 	})
 }
 
@@ -87,6 +88,7 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsDocker,
+		Flags:          map[string]string{"-cover": ""},
 		LinkStatically: true,
 	})
 }

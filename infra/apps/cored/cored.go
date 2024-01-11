@@ -343,6 +343,10 @@ func (c Cored) Deployment() infra.Deployment {
 					Name:  "DAEMON_NAME",
 					Value: "cored",
 				},
+				{
+					Name:  "GOCOVERDIR",
+					Value: filepath.Join(targets.AppHomeDir, "covdatafiles"),
+				},
 			}
 		},
 		Volumes: []infra.Volume{
@@ -361,6 +365,10 @@ func (c Cored) Deployment() infra.Deployment {
 			{
 				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades"),
 				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "cosmovisor", "upgrades"),
+			},
+			{
+				Source:      filepath.Join(c.config.HomeDir, "covdatafiles"),
+				Destination: filepath.Join(targets.AppHomeDir, "covdatafiles"),
 			},
 		},
 		ArgsFunc: func() []string {

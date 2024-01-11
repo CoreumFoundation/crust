@@ -19,6 +19,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
@@ -42,8 +43,11 @@ type BinaryBuildConfig struct {
 	// BinOutputPath is the path for compiled binary file
 	BinOutputPath string
 
-	// Tags is the list of additional tags to build
+	// Tags is the list of additional tags pass to inside --tags into `go build`.
 	Tags []string
+
+	// Flags is the map of additional flags to pass to `go build`. E.g -cover, -compiler etc.
+	Flags map[string]string
 
 	// LinkStatically triggers static compilation
 	LinkStatically bool
@@ -298,6 +302,14 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	if len(config.Tags) > 0 {
 		args = append(args, "-tags="+strings.Join(config.Tags, ","))
 	}
+
+	formattedFlags := lo.MapToSlice(config.Flags, func(key string, value string) string {
+		if value != "" {
+			return "-" + key + "=" + value
+		}
+		return "-" + key
+	})
+	args = append(args, formattedFlags...)
 
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
