@@ -6,7 +6,7 @@ go 1.20
 
 require (
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v3 v3.0.2
+	github.com/CoreumFoundation/coreum/v3 v3.0.3-0.20240111120032-c78dd4ab3f17
 	github.com/bufbuild/buf v1.26.1
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
