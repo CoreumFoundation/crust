@@ -3,8 +3,6 @@ cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab h1:XPcSzlQ06tor/py1LkEM9FX70LIeDWB++vLuAO6eAYI=
 github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab/go.mod h1:VD93vCHkxYaT/RhOesXTFgd/GQDW54tr0BqGi5JU1c0=
-github.com/CoreumFoundation/coreum/v3 v3.0.2 h1:NetX3sEfOzoZymMOitbL3vJqVCyWOVZckyRwtJLpaZo=
-github.com/CoreumFoundation/coreum/v3 v3.0.2/go.mod h1:gbMfQwz4dLpmliFQvZLYMthSF208/FCn9kXGCDcuJhg=
 github.com/CoreumFoundation/coreum/v3 v3.0.3-0.20240111120032-c78dd4ab3f17 h1:0E67crDP5iiQgcn2lN+NeTuL63almhWnyoaJfbTPzMo=
 github.com/CoreumFoundation/coreum/v3 v3.0.3-0.20240111120032-c78dd4ab3f17/go.mod h1:RQVdFtaf8xo9Y4tsAjTUhTi/UwHr8JJDqkBtgD8sYcY=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
