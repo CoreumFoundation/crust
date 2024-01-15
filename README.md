@@ -157,7 +157,7 @@ $ crust znet
 it is possible to use `logs` wrapper to tail logs from an application:
 
 ```
-(znet) [znet] $ logs cored-00
+(znet) [znet] $ logs cored-00-val
 ```
 
 ## Playing with the blockchain manually
@@ -165,8 +165,8 @@ it is possible to use `logs` wrapper to tail logs from an application:
 For each `cored` instance started by `znet` wrapper script named after the name of the node is created, so you may call the client manually.
 There are also three standard keys: `alice`, `bob` and `charlie` added to the keystore of each instance.
 
-If you start `znet` using default `--profiles=1cored` there is one `cored` application called `cored-00`.
-To use the client you may use `cored-00` wrapper:
+If you start `znet` using default `--profiles=1cored` there is one `cored` application called `cored-00-val`.
+To use the client you may use `cored-00-val` wrapper:
 
 ```
 (znet) [znet] $ start 
@@ -174,14 +174,14 @@ To use the client you may use `cored-00` wrapper:
 
 Generate a wallet to transfer funds to
 ```
-(znet) [znet] $ cored-00 keys add {YOUR_WALLET_NAME}
+(znet) [znet] $ cored-00-val keys add {YOUR_WALLET_NAME}
 ```
 Take the address the out put of the command above, you will use it in the next commands.
 
 ```
-(znet) [znet] $ cored-00 query bank balances {YOUR_GENERATED_ADDRESS}
-(znet) [znet] $ cored-00 tx bank send bob {YOUR_GENERATED_ADDRESS} 10udevcore
-(znet) [znet] $ cored-00 query bank balances {YOUR_GENERATED_ADDRESS}
+(znet) [znet] $ cored-00-val query bank balances {YOUR_GENERATED_ADDRESS}
+(znet) [znet] $ cored-00-val tx bank send bob {YOUR_GENERATED_ADDRESS} 10udevcore
+(znet) [znet] $ cored-00-val query bank balances {YOUR_GENERATED_ADDRESS}
 ```
 
 ## Integration tests
