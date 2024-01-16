@@ -62,7 +62,17 @@ func compileWasmDir(dirPath string, deps build.DepsFunc) error {
 			continue
 		}
 
-		actions = append(actions, CompileSmartContract(filepath.Join(dirPath, e.Name())))
+		contractDir := filepath.Join(dirPath, e.Name())
+
+		_, err := os.Stat(filepath.Join(contractDir, "Cargo.lock"))
+		switch {
+		case os.IsNotExist(err):
+			continue
+		case err != nil:
+			return errors.WithStack(err)
+		}
+
+		actions = append(actions, CompileSmartContract(contractDir))
 	}
 	deps(actions...)
 
