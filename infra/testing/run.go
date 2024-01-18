@@ -75,7 +75,6 @@ func Run(
 		args = append(args, "-test.run", config.TestFilter)
 	}
 
-	var failed bool
 	// the execution order might be important
 	for _, onlyTestGroup := range onlyTestGroups {
 		// copy is not used here, since the linter complains in the next line that using append with pre-allocated
@@ -144,12 +143,8 @@ func Run(
 		log.Info("Running tests")
 
 		if err := libexec.Exec(ctx, exec.Command(binPath, fullArgs...)); err != nil {
-			log.Error("Tests failed", zap.Error(err))
-			failed = true
+			return errors.Wrap(err, "tests failed")
 		}
-	}
-	if failed {
-		return errors.New("tests failed")
 	}
 	log.Info("All tests succeeded")
 	return nil
