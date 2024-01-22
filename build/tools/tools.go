@@ -1135,7 +1135,7 @@ func linkTool(tool Tool, platform TargetPlatform, binaries ...string) error {
 			return errors.WithStack(err)
 		}
 
-		dstVersion := filepath.Join(VersionRootPath(platform), dst)
+		dstVersion := filepath.Join(VersionedRootPath(platform), dst)
 
 		if err := os.Remove(dstVersion); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return errors.WithStack(err)
@@ -1443,7 +1443,7 @@ func shouldRelink(tool Tool, platform TargetPlatform, dst string) (bool, error) 
 		return false, errors.WithStack(err)
 	}
 
-	versionedPath := filepath.Join(VersionRootPath(platform), dst)
+	versionedPath := filepath.Join(VersionedRootPath(platform), dst)
 	realVersionedPath, err := filepath.EvalSymlinks(versionedPath)
 	if err != nil {
 		return true, nil //nolint:nilerr // this is ok
@@ -1544,14 +1544,14 @@ func PlatformRootPath(platform TargetPlatform) string {
 	return filepath.Join(CacheDir(), "tools", platform.String())
 }
 
-// VersionRootPath returns the path to the root directory of crust version.
-func VersionRootPath(platform TargetPlatform) string {
+// VersionedRootPath returns the path to the root directory of crust version.
+func VersionedRootPath(platform TargetPlatform) string {
 	return filepath.Join(PlatformRootPath(platform), Version())
 }
 
 // Path returns path to the installed binary.
 func Path(binary string, platform TargetPlatform) string {
-	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(filepath.Join(VersionRootPath(platform), binary)))))
+	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(filepath.Join(VersionedRootPath(platform), binary)))))
 }
 
 // Ensure ensures tool exists for the platform.
@@ -1563,7 +1563,7 @@ func Ensure(ctx context.Context, toolName Name, platform TargetPlatform) error {
 	return tool.Ensure(ctx, platform)
 }
 
-// Version returns crust version.
+// Version returns crust/build module version used to import this module in go.mod of the repository.
 func Version() string {
 	const buildModule = "github.com/CoreumFoundation/crust/build"
 
@@ -1580,6 +1580,9 @@ func Version() string {
 			m = m.Replace
 		}
 
+		//This happens in two cases:
+		// - building is done in crust repository
+		// any other repository has `go.mod` modified to replace crust/build with the local source code
 		if m.Version == "(devel)" {
 			return "devel"
 		}
