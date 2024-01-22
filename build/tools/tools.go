@@ -1582,7 +1582,7 @@ func Version() string {
 
 		//This happens in two cases:
 		// - building is done in crust repository
-		// any other repository has `go.mod` modified to replace crust/build with the local source code
+		// - any other repository has `go.mod` modified to replace crust/build with the local source code
 		if m.Version == "(devel)" {
 			return "devel"
 		}
