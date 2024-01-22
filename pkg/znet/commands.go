@@ -63,6 +63,7 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 		"CRUST_ZNET_PROFILES="+strings.Join(configF.Profiles, ","),
 		"CRUST_ZNET_CORED_VERSION="+configF.CoredVersion,
 		"CRUST_ZNET_HOME="+configF.HomeDir,
+		"CRUST_ZNET_ROOT_DIR="+configF.RootDir,
 		"CRUST_ZNET_BIN_DIR="+configF.BinDir,
 		"CRUST_ZNET_FILTER="+configF.TestFilter,
 	)

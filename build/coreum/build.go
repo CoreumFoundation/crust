@@ -40,14 +40,14 @@ func BuildCored(ctx context.Context, deps build.DepsFunc) error {
 
 // BuildCoredLocally builds cored locally.
 func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
-	deps(golang.EnsureGo, ensureRepo)
+	deps(ensureRepo)
 
 	parameters, err := coredVersionParams(ctx, tagsLocal)
 	if err != nil {
 		return err
 	}
 
-	return golang.Build(ctx, golang.BinaryBuildConfig{
+	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  binaryPath,
@@ -63,7 +63,7 @@ func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
-	deps(golang.EnsureGo, ensureRepo)
+	deps(ensureRepo)
 
 	parameters, err := coredVersionParams(ctx, tagsDocker)
 	if err != nil {
@@ -80,7 +80,7 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform
 		return err
 	}
 
-	return golang.Build(ctx, golang.BinaryBuildConfig{
+	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
@@ -94,14 +94,14 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform
 // buildCoredClientInDocker builds cored binary without the wasm VM and with CGO disabled. The result binary might be
 // used for the CLI on target platform, but can't be used to run the node.
 func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
-	deps(golang.EnsureGo, ensureRepo)
+	deps(ensureRepo)
 
 	parameters, err := coredVersionParams(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
 
-	return golang.Build(ctx, golang.BinaryBuildConfig{
+	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
 		BinOutputPath: filepath.Join(

@@ -177,6 +177,7 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 	bdjunoApp := bdjuno.New(bdjuno.Config{
 		Name:           nameBDJuno,
 		HomeDir:        filepath.Join(f.config.AppDir, nameBDJuno),
+		RepoDir:        filepath.Join(f.config.RootDir, "bdjuno"),
 		AppInfo:        f.spec.DescribeApp(bdjuno.AppType, nameBDJuno),
 		Port:           blockexplorer.DefaultPorts.BDJuno,
 		TelemetryPort:  blockexplorer.DefaultPorts.BDJunoTelemetry,
