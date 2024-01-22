@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
+	"github.com/CoreumFoundation/crust/build/bdjuno"
 	"github.com/CoreumFoundation/crust/build/coreum"
 	"github.com/CoreumFoundation/crust/build/crust"
 	"github.com/CoreumFoundation/crust/build/faucet"
@@ -16,6 +17,7 @@ import (
 // Commands is a definition of commands available in build system.
 var Commands = map[string]build.CommandFunc{
 	"build":                                  buildBinaries,
+	"build/bdjuno":                           bdjuno.Build,
 	"build/crust":                            crust.BuildBuilder,
 	"build/cored":                            coreum.BuildCored,
 	"build/faucet":                           faucet.Build,
@@ -29,6 +31,7 @@ var Commands = map[string]build.CommandFunc{
 	"generate":                               generate,
 	"generate/coreum":                        coreum.Generate,
 	"images":                                 buildDockerImages,
+	"images/bdjuno":                          bdjuno.BuildDockerImage,
 	"images/cored":                           coreum.BuildCoredDockerImage,
 	"images/faucet":                          faucet.BuildDockerImage,
 	"images/gaiad":                           gaia.BuildDockerImage,
@@ -73,7 +76,14 @@ func test(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildBinaries(ctx context.Context, deps build.DepsFunc) error {
-	deps(coreum.BuildCored, faucet.Build, crust.BuildZNet, buildIntegrationTests)
+	deps(
+		bdjuno.Build,
+		coreum.BuildCored,
+		faucet.Build,
+		crust.BuildZNet,
+		buildIntegrationTests,
+	)
+
 	return nil
 }
 
@@ -84,6 +94,7 @@ func buildIntegrationTests(ctx context.Context, deps build.DepsFunc) error {
 
 func buildDockerImages(ctx context.Context, deps build.DepsFunc) error {
 	deps(
+		bdjuno.BuildDockerImage,
 		coreum.BuildCoredDockerImage,
 		faucet.BuildDockerImage,
 		gaia.BuildDockerImage,

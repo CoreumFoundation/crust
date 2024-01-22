@@ -49,6 +49,7 @@ const (
 type Config struct {
 	Name           string
 	HomeDir        string
+	RepoDir        string
 	AppInfo        *infra.AppInfo
 	Port           int
 	TelemetryPort  int
@@ -98,13 +99,17 @@ func (j BDJuno) Config() Config {
 func (j BDJuno) Deployment() infra.Deployment {
 	return infra.Deployment{
 		RunAsUser: true,
-		Image:     "coreumfoundation/bdjuno:latest",
+		Image:     "bdjuno:znet",
 		Name:      j.Name(),
 		Info:      j.config.AppInfo,
 		Volumes: []infra.Volume{
 			{
 				Source:      j.config.HomeDir,
 				Destination: targets.AppHomeDir,
+			},
+			{
+				Source:      filepath.Join(j.config.RepoDir, "database", "schema"),
+				Destination: filepath.Join(targets.AppHomeDir, "schema"),
 			},
 		},
 		Ports: map[string]int{

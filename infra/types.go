@@ -390,6 +390,9 @@ type ConfigFactory struct {
 	// HomeDir is the path where all the files are kept
 	HomeDir string
 
+	// RootDir is the path where all the repositories are present
+	RootDir string
+
 	// BinDir is the path where all binaries are present
 	BinDir string
 

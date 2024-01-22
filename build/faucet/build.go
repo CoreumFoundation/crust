@@ -24,9 +24,9 @@ func Build(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildFaucet(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
-	deps(golang.EnsureGo, ensureRepo)
+	deps(ensureRepo)
 
-	return golang.Build(ctx, golang.BinaryBuildConfig{
+	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    repoPath,
 		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),

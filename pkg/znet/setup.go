@@ -46,6 +46,7 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 		TimeoutCommit:  spec.TimeoutCommit,
 		CoredVersion:   configF.CoredVersion,
 		HomeDir:        homeDir,
+		RootDir:        configF.RootDir,
 		AppDir:         homeDir + "/app",
 		WrapperDir:     homeDir + "/bin",
 		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.BinDir)))),

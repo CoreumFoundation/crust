@@ -79,7 +79,9 @@ func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // Build builds go binary.
-func Build(ctx context.Context, config BinaryBuildConfig) error {
+func Build(ctx context.Context, deps build.DepsFunc, config BinaryBuildConfig) error {
+	deps(EnsureGo)
+
 	if config.TargetPlatform.BuildInDocker {
 		return buildInDocker(ctx, config)
 	}
