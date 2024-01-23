@@ -31,6 +31,7 @@ func main() {
 		rootCmd.AddCommand(testCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(specCmd(configF, cmdF))
 		rootCmd.AddCommand(consoleCmd(ctx, configF, cmdF))
+		rootCmd.AddCommand(coverageDumpCmd(ctx, configF, cmdF))
 
 		return rootCmd.Execute()
 	})
@@ -157,6 +158,19 @@ func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cm
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
 			return znet.Console(ctx, config, spec)
+		}),
+	}
+}
+
+func coverageDumpCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) *cobra.Command {
+	return &cobra.Command{
+		Use:   "coverage-dump",
+		Short: "Dumps code coverage report to repository",
+		RunE: cmdF.Cmd(func() error {
+			spec := infra.NewSpec(configF)
+			config := znet.NewConfig(configF, spec)
+
+			return znet.CoverageDump(ctx, config, spec)
 		}),
 	}
 }

@@ -111,7 +111,7 @@ func executeGoProtocCommand(ctx context.Context, deps build.DepsFunc, includeDir
 				return errors.WithStack(err)
 			}
 			dstPath := filepath.Join(repoPath, relPath)
-			return copyFile(srcPath, dstPath, 0o600)
+			return tools.CopyFile(srcPath, dstPath, 0o600)
 		})
 	if err != nil {
 		return err

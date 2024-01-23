@@ -539,6 +539,13 @@ type AppInfo struct {
 	data appInfoData
 }
 
+func (ai *AppInfo) Type() AppType {
+	ai.mu.RLock()
+	defer ai.mu.RUnlock()
+
+	return ai.data.Type
+}
+
 // SetInfo sets deployment info.
 func (ai *AppInfo) SetInfo(info DeploymentInfo) {
 	ai.mu.Lock()

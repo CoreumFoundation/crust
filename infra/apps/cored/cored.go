@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -49,6 +48,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 	"github.com/CoreumFoundation/crust/infra/targets"
+	"github.com/CoreumFoundation/crust/pkg/tools"
 )
 
 // AppType is the type of cored application.
@@ -496,7 +496,7 @@ func (c Cored) prepare() error {
 	}
 	// the path is defined by the build
 	dockerLinuxBinaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
-	if err := copyFile(
+	if err := tools.CopyFile(
 		c.binaryPath(),
 		filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored"),
 		0o755); err != nil {
@@ -509,7 +509,7 @@ func (c Cored) prepare() error {
 		"v3": "cored-v3.0.2",
 	}
 	for upgrade, binary := range upgrades {
-		err := copyFile(filepath.Join(dockerLinuxBinaryPath, binary),
+		err := tools.CopyFile(filepath.Join(dockerLinuxBinaryPath, binary),
 			filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", upgrade, "bin", "cored"), 0o755)
 		if err != nil {
 			return err
@@ -627,28 +627,4 @@ func applyPatchToV3Genesis(originalGenDocBytes []byte) []byte {
 	}
 
 	return []byte(modifiedGenDocStr)
-}
-
-func copyFile(src, dst string, perm os.FileMode) error {
-	fr, err := os.Open(src)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer fr.Close()
-
-	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
-		return errors.WithStack(err)
-	}
-
-	fw, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, perm)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer fw.Close()
-
-	if _, err = io.Copy(fw, fr); err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
 }

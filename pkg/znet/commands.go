@@ -20,11 +20,13 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/CoreumFoundation/crust/infra/testing"
+	"github.com/CoreumFoundation/crust/pkg/tools"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
 )
 
@@ -199,6 +201,25 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 // Spec prints specification of running environment.
 func Spec(spec *infra.Spec) error {
 	fmt.Println(spec)
+	return nil
+}
+
+func CoverageDump(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+	for appName, app := range spec.Apps {
+		if app.Type() != cored.AppType {
+			continue
+		}
+
+		srcCovdata := filepath.Join(config.AppDir, appName, string(constant.ChainIDDev), "covdatafiles") // TODO: hardcoded chain id
+		dstCovdata := filepath.Join(config.BinDir, "..", "covdatafiles")
+		fmt.Printf("src: %v\ndst: %v\n", srcCovdata, dstCovdata)
+
+		if err := tools.CopyDirFiles(srcCovdata, dstCovdata, 0o700); err != nil {
+			return err
+		}
+
+		break // todo: add comment
+	}
 	return nil
 }
 
