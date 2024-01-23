@@ -1551,7 +1551,8 @@ func VersionedRootPath(platform TargetPlatform) string {
 
 // Path returns path to the installed binary.
 func Path(binary string, platform TargetPlatform) string {
-	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(filepath.Join(VersionedRootPath(platform), binary)))))
+	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(
+		filepath.Join(VersionedRootPath(platform), binary)))))
 }
 
 // Ensure ensures tool exists for the platform.
@@ -1580,7 +1581,7 @@ func Version() string {
 			m = m.Replace
 		}
 
-		//This happens in two cases:
+		// This happens in two cases:
 		// - building is done in crust repository
 		// - any other repository has `go.mod` modified to replace crust/build with the local source code
 		if m.Version == "(devel)" {
