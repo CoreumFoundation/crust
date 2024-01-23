@@ -211,7 +211,7 @@ func CoverageDump(ctx context.Context, config infra.Config, spec *infra.Spec) er
 		}
 
 		srcCovdata := filepath.Join(config.AppDir, appName, string(constant.ChainIDDev), "covdatafiles") // TODO: hardcoded chain id
-		dstCovdata := filepath.Join(config.BinDir, "..", "covdatafiles")
+		dstCovdata := filepath.Join(config.BinDir, "..", "covdatafiles", "integration-tests-modules")
 		fmt.Printf("src: %v\ndst: %v\n", srcCovdata, dstCovdata)
 
 		if err := tools.CopyDirFiles(srcCovdata, dstCovdata, 0o700); err != nil {
