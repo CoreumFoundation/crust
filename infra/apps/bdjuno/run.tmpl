@@ -7,7 +7,7 @@ if bdjuno start --home="{{ .HomePath }}"; then
   exit 0
 else
   echo "Applying database migration."
-  for file in /var/lib/postgresql/schema/*.sql; do
+  for file in /app/schema/*.sql; do
     psql {{ .PostgresURL }} -a -f "${file}"
   done
 
