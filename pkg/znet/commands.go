@@ -26,7 +26,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
 	"github.com/CoreumFoundation/crust/infra/testing"
-	"github.com/CoreumFoundation/crust/pkg/tools"
 	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
 )
 
@@ -210,17 +209,22 @@ func CoverageDump(ctx context.Context, config infra.Config, spec *infra.Spec) er
 			continue
 		}
 
-		srcCovdata := filepath.Join(config.AppDir, appName, string(constant.ChainIDDev), "covdatafiles") // TODO: hardcoded chain id
-		dstCovdata := filepath.Join(config.BinDir, "..", "covdatafiles", "integration-tests-modules")
-		fmt.Printf("src: %v\ndst: %v\n", srcCovdata, dstCovdata)
-
-		if err := tools.CopyDirFiles(srcCovdata, dstCovdata, 0o700); err != nil {
-			return err
+		if app.Info().Status != infra.AppStatusStopped {
+			return errors.New("coverage dump can't be executed on top of running environment, stop it first")
 		}
 
-		break // todo: add comment
+		dstCoverageDir := filepath.Join(config.BinDir, "..", "coverage")
+		if err := os.MkdirAll(dstCoverageDir, os.ModePerm); err != nil {
+			return errors.Wrapf(err, "failed to create coverage dir `%s`", dstCoverageDir)
+		}
+
+		dstCoverageFile := filepath.Join(dstCoverageDir, "integration-tests-modules")
+
+		coredAppHome := filepath.Join(config.AppDir, appName, string(constant.ChainIDDev)) // TODO: hardcoded chain id
+		return cored.CoverageDump(ctx, coredAppHome, dstCoverageFile)                      // todo: add comment
 	}
-	return nil
+
+	return errors.Errorf("no %s app found", cored.AppType)
 }
 
 // Console starts tmux session on top of running environment.
