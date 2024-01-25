@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -593,15 +594,7 @@ func (bt BinaryTool) Ensure(ctx context.Context, platform TargetPlatform) error 
 		}
 	}
 
-	for dst := range lo.Assign(bt.Binaries, source.Binaries) {
-		if bt.Local {
-			if err := linkTool(dst); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return linkTool(bt, platform, lo.Keys(lo.Assign(bt.Binaries, source.Binaries))...)
 }
 
 func (bt BinaryTool) install(ctx context.Context, platform TargetPlatform) (retErr error) {
@@ -645,16 +638,16 @@ func (bt BinaryTool) install(ctx context.Context, platform TargetPlatform) (retE
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
-	dstDir := BinariesRootPath(platform)
+	dstDir := filepath.Join(toolDir, "crust")
 	for dst, src := range lo.Assign(bt.Binaries, source.Binaries) {
-		srcPath := toolDir + "/" + src
+		srcPath := filepath.Join(toolDir, src)
 
 		binChecksum, err := checksum(srcPath)
 		if err != nil {
 			return err
 		}
 
-		dstPath := dstDir + "/" + dst
+		dstPath := filepath.Join(dstDir, dst)
 		dstPathChecksum := dstPath + ":" + binChecksum
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
 			return errors.WithStack(err)
@@ -670,9 +663,7 @@ func (bt BinaryTool) install(ctx context.Context, platform TargetPlatform) (retE
 			return errors.WithStack(err)
 		}
 		srcLinkPath := filepath.Join(
-			strings.Repeat("../", strings.Count(dst, "/")),
-			"downloads",
-			string(bt.Name)+"-"+bt.Version,
+			strings.Repeat("../", strings.Count(dst, "/")+1),
 			src,
 		)
 		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
@@ -742,14 +733,14 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 			return err
 		}
 
-		srcPath := toolDir + "/" + binName
+		srcPath := filepath.Join(toolDir, binName)
 
 		binChecksum, err := checksum(srcPath)
 		if err != nil {
 			return err
 		}
 
-		dstPath := BinariesRootPath(platform) + "/" + dst
+		dstPath := filepath.Join(toolDir, "crust", dst)
 		dstPathChecksum := dstPath + ":" + binChecksum
 
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
@@ -765,7 +756,7 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 		if err := os.Chmod(srcPath, 0o700); err != nil {
 			return errors.WithStack(err)
 		}
-		srcLinkPath := filepath.Join("..", "downloads", string(gpt.Name)+"-"+gpt.Version, binName)
+		srcLinkPath := filepath.Join("../..", binName)
 		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
 			return errors.WithStack(err)
 		}
@@ -778,7 +769,7 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
 	}
 
-	return linkTool(dst)
+	return linkTool(gpt, platform, dst)
 }
 
 // RustInstaller installs rust.
@@ -849,13 +840,7 @@ func (ri RustInstaller) Ensure(ctx context.Context, platform TargetPlatform) err
 		}
 	}
 
-	for _, binary := range binaries {
-		if err := linkTool(binary); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return linkTool(ri, platform, binaries...)
 }
 
 func (ri RustInstaller) install(ctx context.Context, platform TargetPlatform) (retErr error) {
@@ -919,7 +904,7 @@ func (ri RustInstaller) install(ctx context.Context, platform TargetPlatform) (r
 			return err
 		}
 
-		dstPath := filepath.Join(BinariesRootPath(platform), binary)
+		dstPath := filepath.Join(toolDir, "crust", binary)
 		dstPathChecksum := dstPath + ":" + binChecksum
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
 			return errors.WithStack(err)
@@ -932,12 +917,7 @@ func (ri RustInstaller) install(ctx context.Context, platform TargetPlatform) (r
 			return errors.WithStack(err)
 		}
 
-		srcLinkPath := filepath.Join(
-			"..",
-			"downloads",
-			string(ri.GetName())+"-"+ri.Version,
-			filepath.Join(srcDir, binary),
-		)
+		srcLinkPath := filepath.Join("../..", filepath.Join(srcDir, binary))
 		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
 			return errors.WithStack(err)
 		}
@@ -1023,6 +1003,7 @@ func (ct CargoTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 		cmd := exec.Command(Path("bin/cargo", TargetPlatformLocal), "install",
 			"--version", ct.Version, "--force", "--locked",
 			"--root", toolDir, ct.Tool)
+		cmd.Env = append(os.Environ(), fmt.Sprintf("RUSTC=%s", Path("bin/rustc", TargetPlatformLocal)))
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err
 		}
@@ -1034,7 +1015,7 @@ func (ct CargoTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 			return err
 		}
 
-		dstPath := filepath.Join(BinariesRootPath(platform), binPath)
+		dstPath := filepath.Join(toolDir, "crust", binPath)
 		dstPathChecksum := dstPath + ":" + binChecksum
 
 		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
@@ -1050,7 +1031,7 @@ func (ct CargoTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 		if err := os.Chmod(srcPath, 0o700); err != nil {
 			return errors.WithStack(err)
 		}
-		srcLinkPath := filepath.Join("..", "downloads", string(ct.Name)+"-"+ct.Version, binPath)
+		srcLinkPath := filepath.Join("../..", binPath)
 		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
 			return errors.WithStack(err)
 		}
@@ -1063,7 +1044,7 @@ func (ct CargoTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
 	}
 
-	return linkTool(binPath)
+	return linkTool(ct, platform, binPath)
 }
 
 // Source represents source where tool is fetched from.
@@ -1132,26 +1113,60 @@ func EnsureProtocGenBufBreaking(ctx context.Context, deps build.DepsFunc) error 
 	return Ensure(ctx, ProtocGenBufBreaking, TargetPlatformLocal)
 }
 
-func linkTool(dst string) error {
-	relink, err := shouldRelink(dst)
-	if err != nil {
-		return err
+func linkTool(tool Tool, platform TargetPlatform, binaries ...string) error {
+	for _, dst := range binaries {
+		relink, err := shouldRelink(tool, platform, dst)
+		if err != nil {
+			return err
+		}
+
+		if !relink {
+			continue
+		}
+
+		src := filepath.Join(
+			strings.Repeat("../", strings.Count(dst, "/")+1),
+			"downloads",
+			fmt.Sprintf("%s-%s", tool.GetName(), tool.GetVersion()),
+			"crust",
+			dst,
+		)
+		if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+
+		dstVersion := filepath.Join(VersionedRootPath(platform), dst)
+
+		if err := os.Remove(dstVersion); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return errors.WithStack(err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(dstVersion), 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+
+		if err := os.Symlink(src, dstVersion); err != nil {
+			return errors.WithStack(err)
+		}
+
+		if !tool.IsLocal() {
+			continue
+		}
+
+		if err := os.Remove(dst); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return errors.WithStack(err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+
+		if err := os.Symlink(dstVersion, dst); err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
-	if !relink {
-		return nil
-	}
-
-	src := filepath.Join(BinariesRootPath(TargetPlatformLocal), dst)
-	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err := os.Remove(dst); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return errors.WithStack(err)
-	}
-
-	return errors.WithStack(os.Symlink(src, dst))
+	return nil
 }
 
 func hasher(hashStr string) (hash.Hash, string) {
@@ -1360,7 +1375,7 @@ func CacheDir() string {
 }
 
 func toolDir(tool Tool, platform TargetPlatform) string {
-	return filepath.Join(BinariesRootPath(platform), "downloads", string(tool.GetName())+"-"+tool.GetVersion())
+	return filepath.Join(PlatformRootPath(platform), "downloads", string(tool.GetName())+"-"+tool.GetVersion())
 }
 
 func ensureDir(file string) error {
@@ -1373,12 +1388,12 @@ func ensureDir(file string) error {
 func shouldReinstall(t Tool, platform TargetPlatform, src, dst string) bool {
 	toolDir := toolDir(t, platform)
 
-	srcPath, err := filepath.Abs(toolDir + "/" + src)
+	srcPath, err := filepath.Abs(filepath.Join(toolDir, src))
 	if err != nil {
 		return true
 	}
 
-	dstPath, err := filepath.Abs(filepath.Join(BinariesRootPath(platform), dst))
+	dstPath, err := filepath.Abs(filepath.Join(toolDir, "crust", dst))
 	if err != nil {
 		return true
 	}
@@ -1420,16 +1435,26 @@ func shouldReinstall(t Tool, platform TargetPlatform, src, dst string) bool {
 	return actualChecksum != expectedChecksum
 }
 
-func shouldRelink(dst string) (bool, error) {
-	dstPath := filepath.Join(BinariesRootPath(TargetPlatformLocal), dst)
+func shouldRelink(tool Tool, platform TargetPlatform, dst string) (bool, error) {
+	srcPath := filepath.Join(toolDir(tool, platform), "crust", dst)
 
-	absSrcPath, err := filepath.Abs(dstPath)
+	realSrcPath, err := filepath.EvalSymlinks(srcPath)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
-	realSrcPath, err := filepath.EvalSymlinks(absSrcPath)
+
+	versionedPath := filepath.Join(VersionedRootPath(platform), dst)
+	realVersionedPath, err := filepath.EvalSymlinks(versionedPath)
 	if err != nil {
-		return false, errors.WithStack(err)
+		return true, nil //nolint:nilerr // this is ok
+	}
+
+	if realSrcPath != realVersionedPath {
+		return true, nil
+	}
+
+	if !tool.IsLocal() {
+		return false, nil
 	}
 
 	absDstPath, err := filepath.Abs(dst)
@@ -1514,14 +1539,20 @@ func CopyToolBinaries(toolName Name, platform TargetPlatform, path string, binar
 	return nil
 }
 
-// BinariesRootPath returns the root path of cached binaries.
-func BinariesRootPath(platform TargetPlatform) string {
-	return filepath.Join(CacheDir(), "bin", platform.String())
+// PlatformRootPath returns path to the directory containing all platform-secific files.
+func PlatformRootPath(platform TargetPlatform) string {
+	return filepath.Join(CacheDir(), "tools", platform.String())
+}
+
+// VersionedRootPath returns the path to the root directory of crust version.
+func VersionedRootPath(platform TargetPlatform) string {
+	return filepath.Join(PlatformRootPath(platform), Version())
 }
 
 // Path returns path to the installed binary.
 func Path(binary string, platform TargetPlatform) string {
-	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(filepath.Join(BinariesRootPath(platform), binary)))))
+	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(
+		filepath.Join(VersionedRootPath(platform), binary)))))
 }
 
 // Ensure ensures tool exists for the platform.
@@ -1531,4 +1562,34 @@ func Ensure(ctx context.Context, toolName Name, platform TargetPlatform) error {
 		return err
 	}
 	return tool.Ensure(ctx, platform)
+}
+
+// Version returns crust/build module version used to import this module in go.mod of the repository.
+func Version() string {
+	const buildModule = "github.com/CoreumFoundation/crust/build"
+
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		panic("reading build info failed")
+	}
+
+	for _, m := range append([]*debug.Module{&bi.Main}, bi.Deps...) {
+		if m.Path != buildModule {
+			continue
+		}
+		if m.Replace != nil {
+			m = m.Replace
+		}
+
+		// This happens in two cases:
+		// - building is done in crust repository
+		// - any other repository has `go.mod` modified to replace crust/build with the local source code
+		if m.Version == "(devel)" {
+			return "devel"
+		}
+
+		return m.Version
+	}
+
+	panic("impossible condition: crust module not found")
 }

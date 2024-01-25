@@ -155,7 +155,7 @@ func parseRegexps(strRegexps []string) ([]*regexp.Regexp, error) {
 }
 
 func lintConfigPath() string {
-	return filepath.Join(tools.CacheDir(), "golangci.yaml")
+	return filepath.Join(tools.VersionedRootPath(tools.TargetPlatformLocal), "golangci.yaml")
 }
 
 func storeLintConfig(_ context.Context, _ build.DepsFunc) error {
