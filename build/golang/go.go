@@ -19,7 +19,6 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
@@ -46,8 +45,8 @@ type BinaryBuildConfig struct {
 	// Tags is the list of additional tags pass to inside --tags into `go build`.
 	Tags []string
 
-	// Flags is the map of additional flags to pass to `go build`. E.g -cover, -compiler etc.
-	Flags map[string]string
+	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler etc.
+	Flags []string
 
 	// LinkStatically triggers static compilation
 	LinkStatically bool
@@ -113,6 +112,8 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 	cmd.Env = envs
+
+	fmt.Printf("build cmd: %v\n", cmd.String())
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", config.PackagePath)
@@ -186,6 +187,8 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
+
+	fmt.Printf("buildInDocker: %v \n", strings.Join(runArgs, " "))
 	return nil
 }
 
@@ -303,13 +306,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 		args = append(args, "-tags="+strings.Join(config.Tags, ","))
 	}
 
-	formattedFlags := lo.MapToSlice(config.Flags, func(key string, value string) string {
-		if value != "" {
-			return "-" + key + "=" + value
-		}
-		return "-" + key
-	})
-	args = append(args, formattedFlags...)
+	args = append(args, config.Flags...)
 
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
