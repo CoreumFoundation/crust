@@ -11,6 +11,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/crust/exec"
+	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
 const CovdataDirName = "covdatafiles"
@@ -30,4 +31,8 @@ func CoverageConvert(ctx context.Context, coredHomeDir string, dstFilePath strin
 		zap.String("destination text file", dstFilePath),
 	)
 	return nil
+}
+
+func (c Cored) GoCoverDir() string {
+	return filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), CovdataDirName)
 }

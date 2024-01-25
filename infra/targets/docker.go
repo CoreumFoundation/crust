@@ -193,7 +193,7 @@ func (d *Docker) prepareRunArgs(name string, app infra.Deployment) []string {
 		runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
 	}
 	for _, v := range app.Volumes {
-		runArgs = append(runArgs, "-v", v.Source+":"+v.Destination)
+		runArgs = append(runArgs, "-v", v.Source+":"+v.Destination+":rw")
 	}
 	if app.EnvVarsFunc != nil {
 		for _, env := range app.EnvVarsFunc() {
