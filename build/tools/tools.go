@@ -725,8 +725,7 @@ func (gpt GoPackageTool) Ensure(ctx context.Context, platform TargetPlatform) er
 			return errors.Wrapf(err, "ensuring go failed")
 		}
 
-		cmd := exec.Command(Path("bin/go", TargetPlatformLocal), "install", "-tags=tools", gpt.Package)
-		cmd.Dir = "build/tools"
+		cmd := exec.Command(Path("bin/go", TargetPlatformLocal), "install", gpt.Package+"@"+gpt.Version)
 		cmd.Env = append(os.Environ(), "GOBIN="+toolDir)
 
 		if err := libexec.Exec(ctx, cmd); err != nil {
