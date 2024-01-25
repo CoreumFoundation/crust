@@ -170,7 +170,7 @@ func coverageDumpCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *zn
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
 
-			return znet.CoverageDump(ctx, config, spec)
+			return znet.CoverageConvert(ctx, config, spec)
 		}),
 	}
 }

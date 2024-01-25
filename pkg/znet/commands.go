@@ -203,7 +203,7 @@ func Spec(spec *infra.Spec) error {
 	return nil
 }
 
-func CoverageDump(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+func CoverageConvert(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	for appName, app := range spec.Apps {
 		if app.Type() != cored.AppType {
 			continue
@@ -219,9 +219,11 @@ func CoverageDump(ctx context.Context, config infra.Config, spec *infra.Spec) er
 		}
 
 		dstCoverageFile := filepath.Join(dstCoverageDir, "integration-tests-modules")
-
 		coredAppHome := filepath.Join(config.AppDir, appName, string(constant.ChainIDDev)) // TODO: hardcoded chain id
-		return cored.CoverageDump(ctx, coredAppHome, dstCoverageFile)                      // todo: add comment
+
+		// We convert coverage from the first cored app we find since codcove result for all of them is identical
+		// because of consensus.
+		return cored.CoverageConvert(ctx, coredAppHome, dstCoverageFile)
 	}
 
 	return errors.Errorf("no %s app found", cored.AppType)
