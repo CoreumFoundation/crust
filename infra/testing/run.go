@@ -6,11 +6,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -24,6 +24,35 @@ import (
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
+// FIXME (wojtek): Simplify it to contain only one path once everything is migrated.
+var testBinaries = map[string][]string{
+	apps.TestGroupCoreumModules: {
+		"coreum/bin/.cache/integration-tests/coreum-modules",
+		"crust/bin/.cache/integration-tests/coreum-modules",
+	},
+	apps.TestGroupCoreumUpgrade: {
+		"coreum/bin/.cache/integration-tests/coreum-upgrade",
+		"crust/bin/.cache/integration-tests/coreum-upgrade",
+	},
+	apps.TestGroupCoreumIBC: {
+		"coreum/bin/.cache/integration-tests/coreum-ibc",
+		"crust/bin/.cache/integration-tests/coreum-ibc",
+	},
+	apps.TestGroupFaucet: {
+		"crust/bin/.cache/integration-tests/faucet",
+	},
+}
+
+// TestGroups is the list of available test groups.
+var TestGroups = func() []string {
+	testGroups := make([]string, 0, len(testBinaries))
+	for tg := range testBinaries {
+		testGroups = append(testGroups, tg)
+	}
+	sort.Strings(testGroups)
+	return testGroups
+}()
+
 // Run deploys testing environment and runs tests there.
 //
 //nolint:funlen
@@ -33,29 +62,11 @@ func Run(
 	appSet infra.AppSet,
 	coredApp cored.Cored,
 	config infra.Config,
-	onlyTestGroups ...string,
 ) error {
-	testDir := filepath.Join(config.BinDir, ".cache", "integration-tests")
-	files, err := os.ReadDir(testDir)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	binaries := make([]string, 0, len(files))
-	for _, f := range files {
-		if f.IsDir() {
-			continue
+	for _, tg := range config.TestGroups {
+		if _, exists := testBinaries[tg]; !exists {
+			return errors.Errorf("test group %q does not exist", tg)
 		}
-		binaries = append(binaries, f.Name())
-	}
-
-	for _, tg := range onlyTestGroups {
-		if !lo.Contains(binaries, tg) {
-			return errors.Errorf("binary does not exist for test group %q", tg)
-		}
-	}
-	// if not limitations were provided we test all binaries
-	if len(onlyTestGroups) == 0 {
-		onlyTestGroups = binaries
 	}
 
 	if err := target.Deploy(ctx, appSet); err != nil {
@@ -76,13 +87,12 @@ func Run(
 	}
 
 	// the execution order might be important
-	for _, onlyTestGroup := range onlyTestGroups {
+	for _, tg := range config.TestGroups {
 		// copy is not used here, since the linter complains in the next line that using append with pre-allocated
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
-		switch onlyTestGroup {
+		switch tg {
 		case apps.TestGroupCoreumModules, apps.TestGroupCoreumUpgrade, apps.TestGroupCoreumIBC:
-
 			fullArgs = append(fullArgs,
 				"-run-unsafe=true",
 				"-coreum-funding-mnemonic", coredApp.Config().FundingMnemonic,
@@ -95,7 +105,7 @@ func Run(
 				}
 			}
 
-			if onlyTestGroup == apps.TestGroupCoreumIBC {
+			if tg == apps.TestGroupCoreumIBC {
 				fullArgs = append(
 					fullArgs,
 					"-coreum-rpc-address",
@@ -126,7 +136,6 @@ func Run(
 					"-osmosis-funding-mnemonic", osmosisApp.AppConfig().FundingMnemonic,
 				)
 			}
-
 		case apps.TestGroupFaucet:
 			faucetApp := appSet.FindRunningAppByName(string(faucet.AppType))
 			if faucetApp == nil {
@@ -138,7 +147,21 @@ func Run(
 			)
 		}
 
-		binPath := filepath.Join(testDir, onlyTestGroup)
+		var binPath string
+	loop:
+		for _, path := range testBinaries[tg] {
+			path = filepath.Join(config.RootDir, path)
+			_, err := os.Stat(path)
+			switch {
+			case err == nil:
+				binPath = path
+				break loop
+			case os.IsNotExist(err):
+			default:
+				return errors.Wrapf(err, "cannot find binary for test group %q", tg)
+			}
+		}
+
 		log := log.With(zap.String("binary", binPath), zap.Strings("args", fullArgs))
 		log.Info("Running tests")
 

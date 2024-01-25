@@ -16,6 +16,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
+	"github.com/CoreumFoundation/crust/infra/testing"
 	"github.com/CoreumFoundation/crust/pkg/znet"
 )
 
@@ -168,7 +169,7 @@ func addTestGroupFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringSliceVar(
 		&configF.TestGroups,
 		"test-groups",
-		[]string{},
+		testing.TestGroups,
 		"Test groups in supported repositories to run integration test for,empty means all repositories all test groups ,e.g. --test-groups=faucet,coreum-modules or --test-groups=faucet --test-groups=coreum-modules", //nolint:lll // we don't care about this description
 	)
 }
