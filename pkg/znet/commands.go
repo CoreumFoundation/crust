@@ -194,7 +194,7 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		return err
 	}
 
-	return testing.Run(ctx, target, appSet, coredApp, config, config.TestGroups...)
+	return testing.Run(ctx, target, appSet, coredApp, config)
 }
 
 // Spec prints specification of running environment.
