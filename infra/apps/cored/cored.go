@@ -345,7 +345,7 @@ func (c Cored) Deployment() infra.Deployment {
 				},
 				{
 					Name:  "GOCOVERDIR",
-					Value: filepath.Join(targets.AppHomeDir, CovdataDirName),
+					Value: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), CovdataDirName),
 				},
 			}
 		},
@@ -368,7 +368,7 @@ func (c Cored) Deployment() infra.Deployment {
 			},
 			{
 				Source:      filepath.Join(c.config.HomeDir, CovdataDirName),
-				Destination: filepath.Join(targets.AppHomeDir, CovdataDirName),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), CovdataDirName),
 			},
 		},
 		ArgsFunc: func() []string {
