@@ -237,6 +237,31 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	return tmux.Kill(ctx, config.EnvName)
 }
 
+func CoverageConvert(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+	for appName, app := range spec.Apps {
+		if app.Type() != cored.AppType {
+			continue
+		}
+
+		if app.Info().Status != infra.AppStatusStopped {
+			return errors.New("coverage convert can't be executed on top of running environment, stop it first")
+		}
+
+		dstCoverageDir := filepath.Dir(config.CoverageOutputFile)
+		if err := os.MkdirAll(dstCoverageDir, os.ModePerm); err != nil {
+			return errors.Wrapf(err, "failed to create coverage dir `%s`", dstCoverageDir)
+		}
+
+		coredAppHome := filepath.Join(config.AppDir, appName, "coreum-devnet-1") // TODO: hardcoded chain id
+
+		// We convert coverage from the first cored app we find since codcove result for all of them is identical
+		// because of consensus.
+		return cored.CoverageConvert(ctx, coredAppHome, config.CoverageOutputFile)
+	}
+
+	return errors.Errorf("no %s app found", cored.AppType)
+}
+
 func saveWrapper(dir, file, command string) {
 	must.OK(os.WriteFile(dir+"/"+file, []byte(`#!/bin/bash
 exec "`+exe+`" "`+command+`" "$@"

@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	// AppHomeDir is the path inide container where application's home directory is mounted.
+	// AppHomeDir is the path inside container where application's home directory is mounted.
 	AppHomeDir = "/app"
 
 	labelEnv = "com.coreum.crust.znet.env"
@@ -162,6 +162,8 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (inf
 	}
 	idBuf := &bytes.Buffer{}
 	startCmd.Stdout = idBuf
+
+	fmt.Printf("DeployContainer: %v\n", startCmd.String())
 
 	if err := libexec.Exec(ctx, startCmd); err != nil {
 		return infra.DeploymentInfo{}, err

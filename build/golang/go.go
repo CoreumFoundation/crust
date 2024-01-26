@@ -42,8 +42,11 @@ type BinaryBuildConfig struct {
 	// BinOutputPath is the path for compiled binary file
 	BinOutputPath string
 
-	// Tags is the list of additional tags to build
+	// Tags is the list of additional tags pass to inside --tags into `go build`.
 	Tags []string
+
+	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler etc.
+	Flags []string
 
 	// LinkStatically triggers static compilation
 	LinkStatically bool
@@ -111,6 +114,9 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 	cmd.Env = envs
+
+	// Todo: maybe replace with debug log
+	fmt.Printf("build cmd: %v\n", cmd.String())
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", config.PackagePath)
@@ -181,6 +187,9 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
 	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
+
+	fmt.Printf("buildInDocker: %v \n", strings.Join(runArgs, " "))
+
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
@@ -300,6 +309,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	if len(config.Tags) > 0 {
 		args = append(args, "-tags="+strings.Join(config.Tags, ","))
 	}
+	args = append(args, config.Flags...)
 
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
