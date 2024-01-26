@@ -471,6 +471,10 @@ func (c Cored) prepare() error {
 		return errors.WithStack(err)
 	}
 
+	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, CovdataDirName), 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+
 	appCfg := srvconfig.DefaultConfig()
 	appCfg.API.Enable = true
 	appCfg.API.Swagger = true
