@@ -32,7 +32,7 @@ func main() {
 		rootCmd.AddCommand(testCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(specCmd(configF, cmdF))
 		rootCmd.AddCommand(consoleCmd(ctx, configF, cmdF))
-		rootCmd.AddCommand(coverageDumpCmd(ctx, configF, cmdF))
+		rootCmd.AddCommand(coverageConvertCmd(ctx, configF, cmdF))
 
 		return rootCmd.Execute()
 	})
@@ -166,7 +166,7 @@ func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cm
 	}
 }
 
-func coverageDumpCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) *cobra.Command {
+func coverageConvertCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "coverage-convert",
 		Short: "Converts codecoverage report from binary to text format and stores in <> folder",
@@ -192,15 +192,19 @@ func addTestGroupFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 }
 
 func addRootDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.RootDir, "root-dir", defaultString("CRUST_ZNET_ROOT_DIR",
-		filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(
-			must.String(os.Executable())))))))),
-		"Path to directory where all the repositories exist")
+	cmd.Flags().StringVar(
+		&configF.RootDir,
+		"root-dir",
+		defaultString("CRUST_ZNET_ROOT_DIR", filepath.Clean(filepath.Join(repoRoot(), ".."))),
+		"Path to directory where all the repositories exist",
+	)
 }
 
 func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(&configF.BinDir, "bin-dir", defaultString("CRUST_ZNET_BIN_DIR",
-		filepath.Dir(filepath.Dir(must.String(filepath.EvalSymlinks(must.String(os.Executable())))))),
+	cmd.Flags().StringVar(
+		&configF.BinDir,
+		"bin-dir",
+		defaultString("CRUST_ZNET_BIN_DIR", filepath.Clean(filepath.Join(repoRoot(), "/bin"))),
 		"Path to directory where executables exist")
 }
 
@@ -244,9 +248,16 @@ func addCoverageOutputFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringVar(
 		&configF.CoverageOutputFile,
 		"coverage-output",
-		defaultString("CRUST_ZNET_COVERAGE_OUTPUT", ""),
+		defaultString("CRUST_ZNET_COVERAGE_OUTPUT", filepath.Clean(filepath.Join(repoRoot(), "../coreum/coverage/coreum-integration-tests"))),
 		"Output path for coverage data in text format",
 	)
+}
+
+func repoRoot() string {
+	currentBinaryPath := must.String(filepath.EvalSymlinks(must.String(os.Executable())))
+
+	// to detect crust repo root we go 3 levels up.
+	return filepath.Clean(filepath.Join(currentBinaryPath, "../../.."))
 }
 
 func defaultString(env, def string) string {
