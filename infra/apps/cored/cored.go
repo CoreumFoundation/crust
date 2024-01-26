@@ -367,7 +367,7 @@ func (c Cored) Deployment() infra.Deployment {
 				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "cosmovisor", "upgrades"),
 			},
 			{
-				Source:      filepath.Join(c.config.HomeDir, CovdataDirName),
+				Source:      filepath.Join(c.config.HomeDir, covdataDirName),
 				Destination: c.GoCoverDir(),
 			},
 		},
@@ -471,9 +471,9 @@ func (c Cored) prepare() error {
 		return errors.WithStack(err)
 	}
 
-	// We need to pre-create empty covdata dir.
-	// Otherwise, docker creates empty dir with root ownership and go fails to create coverage files because of permissions.
-	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, CovdataDirName), 0o700); err != nil {
+	// We need to pre-create empty covdata dir. Otherwise, docker creates empty dir with root ownership and go fails to
+	//create coverage files because of permissions.
+	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, covdataDirName), 0o700); err != nil {
 		return errors.WithStack(err)
 	}
 

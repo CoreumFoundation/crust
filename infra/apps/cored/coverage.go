@@ -14,10 +14,11 @@ import (
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
-const CovdataDirName = "covdatafiles"
+const covdataDirName = "covdatafiles"
 
+// CoverageConvert converts and stores cored coverage data in text format.
 func CoverageConvert(ctx context.Context, coredHomeDir string, dstFilePath string) error {
-	srcCovdataDir := filepath.Join(coredHomeDir, CovdataDirName)
+	srcCovdataDir := filepath.Join(coredHomeDir, covdataDirName)
 
 	cmd := exec.Go("tool", "covdata", "textfmt", fmt.Sprintf("-i=%s", srcCovdataDir), fmt.Sprintf("-o=%s", dstFilePath))
 
@@ -33,6 +34,7 @@ func CoverageConvert(ctx context.Context, coredHomeDir string, dstFilePath strin
 	return nil
 }
 
+// GoCoverDir returns go coverage data directory inside container.
 func (c Cored) GoCoverDir() string {
-	return filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), CovdataDirName)
+	return filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), covdataDirName)
 }

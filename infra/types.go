@@ -545,6 +545,7 @@ type AppInfo struct {
 	data appInfoData
 }
 
+// Type returns type of app.
 func (ai *AppInfo) Type() AppType {
 	ai.mu.RLock()
 	defer ai.mu.RUnlock()

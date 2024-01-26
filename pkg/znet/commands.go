@@ -238,6 +238,7 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	return tmux.Kill(ctx, config.EnvName)
 }
 
+// CoverageConvert converts & stores coverage from the first cored app we find.
 func CoverageConvert(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 	for appName, app := range spec.Apps {
 		if app.Type() != cored.AppType {
