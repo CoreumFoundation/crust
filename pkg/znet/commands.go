@@ -20,6 +20,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -252,7 +253,7 @@ func CoverageConvert(ctx context.Context, config infra.Config, spec *infra.Spec)
 			return errors.Wrapf(err, "failed to create coverage dir `%s`", dstCoverageDir)
 		}
 
-		coredAppHome := filepath.Join(config.AppDir, appName, "coreum-devnet-1") // TODO: hardcoded chain id
+		coredAppHome := filepath.Join(config.AppDir, appName, string(constant.ChainIDDev))
 
 		// We convert coverage from the first cored app we find since codcove result for all of them is identical
 		// because of consensus.

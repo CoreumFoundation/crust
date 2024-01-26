@@ -169,7 +169,7 @@ func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cm
 func coverageConvertCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFactory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "coverage-convert",
-		Short: "Converts codecoverage report from binary to text format and stores in <> folder",
+		Short: "Converts codecoverage report from binary to text format and stores in folder specified by flag",
 		RunE: cmdF.Cmd(func() error {
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
@@ -248,7 +248,7 @@ func addCoverageOutputFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 	cmd.Flags().StringVar(
 		&configF.CoverageOutputFile,
 		"coverage-output",
-		defaultString("CRUST_ZNET_COVERAGE_OUTPUT", filepath.Clean(filepath.Join(repoRoot(), "../coreum/coverage/coreum-integration-tests"))),
+		defaultString("CRUST_ZNET_COVERAGE_OUTPUT", filepath.Clean(filepath.Join(repoRoot(), "../coreum/coverage/coreum-integration-tests-modules"))),
 		"Output path for coverage data in text format",
 	)
 }

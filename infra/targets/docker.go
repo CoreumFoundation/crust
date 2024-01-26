@@ -163,8 +163,6 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (inf
 	idBuf := &bytes.Buffer{}
 	startCmd.Stdout = idBuf
 
-	fmt.Printf("DeployContainer: %v\n", startCmd.String())
-
 	if err := libexec.Exec(ctx, startCmd); err != nil {
 		return infra.DeploymentInfo{}, err
 	}

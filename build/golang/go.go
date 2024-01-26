@@ -115,9 +115,6 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	cmd.Dir = config.PackagePath
 	cmd.Env = envs
 
-	// Todo: maybe replace with debug log
-	fmt.Printf("build cmd: %v\n", cmd.String())
-
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", config.PackagePath)
 	}
@@ -187,8 +184,6 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
 	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
-
-	fmt.Printf("buildInDocker: %v \n", strings.Join(runArgs, " "))
 
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
