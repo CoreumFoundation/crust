@@ -365,6 +365,11 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 			return nil
 		}
 
+		if filepath.Base(path) == "integration-tests" {
+			log.Info("Skipping integration-tests", zap.String("path", path))
+			return nil
+		}
+
 		coverageName := strings.ReplaceAll(relPath, "/", "-")
 		coverageProfile := filepath.Join(coverageReportsDir, coverageName)
 
