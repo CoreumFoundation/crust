@@ -25,6 +25,7 @@ const (
 	testsBinDir    = "bin/.cache/integration-tests"
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
+	goCoverFlag          = "-cover"
 )
 
 var (
@@ -54,16 +55,21 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsLocal,
-		Flags:          []string{"-cover"},
+		Flags:          []string{goCoverFlag},
 	})
 }
 
 // BuildCoredInDocker builds cored in docker.
 func BuildCoredInDocker(ctx context.Context, deps build.DepsFunc) error {
-	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker)
+	return buildCoredInDocker(ctx, deps, tools.TargetPlatformLinuxLocalArchInDocker, []string{goCoverFlag})
 }
 
-func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
+func buildCoredInDocker(
+	ctx context.Context,
+	deps build.DepsFunc,
+	targetPlatform tools.TargetPlatform,
+	extraFlags []string,
+) error {
 	deps(ensureRepo)
 
 	parameters, err := coredVersionParams(ctx, tagsDocker)
@@ -88,7 +94,7 @@ func buildCoredInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform
 		Parameters:     parameters,
 		CGOEnabled:     true,
 		Tags:           tagsDocker,
-		Flags:          []string{"-cover"},
+		Flags:          extraFlags,
 		LinkStatically: true,
 	})
 }

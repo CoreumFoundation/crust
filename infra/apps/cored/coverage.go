@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -23,7 +22,7 @@ func CoverageConvert(ctx context.Context, coredHomeDir string, dstFilePath strin
 	cmd := exec.Go("tool", "covdata", "textfmt", fmt.Sprintf("-i=%s", srcCovdataDir), fmt.Sprintf("-o=%s", dstFilePath))
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 
 	logger.Get(ctx).Info(

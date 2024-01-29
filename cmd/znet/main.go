@@ -249,7 +249,7 @@ func addCoverageOutputFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 		&configF.CoverageOutputFile,
 		"coverage-output",
 		defaultString("CRUST_ZNET_COVERAGE_OUTPUT",
-			filepath.Clean(filepath.Join(repoRoot(), "../coreum/coverage/coreum-integration-tests-modules"))),
+			filepath.Clean(filepath.Join(configF.RootDir, "coreum/coverage/coreum-integration-tests-modules"))),
 		"Output path for coverage data in text format",
 	)
 }

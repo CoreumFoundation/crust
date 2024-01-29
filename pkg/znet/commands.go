@@ -256,7 +256,7 @@ func CoverageConvert(ctx context.Context, config infra.Config, spec *infra.Spec)
 
 		coredAppHome := filepath.Join(config.AppDir, appName, string(constant.ChainIDDev))
 
-		// We convert coverage from the first cored app we find since codcove result for all of them is identical
+		// We convert coverage from the first cored app we find since codecove results for all of them are identical
 		// because of consensus.
 		return cored.CoverageConvert(ctx, coredAppHome, config.CoverageOutputFile)
 	}

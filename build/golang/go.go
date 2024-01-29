@@ -42,7 +42,7 @@ type BinaryBuildConfig struct {
 	// BinOutputPath is the path for compiled binary file
 	BinOutputPath string
 
-	// Tags is the list of additional tags pass to inside --tags into `go build`.
+	// Tags is the list of additional tags pass to inside -tags into `go build`.
 	Tags []string
 
 	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler etc.
