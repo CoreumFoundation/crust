@@ -1724,7 +1724,7 @@ validators.txt
 # Turn down default logging to save disk space in the long run.
 # Valid values here are trace, debug, info, warning, error, and fatal
 [rpc_startup]
-{ "command": "log_level", "severity": "warning" }
+{ "command": "log_level", "severity": "trace" }
 
 # If ssl_verify is 1, certificates will be validated.
 # To allow the use of self-signed certificates for development or internal use,
@@ -1743,3 +1743,75 @@ validators.txt
 # source_grpc_port=50051
 # source_ws_port=6005
 # source_ip=127.0.0.1
+
+# all features (amendments) https://livenet.xrpl.org/amendments
+
+[features]
+
+# Enabled mainnet features
+
+# Voting:
+
+# Clawback
+# DID
+# XChainBridge
+# fixFillOrKill
+# fixDisallowIncomingV1
+# AMM
+# XRPFees
+
+# Enabled:
+
+fixReducedOffersV1
+fixNFTokenRemint
+fixUniversalNumber
+DisallowIncoming
+ImmediateOfferKilled
+fixTrustLinesToSelf
+fixNonFungibleTokensV1_2
+fixRemoveNFTokenAutoTrustLine
+NonFungibleTokensV1_1
+ExpandedSignerList
+CheckCashMakesTrustLine
+NegativeUNL
+fixRmSmallIncreasedQOffers
+TicketBatch
+FlowSortStrands
+fixSTAmountCanonicalize
+fix1781
+HardenedValidations
+fixAmendmentMajorityCalc
+RequireFullyCanonicalSig
+fixQualityUpperBound
+DeletableAccounts
+fixPayChanRecipientOwnerDir
+fixCheckThreading
+fixMasterKeyAsRegularKey
+fixTakerDryOfferRemoval
+fix1578
+MultiSignReserve
+DepositPreauth
+fix1515
+fix1571
+fix1623
+fix1543
+fix1513
+Checks
+DepositAuth
+fix1523
+SortedDirectories
+fix1512
+fix1201
+fix1528
+fix1373
+FlowCross
+EnforceInvariants
+fix1368
+Escrow
+TickSize
+CryptoConditions
+PayChan
+Flow
+MultiSign
+FeeEscalation
+TrustSetAuth
