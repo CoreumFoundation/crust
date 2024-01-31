@@ -343,6 +343,10 @@ func (c Cored) Deployment() infra.Deployment {
 					Name:  "DAEMON_NAME",
 					Value: "cored",
 				},
+				{
+					Name:  "GOCOVERDIR",
+					Value: c.GoCoverDir(),
+				},
 			}
 		},
 		Volumes: []infra.Volume{
@@ -361,6 +365,10 @@ func (c Cored) Deployment() infra.Deployment {
 			{
 				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades"),
 				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "cosmovisor", "upgrades"),
+			},
+			{
+				Source:      filepath.Join(c.config.HomeDir, covdataDirName),
+				Destination: c.GoCoverDir(),
 			},
 		},
 		ArgsFunc: func() []string {
@@ -460,6 +468,12 @@ func (c Cored) prepare() error {
 	}, c.config.TimeoutCommit, c.config.HomeDir)
 
 	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, "data"), 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+
+	// We need to pre-create empty covdata dir. Otherwise, docker creates empty dir with root ownership and go fails to
+	// create coverage files because of permissions.
+	if err := os.MkdirAll(filepath.Join(c.config.HomeDir, covdataDirName), 0o700); err != nil {
 		return errors.WithStack(err)
 	}
 

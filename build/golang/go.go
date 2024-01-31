@@ -42,8 +42,11 @@ type BinaryBuildConfig struct {
 	// BinOutputPath is the path for compiled binary file
 	BinOutputPath string
 
-	// Tags is the list of additional tags to build
+	// Tags is the list of additional tags pass to inside -tags into `go build`.
 	Tags []string
+
+	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler etc.
+	Flags []string
 
 	// LinkStatically triggers static compilation
 	LinkStatically bool
@@ -181,6 +184,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
 	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
+
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
@@ -300,6 +304,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	if len(config.Tags) > 0 {
 		args = append(args, "-tags="+strings.Join(config.Tags, ","))
 	}
+	args = append(args, config.Flags...)
 
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
@@ -357,6 +362,11 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 		}
 		if !goCodePresent {
 			log.Info("No code to test", zap.String("path", path))
+			return nil
+		}
+
+		if filepath.Base(path) == "integration-tests" {
+			log.Info("Skipping integration-tests", zap.String("path", path))
 			return nil
 		}
 

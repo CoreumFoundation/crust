@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	// AppHomeDir is the path inide container where application's home directory is mounted.
+	// AppHomeDir is the path inside container where application's home directory is mounted.
 	AppHomeDir = "/app"
 
 	labelEnv = "com.coreum.crust.znet.env"

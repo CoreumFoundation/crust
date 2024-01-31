@@ -41,18 +41,19 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 	}
 
 	config := infra.Config{
-		EnvName:        configF.EnvName,
-		Profiles:       spec.Profiles,
-		TimeoutCommit:  spec.TimeoutCommit,
-		CoredVersion:   configF.CoredVersion,
-		HomeDir:        homeDir,
-		RootDir:        configF.RootDir,
-		AppDir:         homeDir + "/app",
-		WrapperDir:     homeDir + "/bin",
-		BinDir:         must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.BinDir)))),
-		TestFilter:     configF.TestFilter,
-		VerboseLogging: configF.VerboseLogging,
-		LogFormat:      configF.LogFormat,
+		EnvName:            configF.EnvName,
+		Profiles:           spec.Profiles,
+		TimeoutCommit:      spec.TimeoutCommit,
+		CoredVersion:       configF.CoredVersion,
+		HomeDir:            homeDir,
+		RootDir:            configF.RootDir,
+		AppDir:             homeDir + "/app",
+		WrapperDir:         homeDir + "/bin",
+		BinDir:             must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.BinDir)))),
+		TestFilter:         configF.TestFilter,
+		VerboseLogging:     configF.VerboseLogging,
+		LogFormat:          configF.LogFormat,
+		CoverageOutputFile: configF.CoverageOutputFile,
 	}
 
 	// we use append to make a copy of the original list, so it is not passed by reference

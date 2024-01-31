@@ -42,4 +42,7 @@ type Config struct {
 
 	// LogFormat is the format used to encode logs
 	LogFormat string
+
+	// CoverageOutputFile is the output path for coverage data in text format
+	CoverageOutputFile string
 }

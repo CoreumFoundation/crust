@@ -8,3 +8,8 @@ import (
 func Docker(args ...string) *exec.Cmd {
 	return toolCmd("docker", args)
 }
+
+// Go runs go command.
+func Go(args ...string) *exec.Cmd {
+	return toolCmd("go", args)
+}

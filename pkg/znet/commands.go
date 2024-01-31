@@ -20,6 +20,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -235,6 +236,32 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		return err
 	}
 	return tmux.Kill(ctx, config.EnvName)
+}
+
+// CoverageConvert converts & stores coverage from the first cored app we find.
+func CoverageConvert(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+	for appName, app := range spec.Apps {
+		if app.Type() != cored.AppType {
+			continue
+		}
+
+		if app.Info().Status != infra.AppStatusStopped {
+			return errors.New("coverage convert can't be executed on top of running environment, stop it first")
+		}
+
+		dstCoverageDir := filepath.Dir(config.CoverageOutputFile)
+		if err := os.MkdirAll(dstCoverageDir, os.ModePerm); err != nil {
+			return errors.Wrapf(err, "failed to create coverage dir `%s`", dstCoverageDir)
+		}
+
+		coredAppHome := filepath.Join(config.AppDir, appName, string(constant.ChainIDDev))
+
+		// We convert coverage from the first cored app we find since codecove results for all of them are identical
+		// because of consensus.
+		return cored.CoverageConvert(ctx, coredAppHome, config.CoverageOutputFile)
+	}
+
+	return errors.Errorf("no %s app found", cored.AppType)
 }
 
 func saveWrapper(dir, file, command string) {

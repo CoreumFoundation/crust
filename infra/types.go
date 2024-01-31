@@ -407,6 +407,9 @@ type ConfigFactory struct {
 
 	// LogFormat is the format used to encode logs
 	LogFormat string
+
+	// CoverageOutputFile is the output path for coverage data in text format
+	CoverageOutputFile string
 }
 
 // NewSpec returns new spec.
@@ -540,6 +543,14 @@ type AppInfo struct {
 	mu sync.RWMutex
 
 	data appInfoData
+}
+
+// Type returns type of app.
+func (ai *AppInfo) Type() AppType {
+	ai.mu.RLock()
+	defer ai.mu.RUnlock()
+
+	return ai.data.Type
 }
 
 // SetInfo sets deployment info.
