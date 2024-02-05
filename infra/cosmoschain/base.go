@@ -159,7 +159,7 @@ func (ba BaseApp) Deployment() infra.Deployment {
 	}
 }
 
-func (ba BaseApp) prepare() error {
+func (ba BaseApp) prepare(_ context.Context) error {
 	args := struct {
 		ExecName        string
 		HomePath        string

@@ -135,7 +135,7 @@ func (f Faucet) Deployment() infra.Deployment {
 				f.config.Cored,
 			},
 		},
-		PrepareFunc: func() error {
+		PrepareFunc: func(ctx context.Context) error {
 			return errors.WithStack(os.WriteFile(
 				filepath.Join(f.config.HomeDir, "mnemonic-key"),
 				[]byte(f.config.Cored.Config().FaucetMnemonic),

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -100,10 +99,10 @@ func (x XRPL) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	statusURL := url.URL{Scheme: "http", Host: infra.JoinNetAddr("", x.Info().HostFromHost, x.config.RPCPort)}
+	rpcURL := infra.JoinNetAddr("http", x.Info().HostFromHost, x.config.RPCPort)
 	statusBody := `{"method":"server_info","params":[{"api_version": 1}]}`
 	req := must.HTTPRequest(
-		http.NewRequestWithContext(ctx, http.MethodPost, statusURL.String(), strings.NewReader(statusBody)),
+		http.NewRequestWithContext(ctx, http.MethodPost, rpcURL, strings.NewReader(statusBody)),
 	)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -157,7 +156,7 @@ func (x XRPL) Deployment() infra.Deployment {
 	}
 }
 
-func (x XRPL) prepare() error {
+func (x XRPL) prepare(_ context.Context) error {
 	if err := x.saveConfigFile(); err != nil {
 		return err
 	}

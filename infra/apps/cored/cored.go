@@ -37,10 +37,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
-	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
@@ -456,7 +454,7 @@ func (c Cored) binaryPath() string {
 	return binaryPath
 }
 
-func (c Cored) prepare() error {
+func (c Cored) prepare(ctx context.Context) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -493,7 +491,7 @@ func (c Cored) prepare() error {
 		return err
 	}
 
-	if err := c.SaveGenesis(c.config.HomeDir); err != nil {
+	if err := c.SaveGenesis(ctx, c.config.HomeDir); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -555,7 +553,7 @@ func newBasicManager() module.BasicManager {
 }
 
 // SaveGenesis saves json encoded representation of the genesis config into file.
-func (c Cored) SaveGenesis(homeDir string) error {
+func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 	// If genesis template is empty we will use the new method of genesis creation and
 	// use cored binary to create genesis. Otherwise we will use the legacy method and
 	// use template files.
@@ -586,7 +584,7 @@ func (c Cored) SaveGenesis(homeDir string) error {
 	}
 
 	return libexec.Exec(
-		logger.WithLogger(context.Background(), zap.NewNop()),
+		ctx,
 		exec.Command(c.binaryPath(), fullArgs...),
 	)
 }

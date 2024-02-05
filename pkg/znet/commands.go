@@ -319,7 +319,7 @@ func shellConfig(envName string) (string, string, error) {
 
 func coredVersionToGenesisTemplate(coredVersion string) string {
 	switch coredVersion {
-	case "", "v3.0.2", "v4.0.0":
+	case "v3.0.2":
 		return coreumconfig.GenesisV3Template
 	case "v2.0.2":
 		return coreumconfig.GenesisV2Template

@@ -2,6 +2,7 @@ package grafana
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"io"
 	"io/fs"
@@ -117,7 +118,7 @@ func (g Grafana) Deployment() infra.Deployment {
 	}
 }
 
-func (g Grafana) saveConfigFiles() error {
+func (g Grafana) saveConfigFiles(_ context.Context) error {
 	dataSourceConfigArgs := struct {
 		PrometheusHost string
 		PrometheusPort int

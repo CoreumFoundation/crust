@@ -162,7 +162,7 @@ func (p Prometheus) Deployment() infra.Deployment {
 	}
 }
 
-func (p Prometheus) saveConfigFile() error {
+func (p Prometheus) saveConfigFile(_ context.Context) error {
 	type nodesConfigArgs struct {
 		Host string
 		Port int

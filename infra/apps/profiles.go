@@ -10,6 +10,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 	"github.com/CoreumFoundation/crust/infra/apps/hermes"
 	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
+	"github.com/CoreumFoundation/crust/infra/apps/xrpl"
 )
 
 // TestGroup constant values.
@@ -27,6 +28,7 @@ const (
 	AppPrefixExplorer   = "explorer"
 	AppPrefixMonitoring = "monitoring"
 	AppPrefixXRPL       = "xrpl"
+	AppPrefixBrisgeXRPL = "bridge-xrpl"
 )
 
 // Predefined Profiles.
@@ -40,6 +42,7 @@ const (
 	ProfileExplorer                = "explorer"
 	ProfileMonitoring              = "monitoring"
 	ProfileXRPL                    = "xrpl"
+	ProfileXRPLBridge              = "bridge-xrpl"
 	ProfileIntegrationTestsIBC     = "integration-tests-ibc"
 	ProfileIntegrationTestsModules = "integration-tests-modules"
 )
@@ -54,6 +57,7 @@ var profiles = []string{
 	ProfileExplorer,
 	ProfileMonitoring,
 	ProfileXRPL,
+	ProfileXRPLBridge,
 	ProfileIntegrationTestsIBC,
 	ProfileIntegrationTestsModules,
 }
@@ -79,6 +83,8 @@ func DefaultProfiles() []string {
 }
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
+//
+//nolint:funlen
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, cored.Cored, error) {
 	pMap, err := checkProfiles(profiles)
 	if err != nil {
@@ -100,9 +106,15 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		pMap[ProfileIBC] = true
 	}
 
-	if (pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileExplorer] || pMap[ProfileMonitoring]) &&
-		!pMap[Profile3Cored] && !pMap[Profile5Cored] && !pMap[ProfileDevNet] {
+	coredNeeded := pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileXRPLBridge] || pMap[ProfileExplorer] ||
+		pMap[ProfileMonitoring]
+	coredPresent := pMap[Profile1Cored] || pMap[Profile3Cored] || pMap[Profile5Cored] || pMap[ProfileDevNet]
+	if coredNeeded && !coredPresent {
 		pMap[Profile1Cored] = true
+	}
+
+	if pMap[ProfileXRPLBridge] {
+		pMap[ProfileXRPL] = true
 	}
 
 	validatorCount, sentryCount, seedCount, fullCount := decideNumOfCoredNodes(pMap)
@@ -166,10 +178,23 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		)...)
 	}
 
+	var xrplApp xrpl.XRPL
 	if pMap[ProfileXRPL] {
-		appSet = append(appSet, appF.XRPL(
-			AppPrefixXRPL,
-		))
+		xrplApp = appF.XRPL(AppPrefixXRPL)
+		appSet = append(appSet, xrplApp)
+	}
+
+	if pMap[ProfileXRPLBridge] {
+		relayers, err := appF.BridgeXRPLRelayers(
+			AppPrefixBrisgeXRPL,
+			coredApp,
+			xrplApp,
+			3,
+		)
+		if err != nil {
+			return nil, cored.Cored{}, err
+		}
+		appSet = append(appSet, relayers...)
 	}
 
 	return appSet, coredApp, nil
