@@ -28,7 +28,7 @@ const (
 	AppPrefixExplorer   = "explorer"
 	AppPrefixMonitoring = "monitoring"
 	AppPrefixXRPL       = "xrpl"
-	AppPrefixBrisgeXRPL = "bridge-xrpl"
+	AppPrefixBridgeXRPL = "bridge-xrpl"
 )
 
 // Predefined Profiles.
@@ -186,7 +186,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 
 	if pMap[ProfileXRPLBridge] {
 		relayers, err := appF.BridgeXRPLRelayers(
-			AppPrefixBrisgeXRPL,
+			AppPrefixBridgeXRPL,
 			coredApp,
 			xrplApp,
 			3,
