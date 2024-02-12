@@ -137,6 +137,7 @@ func GenesisConfigFromNetworkProvider(n config.NetworkConfigProvider) GenesisIni
 		GovConfig: govConfig{
 			MinDeposit: sdk.NewCoins(
 				sdk.NewCoin(dnp.Denom, minDeposit)),
+			VotingPeriod: 20 * time.Second,
 		},
 		CustomParamsConfig: customParamsConfig{
 			MinSelfDelegation: minSelfDelegation,
