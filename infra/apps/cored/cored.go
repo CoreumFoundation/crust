@@ -117,10 +117,6 @@ func GenesisConfigFromNetworkProvider(n config.NetworkConfigProvider) GenesisIni
 	if !ok {
 		panic("unable to prase mint deposit amount")
 	}
-	minSelfDelegation, ok := sdk.NewIntFromString(dnp.GovConfig.ProposalConfig.MinDepositAmount)
-	if !ok {
-		panic("unable to prase mint deposit amount")
-	}
 	var bankBalances []banktypes.Balance
 	for _, fa := range dnp.FundedAccounts {
 		bankBalances = append(bankBalances, banktypes.Balance{
@@ -140,7 +136,7 @@ func GenesisConfigFromNetworkProvider(n config.NetworkConfigProvider) GenesisIni
 			VotingPeriod: 20 * time.Second,
 		},
 		CustomParamsConfig: customParamsConfig{
-			MinSelfDelegation: minSelfDelegation,
+			MinSelfDelegation: dnp.CustomParamsConfig.Staking.MinSelfDelegation,
 		},
 		BankBalances: bankBalances,
 	}
