@@ -36,5 +36,6 @@ processes:
   coreum_to_xrpl:
     repeat_delay: 10s
 metrics:
-  start_server: true
-  listen_address: :9090
+  server:
+    enable: true
+    listen_address: :9090
