@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	desiredTotalSupply int64 = 500_000_000_000_000                  // 500m core
-	stakerBalance      int64 = 10_000_000_000_000 + 100_000_000_000 // 10m core for staking + 100k core for integration test
+	desiredTotalSupply int64 = 500_000_000_000_000 // 500m core.
+
+	// 10m core for staking + 100k core for integration test.
+	stakerBalance int64 = 10_000_000_000_000 + 100_000_000_000
 )
 
 // mnemonics generating well-known keys to create predictable wallets so manual operation is easier.

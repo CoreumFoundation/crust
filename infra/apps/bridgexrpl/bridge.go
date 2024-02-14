@@ -38,8 +38,13 @@ import (
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
-// AppType is the type of cored application.
-const AppType infra.AppType = "bridgexrpl"
+const (
+	// AppType is the type of cored application.
+	AppType infra.AppType = "bridgexrpl"
+
+	coreumAdminBalance   = 10_000_000_000
+	coreumRelayerBalance = 100_000_000
+)
 
 //go:embed relayer.tmpl.yaml
 var configTmpl string
@@ -59,33 +64,11 @@ type Config struct {
 }
 
 // New creates new cored app.
-func New(cfg Config) (Bridge, error) {
-	genesisConfig := cfg.Cored.Config().GenesisInitConfig
-
-	if cfg.Leader == nil {
-		adminCoreumAccount, err := coreumhelper.AccountFromMnemonic(CoreumAdminMnemonic)
-		if err != nil {
-			return Bridge{}, err
-		}
-		genesisConfig.BankBalances = append(genesisConfig.BankBalances, banktypes.Balance{
-			Address: adminCoreumAccount.String(),
-			Coins:   sdk.NewCoins(sdk.NewInt64Coin(genesisConfig.Denom, 10_000_000_000)),
-		})
-	}
-
-	relayerCoreumAccount, err := coreumhelper.AccountFromMnemonic(cfg.Mnemonics.Coreum)
-	if err != nil {
-		return Bridge{}, err
-	}
-	genesisConfig.BankBalances = append(genesisConfig.BankBalances, banktypes.Balance{
-		Address: relayerCoreumAccount.String(),
-		Coins:   sdk.NewCoins(sdk.NewInt64Coin(genesisConfig.Denom, 100_000_000)),
-	})
-
+func New(cfg Config) Bridge {
 	return Bridge{
 		config:       cfg,
 		contractAddr: lo.ToPtr(""),
-	}, nil
+	}
 }
 
 // Bridge represents XRPL bridge.
@@ -158,11 +141,16 @@ func (b Bridge) Deployment() infra.Deployment {
 }
 
 func (b Bridge) setupBridge(ctx context.Context) error {
+	//nolint:nestif // ifs are here to return errors
 	if b.config.Leader == nil {
 		xrplClient := xrplhelper.NewRPCClient(infra.JoinNetAddr("http", b.config.XRPL.Info().HostFromHost,
 			b.config.XRPL.Config().RPCPort))
 
 		if err := fundXRPLAccounts(ctx, xrplClient); err != nil {
+			return err
+		}
+
+		if err := b.fundCoreumAccounts(ctx); err != nil {
 			return err
 		}
 
@@ -515,6 +503,74 @@ func fundXRPLAccounts(ctx context.Context, rpcClient *xrplhelper.RPCClient) erro
 	}
 
 	return nil
+}
+
+func (b Bridge) fundCoreumAccounts(ctx context.Context) error {
+	coredConfig := b.config.Cored.Config()
+
+	clientCtx := b.config.Cored.ClientContext().
+		WithBroadcastMode(flags.BroadcastSync).
+		WithAwaitTx(true)
+	clientCtx = clientCtx.WithKeyring(keyring.NewInMemory(clientCtx.Codec()))
+	txf := b.config.Cored.TxFactory(clientCtx).
+		WithSimulateAndExecute(true)
+
+	// TODO: Once we have more services requiring funds we will have to create dedicated faucet (by sharing code from
+	// integration tests) to avoid problems with parallel tx creation and conflicting sequence numbers.
+	faucetKeyInfo, err := clientCtx.Keyring().NewAccount(
+		uuid.New().String(),
+		coredConfig.FaucetMnemonic,
+		"",
+		hd.CreateHDPath(constant.CoinType, 0, 0).String(),
+		hd.Secp256k1,
+	)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	faucetAddr, err := faucetKeyInfo.GetAddress()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	clientCtx = clientCtx.WithFromAddress(faucetAddr)
+
+	adminCoreumAccount, err := coreumhelper.AccountFromMnemonic(CoreumAdminMnemonic)
+	if err != nil {
+		return err
+	}
+
+	sendMsg := &banktypes.MsgMultiSend{
+		Inputs: []banktypes.Input{
+			{
+				Address: faucetAddr.String(),
+				Coins: sdk.NewCoins(sdk.NewCoin(coredConfig.GenesisInitConfig.Denom,
+					sdk.NewInt(coreumAdminBalance).Add(
+						sdk.NewInt(coreumRelayerBalance).MulRaw(int64(len(RelayerMnemonics))),
+					),
+				)),
+			},
+		},
+		Outputs: []banktypes.Output{
+			{
+				Address: adminCoreumAccount.String(),
+				Coins:   sdk.NewCoins(sdk.NewInt64Coin(coredConfig.GenesisInitConfig.Denom, coreumAdminBalance)),
+			},
+		},
+	}
+	for _, m := range RelayerMnemonics {
+		relayerAccount, err := coreumhelper.AccountFromMnemonic(m.Coreum)
+		if err != nil {
+			return err
+		}
+		sendMsg.Outputs = append(sendMsg.Outputs, banktypes.Output{
+			Address: relayerAccount.String(),
+			Coins:   sdk.NewCoins(sdk.NewInt64Coin(coredConfig.GenesisInitConfig.Denom, coreumRelayerBalance)),
+		})
+	}
+
+	_, err = client.BroadcastTx(ctx, clientCtx, txf, sendMsg)
+	return err
 }
 
 func addKeyToTestKeyring(keyringDir, keyName, suffix, hdPath, mnemonic string) error {
