@@ -23,7 +23,9 @@ import (
 	"github.com/pkg/errors"
 	rippledata "github.com/rubblelabs/ripple/data"
 	"github.com/samber/lo"
+	"go.uber.org/zap"
 
+	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
@@ -396,6 +398,8 @@ func (b Bridge) deploySmartContract(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	logger.Get(ctx).Info("Contract address of the XRPL bridge", zap.String("contractAddress", contractAddr))
 
 	*b.contractAddr = contractAddr
 
