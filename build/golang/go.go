@@ -409,6 +409,22 @@ func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	})
 }
 
+// DownloadDependencies downloads all the go dependencies.
+func DownloadDependencies(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+	deps(EnsureGo)
+	log := logger.Get(ctx)
+	return onModule(repoPath, func(path string) error {
+		log.Info("Running go mod download", zap.String("path", path))
+
+		cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "mod", "download")
+		cmd.Dir = path
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return errors.Wrapf(err, "'go mod download' failed in module '%s'", path)
+		}
+		return nil
+	})
+}
+
 func onModule(repoPath string, fn func(path string) error) error {
 	return filepath.WalkDir(repoPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
