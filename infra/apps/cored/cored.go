@@ -573,6 +573,7 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 		return err
 	}
 
+	// FIXME: This doesn't work on macs because cored is built for linux/docker.
 	fullArgs := []string{
 		"generate-genesis",
 		"--output-path", homeDir + "/config/genesis.json",
