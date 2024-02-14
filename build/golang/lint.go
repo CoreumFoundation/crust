@@ -23,8 +23,10 @@ import (
 
 var (
 	//go:embed "golangci.yaml"
-	lintConfig                   []byte
-	lintNewLinesSkipDirsRegexps  = []string{`^\.`, `^vendor$`, `^target$`, `^tmp$`}
+	lintConfig                  []byte
+	lintNewLinesSkipDirsRegexps = []string{`^\.`, `^vendor$`, `^target$`, `^tmp$`,
+		`^.+\.db$`, // directories containing goleveldb
+	}
 	lintNewLinesSkipFilesRegexps = []string{`\.iml$`, `\.wasm$`, `\.png$`}
 )
 
