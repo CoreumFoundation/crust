@@ -46,8 +46,8 @@ type Docker struct {
 	config infra.Config
 	spec   *infra.Spec
 
-	mu        sync.Mutex
-	networkIP string
+	mu            sync.Mutex
+	networkExists bool
 }
 
 // Stop stops running applications.
@@ -139,8 +139,7 @@ func (d *Docker) Deploy(ctx context.Context, appSet infra.AppSet) error {
 
 // DeployContainer starts container in docker.
 func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (infra.DeploymentInfo, error) {
-	networkIP, err := d.ensureNetwork(ctx, d.config.EnvName)
-	if err != nil {
+	if err := d.ensureNetwork(ctx, d.config.EnvName); err != nil {
 		return infra.DeploymentInfo{}, err
 	}
 
@@ -158,7 +157,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (inf
 	if id != "" {
 		startCmd = exec.Docker("start", id)
 	} else {
-		runArgs := d.prepareRunArgs(name, app, networkIP)
+		runArgs := d.prepareRunArgs(name, app)
 		startCmd = exec.Docker(runArgs...)
 	}
 	idBuf := &bytes.Buffer{}
@@ -180,7 +179,7 @@ func (d *Docker) DeployContainer(ctx context.Context, app infra.Deployment) (inf
 	}, nil
 }
 
-func (d *Docker) prepareRunArgs(name string, app infra.Deployment, networkIP string) []string {
+func (d *Docker) prepareRunArgs(name string, app infra.Deployment) []string {
 	runArgs := []string{
 		"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
 		"--label", labelApp + "=" + app.Name, "--network", d.config.EnvName,
@@ -190,10 +189,7 @@ func (d *Docker) prepareRunArgs(name string, app infra.Deployment, networkIP str
 	}
 	for _, port := range app.Ports {
 		portStr := strconv.Itoa(port)
-		runArgs = append(runArgs,
-			"-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp",
-			"-p", networkIP+":"+portStr+":"+portStr+"/tcp",
-		)
+		runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
 	}
 	for _, v := range app.Volumes {
 		runArgs = append(runArgs, "-v", v.Source+":"+v.Destination)
@@ -218,48 +214,43 @@ func (d *Docker) prepareRunArgs(name string, app infra.Deployment, networkIP str
 	return runArgs
 }
 
-func (d *Docker) ensureNetwork(ctx context.Context, network string) (string, error) {
+func (d *Docker) ensureNetwork(ctx context.Context, network string) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	if d.networkIP != "" {
-		return d.networkIP, nil
+	if d.networkExists {
+		return nil
 	}
 
 	log := logger.Get(ctx).With(zap.String("network", network))
 
 	var err error
-	d.networkIP, err = networkAddress(ctx, network)
+	d.networkExists, err = networkExists(ctx, network)
 	if err != nil {
-		return "", err
+		return err
 	}
-	if d.networkIP != "" {
+	if d.networkExists {
 		log.Info("Docker network exists")
-		return d.networkIP, nil
+		return nil
 	}
 
 	log.Info("Creating docker network")
 
 	if err := libexec.Exec(ctx, noStdout(exec.Docker("network", "create", network))); err != nil {
-		return "", errors.Wrapf(err, "creating network '%s' failed", network)
+		return errors.Wrapf(err, "creating network '%s' failed", network)
 	}
 
+	d.networkExists = true
 	log.Info("Docker network created")
-
-	d.networkIP, err = networkAddress(ctx, network)
-	if err != nil {
-		return "", err
-	}
-
-	return d.networkIP, nil
+	return nil
 }
 
 func (d *Docker) deleteNetwork(ctx context.Context, network string) error {
-	networkIP, err := networkAddress(ctx, network)
+	exists, err := networkExists(ctx, network)
 	if err != nil {
 		return err
 	}
-	if networkIP == "" {
+	if !exists {
 		return nil
 	}
 
@@ -360,36 +351,12 @@ func removeContainer(ctx context.Context, info container) error {
 	return nil
 }
 
-func networkAddress(ctx context.Context, network string) (string, error) {
+func networkExists(ctx context.Context, network string) (bool, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Docker("network", "ls", "-q", "--no-trunc", "--filter", "name="+network)
 	cmd.Stdout = buf
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return "", err
+		return false, err
 	}
-	if strings.TrimSuffix(buf.String(), "\n") == "" {
-		return "", nil
-	}
-
-	inspectBuf := &bytes.Buffer{}
-	inspectCmd := exec.Docker("network", "inspect", network)
-	inspectCmd.Stdout = inspectBuf
-
-	if err := libexec.Exec(ctx, inspectCmd); err != nil {
-		return "", err
-	}
-
-	var info []struct {
-		IPAM struct {
-			Config []struct {
-				Gateway string
-			}
-		}
-	}
-
-	if err := json.Unmarshal(inspectBuf.Bytes(), &info); err != nil {
-		return "", errors.Wrap(err, "unmarshalling network properties failed")
-	}
-
-	return info[0].IPAM.Config[0].Gateway, nil
+	return strings.TrimSuffix(buf.String(), "\n") != "", nil
 }
