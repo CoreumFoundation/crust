@@ -17,7 +17,7 @@ xrpl:
     repeat_recent_scan: true
     full_scan_enabled: true
     repeat_full_scan: true
-    retry_delay: 10s
+    retry_delay: 1s
 coreum:
   relayer_key_name: coreum-relayer
   grpc:
@@ -34,7 +34,7 @@ coreum:
     tx_status_poll_interval: 500ms
 processes:
   coreum_to_xrpl:
-    repeat_delay: 10s
+    repeat_delay: 1s
 metrics:
   server:
     enable: true
