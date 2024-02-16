@@ -160,7 +160,7 @@ func (b Bridge) setupBridge(ctx context.Context) error {
 			return err
 		}
 
-		if err := b.deploySmartContract(ctx); err != nil {
+		if err := b.deploySmartContract(ctx, xrplClient); err != nil {
 			return err
 		}
 	} else {
@@ -262,7 +262,7 @@ func (b Bridge) setupBridgeMultisigAccount(ctx context.Context, rpcClient *xrplh
 }
 
 //nolint:funlen
-func (b Bridge) deploySmartContract(ctx context.Context) error {
+func (b Bridge) deploySmartContract(ctx context.Context, rpcClient *xrplhelper.RPCClient) error {
 	wasmCode, err := os.ReadFile(b.config.ContractPath)
 	if err != nil {
 		return err
@@ -403,7 +403,36 @@ func (b Bridge) deploySmartContract(ctx context.Context) error {
 
 	*b.contractAddr = contractAddr
 
-	return nil
+	xrplAdmin, err := xrplhelper.AccountFromMnemonic(XRPLAdminMnemonic)
+	if err != nil {
+		return err
+	}
+
+	accInfo, err := rpcClient.AccountInfo(ctx, xrplAdmin)
+	if err != nil {
+		return err
+	}
+
+	recoverTicketsPayload, err := json.Marshal(map[string]struct {
+		AccountSequence uint32  `json:"account_sequence"`
+		NumberOfTickets *uint32 `json:"number_of_tickets,omitempty"`
+	}{
+		"recover_tickets": {
+			AccountSequence: *accInfo.AccountData.Sequence,
+			NumberOfTickets: lo.ToPtr[uint32](250),
+		},
+	})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	_, err = client.BroadcastTx(ctx, clientCtx, txf, &wasmtypes.MsgExecuteContract{
+		Sender:   adminAddr.String(),
+		Contract: contractAddr,
+		Msg:      recoverTicketsPayload,
+	})
+
+	return err
 }
 
 func (b Bridge) importKeys() error {
