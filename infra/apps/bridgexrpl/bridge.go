@@ -26,6 +26,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
+	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
@@ -102,6 +103,43 @@ func (b Bridge) Config() Config {
 // ContractAddr returns address of the smart contract.
 func (b Bridge) ContractAddr() string {
 	return *b.contractAddr
+}
+
+// HealthCheck checks if bridge is ready to serve requests.
+func (b Bridge) HealthCheck(ctx context.Context) error {
+	queryTicketsPayload, err := json.Marshal(map[string]struct{}{
+		"available_tickets": {},
+	})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	ticketsResp := &struct {
+		Tickets []uint32 `json:"tickets"`
+	}{}
+
+	query := &wasmtypes.QuerySmartContractStateRequest{
+		Address:   *b.contractAddr,
+		QueryData: queryTicketsPayload,
+	}
+
+	wasmClient := wasmtypes.NewQueryClient(b.config.Cored.ClientContext())
+
+	resp, err := wasmClient.SmartContractState(ctx, query)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := json.Unmarshal(resp.Data, &ticketsResp); err != nil {
+		return errors.WithStack(err)
+	}
+
+	if len(ticketsResp.Tickets) < 250 {
+		return retry.Retryable(errors.Errorf("waiting for tickets to be recovered, current number of tickets: %d",
+			len(ticketsResp.Tickets)))
+	}
+
+	return nil
 }
 
 // Deployment returns deployment of XRPL bridge.
