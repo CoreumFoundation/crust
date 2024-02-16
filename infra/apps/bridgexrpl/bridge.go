@@ -45,6 +45,7 @@ const (
 	// AppType is the type of cored application.
 	AppType infra.AppType = "bridgexrpl"
 
+	numberOfTickets      = 250
 	coreumAdminBalance   = 10_000_000_000
 	coreumRelayerBalance = 100_000_000
 )
@@ -134,7 +135,7 @@ func (b Bridge) HealthCheck(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 
-	if len(ticketsResp.Tickets) < 250 {
+	if len(ticketsResp.Tickets) < numberOfTickets {
 		return retry.Retryable(errors.Errorf("waiting for tickets to be recovered, current number of tickets: %d",
 			len(ticketsResp.Tickets)))
 	}
@@ -198,7 +199,7 @@ func (b Bridge) setupBridge(ctx context.Context) error {
 			return err
 		}
 
-		if err := b.deploySmartContract(ctx, xrplClient); err != nil {
+		if err := b.deployAndInitSmartContract(ctx, xrplClient); err != nil {
 			return err
 		}
 	} else {
@@ -300,7 +301,7 @@ func (b Bridge) setupBridgeMultisigAccount(ctx context.Context, rpcClient *xrplh
 }
 
 //nolint:funlen
-func (b Bridge) deploySmartContract(ctx context.Context, rpcClient *xrplhelper.RPCClient) error {
+func (b Bridge) deployAndInitSmartContract(ctx context.Context, rpcClient *xrplhelper.RPCClient) error {
 	wasmCode, err := os.ReadFile(b.config.ContractPath)
 	if err != nil {
 		return err
@@ -457,7 +458,7 @@ func (b Bridge) deploySmartContract(ctx context.Context, rpcClient *xrplhelper.R
 	}{
 		"recover_tickets": {
 			AccountSequence: *accInfo.AccountData.Sequence,
-			NumberOfTickets: lo.ToPtr[uint32](250),
+			NumberOfTickets: lo.ToPtr[uint32](numberOfTickets),
 		},
 	})
 	if err != nil {
