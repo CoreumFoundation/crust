@@ -179,7 +179,7 @@ func (h Hermes) Deployment() infra.Deployment {
 	}
 }
 
-func (h Hermes) prepare() error {
+func (h Hermes) prepare(_ context.Context) error {
 	if err := h.saveConfigFile(); err != nil {
 		return err
 	}

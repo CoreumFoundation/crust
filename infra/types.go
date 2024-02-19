@@ -293,7 +293,7 @@ type Deployment struct {
 	// PrepareFunc is the function called before application is deployed for the first time.
 	// It is a good place to prepare configuration files and other things which must or might
 	// be done before application runs.
-	PrepareFunc func() error
+	PrepareFunc func(ctx context.Context) error
 
 	// ConfigureFunc is the function called after application is deployed for the first time.
 	// It is a good place to connect to the application to configure it because at this stage
@@ -331,6 +331,7 @@ func (app Deployment) Deploy(ctx context.Context, target AppTarget, config Confi
 	if err != nil {
 		return DeploymentInfo{}, err
 	}
+
 	if err := app.postprocess(ctx, info); err != nil {
 		return DeploymentInfo{}, err
 	}
@@ -353,7 +354,7 @@ func (app Deployment) preprocess(ctx context.Context, config Config) error {
 	}
 
 	if app.PrepareFunc != nil {
-		return app.PrepareFunc()
+		return app.PrepareFunc(ctx)
 	}
 	return nil
 }

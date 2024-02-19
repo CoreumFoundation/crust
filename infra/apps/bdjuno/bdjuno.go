@@ -200,8 +200,8 @@ func (j BDJuno) prepareConfig() []byte {
 	return configBuf.Bytes()
 }
 
-func (j BDJuno) prepare() error {
-	if err := j.config.Cored.SaveGenesis(j.config.HomeDir); err != nil {
+func (j BDJuno) prepare(ctx context.Context) error {
+	if err := j.config.Cored.SaveGenesis(ctx, j.config.HomeDir); err != nil {
 		return err
 	}
 

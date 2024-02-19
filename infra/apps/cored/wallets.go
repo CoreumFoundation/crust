@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	desiredTotalSupply int64 = 500_000_000_000_000 // 500m core
-	stakerBalance      int64 = 10_000_000_000_000  // 10m core
+	desiredTotalSupply int64 = 500_000_000_000_000 // 500m core.
+
+	// 10m core for staking + 100k core for integration test.
+	stakerBalance int64 = 10_000_000_000_000 + 100_000_000_000
 )
 
 // mnemonics generating well-known keys to create predictable wallets so manual operation is easier.
@@ -44,10 +46,10 @@ var namedMnemonicsList = []string{
 	RelayerMnemonicOsmosis,
 }
 
-// StakerMnemonics defines the list of the stakers used by validators.
+// stakerMnemonics defines the list of the stakers used by validators.
 //
 //nolint:lll // we don't care about mnemonic strings
-var stakerMnemonicsList = []string{
+var stakerMnemonics = []string{
 	"biology rigid design broccoli adult hood modify tissue swallow arctic option improve quiz cliff inject soup ozone suffer fantasy layer negative eagle leader priority",
 	"enemy fix tribe swift alcohol metal salad edge episode dry tired address bless cloth error useful define rough fold swift confirm century wasp acoustic",
 	"act electric demand cancel duck invest below once obvious estate interest solution drink mango reason already clean host limit stadium smoke census pattern express",
@@ -86,15 +88,15 @@ var stakerMnemonicsList = []string{
 type Wallet struct {
 	stakerBalance         int64
 	namedMnemonicsBalance int64
-	stakerMnemonicsList   []string
-	namedMnemonicsList    []string
+	stakerMnemonics       []string
+	namedMnemonics        []string
 }
 
 // NewFundedWallet creates wallet and funds all predefined accounts.
 func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfig) {
 	// distribute the remaining after stakers amount among Alice, Bob, Faucet, etc
 	namedMnemonicsBalance :=
-		(desiredTotalSupply - stakerBalance*int64(len(stakerMnemonicsList))) / int64(len(namedMnemonicsList))
+		(desiredTotalSupply - stakerBalance*int64(len(stakerMnemonics))) / int64(len(namedMnemonicsList))
 	networkProvider := network.Provider.(config.DynamicConfigProvider)
 
 	w := &Wallet{
@@ -105,11 +107,11 @@ func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfi
 		// That's why our main validators created here must have much higher stake.
 		stakerBalance:         stakerBalance,
 		namedMnemonicsBalance: namedMnemonicsBalance,
-		stakerMnemonicsList:   stakerMnemonicsList,
-		namedMnemonicsList:    namedMnemonicsList,
+		stakerMnemonics:       stakerMnemonics,
+		namedMnemonics:        namedMnemonicsList,
 	}
 
-	for _, mnemonic := range w.namedMnemonicsList {
+	for _, mnemonic := range w.namedMnemonics {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
 		networkProvider = networkProvider.WithAccount(
@@ -118,7 +120,7 @@ func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfi
 		)
 	}
 
-	for _, mnemonic := range w.stakerMnemonicsList {
+	for _, mnemonic := range w.stakerMnemonics {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
 		networkProvider = networkProvider.WithAccount(
@@ -131,9 +133,9 @@ func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfi
 	return w, network
 }
 
-// GetStakersMnemonicsCount returns length of stakerMnemonicsList.
+// GetStakersMnemonicsCount returns length of stakerMnemonics.
 func (w Wallet) GetStakersMnemonicsCount() int {
-	return len(w.stakerMnemonicsList)
+	return len(w.stakerMnemonics)
 }
 
 // GetStakerMnemonicsBalance returns balance for the single staker.
@@ -143,9 +145,9 @@ func (w Wallet) GetStakerMnemonicsBalance() int64 {
 
 // GetStakersMnemonic returns staker mnemonic by index.
 func (w Wallet) GetStakersMnemonic(index int) string {
-	if len(w.stakerMnemonicsList) < index {
+	if len(w.stakerMnemonics) < index {
 		panic(errors.New("index at GetStakersMnemonic is bigger than available mnemonic number"))
 	}
 
-	return w.stakerMnemonicsList[index]
+	return w.stakerMnemonics[index]
 }

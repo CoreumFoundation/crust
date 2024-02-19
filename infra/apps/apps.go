@@ -12,6 +12,7 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/bigdipper"
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
+	"github.com/CoreumFoundation/crust/infra/apps/bridgexrpl"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
@@ -125,9 +126,10 @@ func (f *Factory) CoredNetwork(
 				return nil
 			}(),
 			ImportedMnemonics: map[string]string{
-				"alice":   cored.AliceMnemonic,
-				"bob":     cored.BobMnemonic,
-				"charlie": cored.CharlieMnemonic,
+				"alice":      cored.AliceMnemonic,
+				"bob":        cored.BobMnemonic,
+				"charlie":    cored.CharlieMnemonic,
+				"xrplbridge": bridgexrpl.CoreumAdminMnemonic,
 			},
 			FundingMnemonic: cored.FundingMnemonic,
 			FaucetMnemonic:  cored.FaucetMnemonic,
@@ -311,7 +313,7 @@ func (f *Factory) Monitoring(
 }
 
 // XRPL returns xrpl node app set.
-func (f *Factory) XRPL(prefix string) infra.App {
+func (f *Factory) XRPL(prefix string) xrpl.XRPL {
 	nameXRPL := BuildPrefixedAppName(prefix, string(xrpl.AppType))
 
 	return xrpl.New(xrpl.Config{
@@ -322,6 +324,49 @@ func (f *Factory) XRPL(prefix string) infra.App {
 		WSPort:     xrpl.DefaultWSPort,
 		FaucetSeed: xrpl.DefaultFaucetSeed,
 	})
+}
+
+// BridgeXRPLRelayers returns a set of XRPL relayer apps.
+func (f *Factory) BridgeXRPLRelayers(
+	prefix string,
+	coredApp cored.Cored,
+	xrplApp xrpl.XRPL,
+	relayerCount int,
+) (infra.AppSet, error) {
+	if relayerCount > len(bridgexrpl.RelayerMnemonics) {
+		return nil, errors.Errorf(
+			"unsupported relayer count: %d, max: %d",
+			relayerCount,
+			len(bridgexrpl.RelayerMnemonics),
+		)
+	}
+
+	var leader *bridgexrpl.Bridge
+	relayers := make(infra.AppSet, 0, relayerCount)
+	ports := bridgexrpl.DefaultPorts
+	for i := 0; i < relayerCount; i++ {
+		name := fmt.Sprintf("%s-%02d", BuildPrefixedAppName(prefix, string(bridgexrpl.AppType)), i)
+		relayer := bridgexrpl.New(bridgexrpl.Config{
+			Name:         name,
+			HomeDir:      filepath.Join(f.config.AppDir, name),
+			ContractPath: filepath.Join(f.config.RootDir, "coreumbridge-xrpl", "build", "coreumbridge_xrpl.wasm"),
+			Mnemonics:    bridgexrpl.RelayerMnemonics[i],
+			Quorum:       uint32(relayerCount),
+			AppInfo:      f.spec.DescribeApp(bridgexrpl.AppType, name),
+			Ports:        ports,
+			Leader:       leader,
+			Cored:        coredApp,
+			XRPL:         xrplApp,
+		})
+		ports.Prometheus++
+		if leader == nil {
+			leader = &relayer
+		}
+
+		relayers = append(relayers, relayer)
+	}
+
+	return relayers, nil
 }
 
 // BuildPrefixedAppName builds the app name based on its prefix and name.

@@ -1,0 +1,41 @@
+version: v1
+logging:
+  level: info
+  format: console
+xrpl:
+  multi_signer_key_name: xrpl-relayer
+  http_client:
+    request_timeout: 5s
+    do_timeout: 30s
+    retry_delay: 300ms
+  rpc:
+    url: "{{ .XRPLRPCURL }}"
+    page_limit: 100
+  scanner:
+    recent_scan_enabled: true
+    recent_scan_window: 10000
+    repeat_recent_scan: true
+    full_scan_enabled: true
+    repeat_full_scan: true
+    retry_delay: 1s
+coreum:
+  relayer_key_name: coreum-relayer
+  grpc:
+    url: "{{ .CoreumGRPCURL }}"
+  network:
+    chain_id: coreum-devnet-1
+  contract:
+    contract_address: "{{ .CoreumContractAddress }}"
+    gas_adjustment: 2
+    gas_price_adjustment: 1.2
+    page_limit: 250
+    request_timeout: 10s
+    tx_timeout: 1m0s
+    tx_status_poll_interval: 500ms
+processes:
+  coreum_to_xrpl:
+    repeat_delay: 1s
+metrics:
+  server:
+    enable: true
+    listen_address: :9090
