@@ -28,7 +28,7 @@ func buildBDJuno(ctx context.Context, deps build.DepsFunc, targetPlatform tools.
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    filepath.Join(repoPath, "cmd", "bdjuno"),
-		BinOutputPath:  filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
+		Flags:          []string{"-o " + filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)},
 	})
 }
 

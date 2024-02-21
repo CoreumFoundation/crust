@@ -92,8 +92,7 @@ func Build(ctx context.Context, deps build.DepsFunc, config BinaryBuildConfig) e
 }
 
 func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
-	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
-		zap.String("binary", config.BinOutputPath))
+	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath))
 
 	if config.TargetPlatform != tools.TargetPlatformLocal {
 		return errors.Errorf("building requested for platform %s while only %s is supported",
@@ -108,7 +107,6 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	if err != nil {
 		return err
 	}
-	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
@@ -124,8 +122,7 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	// FIXME (wojciech): use docker API instead of docker executable
 
-	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath),
-		zap.String("binary", config.BinOutputPath))
+	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath))
 
 	if _, err := exec.LookPath("docker"); err != nil {
 		return errors.Wrap(err, "docker command is not available in PATH")
@@ -165,7 +162,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--env", "GOCACHE=/crust-cache/go-build",
 		"--workdir", workDir,
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-		"--name", "crust-build-" + filepath.Base(config.BinOutputPath) + "-" + hex.EncodeToString(nameSuffix),
+		"--name", "crust-build-" + filepath.Base(config.PackagePath) + "-" + hex.EncodeToString(nameSuffix),
 	}
 	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
 		config.TargetPlatform == tools.TargetPlatformLinuxARM64InDocker {
@@ -183,7 +180,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
-	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
+	//runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
 
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
@@ -299,7 +296,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	args = []string{
 		"build",
 		"-trimpath",
-		"-ldflags=" + strings.Join(ldFlags, " "),
+		"-ldflags=\"" + strings.Join(ldFlags, " ") + "\"",
 	}
 	if len(config.Tags) > 0 {
 		args = append(args, "-tags="+strings.Join(config.Tags, ","))
