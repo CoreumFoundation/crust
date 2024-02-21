@@ -39,12 +39,6 @@ type BinaryBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
-	// BinOutputPath is the path for compiled binary file
-	BinOutputPath string
-
-	// Tags is the list of additional tags pass to inside -tags into `go build`.
-	Tags []string
-
 	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler etc.
 	Flags []string
 
@@ -182,6 +176,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	runArgs = append(runArgs, args...)
 	//runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
 
+	fmt.Println(exec.Command("docker", runArgs...).String())
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
@@ -296,10 +291,7 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	args = []string{
 		"build",
 		"-trimpath",
-		"-ldflags=\"" + strings.Join(ldFlags, " ") + "\"",
-	}
-	if len(config.Tags) > 0 {
-		args = append(args, "-tags="+strings.Join(config.Tags, ","))
+		"-ldflags=" + strings.Join(ldFlags, " "),
 	}
 	args = append(args, config.Flags...)
 

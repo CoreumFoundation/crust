@@ -53,10 +53,10 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 		PackagePath:    "../coreum/cmd/cored",
 		Parameters:     parameters,
 		CGOEnabled:     true,
-		Tags:           tagsLocal,
 		Flags: []string{
 			goCoverFlag,
-			"-o " + binaryName,
+			"-tags=" + strings.Join(tagsLocal, ","),
+			"-o=" + binaryName,
 		},
 	})
 }
@@ -94,8 +94,11 @@ func buildCoredInDocker(
 		PackagePath:    "../coreum/cmd/cored",
 		Parameters:     parameters,
 		CGOEnabled:     true,
-		Tags:           tagsDocker,
-		Flags:          append(extraFlags, "-o "+filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName)),
+		Flags: append(
+			extraFlags,
+			"-tags="+strings.Join(tagsDocker, ","),
+			"-o="+filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
+		),
 		LinkStatically: true,
 	})
 }
@@ -123,8 +126,10 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 		PackagePath:    "../coreum/cmd/cored",
 		Parameters:     parameters,
 		CGOEnabled:     false,
-		Tags:           tagsDocker,
-		Flags:          []string{"-o " + binOutputPath},
+		Flags: []string{
+			"-tags=" + strings.Join(tagsDocker, ","),
+			"-o=" + binOutputPath,
+		},
 		LinkStatically: true,
 	})
 }
