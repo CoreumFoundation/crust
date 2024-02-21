@@ -39,17 +39,11 @@ type BinaryBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
-	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler etc.
+	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler, -ldflags=... etc.
 	Flags []string
 
-	// LinkStatically triggers static compilation
-	LinkStatically bool
-
-	// CGOEnabled builds cgo binary
-	CGOEnabled bool
-
-	// Parameters is the set of values passed to -X flags of `go build`
-	Parameters map[string]string
+	// Envs is a slice of additional environment variables to pass to `go build`.
+	Envs []string
 }
 
 // TestBuildConfig is the configuration for `go test -c`.
@@ -57,11 +51,8 @@ type TestBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
-	// BinOutputPath is the path for compiled binary file
-	BinOutputPath string
-
-	// Tags is the list of additional tags to build
-	Tags []string
+	// Flags is a slice of additional flags to pass to `go test -c`. E.g -cover, -compiler, -ldflags=... etc.
+	Flags []string
 }
 
 // EnsureGo ensures that go is available.
@@ -174,7 +165,6 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
-	//runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
 
 	fmt.Println(exec.Command("docker", runArgs...).String())
 	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
@@ -185,17 +175,10 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 
 // BuildTests builds tests.
 func BuildTests(ctx context.Context, config TestBuildConfig) error {
-	logger.Get(ctx).Info("Building go tests", zap.String("package", config.PackagePath),
-		zap.String("binary", config.BinOutputPath))
+	logger.Get(ctx).Info("Building go tests", zap.String("package", config.PackagePath))
 
-	args := []string{
-		"test",
-		"-c",
-		"-o", must.String(filepath.Abs(config.BinOutputPath)),
-	}
-	if len(config.Tags) > 0 {
-		args = append(args, "-tags="+strings.Join(config.Tags, ","))
-	}
+	args := []string{"test", "-c"}
+	args = append(args, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
@@ -282,12 +265,6 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	}
 
 	ldFlags := []string{"-w", "-s"}
-	if config.LinkStatically {
-		ldFlags = append(ldFlags, "-extldflags=-static")
-	}
-	for k, v := range config.Parameters {
-		ldFlags = append(ldFlags, "-X", k+"="+v)
-	}
 	args = []string{
 		"build",
 		"-trimpath",
@@ -298,17 +275,15 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
 	}
-
-	cgoEnabled := "0"
-	if config.CGOEnabled {
-		cgoEnabled = "1"
-	}
-	envs = append(envs, fmt.Sprintf("CGO_ENABLED=%s", cgoEnabled))
 	if crossCompileARM64 {
 		envs = append(envs, "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
 	}
-	envs = append(envs, fmt.Sprintf("GOOS=%s", config.TargetPlatform.OS))
-	envs = append(envs, fmt.Sprintf("GOARCH=%s", config.TargetPlatform.Arch))
+	envs = append(envs, config.Envs...)
+	envs = append(
+		envs,
+		fmt.Sprintf("GOOS=%s", config.TargetPlatform.OS),
+		fmt.Sprintf("GOARCH=%s", config.TargetPlatform.Arch),
+	)
 
 	return args, envs, nil
 }

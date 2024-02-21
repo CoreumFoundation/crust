@@ -42,8 +42,8 @@ func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "cmd/znet",
+		Envs:           []string{"CGO_ENABLED=1"},
 		Flags:          []string{"-o=" + "bin/.cache/znet"},
-		CGOEnabled:     true,
 	})
 }
 

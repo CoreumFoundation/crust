@@ -26,6 +26,7 @@ const (
 
 	cosmovisorBinaryPath = "bin/cosmovisor"
 	goCoverFlag          = "-cover"
+	linkStaticallyLDFlag = "-ldflags=-extldflags=-static"
 )
 
 var (
@@ -43,7 +44,7 @@ func BuildCored(ctx context.Context, deps build.DepsFunc) error {
 func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	deps(ensureRepo)
 
-	parameters, err := coredVersionParams(ctx, tagsLocal)
+	versionFlags, err := coredVersionLDFlags(ctx, tagsLocal)
 	if err != nil {
 		return err
 	}
@@ -51,10 +52,10 @@ func BuildCoredLocally(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "../coreum/cmd/cored",
-		Parameters:     parameters,
-		CGOEnabled:     true,
+		Envs:           []string{"CGO_ENABLED=1"},
 		Flags: []string{
 			goCoverFlag,
+			versionFlags,
 			"-tags=" + strings.Join(tagsLocal, ","),
 			"-o=" + binaryName,
 		},
@@ -74,7 +75,7 @@ func buildCoredInDocker(
 ) error {
 	deps(ensureRepo)
 
-	parameters, err := coredVersionParams(ctx, tagsDocker)
+	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
@@ -92,14 +93,14 @@ func buildCoredInDocker(
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
-		Parameters:     parameters,
-		CGOEnabled:     true,
+		Envs:           []string{"CGO_ENABLED=1"},
 		Flags: append(
 			extraFlags,
+			versionFlags,
+			linkStaticallyLDFlag,
 			"-tags="+strings.Join(tagsDocker, ","),
 			"-o="+filepath.Join("bin", ".cache", binaryName, targetPlatform.String(), "bin", binaryName),
 		),
-		LinkStatically: true,
 	})
 }
 
@@ -108,7 +109,7 @@ func buildCoredInDocker(
 func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPlatform tools.TargetPlatform) error {
 	deps(ensureRepo)
 
-	parameters, err := coredVersionParams(ctx, tagsDocker)
+	versionFlags, err := coredVersionLDFlags(ctx, tagsDocker)
 	if err != nil {
 		return err
 	}
@@ -124,13 +125,13 @@ func buildCoredClientInDocker(ctx context.Context, deps build.DepsFunc, targetPl
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: targetPlatform,
 		PackagePath:    "../coreum/cmd/cored",
-		Parameters:     parameters,
-		CGOEnabled:     false,
+		Envs:           []string{"CGO_ENABLED=0"},
 		Flags: []string{
+			versionFlags,
+			linkStaticallyLDFlag,
 			"-tags=" + strings.Join(tagsDocker, ","),
 			"-o=" + binOutputPath,
 		},
-		LinkStatically: true,
 	})
 }
 
@@ -166,15 +167,15 @@ func (p params) Commit() string {
 	return p["github.com/cosmos/cosmos-sdk/version.Commit"]
 }
 
-func coredVersionParams(ctx context.Context, buildTags []string) (params, error) {
+func coredVersionLDFlags(ctx context.Context, buildTags []string) (string, error) {
 	hash, err := git.DirtyHeadHash(ctx, repoPath)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	version, err := git.VersionFromTag(ctx, repoPath)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if version == "" {
 		version = hash
@@ -190,7 +191,12 @@ func coredVersionParams(ctx context.Context, buildTags []string) (params, error)
 		ps["github.com/cosmos/cosmos-sdk/version.BuildTags"] = strings.Join(buildTags, ",")
 	}
 
-	return ps, nil
+	var ldFlags []string
+	for k, v := range ps {
+		ldFlags = append(ldFlags, fmt.Sprintf("-X %s=%s", k, v))
+	}
+
+	return "-ldflags=" + strings.Join(ldFlags, " "), nil
 }
 
 func formatProto(ctx context.Context, deps build.DepsFunc) error {
