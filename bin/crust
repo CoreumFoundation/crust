@@ -18,7 +18,7 @@ if [ ! -f "$CRUST_BIN" ]; then
   go build -trimpath -o "$CRUST_BIN" ./cmd
   popd > /dev/null
 
-  "$CRUST_BIN" build/crust
+  "$CRUST_BIN" build/me
 fi
 
 popd > /dev/null
@@ -33,15 +33,6 @@ case "$1" in
       shift 1
       exec "$REPO/bin/.cache/znet" "$@"
       ;;
-
-   "zstress")
-     if [ ! -f "$REPO/bin/.cache/zstress" ]; then
-       "$CRUST_BIN" build/zstress
-     fi
-
-     shift 1
-     exec "$REPO/bin/.cache/zstress" "$@"
-     ;;
 
    *)
      exec "$CRUST_BIN" "$@"
