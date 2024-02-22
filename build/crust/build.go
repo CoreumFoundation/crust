@@ -9,8 +9,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/crust/build/bdjuno"
-	"github.com/CoreumFoundation/crust/build/coreum"
 	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/hermes"
@@ -31,9 +29,8 @@ func BuildBuilder(ctx context.Context, deps build.DepsFunc) error {
 
 // BuildZNet builds znet.
 func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
+	// FIXME (wojciech): Move building znet dependencies to znet
 	deps(
-		bdjuno.BuildDockerImage,
-		coreum.BuildCoredDockerImage,
 		gaia.BuildDockerImage,
 		osmosis.BuildDockerImage,
 		hermes.BuildDockerImage,
