@@ -23,6 +23,8 @@ fi
 
 popd > /dev/null
 
+test
+
 case "$1" in
 
    "znet")
