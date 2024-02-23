@@ -167,7 +167,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		"--name", "crust-build-" + filepath.Base(config.BinOutputPath) + "-" + hex.EncodeToString(nameSuffix),
 	}
-	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
+	if config.CGOEnabled && tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
 		config.TargetPlatform == tools.TargetPlatformLinuxARM64InDocker {
 		crossCompilerPath := filepath.Dir(
 			filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.TargetPlatformLinuxAMD64InDocker)),
