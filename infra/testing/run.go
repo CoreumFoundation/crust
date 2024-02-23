@@ -173,6 +173,8 @@ func Run(
 
 			fullArgs = append(fullArgs,
 				"-coreum-funding-mnemonic", coredApp.Config().FundingMnemonic,
+				"-coreum-contract-path", filepath.Join(config.RootDir, "coreumbridge-xrpl", "contract", "artifacts",
+					"coreumbridge_xrpl.wasm"),
 				"-xrpl-rpc-address", infra.JoinNetAddr("http", xrplApp.Info().HostFromHost, xrplApp.Config().RPCPort),
 				"-xrpl-funding-seed", xrplApp.Config().FaucetSeed,
 			)
