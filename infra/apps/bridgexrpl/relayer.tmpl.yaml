@@ -36,6 +36,8 @@ processes:
   coreum_to_xrpl:
     repeat_delay: 1s
 metrics:
+  enabled: true
   server:
-    enable: true
-    listen_address: :9090
+    listen_address: :{{ .MetricsPort }}
+  periodic_collector:
+    repeat_delay: 3s
