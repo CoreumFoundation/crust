@@ -394,9 +394,6 @@ type ConfigFactory struct {
 	// RootDir is the path where all the repositories are present
 	RootDir string
 
-	// BinDir is the path where all binaries are present
-	BinDir string
-
 	// TestFilter is a regular expressions used to filter tests to run
 	TestFilter string
 
