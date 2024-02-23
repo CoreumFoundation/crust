@@ -347,16 +347,17 @@ func (f *Factory) BridgeXRPLRelayers(
 	for i := 0; i < relayerCount; i++ {
 		name := fmt.Sprintf("%s-%02d", BuildPrefixedAppName(prefix, string(bridgexrpl.AppType)), i)
 		relayer := bridgexrpl.New(bridgexrpl.Config{
-			Name:         name,
-			HomeDir:      filepath.Join(f.config.AppDir, name),
-			ContractPath: filepath.Join(f.config.RootDir, "coreumbridge-xrpl", "build", "coreumbridge_xrpl.wasm"),
-			Mnemonics:    bridgexrpl.RelayerMnemonics[i],
-			Quorum:       uint32(relayerCount),
-			AppInfo:      f.spec.DescribeApp(bridgexrpl.AppType, name),
-			Ports:        ports,
-			Leader:       leader,
-			Cored:        coredApp,
-			XRPL:         xrplApp,
+			Name:    name,
+			HomeDir: filepath.Join(f.config.AppDir, name),
+			ContractPath: filepath.Join(f.config.RootDir, "coreumbridge-xrpl", "contract", "artifacts",
+				"coreumbridge_xrpl.wasm"),
+			Mnemonics: bridgexrpl.RelayerMnemonics[i],
+			Quorum:    uint32(relayerCount),
+			AppInfo:   f.spec.DescribeApp(bridgexrpl.AppType, name),
+			Ports:     ports,
+			Leader:    leader,
+			Cored:     coredApp,
+			XRPL:      xrplApp,
 		})
 		ports.Prometheus++
 		if leader == nil {
