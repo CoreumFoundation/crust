@@ -5,6 +5,7 @@ module github.com/CoreumFoundation/crust/build
 go 1.21
 
 require (
+	github.com/BurntSushi/toml v1.3.2
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.38.1

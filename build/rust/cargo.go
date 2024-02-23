@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
@@ -22,6 +23,16 @@ func BuildSmartContract(
 	path string,
 ) error {
 	deps(EnsureRust, EnsureWASMOpt)
+
+	cargo := struct {
+		Package struct {
+			Name string `toml:"name"`
+		} `toml:"package"`
+	}{}
+
+	if _, err := toml.DecodeFile(filepath.Join(path, "Cargo.toml"), &cargo); err != nil {
+		return errors.WithStack(err)
+	}
 
 	if err := os.MkdirAll(filepath.Join(path, "artifacts"), 0o700); err != nil {
 		return errors.WithStack(err)
@@ -45,7 +56,7 @@ func BuildSmartContract(
 	)
 	cmdCargo.Dir = path
 
-	contractFile := strings.ReplaceAll(filepath.Base(path), "-", "_") + ".wasm"
+	contractFile := strings.ReplaceAll(cargo.Package.Name, "-", "_") + ".wasm"
 	cmdWASMOpt := exec.Command(tools.Path("bin/wasm-opt", tools.TargetPlatformLocal),
 		"-Os", "--signext-lowering",
 		"-o", filepath.Join("artifacts", contractFile),
