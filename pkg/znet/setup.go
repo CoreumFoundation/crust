@@ -49,7 +49,6 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 		RootDir:            configF.RootDir,
 		AppDir:             homeDir + "/app",
 		WrapperDir:         homeDir + "/bin",
-		BinDir:             must.String(filepath.Abs(must.String(filepath.EvalSymlinks(configF.BinDir)))),
 		TestFilter:         configF.TestFilter,
 		VerboseLogging:     configF.VerboseLogging,
 		LogFormat:          configF.LogFormat,
