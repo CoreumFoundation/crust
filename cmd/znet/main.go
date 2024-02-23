@@ -64,7 +64,6 @@ func rootCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		"Directory where all files created automatically by znet are stored",
 	)
 	addRootDirFlag(rootCmd, configF)
-	addBinDirFlag(rootCmd, configF)
 	addProfileFlag(rootCmd, configF)
 	addCoredVersionFlag(rootCmd, configF)
 	addFilterFlag(rootCmd, configF)
@@ -86,7 +85,6 @@ func startCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdF
 		}),
 	}
 	addRootDirFlag(startCmd, configF)
-	addBinDirFlag(startCmd, configF)
 	addProfileFlag(startCmd, configF)
 	addCoredVersionFlag(startCmd, configF)
 	addTimeoutCommitFlag(startCmd, configF)
@@ -134,7 +132,6 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 	}
 	addTestGroupFlag(testCmd, configF)
 	addRootDirFlag(testCmd, configF)
-	addBinDirFlag(testCmd, configF)
 	addFilterFlag(testCmd, configF)
 	addCoredVersionFlag(testCmd, configF)
 	addTimeoutCommitFlag(testCmd, configF)
@@ -198,14 +195,6 @@ func addRootDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 		defaultString("CRUST_ZNET_ROOT_DIR", filepath.Clean(filepath.Join(repoRoot(), ".."))),
 		"Path to directory where all the repositories exist",
 	)
-}
-
-func addBinDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(
-		&configF.BinDir,
-		"bin-dir",
-		defaultString("CRUST_ZNET_BIN_DIR", filepath.Clean(filepath.Join(repoRoot(), "/bin"))),
-		"Path to directory where executables exist")
 }
 
 func addProfileFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {

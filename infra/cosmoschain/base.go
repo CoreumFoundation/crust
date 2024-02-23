@@ -50,7 +50,6 @@ type Ports struct {
 // AppConfig defines configuration of the application.
 type AppConfig struct {
 	Name            string
-	BinDir          string
 	HomeDir         string
 	HomeName        string
 	ChainID         string

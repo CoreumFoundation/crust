@@ -34,7 +34,6 @@ const (
 type Config struct {
 	Name           string
 	HomeDir        string
-	BinDir         string
 	ChainID        constant.ChainID
 	AppInfo        *infra.AppInfo
 	Port           int
