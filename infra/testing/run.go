@@ -39,6 +39,7 @@ var testBinaries = map[string][]string{
 		"crust/bin/.cache/integration-tests/coreum-ibc",
 	},
 	apps.TestGroupFaucet: {
+		"faucet/bin/.cache/integration-tests/faucet",
 		"crust/bin/.cache/integration-tests/faucet",
 	},
 }
