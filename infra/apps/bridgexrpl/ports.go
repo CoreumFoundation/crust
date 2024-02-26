@@ -1,11 +1,11 @@
 package bridgexrpl
 
-// Ports defines ports used by cored application.
+// Ports defines ports used by bridgexrpl application.
 type Ports struct {
-	Prometheus int `json:"prometheus"`
+	Metrics int `json:"metrics"`
 }
 
-// DefaultPorts are the default ports cored listens on.
+// DefaultPorts are the default ports bridgexrpl listens on.
 var DefaultPorts = Ports{
-	Prometheus: 10090,
+	Metrics: 10090,
 }

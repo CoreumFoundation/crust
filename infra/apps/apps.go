@@ -355,7 +355,7 @@ func (f *Factory) BridgeXRPLRelayers(
 			Cored:        coredApp,
 			XRPL:         xrplApp,
 		})
-		ports.Prometheus++
+		ports.Metrics++
 		if leader == nil {
 			leader = &relayer
 		}

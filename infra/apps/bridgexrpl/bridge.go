@@ -498,12 +498,14 @@ func (b Bridge) saveConfig() error {
 		XRPLRPCURL            string
 		CoreumGRPCURL         string
 		CoreumContractAddress string
+		MetricsPort           int
 	}{
 		XRPLRPCURL: infra.JoinNetAddr("http", b.config.XRPL.Info().HostFromContainer,
 			b.config.XRPL.Config().RPCPort),
 		CoreumGRPCURL: infra.JoinNetAddr("http", b.config.Cored.Info().HostFromContainer,
 			b.config.Cored.Config().Ports.GRPC),
 		CoreumContractAddress: *b.contractAddr,
+		MetricsPort:           b.Config().Ports.Metrics,
 	}))
 }
 
