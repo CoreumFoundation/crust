@@ -77,8 +77,6 @@ func Build(ctx context.Context, deps build.DepsFunc, config BinaryBuildConfig) e
 }
 
 func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
-	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath))
-
 	if config.TargetPlatform != tools.TargetPlatformLocal {
 		return errors.Errorf("building requested for platform %s while only %s is supported",
 			config.TargetPlatform, tools.TargetPlatformLocal)
@@ -98,6 +96,11 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	cmd.Dir = config.PackagePath
 	cmd.Env = envs
 
+	logger.Get(ctx).Info(
+		"Building go package locally",
+		zap.String("package", config.PackagePath),
+		zap.String("command", cmd.String()),
+	)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", config.PackagePath)
 	}
@@ -106,8 +109,6 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 
 func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	// FIXME (wojciech): use docker API instead of docker executable
-
-	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath))
 
 	if _, err := exec.LookPath("docker"); err != nil {
 		return errors.Wrap(err, "docker command is not available in PATH")
@@ -166,8 +167,13 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
 
-	fmt.Println(exec.Command("docker", runArgs...).String())
-	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
+	cmd := exec.Command("docker", runArgs...)
+	logger.Get(ctx).Info(
+		"Building go package in docker",
+		zap.String("package", config.PackagePath),
+		zap.String("command", cmd.String()),
+	)
+	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
 	return nil
@@ -175,14 +181,17 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 
 // BuildTests builds tests.
 func BuildTests(ctx context.Context, config TestBuildConfig) error {
-	logger.Get(ctx).Info("Building go tests", zap.String("package", config.PackagePath))
-
 	args := []string{"test", "-c"}
 	args = append(args, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 
+	logger.Get(ctx).Info(
+		"Building go tests locally",
+		zap.String("package", config.PackagePath),
+		zap.String("command", cmd.String()),
+	)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go tests '%s' failed", config.PackagePath)
 	}
