@@ -28,9 +28,6 @@ type Config struct {
 	// WrapperDir is the path where wrappers are stored
 	WrapperDir string
 
-	// BinDir is the path where all binaries are present
-	BinDir string
-
 	// TestFilter is a regular expressions used to filter tests to run
 	TestFilter string
 

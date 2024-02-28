@@ -89,7 +89,7 @@ func (f *Factory) CoredNetwork(
 		node := cored.New(cored.Config{
 			Name:              name,
 			HomeDir:           filepath.Join(f.config.AppDir, name, string(networkConfig.ChainID())),
-			BinDir:            f.config.BinDir,
+			BinDir:            filepath.Join(f.config.RootDir, "coreum", "bin"),
 			WrapperDir:        f.config.WrapperDir,
 			NetworkConfig:     &networkConfig,
 			GenesisInitConfig: &genesisConfig,
@@ -155,7 +155,6 @@ func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 	return faucet.New(faucet.Config{
 		Name:           name,
 		HomeDir:        filepath.Join(f.config.AppDir, name),
-		BinDir:         f.config.BinDir,
 		ChainID:        f.networkConfig.Provider.GetChainID(),
 		AppInfo:        f.spec.DescribeApp(faucet.AppType, name),
 		Port:           faucet.DefaultPort,
@@ -219,7 +218,6 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 
 	gaiaApp := gaiad.New(cosmoschain.AppConfig{
 		Name:            nameGaia,
-		BinDir:          f.config.BinDir,
 		HomeDir:         filepath.Join(f.config.AppDir, nameGaia),
 		ChainID:         gaiad.DefaultChainID,
 		HomeName:        gaiad.DefaultHomeName,
@@ -234,7 +232,6 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 
 	osmosisApp := osmosis.New(cosmoschain.AppConfig{
 		Name:            nameOsmosis,
-		BinDir:          f.config.BinDir,
 		HomeDir:         filepath.Join(f.config.AppDir, nameOsmosis),
 		ChainID:         osmosis.DefaultChainID,
 		HomeName:        osmosis.DefaultHomeName,
@@ -358,7 +355,7 @@ func (f *Factory) BridgeXRPLRelayers(
 			Cored:        coredApp,
 			XRPL:         xrplApp,
 		})
-		ports.Prometheus++
+		ports.Metrics++
 		if leader == nil {
 			leader = &relayer
 		}
