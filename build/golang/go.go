@@ -257,7 +257,7 @@ func buildArgsAndEnvs(
 	config BinaryBuildConfig,
 	libDir string,
 ) (args, envs []string, err error) {
-	crossCompileARM64 := false
+	var crossCompileARM64 bool
 
 	switch config.TargetPlatform {
 	case tools.TargetPlatformLocal,
