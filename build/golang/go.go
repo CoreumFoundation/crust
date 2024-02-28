@@ -39,6 +39,9 @@ type BinaryBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
+	// CGOEnabled builds cgo binary
+	CGOEnabled bool
+
 	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler, -ldflags=... etc.
 	Flags []string
 
@@ -86,7 +89,7 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(libDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	args, envs, err := buildArgsAndEnvs(config, libDir)
+	args, envs, err := buildArgsAndEnvs(ctx, config, libDir)
 	if err != nil {
 		return err
 	}
@@ -134,7 +137,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
-	args, envs, err := buildArgsAndEnvs(config, filepath.Join("/crust-cache", tools.Version(), "lib"))
+	args, envs, err := buildArgsAndEnvs(ctx, config, filepath.Join("/crust-cache", tools.Version(), "lib"))
 	if err != nil {
 		return err
 	}
@@ -150,7 +153,8 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		"--name", "crust-build-" + filepath.Base(config.PackagePath) + "-" + hex.EncodeToString(nameSuffix),
 	}
-	if tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
+	if config.CGOEnabled &&
+		tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
 		config.TargetPlatform == tools.TargetPlatformLinuxARM64InDocker {
 		crossCompilerPath := filepath.Dir(
 			filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.TargetPlatformLinuxAMD64InDocker)),
@@ -248,22 +252,29 @@ func ensureBuildDockerImage(ctx context.Context) (string, error) {
 	return image, nil
 }
 
-func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []string, err error) {
-	var crossCompileARM64 bool
+func buildArgsAndEnvs(
+	ctx context.Context,
+	config BinaryBuildConfig,
+	libDir string,
+) (args, envs []string, err error) {
+	crossCompileARM64 := false
+
 	switch config.TargetPlatform {
-	case tools.TargetPlatformLocal:
-	case tools.TargetPlatformLinuxLocalArchInDocker:
+	case tools.TargetPlatformLocal,
+		tools.TargetPlatformLinuxLocalArchInDocker,
+		tools.TargetPlatformDarwinAMD64InDocker,
+		tools.TargetPlatformDarwinARM64InDocker:
 	case tools.TargetPlatformLinuxARM64InDocker:
-		if tools.TargetPlatformLocal != tools.TargetPlatformLinuxAMD64 {
-			return nil, nil, errors.Errorf(
-				"crosscompiling for %s is possible only on platform %s",
-				config.TargetPlatform,
-				tools.TargetPlatformLinuxAMD64,
-			)
+		if config.CGOEnabled {
+			if tools.TargetPlatformLocal != tools.TargetPlatformLinuxAMD64 {
+				return nil, nil, errors.Errorf(
+					"crosscompiling for %s is possible only on platform %s",
+					config.TargetPlatform,
+					tools.TargetPlatformLinuxAMD64,
+				)
+			}
+			crossCompileARM64 = true
 		}
-		crossCompileARM64 = true
-	case tools.TargetPlatformDarwinAMD64InDocker:
-	case tools.TargetPlatformDarwinARM64InDocker:
 	default:
 		return nil, nil,
 			errors.Errorf(
@@ -281,18 +292,24 @@ func buildArgsAndEnvs(config BinaryBuildConfig, libDir string) (args, envs []str
 	}
 	args = append(args, config.Flags...)
 
+	cgoEnabled := "0"
+	if config.CGOEnabled {
+		cgoEnabled = "1"
+	}
 	envs = []string{
 		"LIBRARY_PATH=" + libDir,
+		"CGO_ENABLED=" + cgoEnabled,
+		"GOOS=" + config.TargetPlatform.OS,
+		"GOARCH=" + config.TargetPlatform.Arch,
 	}
 	if crossCompileARM64 {
+		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
+			return nil, nil, err
+		}
+
 		envs = append(envs, "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
 	}
 	envs = append(envs, config.Envs...)
-	envs = append(
-		envs,
-		fmt.Sprintf("GOOS=%s", config.TargetPlatform.OS),
-		fmt.Sprintf("GOARCH=%s", config.TargetPlatform.Arch),
-	)
 
 	return args, envs, nil
 }
