@@ -23,7 +23,7 @@ func BuildBuilder(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "build/cmd",
-		BinOutputPath:  must.String(filepath.EvalSymlinks(must.String(os.Executable()))),
+		Flags:          []string{"-o=" + must.String(filepath.EvalSymlinks(must.String(os.Executable())))},
 	})
 }
 
@@ -39,8 +39,8 @@ func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "cmd/znet",
-		BinOutputPath:  "bin/.cache/znet",
 		CGOEnabled:     true,
+		Flags:          []string{"-o=" + "bin/.cache/znet"},
 	})
 }
 

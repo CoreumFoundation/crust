@@ -39,23 +39,14 @@ type BinaryBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
-	// BinOutputPath is the path for compiled binary file
-	BinOutputPath string
-
-	// Tags is the list of additional tags pass to inside -tags into `go build`.
-	Tags []string
-
-	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler etc.
-	Flags []string
-
-	// LinkStatically triggers static compilation
-	LinkStatically bool
-
 	// CGOEnabled builds cgo binary
 	CGOEnabled bool
 
-	// Parameters is the set of values passed to -X flags of `go build`
-	Parameters map[string]string
+	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler, -ldflags=... etc.
+	Flags []string
+
+	// Envs is a slice of additional environment variables to pass to `go build`.
+	Envs []string
 }
 
 // TestBuildConfig is the configuration for `go test -c`.
@@ -63,11 +54,8 @@ type TestBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
-	// BinOutputPath is the path for compiled binary file
-	BinOutputPath string
-
-	// Tags is the list of additional tags to build
-	Tags []string
+	// Flags is a slice of additional flags to pass to `go test -c`. E.g -cover, -compiler, -ldflags=... etc.
+	Flags []string
 }
 
 // EnsureGo ensures that go is available.
@@ -92,9 +80,6 @@ func Build(ctx context.Context, deps build.DepsFunc, config BinaryBuildConfig) e
 }
 
 func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
-	logger.Get(ctx).Info("Building go package locally", zap.String("package", config.PackagePath),
-		zap.String("binary", config.BinOutputPath))
-
 	if config.TargetPlatform != tools.TargetPlatformLocal {
 		return errors.Errorf("building requested for platform %s while only %s is supported",
 			config.TargetPlatform, tools.TargetPlatformLocal)
@@ -108,13 +93,17 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	if err != nil {
 		return err
 	}
-	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 	cmd.Env = envs
 
+	logger.Get(ctx).Info(
+		"Building go package locally",
+		zap.String("package", config.PackagePath),
+		zap.String("command", cmd.String()),
+	)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go package '%s' failed", config.PackagePath)
 	}
@@ -123,9 +112,6 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 
 func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	// FIXME (wojciech): use docker API instead of docker executable
-
-	logger.Get(ctx).Info("Building go package in docker", zap.String("package", config.PackagePath),
-		zap.String("binary", config.BinOutputPath))
 
 	if _, err := exec.LookPath("docker"); err != nil {
 		return errors.Wrap(err, "docker command is not available in PATH")
@@ -165,9 +151,10 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--env", "GOCACHE=/crust-cache/go-build",
 		"--workdir", workDir,
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
-		"--name", "crust-build-" + filepath.Base(config.BinOutputPath) + "-" + hex.EncodeToString(nameSuffix),
+		"--name", "crust-build-" + filepath.Base(config.PackagePath) + "-" + hex.EncodeToString(nameSuffix),
 	}
-	if config.CGOEnabled && tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
+	if config.CGOEnabled &&
+		tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
 		config.TargetPlatform == tools.TargetPlatformLinuxARM64InDocker {
 		crossCompilerPath := filepath.Dir(
 			filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.TargetPlatformLinuxAMD64InDocker)),
@@ -183,33 +170,32 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
-	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
 
-	if err := libexec.Exec(ctx, exec.Command("docker", runArgs...)); err != nil {
+	cmd := exec.Command("docker", runArgs...)
+	logger.Get(ctx).Info(
+		"Building go package in docker",
+		zap.String("package", config.PackagePath),
+		zap.String("command", cmd.String()),
+	)
+	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
 	return nil
 }
 
 // BuildTests builds tests.
-func BuildTests(ctx context.Context, deps build.DepsFunc, config TestBuildConfig) error {
-	deps(EnsureGo)
-
-	logger.Get(ctx).Info("Building go tests", zap.String("package", config.PackagePath),
-		zap.String("binary", config.BinOutputPath))
-
-	args := []string{
-		"test",
-		"-c",
-		"-o", must.String(filepath.Abs(config.BinOutputPath)),
-	}
-	if len(config.Tags) > 0 {
-		args = append(args, "-tags="+strings.Join(config.Tags, ","))
-	}
+func BuildTests(ctx context.Context, config TestBuildConfig) error {
+	args := []string{"test", "-c"}
+	args = append(args, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
 
+	logger.Get(ctx).Info(
+		"Building go tests locally",
+		zap.String("package", config.PackagePath),
+		zap.String("command", cmd.String()),
+	)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building go tests '%s' failed", config.PackagePath)
 	}
@@ -274,8 +260,10 @@ func buildArgsAndEnvs(
 	var crossCompileARM64 bool
 
 	switch config.TargetPlatform {
-	case tools.TargetPlatformLocal:
-	case tools.TargetPlatformLinuxLocalArchInDocker:
+	case tools.TargetPlatformLocal,
+		tools.TargetPlatformLinuxLocalArchInDocker,
+		tools.TargetPlatformDarwinAMD64InDocker,
+		tools.TargetPlatformDarwinARM64InDocker:
 	case tools.TargetPlatformLinuxARM64InDocker:
 		if config.CGOEnabled {
 			if tools.TargetPlatformLocal != tools.TargetPlatformLinuxAMD64 {
@@ -287,8 +275,6 @@ func buildArgsAndEnvs(
 			}
 			crossCompileARM64 = true
 		}
-	case tools.TargetPlatformDarwinAMD64InDocker:
-	case tools.TargetPlatformDarwinARM64InDocker:
 	default:
 		return nil, nil,
 			errors.Errorf(
@@ -299,31 +285,23 @@ func buildArgsAndEnvs(
 	}
 
 	ldFlags := []string{"-w", "-s"}
-	if config.LinkStatically {
-		ldFlags = append(ldFlags, "-extldflags=-static")
-	}
-	for k, v := range config.Parameters {
-		ldFlags = append(ldFlags, "-X", k+"="+v)
-	}
 	args = []string{
 		"build",
 		"-trimpath",
 		"-ldflags=" + strings.Join(ldFlags, " "),
 	}
-	if len(config.Tags) > 0 {
-		args = append(args, "-tags="+strings.Join(config.Tags, ","))
-	}
 	args = append(args, config.Flags...)
-
-	envs = []string{
-		"LIBRARY_PATH=" + libDir,
-	}
 
 	cgoEnabled := "0"
 	if config.CGOEnabled {
 		cgoEnabled = "1"
 	}
-	envs = append(envs, fmt.Sprintf("CGO_ENABLED=%s", cgoEnabled))
+	envs = []string{
+		"LIBRARY_PATH=" + libDir,
+		"CGO_ENABLED=" + cgoEnabled,
+		"GOOS=" + config.TargetPlatform.OS,
+		"GOARCH=" + config.TargetPlatform.Arch,
+	}
 	if crossCompileARM64 {
 		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
 			return nil, nil, err
@@ -331,8 +309,7 @@ func buildArgsAndEnvs(
 
 		envs = append(envs, "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
 	}
-	envs = append(envs, fmt.Sprintf("GOOS=%s", config.TargetPlatform.OS))
-	envs = append(envs, fmt.Sprintf("GOARCH=%s", config.TargetPlatform.Arch))
+	envs = append(envs, config.Envs...)
 
 	return args, envs, nil
 }
