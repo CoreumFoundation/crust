@@ -186,11 +186,10 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 
 // BuildTests builds tests.
 func BuildTests(ctx context.Context, config TestBuildConfig) error {
-	args := []string{"test", "-c"}
+	args := []string{"test", "-c", config.PackagePath}
 	args = append(args, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
-	cmd.Dir = config.PackagePath
 
 	logger.Get(ctx).Info(
 		"Building go tests locally",
