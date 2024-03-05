@@ -90,10 +90,10 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 		return errors.WithStack(err)
 	}
 	args, envs, err := buildArgsAndEnvs(ctx, config, libDir)
-	args = append(args, filepath.Join(config.PackagePath, "main.go"))
 	if err != nil {
 		return err
 	}
+	args = append(args, toLocalGoPkgPath(config.PackagePath))
 	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
@@ -138,10 +138,10 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	must.Any(rand.Read(nameSuffix))
 
 	args, envs, err := buildArgsAndEnvs(ctx, config, filepath.Join("/crust-cache", tools.Version(), "lib"))
-	args = append(args, filepath.Clean(filepath.Join(config.PackagePath, "main.go")))
 	if err != nil {
 		return err
 	}
+	args = append(args, toLocalGoPkgPath(config.PackagePath))
 	runArgs := []string{
 		"run", "--rm",
 		"--label", docker.LabelKey + "=" + docker.LabelValue,
@@ -186,7 +186,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 
 // BuildTests builds tests.
 func BuildTests(ctx context.Context, config TestBuildConfig) error {
-	args := []string{"test", "-c", config.PackagePath}
+	args := []string{"test", toLocalGoPkgPath(config.PackagePath), "-c"}
 	args = append(args, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
@@ -511,4 +511,10 @@ func GoPath() string {
 	}
 
 	return goPath
+}
+
+// toLocalGoPkgPath converts a path to a local go package path by prepending the "./" if needed.
+// The ./ tells the Go tool to look for the package in the local filesystem relative to the current directory.
+func toLocalGoPkgPath(path string) string {
+	return "./" + filepath.Clean(path)
 }
