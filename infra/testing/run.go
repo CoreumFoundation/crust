@@ -19,19 +19,15 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
 	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
-	"github.com/CoreumFoundation/crust/infra/apps/xrpl"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
 // TestGroup constant values.
 const (
-	TestGroupCoreumModules             = "coreum-modules"
-	TestGroupCoreumUpgrade             = "coreum-upgrade"
-	TestGroupCoreumIBC                 = "coreum-ibc"
-	TestGroupFaucet                    = "faucet"
-	TestGroupCoreumBridgeXRPLContract  = "coreumbridge-xrpl-contract"
-	TestGroupCoreumBridgeXRPLProcesses = "coreumbridge-xrpl-processes"
-	TestGroupCoreumBridgeXRPLXRPL      = "coreumbridge-xrpl-xrpl"
+	TestGroupCoreumModules = "coreum-modules"
+	TestGroupCoreumUpgrade = "coreum-upgrade"
+	TestGroupCoreumIBC     = "coreum-ibc"
+	TestGroupFaucet        = "faucet"
 )
 
 // TestGroup describes test group.
@@ -57,18 +53,6 @@ var TestGroups = map[string]TestGroup{
 	TestGroupFaucet: {
 		Binary:           "faucet/bin/.cache/integration-tests/faucet",
 		RequiredProfiles: []string{apps.Profile1Cored, apps.ProfileFaucet},
-	},
-	TestGroupCoreumBridgeXRPLContract: {
-		Binary:           "coreumbridge-xrpl/bin/.cache/integration-tests/coreumbridge-xrpl-contract",
-		RequiredProfiles: []string{apps.Profile1Cored, apps.ProfileXRPL},
-	},
-	TestGroupCoreumBridgeXRPLProcesses: {
-		Binary:           "coreumbridge-xrpl/bin/.cache/integration-tests/coreumbridge-xrpl-processes",
-		RequiredProfiles: []string{apps.Profile1Cored, apps.ProfileXRPL},
-	},
-	TestGroupCoreumBridgeXRPLXRPL: {
-		Binary:           "coreumbridge-xrpl/bin/.cache/integration-tests/coreumbridge-xrpl-xrpl",
-		RequiredProfiles: []string{apps.Profile1Cored, apps.ProfileXRPL},
 	},
 }
 
@@ -163,20 +147,6 @@ func Run(
 			faucetNode := faucetApp.(faucet.Faucet)
 			fullArgs = append(fullArgs,
 				"-faucet-address", infra.JoinNetAddr("http", faucetNode.Info().HostFromHost, faucetNode.Port()),
-			)
-		case TestGroupCoreumBridgeXRPLContract, TestGroupCoreumBridgeXRPLProcesses, TestGroupCoreumBridgeXRPLXRPL:
-			xrplNode := appSet.FindRunningAppByName(apps.BuildPrefixedAppName(apps.AppPrefixXRPL, string(xrpl.AppType)))
-			if xrplNode == nil {
-				return errors.New("no running xrpl app found")
-			}
-			xrplApp := xrplNode.(xrpl.XRPL)
-
-			fullArgs = append(fullArgs,
-				"-coreum-funding-mnemonic", coredApp.Config().FundingMnemonic,
-				"-coreum-contract-path", filepath.Join(config.RootDir, "coreumbridge-xrpl", "contract", "artifacts",
-					"coreumbridge_xrpl.wasm"),
-				"-xrpl-rpc-address", infra.JoinNetAddr("http", xrplApp.Info().HostFromHost, xrplApp.Config().RPCPort),
-				"-xrpl-funding-seed", xrplApp.Config().FaucetSeed,
 			)
 		}
 
