@@ -430,19 +430,19 @@ var tools = []Tool{
 	// https://rust-lang.github.io/rustup/installation/other.html
 	BinaryTool{
 		Name:    RustUpInit,
-		Version: "1.26.0",
+		Version: "1.27.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
 				URL:  "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:0b2f6c8f85a3d02fde2efc0ced4657869d73fccfce59defb4e8d29233116e6db",
+				Hash: "sha256:a3d541a5484c8fa2f1c21478a6f6c505a778d473c21d60a18a4df5185d320ef8",
 			},
 			TargetPlatformDarwinAMD64: {
 				URL:  "https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:f6d1a9fac1a0d0802d87c254f02369a79973bc8c55aa0016d34af4fcdbd67822",
+				Hash: "sha256:02a2d8501a567bfd43e8e0ee18ba7af0c09c84997ae7510e0f620c46293f32e0",
 			},
 			TargetPlatformDarwinARM64: {
 				URL:  "https://static.rust-lang.org/rustup/dist/aarch64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:ed299a8fe762dc28161a99a03cf62836977524ad557ad70e13882d2f375d3983",
+				Hash: "sha256:c30c180297a0053dcb8932ed43d365f0c9005abd847375f7ed5799a761ea81e5",
 			},
 		},
 		Binaries: map[string]string{
