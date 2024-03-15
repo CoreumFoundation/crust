@@ -35,5 +35,5 @@ func CoverageConvert(ctx context.Context, coredHomeDir string, dstFilePath strin
 
 // GoCoverDir returns go coverage data directory inside container.
 func (c Cored) GoCoverDir() string {
-	return filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), covdataDirName)
+	return filepath.Join(targets.AppHomeDir, string(c.config.GenesisInitConfig.ChainID), covdataDirName)
 }

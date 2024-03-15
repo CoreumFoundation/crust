@@ -21,11 +21,6 @@ import (
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -33,14 +28,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
-	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
@@ -54,12 +45,10 @@ const AppType infra.AppType = "cored"
 
 // Config stores cored app config.
 type Config struct {
-	Name       string
-	HomeDir    string
-	BinDir     string
-	WrapperDir string
-	// Deprecated: remove after we drop support for cored v3.
-	NetworkConfig     *config.NetworkConfig
+	Name              string
+	HomeDir           string
+	BinDir            string
+	WrapperDir        string
 	GenesisInitConfig *GenesisInitConfig
 	AppInfo           *infra.AppInfo
 	Ports             Ports
@@ -85,61 +74,34 @@ type GenesisInitConfig struct {
 	DisplayDenom       string              `json:"display_denom"`
 	AddressPrefix      string              `json:"address_prefix"`
 	GenesisTime        time.Time           `json:"genesis_time"`
-	GovConfig          govConfig           `json:"gov_config"`
-	CustomParamsConfig customParamsConfig  `json:"custom_params_config"`
+	GovConfig          GovConfig           `json:"gov_config"`
+	CustomParamsConfig CustomParamsConfig  `json:"custom_params_config"`
 	BankBalances       []banktypes.Balance `json:"bank_balances"`
-	Validators         []genesisValidator  `json:"validators"`
+	Validators         []GenesisValidator  `json:"validators"`
 }
 
+// GovConfig contains the gov config part of genesis.
+//
 //nolint:tagliatelle
-type govConfig struct {
+type GovConfig struct {
 	MinDeposit   sdk.Coins     `json:"min_deposit"`
 	VotingPeriod time.Duration `json:"voting_period"`
 }
 
+// CustomParamsConfig contains the custom params used to generate genesis.
+//
 //nolint:tagliatelle
-type customParamsConfig struct {
+type CustomParamsConfig struct {
 	MinSelfDelegation sdkmath.Int `json:"min_self_delegation"`
 }
 
+// GenesisValidator defines the validator to be added to the genesis.
+//
 //nolint:tagliatelle
-type genesisValidator struct {
+type GenesisValidator struct {
 	DelegatorMnemonic string                `json:"delegator_mnemonic"`
 	PubKey            cometbftcrypto.PubKey `json:"pub_key"`
 	ValidatorName     string                `json:"validator_name"`
-}
-
-// GenesisConfigFromNetworkProvider creates a new config from the network provider. We should drop usage of
-// the network provider after we stop support for cored v3 binraries, and initialize GenesisInitConfig directly.
-func GenesisConfigFromNetworkProvider(n config.NetworkConfigProvider) GenesisInitConfig {
-	dnp := n.(config.DynamicConfigProvider)
-	minDeposit, ok := sdk.NewIntFromString(dnp.GovConfig.ProposalConfig.MinDepositAmount)
-	if !ok {
-		panic("unable to prase mint deposit amount")
-	}
-	var bankBalances []banktypes.Balance
-	for _, fa := range dnp.FundedAccounts {
-		bankBalances = append(bankBalances, banktypes.Balance{
-			Address: fa.Address,
-			Coins:   fa.Balances,
-		})
-	}
-
-	return GenesisInitConfig{
-		ChainID:      dnp.ChainID,
-		Denom:        dnp.Denom,
-		DisplayDenom: "devcore",
-		GenesisTime:  dnp.GenesisTime.UTC(),
-		GovConfig: govConfig{
-			MinDeposit: sdk.NewCoins(
-				sdk.NewCoin(dnp.Denom, minDeposit)),
-			VotingPeriod: 20 * time.Second,
-		},
-		CustomParamsConfig: customParamsConfig{
-			MinSelfDelegation: dnp.CustomParamsConfig.Staking.MinSelfDelegation,
-		},
-		BankBalances: bankBalances,
-	}
 }
 
 // New creates new cored app.
@@ -149,33 +111,9 @@ func New(cfg Config) Cored {
 
 	valPrivateKey := cbfted25519.GenPrivKey()
 	if cfg.IsValidator {
-		valPublicKey := valPrivateKey.PubKey()
-
-		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
-		must.OK(err)
-
-		minimumSelfDelegation := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), 20_000_000_000) // 20k core
-
-		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).
-			WithChainID(string(cfg.NetworkConfig.ChainID()))
-
-		// leave 10% for slashing and commission
-		stake := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), int64(float64(cfg.StakerBalance)*0.9))
-
-		createValidatorTx, err := prepareTxStakingCreateValidator(
-			cfg.NetworkConfig.ChainID(),
-			clientCtx.TxConfig(),
-			cosmosed25519.PubKey{Key: valPublicKey.Bytes()},
-			stakerPrivKey,
-			stake,
-			minimumSelfDelegation.Amount,
-		)
-		must.OK(err)
-		networkProvider := cfg.NetworkConfig.Provider.(config.DynamicConfigProvider)
-		cfg.NetworkConfig.Provider = networkProvider.WithGenesisTx(createValidatorTx)
-		cfg.GenesisInitConfig.Validators = append(cfg.GenesisInitConfig.Validators, genesisValidator{
+		cfg.GenesisInitConfig.Validators = append(cfg.GenesisInitConfig.Validators, GenesisValidator{
 			DelegatorMnemonic: cfg.StakerMnemonic,
-			PubKey:            valPublicKey,
+			PubKey:            valPrivateKey.PubKey(),
 			ValidatorName:     NodeID(nodePublicKey),
 		})
 	}
@@ -188,70 +126,6 @@ func New(cfg Config) Cored {
 		mu:                  &sync.RWMutex{},
 		importedMnemonics:   cfg.ImportedMnemonics,
 	}
-}
-
-// prepareTxStakingCreateValidator generates transaction of type MsgCreateValidator.
-func prepareTxStakingCreateValidator(
-	chainID constant.ChainID,
-	txConfig cosmosclient.TxConfig,
-	validatorPublicKey cosmosed25519.PubKey,
-	stakerPrivateKey cosmossecp256k1.PrivKey,
-	stakedBalance sdk.Coin,
-	selfDelegation sdkmath.Int,
-) ([]byte, error) {
-	// the passphrase here is the trick to import the private key into the keyring
-	const passphrase = "tmp"
-
-	commission := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
-	}
-
-	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
-	msg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(stakerAddress),
-		&validatorPublicKey,
-		stakedBalance,
-		stakingtypes.Description{Moniker: stakerAddress.String()},
-		commission,
-		selfDelegation,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
-	}
-
-	if err := msg.ValidateBasic(); err != nil {
-		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
-	}
-
-	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
-
-	armor := crypto.EncryptArmorPrivKey(&stakerPrivateKey, passphrase, string(hd.Secp256k1Type))
-	if err := inMemKeyring.ImportPrivKey(stakerAddress.String(), armor, passphrase); err != nil {
-		return nil, errors.Wrap(err, "not able to import private key into new in memory keyring")
-	}
-
-	txf := tx.Factory{}.
-		WithChainID(string(chainID)).
-		WithKeybase(inMemKeyring).
-		WithTxConfig(txConfig)
-
-	txBuilder, err := txf.BuildUnsignedTx(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := tx.Sign(txf, stakerAddress.String(), txBuilder, true); err != nil {
-		return nil, err
-	}
-
-	txBytes, err := txConfig.TxJSONEncoder()(txBuilder.GetTx())
-	if err != nil {
-		return nil, err
-	}
-
-	return txBytes, nil
 }
 
 // Cored represents cored.
@@ -301,7 +175,7 @@ func (c Cored) ClientContext() client.Context {
 	must.OK(err)
 
 	return client.NewContext(client.DefaultContextConfig(), mm).
-		WithChainID(string(c.config.NetworkConfig.ChainID())).
+		WithChainID(string(c.config.GenesisInitConfig.ChainID)).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient)
 }
@@ -310,7 +184,7 @@ func (c Cored) ClientContext() client.Context {
 func (c Cored) TxFactory(clientCtx client.Context) tx.Factory {
 	return tx.Factory{}.
 		WithKeybase(clientCtx.Keyring()).
-		WithChainID(string(c.config.NetworkConfig.ChainID())).
+		WithChainID(string(c.config.GenesisInitConfig.ChainID)).
 		WithTxConfig(clientCtx.TxConfig())
 }
 
@@ -332,7 +206,7 @@ func (c Cored) Deployment() infra.Deployment {
 			return []infra.EnvVar{
 				{
 					Name:  "DAEMON_HOME",
-					Value: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID())),
+					Value: filepath.Join(targets.AppHomeDir, string(c.config.GenesisInitConfig.ChainID)),
 				},
 				{
 					Name:  "DAEMON_NAME",
@@ -347,19 +221,21 @@ func (c Cored) Deployment() infra.Deployment {
 		Volumes: []infra.Volume{
 			{
 				Source:      filepath.Join(c.config.HomeDir, "config"),
-				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "config"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.GenesisInitConfig.ChainID), "config"),
 			},
 			{
 				Source:      filepath.Join(c.config.HomeDir, "data"),
-				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "data"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.GenesisInitConfig.ChainID), "data"),
 			},
 			{
-				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "genesis"),
-				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "cosmovisor", "genesis"),
+				Source: filepath.Join(c.config.HomeDir, "cosmovisor", "genesis"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.GenesisInitConfig.ChainID), "cosmovisor",
+					"genesis"),
 			},
 			{
-				Source:      filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades"),
-				Destination: filepath.Join(targets.AppHomeDir, string(c.config.NetworkConfig.ChainID()), "cosmovisor", "upgrades"),
+				Source: filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades"),
+				Destination: filepath.Join(targets.AppHomeDir, string(c.config.GenesisInitConfig.ChainID), "cosmovisor",
+					"upgrades"),
 			},
 			{
 				Source:      filepath.Join(c.config.HomeDir, covdataDirName),
@@ -378,8 +254,8 @@ func (c Cored) Deployment() infra.Deployment {
 				"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPCWeb),
 				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
 				"--inv-check-period", "1",
-				"--chain-id", string(c.config.NetworkConfig.ChainID()),
-				"--minimum-gas-prices", fmt.Sprintf("0.000000000000000001%s", c.config.NetworkConfig.Denom()),
+				"--chain-id", string(c.config.GenesisInitConfig.ChainID),
+				"--minimum-gas-prices", fmt.Sprintf("0.000000000000000001%s", c.config.GenesisInitConfig.Denom),
 				"--wasm.memory_cache_size", "100",
 				"--wasm.query_gas_limit", "3000000",
 			}
@@ -533,7 +409,7 @@ fi
 exec "` +
 		c.config.BinDir +
 		`/cored" --chain-id "` +
-		string(c.config.NetworkConfig.ChainID()) +
+		string(c.config.GenesisInitConfig.ChainID) +
 		`" --home "` +
 		filepath.Dir(c.config.HomeDir) +
 		`" "$@" $OPTS
@@ -551,13 +427,6 @@ func newBasicManager() module.BasicManager {
 
 // SaveGenesis saves json encoded representation of the genesis config into file.
 func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
-	// If genesis template is empty we will use the new method of genesis creation and
-	// use cored binary to create genesis. Otherwise we will use the legacy method and
-	// use template files.
-	if c.config.NetworkConfig.Provider.(config.DynamicConfigProvider).GenesisTemplate != "" {
-		return c.SaveLegacyGenesis(homeDir)
-	}
-
 	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
 		return errors.Wrap(err, "unable to make config directory")
 	}
@@ -585,50 +454,6 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 		ctx,
 		exec.Command(c.binaryPath(), fullArgs...),
 	)
-}
-
-// SaveLegacyGenesis saves json encoded representation of the genesis config into file, using templates.
-func (c Cored) SaveLegacyGenesis(homeDir string) error {
-	genDocBytes, err := c.config.NetworkConfig.EncodeGenesis()
-	if err != nil {
-		return err
-	}
-
-	if strings.HasPrefix(c.config.BinaryVersion, "v1") || strings.HasPrefix(c.config.BinaryVersion, "v2") {
-		genDocBytes = applyPatchToV3Genesis(genDocBytes)
-	}
-
-	if err := os.MkdirAll(homeDir+"/config", 0o700); err != nil {
-		return errors.Wrap(err, "unable to make config directory")
-	}
-
-	err = os.WriteFile(homeDir+"/config/genesis.json", genDocBytes, 0644)
-	return errors.Wrap(err, "unable to write genesis bytes to file")
-}
-
-// This is temporary solution to make both v1 & v2 & v3 cored version work.
-// Since cosmos SDK changed structure of genesis file, we need to apply some patches to v3 (sdk v47)
-// to make it compatible with v2 (sdk v45) binary.
-func applyPatchToV3Genesis(originalGenDocBytes []byte) []byte {
-	// Deleting "send_enabled" from "bank"
-	modifiedGenDocStr, _ := sjson.Delete(string(originalGenDocBytes), "app_state.bank.send_enabled")
-
-	// Iterating over "denom_metadata" in "bank"
-	denomMetadataCount := gjson.Get(modifiedGenDocStr, "app_state.bank.denom_metadata.#").Int()
-	for i := 0; i < int(denomMetadataCount); i++ {
-		// Removing "uri" and "uri_hash" fields
-		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.bank.denom_metadata.%d.uri", i))
-		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.bank.denom_metadata.%d.uri_hash", i))
-	}
-
-	// Iterating over "gen_txs" in "genutil"
-	genTxsCount := gjson.Get(modifiedGenDocStr, "app_state.genutil.gen_txs.#").Int()
-	for i := 0; i < int(genTxsCount); i++ {
-		// Deleting "tip" from "auth_info" in each "gen_txs" item
-		modifiedGenDocStr, _ = sjson.Delete(modifiedGenDocStr, fmt.Sprintf("app_state.genutil.gen_txs.%d.auth_info.tip", i))
-	}
-
-	return []byte(modifiedGenDocStr)
 }
 
 func copyFile(src, dst string, perm os.FileMode) error {

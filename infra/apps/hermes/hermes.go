@@ -124,8 +124,8 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 	}
 
 	chainIDs := map[string]struct{}{
-		h.config.PeeredChain.AppConfig().ChainID:                {},
-		string(h.config.Cored.Config().NetworkConfig.ChainID()): {}, //nolint:staticcheck
+		h.config.PeeredChain.AppConfig().ChainID:                  {},
+		string(h.config.Cored.Config().GenesisInitConfig.ChainID): {},
 	}
 
 	for _, metricItem := range metricFamily.GetMetric() {
@@ -207,14 +207,14 @@ func (h Hermes) saveConfigFile() error {
 	}{
 		TelemetryPort: h.config.TelemetryPort,
 
-		CoreumChanID: string(h.config.Cored.Config().NetworkConfig.ChainID()), //nolint:staticcheck
+		CoreumChanID: string(h.config.Cored.Config().GenesisInitConfig.ChainID),
 		CoreumRPCURL: infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
 		CoreumGRPCURL: infra.JoinNetAddr(
 			"http",
 			h.config.Cored.Info().HostFromContainer,
 			h.config.Cored.Config().Ports.GRPC,
 		),
-		CoreumAccountPrefix: h.config.Cored.Config().NetworkConfig.Provider.GetAddressPrefix(), //nolint:staticcheck
+		CoreumAccountPrefix: h.config.Cored.Config().GenesisInitConfig.AddressPrefix,
 		CoreumGasPrice:      lo.Must1(sdk.ParseDecCoin(h.config.Cored.Config().GasPriceStr)),
 
 		PeerChanID: h.config.PeeredChain.AppConfig().ChainID,
@@ -265,7 +265,7 @@ func (h Hermes) saveRunScriptFile() error {
 	}{
 		HomePath: targets.AppHomeDir,
 
-		CoreumChanID:          string(h.config.Cored.Config().NetworkConfig.ChainID()), //nolint:staticcheck
+		CoreumChanID:          string(h.config.Cored.Config().GenesisInitConfig.ChainID),
 		CoreumRelayerMnemonic: h.config.CoreumRelayerMnemonic,
 		CoreumRPCURL: infra.JoinNetAddr(
 			"http",

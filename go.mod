@@ -19,8 +19,6 @@ require (
 	github.com/rubblelabs/ripple v0.0.0-20240109131116-f99dee0aa0f3
 	github.com/samber/lo v1.38.1
 	github.com/spf13/cobra v1.7.0
-	github.com/tidwall/gjson v1.16.0
-	github.com/tidwall/sjson v1.2.5
 	go.uber.org/zap v1.23.0
 	google.golang.org/grpc v1.60.1
 )
@@ -171,8 +169,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/zondax/hid v0.9.2 // indirect
 	github.com/zondax/ledger-go v0.14.3 // indirect

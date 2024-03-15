@@ -19,7 +19,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
-	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
@@ -114,15 +113,8 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		return err
 	}
 
-	genesisTemplate := coredVersionToGenesisTemplate(config.CoredVersion)
-
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := cored.NetworkConfig(genesisTemplate, config.TimeoutCommit)
-	if err != nil {
-		return err
-	}
-	networkConfig.SetSDKConfig()
-	appF := apps.NewFactory(config, spec, networkConfig)
+	appF := apps.NewFactory(config, spec)
 	appSet, _, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
 		return err
@@ -180,15 +172,8 @@ func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 		}
 	}
 
-	genesisTemplate := coredVersionToGenesisTemplate(config.CoredVersion)
-
 	target := targets.NewDocker(config, spec)
-	networkConfig, err := cored.NetworkConfig(genesisTemplate, config.TimeoutCommit)
-	if err != nil {
-		return err
-	}
-	networkConfig.SetSDKConfig()
-	appF := apps.NewFactory(config, spec, networkConfig)
+	appF := apps.NewFactory(config, spec)
 	appSet, coredApp, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
 		return err
@@ -314,17 +299,4 @@ func shellConfig(envName string) (string, string, error) {
 		promptVar = promptVarFn(envName)
 	}
 	return shell, promptVar, nil
-}
-
-func coredVersionToGenesisTemplate(coredVersion string) string {
-	switch coredVersion {
-	case "v3.0.2", "": // FIXME: remove "" case once new genesis generation mechanism is fixed
-		return coreumconfig.GenesisV3Template
-	case "v2.0.2":
-		return coreumconfig.GenesisV2Template
-	case "v1.0.0":
-		return coreumconfig.GenesisV1Template
-	default:
-		return ""
-	}
 }

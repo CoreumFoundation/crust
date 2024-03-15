@@ -2,10 +2,10 @@ package cored
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 )
 
 const (
@@ -93,11 +93,10 @@ type Wallet struct {
 }
 
 // NewFundedWallet creates wallet and funds all predefined accounts.
-func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfig) {
+func NewFundedWallet(genesisConfig GenesisInitConfig) (*Wallet, GenesisInitConfig) {
 	// distribute the remaining after stakers amount among Alice, Bob, Faucet, etc
 	namedMnemonicsBalance :=
 		(desiredTotalSupply - stakerBalance*int64(len(stakerMnemonics))) / int64(len(namedMnemonicsList))
-	networkProvider := network.Provider.(config.DynamicConfigProvider)
 
 	w := &Wallet{
 		// We have integration tests adding new validators with min self delegation,
@@ -114,23 +113,24 @@ func NewFundedWallet(network config.NetworkConfig) (*Wallet, config.NetworkConfi
 	for _, mnemonic := range w.namedMnemonics {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
-		networkProvider = networkProvider.WithAccount(
-			sdk.AccAddress(privKey.PubKey().Address()),
-			sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.namedMnemonicsBalance)),
-		)
+
+		genesisConfig.BankBalances = append(genesisConfig.BankBalances, banktypes.Balance{
+			Address: sdk.AccAddress(privKey.PubKey().Address()).String(),
+			Coins:   sdk.NewCoins(sdk.NewInt64Coin(genesisConfig.Denom, w.namedMnemonicsBalance)),
+		})
 	}
 
 	for _, mnemonic := range w.stakerMnemonics {
 		privKey, err := PrivateKeyFromMnemonic(mnemonic)
 		must.OK(err)
-		networkProvider = networkProvider.WithAccount(
-			sdk.AccAddress(privKey.PubKey().Address()),
-			sdk.NewCoins(sdk.NewInt64Coin(network.Denom(), w.stakerBalance)),
-		)
+
+		genesisConfig.BankBalances = append(genesisConfig.BankBalances, banktypes.Balance{
+			Address: sdk.AccAddress(privKey.PubKey().Address()).String(),
+			Coins:   sdk.NewCoins(sdk.NewInt64Coin(genesisConfig.Denom, w.stakerBalance)),
+		})
 	}
 
-	network.Provider = networkProvider
-	return w, network
+	return w, genesisConfig
 }
 
 // GetStakersMnemonicsCount returns length of stakerMnemonics.
