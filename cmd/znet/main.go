@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -74,6 +75,10 @@ func startCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdF
 		Use:   "start",
 		Short: "Starts environment",
 		RunE: cmdF.Cmd(func() error {
+			if err := apps.ValidateProfiles(configF.Profiles); err != nil {
+				return err
+			}
+
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
 			return znet.Start(ctx, config, spec)
@@ -116,17 +121,10 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		Use:   "test",
 		Short: "Runs integration tests for all repos",
 		RunE: cmdF.Cmd(func() error {
-			if lo.Some(
-				configF.TestGroups,
-				[]string{apps.TestGroupCoreumIBC, apps.TestGroupCoreumUpgrade},
-			) || len(configF.TestGroups) == 0 {
-				configF.Profiles = []string{apps.ProfileIntegrationTestsIBC}
-			} else {
-				configF.Profiles = []string{apps.ProfileIntegrationTestsModules}
+			for _, tg := range configF.TestGroups {
+				configF.Profiles = append(configF.Profiles, testing.TestGroups[tg].RequiredProfiles...)
 			}
-			if lo.Contains(configF.TestGroups, apps.TestGroupFaucet) {
-				configF.Profiles = append(configF.Profiles, apps.ProfileFaucet)
-			}
+
 			spec := infra.NewSpec(configF)
 			config := znet.NewConfig(configF, spec)
 			return znet.Test(ctx, config, spec)
@@ -180,10 +178,12 @@ func coverageConvertCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF 
 }
 
 func addTestGroupFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
+	testGroups := lo.Keys(testing.TestGroups)
+	sort.Strings(testGroups)
 	cmd.Flags().StringSliceVar(
 		&configF.TestGroups,
 		"test-groups",
-		testing.TestGroups,
+		testGroups,
 		"Test groups in supported repositories to run integration test for,empty means all repositories all test groups ,e.g. --test-groups=faucet,coreum-modules or --test-groups=faucet --test-groups=coreum-modules", //nolint:lll // we don't care about this description
 	)
 }
