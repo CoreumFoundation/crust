@@ -2,11 +2,9 @@ package testing
 
 import (
 	"context"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -24,35 +22,39 @@ import (
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
 
-// FIXME (wojtek): Simplify it to contain only one path once everything is migrated.
-var testBinaries = map[string][]string{
-	apps.TestGroupCoreumModules: {
-		"coreum/bin/.cache/integration-tests/coreum-modules",
-		"crust/bin/.cache/integration-tests/coreum-modules",
-	},
-	apps.TestGroupCoreumUpgrade: {
-		"coreum/bin/.cache/integration-tests/coreum-upgrade",
-		"crust/bin/.cache/integration-tests/coreum-upgrade",
-	},
-	apps.TestGroupCoreumIBC: {
-		"coreum/bin/.cache/integration-tests/coreum-ibc",
-		"crust/bin/.cache/integration-tests/coreum-ibc",
-	},
-	apps.TestGroupFaucet: {
-		"faucet/bin/.cache/integration-tests/faucet",
-		"crust/bin/.cache/integration-tests/faucet",
-	},
+// TestGroup constant values.
+const (
+	TestGroupCoreumModules = "coreum-modules"
+	TestGroupCoreumUpgrade = "coreum-upgrade"
+	TestGroupCoreumIBC     = "coreum-ibc"
+	TestGroupFaucet        = "faucet"
+)
+
+// TestGroup describes test group.
+type TestGroup struct {
+	Binary           string
+	RequiredProfiles []string
 }
 
 // TestGroups is the list of available test groups.
-var TestGroups = func() []string {
-	testGroups := make([]string, 0, len(testBinaries))
-	for tg := range testBinaries {
-		testGroups = append(testGroups, tg)
-	}
-	sort.Strings(testGroups)
-	return testGroups
-}()
+var TestGroups = map[string]TestGroup{
+	TestGroupCoreumModules: {
+		Binary:           "coreum/bin/.cache/integration-tests/coreum-modules",
+		RequiredProfiles: []string{apps.Profile3Cored},
+	},
+	TestGroupCoreumUpgrade: {
+		Binary:           "coreum/bin/.cache/integration-tests/coreum-upgrade",
+		RequiredProfiles: []string{apps.Profile3Cored, apps.ProfileIBC},
+	},
+	TestGroupCoreumIBC: {
+		Binary:           "coreum/bin/.cache/integration-tests/coreum-ibc",
+		RequiredProfiles: []string{apps.Profile3Cored, apps.ProfileIBC},
+	},
+	TestGroupFaucet: {
+		Binary:           "faucet/bin/.cache/integration-tests/faucet",
+		RequiredProfiles: []string{apps.Profile1Cored, apps.ProfileFaucet},
+	},
+}
 
 // Run deploys testing environment and runs tests there.
 //
@@ -65,7 +67,7 @@ func Run(
 	config infra.Config,
 ) error {
 	for _, tg := range config.TestGroups {
-		if _, exists := testBinaries[tg]; !exists {
+		if _, exists := TestGroups[tg]; !exists {
 			return errors.Errorf("test group %q does not exist", tg)
 		}
 	}
@@ -93,7 +95,7 @@ func Run(
 		// length leads to extra space getting allocated.
 		fullArgs := append([]string{}, args...)
 		switch tg {
-		case apps.TestGroupCoreumModules, apps.TestGroupCoreumUpgrade, apps.TestGroupCoreumIBC:
+		case TestGroupCoreumModules, TestGroupCoreumUpgrade, TestGroupCoreumIBC:
 			fullArgs = append(fullArgs,
 				"-run-unsafe=true",
 				"-coreum-funding-mnemonic", coredApp.Config().FundingMnemonic,
@@ -106,7 +108,7 @@ func Run(
 				}
 			}
 
-			if tg == apps.TestGroupCoreumIBC {
+			if tg == TestGroupCoreumIBC {
 				fullArgs = append(
 					fullArgs,
 					"-coreum-rpc-address",
@@ -137,7 +139,7 @@ func Run(
 					"-osmosis-funding-mnemonic", osmosisApp.AppConfig().FundingMnemonic,
 				)
 			}
-		case apps.TestGroupFaucet:
+		case TestGroupFaucet:
 			faucetApp := appSet.FindRunningAppByName(string(faucet.AppType))
 			if faucetApp == nil {
 				return errors.New("no running faucet app found")
@@ -148,20 +150,7 @@ func Run(
 			)
 		}
 
-		var binPath string
-	loop:
-		for _, path := range testBinaries[tg] {
-			path = filepath.Join(config.RootDir, path)
-			_, err := os.Stat(path)
-			switch {
-			case err == nil:
-				binPath = path
-				break loop
-			case os.IsNotExist(err):
-			default:
-				return errors.Wrapf(err, "cannot find binary for test group %q", tg)
-			}
-		}
+		binPath := filepath.Join(config.RootDir, TestGroups[tg].Binary)
 
 		log := log.With(zap.String("binary", binPath), zap.Strings("args", fullArgs))
 		log.Info("Running tests")

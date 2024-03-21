@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
@@ -17,14 +18,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps/hermes"
 	"github.com/CoreumFoundation/crust/infra/apps/osmosis"
 	"github.com/CoreumFoundation/crust/infra/apps/xrpl"
-)
-
-// TestGroup constant values.
-const (
-	TestGroupCoreumModules = "coreum-modules"
-	TestGroupCoreumUpgrade = "coreum-upgrade"
-	TestGroupCoreumIBC     = "coreum-ibc"
-	TestGroupFaucet        = "faucet"
 )
 
 // AppPrefix constants are the prefixes used in the app factories.
@@ -39,18 +32,16 @@ const (
 
 // Predefined Profiles.
 const (
-	Profile1Cored                  = "1cored"
-	Profile3Cored                  = "3cored"
-	Profile5Cored                  = "5cored"
-	ProfileDevNet                  = "devnet"
-	ProfileIBC                     = "ibc"
-	ProfileFaucet                  = "faucet"
-	ProfileExplorer                = "explorer"
-	ProfileMonitoring              = "monitoring"
-	ProfileXRPL                    = "xrpl"
-	ProfileXRPLBridge              = "bridge-xrpl"
-	ProfileIntegrationTestsIBC     = "integration-tests-ibc"
-	ProfileIntegrationTestsModules = "integration-tests-modules"
+	Profile1Cored     = "1cored"
+	Profile3Cored     = "3cored"
+	Profile5Cored     = "5cored"
+	ProfileDevNet     = "devnet"
+	ProfileIBC        = "ibc"
+	ProfileFaucet     = "faucet"
+	ProfileExplorer   = "explorer"
+	ProfileMonitoring = "monitoring"
+	ProfileXRPL       = "xrpl"
+	ProfileXRPLBridge = "bridge-xrpl"
 )
 
 var profiles = []string{
@@ -64,8 +55,6 @@ var profiles = []string{
 	ProfileMonitoring,
 	ProfileXRPL,
 	ProfileXRPLBridge,
-	ProfileIntegrationTestsIBC,
-	ProfileIntegrationTestsModules,
 }
 
 var defaultProfiles = []string{Profile1Cored}
@@ -88,40 +77,59 @@ func DefaultProfiles() []string {
 	return defaultProfiles
 }
 
+// ValidateProfiles verifies that profie set is correct.
+func ValidateProfiles(profiles []string) error {
+	pMap := map[string]bool{}
+	coredProfilePresent := false
+	for _, p := range profiles {
+		if _, ok := availableProfiles[p]; !ok {
+			return errors.Errorf("profile %s does not exist", p)
+		}
+		if p == Profile1Cored || p == Profile3Cored || p == Profile5Cored || p == ProfileDevNet {
+			if coredProfilePresent {
+				return errors.Errorf("profiles 1cored, 3cored, 5cored and devnet are mutually exclusive")
+			}
+			coredProfilePresent = true
+		}
+		pMap[p] = true
+	}
+
+	return nil
+}
+
+// MergeProfiles removes redundant profiles from the list.
+func MergeProfiles(pMap map[string]bool) map[string]bool {
+	switch {
+	case pMap[ProfileDevNet]:
+		delete(pMap, Profile1Cored)
+		delete(pMap, Profile3Cored)
+		delete(pMap, Profile5Cored)
+	case pMap[Profile5Cored]:
+		delete(pMap, Profile1Cored)
+		delete(pMap, Profile3Cored)
+	case pMap[Profile3Cored]:
+		delete(pMap, Profile1Cored)
+	}
+
+	return pMap
+}
+
 // BuildAppSet builds the application set to deploy based on provided profiles.
-//
-//nolint:funlen
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, cored.Cored, error) {
-	pMap, err := checkProfiles(profiles)
-	if err != nil {
-		return nil, cored.Cored{}, err
-	}
+	pMap := lo.SliceToMap(profiles, func(profile string) (string, bool) {
+		return profile, true
+	})
 
-	if pMap[ProfileIntegrationTestsIBC] || pMap[ProfileIntegrationTestsModules] {
-		if pMap[Profile1Cored] {
-			return nil, cored.Cored{}, errors.Errorf(
-				"profile 1cored can't be used together with integration-tests as it requires 3cored, 5cored or devnet",
-			)
-		}
-		if !pMap[Profile5Cored] && !pMap[ProfileDevNet] {
-			pMap[Profile3Cored] = true
-		}
-	}
-
-	if pMap[ProfileIntegrationTestsIBC] {
-		pMap[ProfileIBC] = true
-	}
-
-	coredNeeded := pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileXRPLBridge] || pMap[ProfileExplorer] ||
-		pMap[ProfileMonitoring]
-	coredPresent := pMap[Profile1Cored] || pMap[Profile3Cored] || pMap[Profile5Cored] || pMap[ProfileDevNet]
-	if coredNeeded && !coredPresent {
+	if pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileXRPLBridge] || pMap[ProfileExplorer] ||
+		pMap[ProfileMonitoring] {
 		pMap[Profile1Cored] = true
 	}
 
 	if pMap[ProfileXRPLBridge] {
 		pMap[ProfileXRPL] = true
 	}
+
+	MergeProfiles(pMap)
 
 	validatorCount, sentryCount, seedCount, fullCount := decideNumOfCoredNodes(pMap)
 
@@ -239,23 +247,4 @@ func decideNumOfCoredNodes(pMap map[string]bool) (validatorCount, sentryCount, s
 	default:
 		panic("no cored profile specified.")
 	}
-}
-
-func checkProfiles(profiles []string) (map[string]bool, error) {
-	pMap := map[string]bool{}
-	coredProfilePresent := false
-	for _, p := range profiles {
-		if _, ok := availableProfiles[p]; !ok {
-			return nil, errors.Errorf("profile %s does not exist", p)
-		}
-		if p == Profile1Cored || p == Profile3Cored || p == Profile5Cored {
-			if coredProfilePresent {
-				return nil, errors.Errorf("profiles 1cored, 3cored and 5cored are mutually exclusive")
-			}
-			coredProfilePresent = true
-		}
-		pMap[p] = true
-	}
-
-	return pMap, nil
 }
