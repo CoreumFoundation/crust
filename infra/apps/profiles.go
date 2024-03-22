@@ -143,6 +143,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 				MinSelfDelegation: sdkmath.NewInt(20_000_000_000),
 			},
 			BankBalances: []banktypes.Balance{
+				// Faucet's account
 				{
 					Address: "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
 					Coins:   sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))),
