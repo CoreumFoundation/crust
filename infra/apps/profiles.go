@@ -115,6 +115,8 @@ func MergeProfiles(pMap map[string]bool) map[string]bool {
 }
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
+//
+//nolint:funlen
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, cored.Cored, error) {
 	pMap := lo.SliceToMap(profiles, func(profile string) (string, bool) {
 		return profile, true
