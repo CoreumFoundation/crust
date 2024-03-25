@@ -1,9 +1,15 @@
 package apps
 
 import (
+	"time"
+
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -109,6 +115,8 @@ func MergeProfiles(pMap map[string]bool) map[string]bool {
 }
 
 // BuildAppSet builds the application set to deploy based on provided profiles.
+//
+//nolint:funlen
 func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, cored.Cored, error) {
 	pMap := lo.SliceToMap(profiles, func(profile string) (string, bool) {
 		return profile, true
@@ -131,6 +139,27 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	var appSet infra.AppSet
 
 	coredApp, coredNodes, err := appF.CoredNetwork(
+		cored.GenesisInitConfig{
+			ChainID:       constant.ChainIDDev,
+			Denom:         constant.DenomDev,
+			DisplayDenom:  constant.DenomDevDisplay,
+			AddressPrefix: constant.AddressPrefixDev,
+			GenesisTime:   time.Now(),
+			GovConfig: cored.GovConfig{
+				MinDeposit:   sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 4000000000)),
+				VotingPeriod: 4 * time.Hour,
+			},
+			CustomParamsConfig: cored.CustomParamsConfig{
+				MinSelfDelegation: sdkmath.NewInt(20_000_000_000),
+			},
+			BankBalances: []banktypes.Balance{
+				// Faucet's account
+				{
+					Address: "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
+					Coins:   sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))),
+				},
+			},
+		},
 		AppPrefixCored,
 		cored.DefaultPorts,
 		validatorCount, sentryCount, seedCount, fullCount,

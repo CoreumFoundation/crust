@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v4/pkg/config"
+	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/bigdipper"
@@ -27,32 +28,39 @@ import (
 )
 
 // NewFactory creates new app factory.
-func NewFactory(config infra.Config, spec *infra.Spec, networkConfig config.NetworkConfig) *Factory {
+func NewFactory(config infra.Config, spec *infra.Spec) *Factory {
 	return &Factory{
-		config:        config,
-		spec:          spec,
-		networkConfig: networkConfig,
+		config: config,
+		spec:   spec,
 	}
 }
 
 // Factory produces apps from config.
 type Factory struct {
-	config        infra.Config
-	spec          *infra.Spec
-	networkConfig config.NetworkConfig
+	config infra.Config
+	spec   *infra.Spec
 }
 
 // CoredNetwork creates new network of cored nodes.
 //
 //nolint:funlen // breaking down this function will make it less readable.
 func (f *Factory) CoredNetwork(
+	genesisConfig cored.GenesisInitConfig,
 	namePrefix string,
 	firstPorts cored.Ports,
 	validatorCount, sentryCount, seedCount, fullCount int,
 	binaryVersion string,
 ) (cored.Cored, []cored.Cored, error) {
-	wallet, networkConfig := cored.NewFundedWallet(f.networkConfig)
-	genesisConfig := cored.GenesisConfigFromNetworkProvider(networkConfig.Provider)
+	config := sdk.GetConfig()
+	addressPrefix := genesisConfig.AddressPrefix
+
+	// Set address & public key prefixes
+	config.SetBech32PrefixForAccount(addressPrefix, addressPrefix+"pub")
+	config.SetBech32PrefixForValidator(addressPrefix+"valoper", addressPrefix+"valoperpub")
+	config.SetBech32PrefixForConsensusNode(addressPrefix+"valcons", addressPrefix+"valconspub")
+	config.SetCoinType(constant.CoinType)
+
+	wallet, genesisConfig := cored.NewFundedWallet(genesisConfig)
 
 	if validatorCount > wallet.GetStakersMnemonicsCount() {
 		return cored.Cored{}, nil, errors.Errorf(
@@ -88,10 +96,9 @@ func (f *Factory) CoredNetwork(
 
 		node := cored.New(cored.Config{
 			Name:              name,
-			HomeDir:           filepath.Join(f.config.AppDir, name, string(networkConfig.ChainID())),
+			HomeDir:           filepath.Join(f.config.AppDir, name, string(genesisConfig.ChainID)),
 			BinDir:            filepath.Join(f.config.RootDir, "coreum", "bin"),
 			WrapperDir:        f.config.WrapperDir,
-			NetworkConfig:     &networkConfig,
 			GenesisInitConfig: &genesisConfig,
 			AppInfo:           f.spec.DescribeApp(cored.AppType, name),
 			Ports: cored.Ports{
@@ -155,7 +162,6 @@ func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 	return faucet.New(faucet.Config{
 		Name:           name,
 		HomeDir:        filepath.Join(f.config.AppDir, name),
-		ChainID:        f.networkConfig.Provider.GetChainID(),
 		AppInfo:        f.spec.DescribeApp(faucet.AppType, name),
 		Port:           faucet.DefaultPort,
 		MonitoringPort: faucet.DefaultMonitoringPort,

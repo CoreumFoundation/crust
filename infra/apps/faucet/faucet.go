@@ -13,7 +13,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -34,7 +33,6 @@ const (
 type Config struct {
 	Name           string
 	HomeDir        string
-	ChainID        constant.ChainID
 	AppInfo        *infra.AppInfo
 	Port           int
 	MonitoringPort int
@@ -119,7 +117,7 @@ func (f Faucet) Deployment() infra.Deployment {
 			return []string{
 				"--address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.Port),
 				"--monitoring-address", infra.JoinNetAddrIP("", net.IPv4zero, f.config.MonitoringPort),
-				"--chain-id", string(f.config.ChainID),
+				"--chain-id", string(f.config.Cored.Config().GenesisInitConfig.ChainID),
 				"--key-path-mnemonic", filepath.Join(targets.AppHomeDir, "mnemonic-key"),
 				"--node", infra.JoinNetAddr("", f.config.Cored.Info().HostFromContainer, f.config.Cored.Config().Ports.GRPC),
 			}
