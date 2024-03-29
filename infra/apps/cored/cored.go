@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
-	_ "embed"
 	"fmt"
 	"io"
 	"net"
