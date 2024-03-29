@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
+	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
@@ -61,6 +62,18 @@ func (f *Factory) CoredNetwork(
 	config.SetCoinType(constant.CoinType)
 
 	wallet, genesisConfig := cored.NewFundedWallet(genesisConfig)
+	networkConfig, err := cored.NetworkConfig(coreumconfig.GenesisV3Template, f.spec.TimeoutCommit)
+	if err != nil {
+		return cored.Cored{}, nil, err
+	}
+	provider := networkConfig.Provider.(coreumconfig.DynamicConfigProvider)
+	for _, balance := range genesisConfig.BankBalances {
+		provider.FundedAccounts = append(provider.FundedAccounts, coreumconfig.FundedAccount{
+			Address:  balance.Address,
+			Balances: balance.Coins,
+		})
+	}
+	networkConfig.Provider = provider
 
 	if validatorCount > wallet.GetStakersMnemonicsCount() {
 		return cored.Cored{}, nil, errors.Errorf(
@@ -99,6 +112,7 @@ func (f *Factory) CoredNetwork(
 			HomeDir:           filepath.Join(f.config.AppDir, name, string(genesisConfig.ChainID)),
 			BinDir:            filepath.Join(f.config.RootDir, "coreum", "bin"),
 			WrapperDir:        f.config.WrapperDir,
+			NetworkConfig:     &networkConfig,
 			GenesisInitConfig: &genesisConfig,
 			AppInfo:           f.spec.DescribeApp(cored.AppType, name),
 			Ports: cored.Ports{
