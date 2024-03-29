@@ -147,7 +147,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 			GenesisTime:   time.Now(),
 			GovConfig: cored.GovConfig{
 				MinDeposit:   sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 4000000000)),
-				VotingPeriod: 4 * time.Hour,
+				VotingPeriod: 20 * time.Second,
 			},
 			CustomParamsConfig: cored.CustomParamsConfig{
 				MinSelfDelegation: sdkmath.NewInt(20_000_000_000),
