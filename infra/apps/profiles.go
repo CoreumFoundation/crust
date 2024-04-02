@@ -146,11 +146,11 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 			AddressPrefix: constant.AddressPrefixDev,
 			GenesisTime:   time.Now(),
 			GovConfig: cored.GovConfig{
-				MinDeposit:   sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 4000000000)),
+				MinDeposit:   sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 1000)),
 				VotingPeriod: 20 * time.Second,
 			},
 			CustomParamsConfig: cored.CustomParamsConfig{
-				MinSelfDelegation: sdkmath.NewInt(20_000_000_000),
+				MinSelfDelegation: sdkmath.NewInt(10_000_000),
 			},
 			BankBalances: []banktypes.Balance{
 				// Faucet's account
