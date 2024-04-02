@@ -349,7 +349,11 @@ func (c Cored) Deployment() infra.Deployment {
 	return deployment
 }
 
-func (c Cored) binaryPath() string {
+func (c Cored) localBinaryPath() string {
+	return filepath.Join(c.config.BinDir, "cored")
+}
+
+func (c Cored) dockerBinaryPath() string {
 	// the path is defined by the build
 	dockerLinuxBinaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
 	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
@@ -407,7 +411,7 @@ func (c Cored) prepare(ctx context.Context) error {
 	// the path is defined by the build
 	dockerLinuxBinaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
 	if err := copyFile(
-		c.binaryPath(),
+		c.dockerBinaryPath(),
 		filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored"),
 		0o755); err != nil {
 		return err
@@ -487,7 +491,6 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 		return err
 	}
 
-	// FIXME: This doesn't work on macs because cored is built for linux/docker.
 	fullArgs := []string{
 		"generate-genesis",
 		"--output-path", genesisFile,
@@ -497,7 +500,7 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 
 	return libexec.Exec(
 		ctx,
-		exec.Command(c.binaryPath(), fullArgs...),
+		exec.Command(c.localBinaryPath(), fullArgs...),
 	)
 }
 
