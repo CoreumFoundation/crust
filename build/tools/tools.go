@@ -54,6 +54,10 @@ const (
 	WASMOpt               Name = "wasm-opt"
 )
 
+func init() {
+	AddTools(tools...)
+}
+
 var tools = []Tool{
 	// https://go.dev/dl/
 	BinaryTool{
@@ -466,13 +470,14 @@ var tools = []Tool{
 // Name is the type used for defining tool names.
 type Name string
 
-var toolsMap = func(tools []Tool) map[Name]Tool {
-	res := make(map[Name]Tool, len(tools))
+var toolsMap = map[Name]Tool{}
+
+// AddTools add tools to the toolset.
+func AddTools(tools ...Tool) {
 	for _, tool := range tools {
-		res[tool.GetName()] = tool
+		toolsMap[tool.GetName()] = tool
 	}
-	return res
-}(tools)
+}
 
 // OS constants.
 const (
