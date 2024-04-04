@@ -188,7 +188,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 func RunTests(ctx context.Context, deps build.DepsFunc, config TestConfig) error {
 	deps(EnsureGo)
 
-	args := []string{"test", toLocalGoPkgPath(config.PackagePath)}
+	args := []string{"test", toLocalGoPkgPath(config.PackagePath), "-v"}
 	args = append(args, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
