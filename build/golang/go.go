@@ -49,8 +49,8 @@ type BinaryBuildConfig struct {
 	Envs []string
 }
 
-// TestBuildConfig is the configuration for `go test -c`.
-type TestBuildConfig struct {
+// TestConfig is the configuration for `go test -c`.
+type TestConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
@@ -184,22 +184,22 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	return nil
 }
 
-// BuildTests builds tests.
-func BuildTests(ctx context.Context, deps build.DepsFunc, config TestBuildConfig) error {
+// RunTests run tests.
+func RunTests(ctx context.Context, deps build.DepsFunc, config TestConfig) error {
 	deps(EnsureGo)
 
-	args := []string{"test", toLocalGoPkgPath(config.PackagePath), "-c"}
+	args := []string{"test", toLocalGoPkgPath(config.PackagePath)}
 	args = append(args, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 
 	logger.Get(ctx).Info(
-		"Building go tests locally",
+		"Running go tests",
 		zap.String("package", config.PackagePath),
 		zap.String("command", cmd.String()),
 	)
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return errors.Wrapf(err, "building go tests '%s' failed", config.PackagePath)
+		return errors.Wrapf(err, "go tests '%s' failed", config.PackagePath)
 	}
 	return nil
 }
