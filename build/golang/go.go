@@ -97,6 +97,7 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
+	cmd.Dir = config.PackagePath
 	cmd.Env = envs
 
 	logger.Get(ctx).Info(
@@ -133,7 +134,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	workDir := filepath.Clean(dockerRepoDir)
+	workDir := filepath.Clean(filepath.Join(dockerRepoDir, config.PackagePath))
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
