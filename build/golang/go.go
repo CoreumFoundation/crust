@@ -93,7 +93,6 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	if err != nil {
 		return err
 	}
-	args = append(args, toLocalGoPkgPath(config.PackagePath))
 	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
@@ -142,7 +141,6 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err != nil {
 		return err
 	}
-	args = append(args, toLocalGoPkgPath(config.PackagePath))
 	runArgs := []string{
 		"run", "--rm",
 		"--label", docker.LabelKey + "=" + docker.LabelValue,
@@ -189,8 +187,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 func RunTests(ctx context.Context, deps build.DepsFunc, config TestConfig) error {
 	deps(EnsureGo)
 
-	args := []string{"test", toLocalGoPkgPath(config.PackagePath), "-v"}
-	args = append(args, config.Flags...)
+	args := append([]string{"test", "-v"}, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 
@@ -514,10 +511,4 @@ func GoPath() string {
 	}
 
 	return goPath
-}
-
-// toLocalGoPkgPath converts a path to a local go package path by prepending the "./" if needed.
-// The ./ tells the Go tool to look for the package in the local filesystem relative to the current directory.
-func toLocalGoPkgPath(path string) string {
-	return "./" + filepath.Clean(path)
 }
