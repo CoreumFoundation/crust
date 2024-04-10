@@ -39,6 +39,9 @@ type BinaryBuildConfig struct {
 	// PackagePath is the path to package to build
 	PackagePath string
 
+	// BinOutputPath is the path for compiled binary file
+	BinOutputPath string
+
 	// CGOEnabled builds cgo binary
 	CGOEnabled bool
 
@@ -93,6 +96,7 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	if err != nil {
 		return err
 	}
+	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, os.Environ()...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
@@ -170,6 +174,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
+	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
 
 	cmd := exec.Command("docker", runArgs...)
 	logger.Get(ctx).Info(
