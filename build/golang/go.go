@@ -195,6 +195,7 @@ func RunTests(ctx context.Context, deps build.DepsFunc, config TestConfig) error
 	args := append([]string{"test", "-v"}, config.Flags...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
+	cmd.Dir = config.PackagePath
 
 	logger.Get(ctx).Info(
 		"Running go tests",
