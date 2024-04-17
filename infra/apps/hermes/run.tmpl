@@ -43,11 +43,8 @@ while true; do
   sleep 3
 
   log_with_time "Clearing IBC packets"
-  hermes --config /app/.hermes/config.toml clear packets --chain coreum-devnet-1 --port transfer --channel channel-0
-  hermes --config /app/.hermes/config.toml clear packets --chain coreum-devnet-1 --port transfer --channel channel-1
-
-  hermes --config /app/.hermes/config.toml clear packets --chain coreum-devnet-1 --port transfer --channel channel-0
-  hermes --config /app/.hermes/config.toml clear packets --chain coreum-devnet-1 --port transfer --channel channel-1
+  hermes --config /app/.hermes/config.toml clear packets --chain {{ .CoreumChanID }} --port transfer --channel channel-0 || hermes --config /app/.hermes/config.toml clear packets --chain {{ .CoreumChanID }} --port transfer --channel channel-1 || true
+  hermes --config /app/.hermes/config.toml clear packets --chain {{ .PeerChanID }} --port transfer --channel channel-0 || hermes --config /app/.hermes/config.toml clear packets --chain {{ .PeerChanID }} --port transfer --channel channel-1 || true
   log_with_time "Cleared IBC packets"
 
   CURRENT_VERSION=$(curl -s {{ .CoreumRPCURL }}/abci_info\? | jq '.result.response.version')
