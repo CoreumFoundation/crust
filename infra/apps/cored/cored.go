@@ -420,7 +420,7 @@ func (c Cored) prepare(ctx context.Context) error {
 	// upgrade to binary mapping
 	upgrades := map[string]string{
 		"v4": "cored",
-		"v3": "cored-v3.0.2",
+		"v3": "cored-v3.0.3",
 	}
 	for upgrade, binary := range upgrades {
 		err := copyFile(filepath.Join(dockerLinuxBinaryPath, binary),
@@ -472,7 +472,7 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 
 	genesisFile := filepath.Join(configDir, "genesis.json")
 
-	if c.Config().BinaryVersion == "v3.0.2" {
+	if c.Config().BinaryVersion == "v3.0.3" {
 		genesisBytes, err := c.Config().NetworkConfig.EncodeGenesis()
 		if err != nil {
 			return err
