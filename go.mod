@@ -4,6 +4,8 @@ go 1.21
 
 replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
+	github.com/spf13/viper => github.com/spf13/viper v1.16.0
 	// Pin the x/exp dependency version because consmos-sdk breaking change is not compatible
 	// with cosmos-sdk v0.47.
 	// Details: https://github.com/cosmos/cosmos-sdk/issues/18415
@@ -164,12 +166,10 @@ require (
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/rs/cors v1.8.3 // indirect
 	github.com/rs/zerolog v1.32.0 // indirect
-	github.com/sagikazarmark/locafero v0.4.0 // indirect
-	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
-	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.18.1 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
