@@ -97,7 +97,12 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 		return err
 	}
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
-	envs = append(envs, os.Environ()...)
+	for _, env := range os.Environ() {
+		e := strings.ToUpper(env)
+		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") {
+			envs = append(envs, env)
+		}
+	}
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
