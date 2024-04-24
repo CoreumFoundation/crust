@@ -1,35 +1,59 @@
 # crust
+
 `crust` helps you build and run all the applications needed for development and testing.
 
 ## Prerequisites
+
 To use `crust` you need:
+
 - `go 1.18` or newer
+- `gcc`
 - `docker` (if you are installing from pacakge manager make sure that `docker-buildx` is installed.
-    for docker version >23 it must be installed separately.
-    Or you can alternatively follow the official installation guide to install docker-desktop
-    , from this [link](https://docs.docker.com/engine/install/))
+  for docker version >23 it must be installed separately.
+  Or you can alternatively follow the official installation guide to install docker-desktop
+  , from this [link](https://docs.docker.com/engine/install/))
 
 Install them manually before continuing.
 
 ## Building
-1. Clone repo to the directory of your choice (let's call it `$COREUM_PATH`):
+
+1. Clone repos to the directory of your choice (let's call it `$COREUM_PATH`):
+
 ```
 cd $COREUM_PATH
 git clone https://github.com/CoreumFoundation/crust
+git clone https://github.com/CoreumFoundation/coreum
 ```
 
-2. Not required but recommended: Add `$COREUM_PATH/crust/bin` to your `PATH` environment variable:
+If you are going to use faucet and explorer, also clone these repos:
+
 ```
-export PATH="$COREUM_PATH/crust/bin:$PATH"
+git clone https://github.com/CoreumFoundation/faucet
+git clone https://github.com/CoreumFoundation/bdjuno
+```
+
+2. Not required but recommended: Add bin directory of all projects to your `PATH` environment variable:
+
+```
+export PATH="$COREUM_PATH/crust/bin:$COREUM_PATH/coreum/bin:$COREUM_PATH/faucet/bin:$COREUM_PATH/bdjuno/bin:$PATH"
 ```
 
 3. Compile all the required binaries and docker images:
+
 ```
 $COREUM_PATH/crust/bin/crust build images
+$COREUM_PATH/coreum/bin/coreum-builder build images
 ```
 
-After the command completes you may find executable `$COREUM_PATH/crust/bin/cored`, being both blockchain node and client.
+If you are going to use faucet and explorer, also build their images:
 
+```
+$COREUM_PATH/faucet/bin/faucet-builder build images
+$COREUM_PATH/bdjuno/bin/bdjuno-builder build images
+```
+
+After the command `crust build images` completes you may find executable `$COREUM_PATH/crust/bin/cored`, being
+both blockchain node and client.
 
 ## Executing `znet`
 
@@ -69,6 +93,7 @@ Each environment is independent, you may create many of them and work with them 
 ### --profiles
 
 Defines the list of available application profiles to run. Available profiles:
+
 - `1cored` - runs one cored validator (default one)
 - `3cored` - runs three cored validators
 - `5cored` - runs five cored validators
@@ -86,9 +111,10 @@ To start fully-featured set you may run:
 ```
 $ crust znet start --profiles=3cored,faucet,explorer,monitoring
 ```
+
 **NOTE**: Notice from here on out, if you already have a znet env started with a set profiles,
 and you want to start znet with a different set of profiles, you need to remove previous znet env
-with `crust znet remove` and only then you can start the new env. 
+with `crust znet remove` and only then you can start the new env.
 
 ### --cored-version
 
@@ -97,7 +123,8 @@ The `--cored-version` allows to start the `znet` with any previously released ve
 ```
 $ crust znet start --cored-version=v1.0.0 --profiles=3cored,faucet,explorer,monitoring
 ```
-**NOTE**: if you already have a znet env started with different profiles, you need to remove it 
+
+**NOTE**: if you already have a znet env started with different profiles, you need to remove it
 with `crust znet remove` so you can start a new environment.
 
 Also, it's possible to execute tests with any previously released version.
@@ -112,6 +139,7 @@ In the environment some wrapper scripts for `znet` are generated automatically t
 Each such `<command>` calls `crust znet <command>`.
 
 Available commands are:
+
 - `start` - starts applications
 - `stop` - stops applications
 - `remove` - stops applications and removes all the resources used by the environment
@@ -162,7 +190,8 @@ it is possible to use `logs` wrapper to tail logs from an application:
 
 ## Playing with the blockchain manually
 
-For each `cored` instance started by `znet` wrapper script named after the name of the node is created, so you may call the client manually.
+For each `cored` instance started by `znet` wrapper script named after the name of the node is created, so you may call
+the client manually.
 There are also three standard keys: `alice`, `bob` and `charlie` added to the keystore of each instance.
 
 If you start `znet` using default `--profiles=1cored` there is one `cored` application called `cored-00-val`.
@@ -173,9 +202,11 @@ To use the client you may use `cored-00-val` wrapper:
 ```
 
 Generate a wallet to transfer funds to
+
 ```
 (znet) [znet] $ cored-00-val keys add {YOUR_WALLET_NAME}
 ```
+
 Take the address the out put of the command above, you will use it in the next commands.
 
 ```
@@ -207,14 +238,15 @@ $ crust znet
 
 After tests complete environment is still running so if something went wrong you may inspect it manually.
 
-
 ## Hard reset
 
 If you want to manually remove all the data created by `znet` do this:
+
 - use `docker ps -a`, `docker stop <container-id>` and `docker rm <container-id>` to delete related running containers
 - run `rm -rf ~/.cache/crust/znet` to remove all the files created by `znet`
 
 ## Monitoring
 
-If you use the `monitoring` profile to start the `znet` you can open `http://localhost:3001` to access the Grafana UI (`admin`/`admin` credentials). 
+If you use the `monitoring` profile to start the `znet` you can open `http://localhost:3001` to access the Grafana
+UI (`admin`/`admin` credentials).
 Or use `http://localhost:9092` to access the prometheus UI.
