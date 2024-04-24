@@ -4,3 +4,4 @@
 /coverage
 vendor
 *.iml
+.DS_Store
