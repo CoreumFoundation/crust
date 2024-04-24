@@ -52,8 +52,8 @@ $COREUM_PATH/faucet/bin/faucet-builder build images
 $COREUM_PATH/bdjuno/bin/bdjuno-builder build images
 ```
 
-After the command completes you may find executable `$COREUM_PATH/crust/bin/cored`, being both blockchain node and
-client.
+After the command `crust build images` completes you may find executable `$COREUM_PATH/crust/bin/cored`, being
+both blockchain node and client.
 
 ## Executing `znet`
 
