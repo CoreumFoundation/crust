@@ -4,6 +4,11 @@ module github.com/CoreumFoundation/crust/build
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
 go 1.21
 
+// Pin the x/exp dependency version because consmos-sdk breaking change is not compatible
+// with cosmos-sdk v0.47.
+// Details: https://github.com/cosmos/cosmos-sdk/issues/18415
+replace golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
+
 require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
