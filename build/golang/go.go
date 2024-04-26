@@ -61,6 +61,10 @@ type TestConfig struct {
 	Flags []string
 }
 
+// env gets environment variables set in the system excluding Go env vars that
+// causes conflict with the build tools used by crust. For example having
+// the GOROOT and GOPATH that point to another version of Go, build binaries
+// with incompatible Go version that fails to run properly
 func env() []string {
 	osEnv := os.Environ()
 	envVars := make([]string, 0, len(osEnv))
