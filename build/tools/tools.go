@@ -38,9 +38,7 @@ const (
 	Gaia                  Name = "gaia"
 	Osmosis               Name = "osmosis"
 	Hermes                Name = "hermes"
-	CoredV100             Name = "cored-v1.0.0"
-	CoredV202             Name = "cored-v2.0.2"
-	CoredV302             Name = "cored-v3.0.2"
+	CoredV303             Name = "cored-v3.0.3"
 	Buf                   Name = "buf"
 	Protoc                Name = "protoc"
 	ProtocGenDoc          Name = "protoc-gen-doc"
@@ -258,61 +256,21 @@ var tools = []Tool{
 
 	// https://github.com/CoreumFoundation/coreum/releases
 	BinaryTool{
-		Name:    CoredV100,
-		Version: "v1.0.0",
+		Name:    CoredV303,
+		Version: "v3.0.3",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-amd64",
-				Hash: "sha256:34098ad7586bda364b1b2e7c4569cbcefb630cd4ed7c8f68eb5bced834082c57",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.3/cored-linux-amd64",
+				Hash: "sha256:1719a32e6f8e8813d00cd86e1d8d02e893324d4f59fa7a1b8cedc5836140ecef",
 				Binaries: map[string]string{
-					"bin/cored-v1.0.0": "cored-linux-amd64",
+					"bin/cored-v3.0.3": "cored-linux-amd64",
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v1.0.0/cored-linux-arm64",
-				Hash: "sha256:3ced97f06607f0cdaf77e7ff0b36b2011d101c660684e4f3e54c2ac6bf344dd6",
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.3/cored-linux-arm64",
+				Hash: "sha256:cfbbad6803c0327407e4dd222a108505e6ff9e294d7c86e34b6b895b96b61bbd",
 				Binaries: map[string]string{
-					"bin/cored-v1.0.0": "cored-linux-arm64",
-				},
-			},
-		},
-	},
-	BinaryTool{
-		Name:    CoredV202,
-		Version: "v2.0.2",
-		Sources: Sources{
-			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-amd64",
-				Hash: "sha256:3facf55f7ff795719f68b9bcf76ea08262bc7c9e9cd735c660257ba73678250e",
-				Binaries: map[string]string{
-					"bin/cored-v2.0.2": "cored-linux-amd64",
-				},
-			},
-			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v2.0.2/cored-linux-arm64",
-				Hash: "sha256:35e261eb3b87c833c30174e6b8667a6155f5962441275d443157e209bbb0bf0d",
-				Binaries: map[string]string{
-					"bin/cored-v2.0.2": "cored-linux-arm64",
-				},
-			},
-		},
-	},
-	BinaryTool{
-		Name:    CoredV302,
-		Version: "v3.0.2",
-		Sources: Sources{
-			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.2/cored-linux-amd64",
-				Hash: "sha256:dca84c3e4655d390fe0bb48d3b7162095734cdee864fb8296b49c4a82b1f4837",
-				Binaries: map[string]string{
-					"bin/cored-v3.0.2": "cored-linux-amd64",
-				},
-			},
-			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.2/cored-linux-arm64",
-				Hash: "sha256:d098609a40ea9abdc30031ddbbb823360dcfcd5bb0468b491957c8149486ad45",
-				Binaries: map[string]string{
-					"bin/cored-v3.0.2": "cored-linux-arm64",
+					"bin/cored-v3.0.3": "cored-linux-arm64",
 				},
 			},
 		},
