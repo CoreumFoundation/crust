@@ -61,6 +61,22 @@ type TestConfig struct {
 	Flags []string
 }
 
+// env gets environment variables set in the system excluding Go env vars that
+// causes conflict with the build tools used by crust. For example having
+// the GOROOT and GOPATH that point to another version of Go, build binaries
+// with incompatible Go version that fails to run properly.
+func env() []string {
+	osEnv := os.Environ()
+	envVars := make([]string, 0, len(osEnv))
+	for _, envVar := range osEnv {
+		e := strings.ToUpper(envVar)
+		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") {
+			envVars = append(envVars, envVar)
+		}
+	}
+	return envVars
+}
+
 // EnsureGo ensures that go is available.
 func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
 	return tools.Ensure(ctx, tools.Go, tools.TargetPlatformLocal)
@@ -97,12 +113,7 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 		return err
 	}
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
-	for _, env := range os.Environ() {
-		e := strings.ToUpper(env)
-		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") {
-			envs = append(envs, env)
-		}
-	}
+	envs = append(envs, env()...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
@@ -201,6 +212,7 @@ func RunTests(ctx context.Context, deps build.DepsFunc, config TestConfig) error
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
+	cmd.Env = env()
 
 	logger.Get(ctx).Info(
 		"Running go tests",
@@ -333,6 +345,7 @@ func Generate(ctx context.Context, path string, deps build.DepsFunc) error {
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "generate", "./...")
 	cmd.Dir = path
+	cmd.Env = env()
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "generation failed in package '%s'", path)
 	}
@@ -387,6 +400,7 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 			"./...",
 		)
 		cmd.Dir = path
+		cmd.Env = env()
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "unit tests failed in module '%s'", path)
 		}
@@ -403,6 +417,7 @@ func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 
 		cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "mod", "tidy")
 		cmd.Dir = path
+		cmd.Env = env()
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "'go mod tidy' failed in module '%s'", path)
 		}
@@ -419,6 +434,7 @@ func DownloadDependencies(ctx context.Context, repoPath string, deps build.DepsF
 
 		cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "mod", "download")
 		cmd.Dir = path
+		cmd.Env = env()
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "'go mod download' failed in module '%s'", path)
 		}
@@ -470,6 +486,7 @@ func ModuleDirs(
 		append([]string{"list", "-m", "-json"}, modules...)...)
 	cmd.Stdout = out
 	cmd.Dir = repoPath
+	cmd.Env = env()
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return nil, err

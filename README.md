@@ -55,6 +55,10 @@ $COREUM_PATH/bdjuno/bin/bdjuno-builder build images
 After the command `crust build images` completes you may find executable `$COREUM_PATH/crust/bin/cored`, being
 both blockchain node and client.
 
+_Note: You need to run respective builder `build images` after you modify that project.
+For example if you do a modification in coreum project, you need to run `coreum-builder build images`._
+
+
 ## Executing `znet`
 
 `znet` is the tool used to spin up development environment running the same components which are used in production.
