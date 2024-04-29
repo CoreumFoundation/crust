@@ -133,11 +133,12 @@ var tools = []Tool{
 
 	// http://musl.cc/#binaries
 	BinaryTool{
-		Name:    Aarch64LinuxMuslCross,
+		Name: Aarch64LinuxMuslCross,
+		// update GCP bin source when update the version
 		Version: "11.2.1",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "http://musl.cc/aarch64-linux-musl-cross.tgz",
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/aarch64-linux-musl-cross/11.2.1/aarch64-linux-musl-cross.tgz", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:c909817856d6ceda86aa510894fa3527eac7989f0ef6e87b5721c58737a06c38",
 			},
 		},
@@ -391,19 +392,20 @@ var tools = []Tool{
 
 	// https://rust-lang.github.io/rustup/installation/other.html
 	BinaryTool{
-		Name:    RustUpInit,
+		Name: RustUpInit,
+		// update GCP bin source when update the version
 		Version: "1.27.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/x86_64-unknown-linux-gnu-rustup-init", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:a3d541a5484c8fa2f1c21478a6f6c505a778d473c21d60a18a4df5185d320ef8",
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/x86_64-apple-darwin-rustup-init", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:02a2d8501a567bfd43e8e0ee18ba7af0c09c84997ae7510e0f620c46293f32e0",
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://static.rust-lang.org/rustup/dist/aarch64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/aarch64-apple-darwin-rustup-init", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:c30c180297a0053dcb8932ed43d365f0c9005abd847375f7ed5799a761ea81e5",
 			},
 		},
