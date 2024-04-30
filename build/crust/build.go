@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
 	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/gaia"
@@ -54,17 +52,12 @@ func Lint(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Lint(ctx, repoPath, deps)
 }
 
-// LintCurrentDir lints current dir.
-func LintCurrentDir(ctx context.Context, deps build.DepsFunc) error {
-	path := os.Getenv("SOURCE_DIR")
-	if path == "" {
-		return errors.New("can't get current dir for linting")
-	}
-
-	return golang.Lint(ctx, path, deps)
-}
-
 // Test run unit tests in crust repo.
 func Test(ctx context.Context, deps build.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
+}
+
+// DownloadDependencies downloads go dependencies.
+func DownloadDependencies(ctx context.Context, deps build.DepsFunc) error {
+	return golang.DownloadDependencies(ctx, repoPath, deps)
 }
