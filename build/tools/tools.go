@@ -397,15 +397,15 @@ var tools = []Tool{
 		Version: "1.27.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/x86_64-unknown-linux-gnu-rustup-init", //nolint:lll // breaking down urls is not beneficial
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/x86_64-unknown-linux-gnu/rustup-init", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:a3d541a5484c8fa2f1c21478a6f6c505a778d473c21d60a18a4df5185d320ef8",
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/x86_64-apple-darwin-rustup-init", //nolint:lll // breaking down urls is not beneficial
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/x86_64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:02a2d8501a567bfd43e8e0ee18ba7af0c09c84997ae7510e0f620c46293f32e0",
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/aarch64-apple-darwin-rustup-init", //nolint:lll // breaking down urls is not beneficial
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/aarch64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
 				Hash: "sha256:c30c180297a0053dcb8932ed43d365f0c9005abd847375f7ed5799a761ea81e5",
 			},
 		},
