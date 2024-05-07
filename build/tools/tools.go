@@ -416,7 +416,7 @@ var tools = []Tool{
 
 	// https://releases.rs
 	RustInstaller{
-		Version: "1.74.0",
+		Version: "1.78.0",
 	},
 
 	// https://crates.io/crates/wasm-opt
