@@ -394,19 +394,19 @@ var tools = []Tool{
 	BinaryTool{
 		Name: RustUpInit,
 		// update GCP bin source when update the version
-		Version: "1.27.0",
+		Version: "1.27.1",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/x86_64-unknown-linux-gnu/rustup-init", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:a3d541a5484c8fa2f1c21478a6f6c505a778d473c21d60a18a4df5185d320ef8",
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.1/x86_64-unknown-linux-gnu/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:6aeece6993e902708983b209d04c0d1dbb14ebb405ddb87def578d41f920f56d",
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/x86_64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:02a2d8501a567bfd43e8e0ee18ba7af0c09c84997ae7510e0f620c46293f32e0",
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.1/x86_64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:f547d77c32d50d82b8228899b936bf2b3c72ce0a70fb3b364e7fba8891eba781",
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.0/aarch64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:c30c180297a0053dcb8932ed43d365f0c9005abd847375f7ed5799a761ea81e5",
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/rustup-init/1.27.1/aarch64-apple-darwin/rustup-init", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:760b18611021deee1a859c345d17200e0087d47f68dfe58278c57abe3a0d3dd0",
 			},
 		},
 		Binaries: map[string]string{
