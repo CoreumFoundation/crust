@@ -1,18 +1,23 @@
 package cored
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	_ "embed"
 	"fmt"
 	"io"
+	mathrand "math/rand"
 	"net"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -47,8 +52,18 @@ import (
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
-// AppType is the type of cored application.
-const AppType infra.AppType = "cored"
+var (
+	//go:embed run.tmpl
+	scriptTmpl        string
+	runScriptTemplate = template.Must(template.New("").Parse(scriptTmpl))
+)
+
+const (
+	// AppType is the type of cored application.
+	AppType infra.AppType = "cored"
+
+	dockerEntrypoint = "run.sh"
+)
 
 // Config stores cored app config.
 type Config struct {
@@ -231,10 +246,9 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 //nolint:funlen
 func (c Cored) Deployment() infra.Deployment {
 	deployment := infra.Deployment{
-		RunAsUser: true,
-		Image:     "cored:znet",
-		Name:      c.Name(),
-		Info:      c.config.AppInfo,
+		Image: "cored:znet",
+		Name:  c.Name(),
+		Info:  c.config.AppInfo,
 		EnvVarsFunc: func() []infra.EnvVar {
 			return []infra.EnvVar{
 				{
@@ -269,6 +283,10 @@ func (c Cored) Deployment() infra.Deployment {
 				Source: filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades"),
 				Destination: filepath.Join(targets.AppHomeDir, string(c.config.GenesisInitConfig.ChainID), "cosmovisor",
 					"upgrades"),
+			},
+			{
+				Source:      filepath.Join(c.config.HomeDir, "run.sh"),
+				Destination: filepath.Join(targets.AppHomeDir, "run.sh"),
 			},
 			{
 				Source:      filepath.Join(c.config.HomeDir, covdataDirName),
@@ -324,6 +342,7 @@ func (c Cored) Deployment() infra.Deployment {
 
 			return args
 		},
+		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
 		Ports:       infra.PortsToMap(c.config.Ports),
 		PrepareFunc: c.prepare,
 		ConfigureFunc: func(ctx context.Context, deployment infra.DeploymentInfo) error {
@@ -430,36 +449,7 @@ func (c Cored) prepare(ctx context.Context) error {
 		}
 	}
 
-	return nil
-}
-
-func (c Cored) saveClientWrapper(wrapperDir, hostname string) error {
-	client := `#!/bin/bash
-OPTS=""
-if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
-	OPTS="$OPTS --node ""` + infra.JoinNetAddr("tcp", hostname, c.config.Ports.RPC) + `"""
-fi
-if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
-	OPTS="$OPTS --keyring-backend ""test"""
-fi
-
-exec "` +
-		c.config.BinDir +
-		`/cored" --chain-id "` +
-		string(c.config.GenesisInitConfig.ChainID) +
-		`" --home "` +
-		filepath.Dir(c.config.HomeDir) +
-		`" "$@" $OPTS
-`
-	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
-}
-
-func newBasicManager() module.BasicManager {
-	return module.NewBasicManager(
-		auth.AppModuleBasic{},
-		bank.AppModuleBasic{},
-		staking.AppModuleBasic{},
-	)
+	return c.saveRunScriptFile()
 }
 
 // SaveGenesis saves json encoded representation of the genesis config into file.
@@ -501,6 +491,59 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 	return libexec.Exec(
 		ctx,
 		exec.Command(c.localBinaryPath(), fullArgs...),
+	)
+}
+
+func (c Cored) saveClientWrapper(wrapperDir, hostname string) error {
+	client := `#!/bin/bash
+OPTS=""
+if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
+	OPTS="$OPTS --node ""` + infra.JoinNetAddr("tcp", hostname, c.config.Ports.RPC) + `"""
+fi
+if [ "$1" == "tx" ] || [ "$1" == "keys" ]; then
+	OPTS="$OPTS --keyring-backend ""test"""
+fi
+
+exec "` +
+		c.config.BinDir +
+		`/cored" --chain-id "` +
+		string(c.config.GenesisInitConfig.ChainID) +
+		`" --home "` +
+		filepath.Dir(c.config.HomeDir) +
+		`" "$@" $OPTS
+`
+	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
+}
+
+func (c Cored) saveRunScriptFile() error {
+	scriptArgs := struct {
+		UserID  int
+		GroupID int
+		Latency time.Duration
+	}{
+		UserID:  os.Getuid(),
+		GroupID: os.Getgid(),
+		Latency: time.Duration(mathrand.Intn(196)+5) * time.Millisecond,
+	}
+
+	buf := &bytes.Buffer{}
+	if err := runScriptTemplate.Execute(buf, scriptArgs); err != nil {
+		return errors.WithStack(err)
+	}
+
+	err := os.WriteFile(path.Join(c.config.HomeDir, dockerEntrypoint), buf.Bytes(), 0o777)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+func newBasicManager() module.BasicManager {
+	return module.NewBasicManager(
+		auth.AppModuleBasic{},
+		bank.AppModuleBasic{},
+		staking.AppModuleBasic{},
 	)
 }
 

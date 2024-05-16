@@ -183,6 +183,7 @@ func (d *Docker) prepareRunArgs(name string, app infra.Deployment) []string {
 	runArgs := []string{
 		"run", "--name", name, "-d", "--label", labelEnv + "=" + d.config.EnvName,
 		"--label", labelApp + "=" + app.Name, "--network", d.config.EnvName,
+		"--cap-add", "NET_ADMIN",
 	}
 	if app.RunAsUser {
 		runArgs = append(runArgs, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))
