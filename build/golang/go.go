@@ -21,12 +21,12 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 const goAlpineVersion = "3.18"
@@ -78,18 +78,18 @@ func env() []string {
 }
 
 // EnsureGo ensures that go is available.
-func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
+func EnsureGo(ctx context.Context, deps types.DepsFunc) error {
 	return tools.Ensure(ctx, tools.Go, tools.TargetPlatformLocal)
 }
 
 // EnsureGolangCI ensures that go linter is available.
-func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
+func EnsureGolangCI(ctx context.Context, deps types.DepsFunc) error {
 	deps(storeLintConfig)
 	return tools.Ensure(ctx, tools.GolangCI, tools.TargetPlatformLocal)
 }
 
 // Build builds go binary.
-func Build(ctx context.Context, deps build.DepsFunc, config BinaryBuildConfig) error {
+func Build(ctx context.Context, deps types.DepsFunc, config BinaryBuildConfig) error {
 	deps(EnsureGo)
 
 	if config.TargetPlatform.BuildInDocker {
@@ -205,7 +205,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 }
 
 // RunTests run tests.
-func RunTests(ctx context.Context, deps build.DepsFunc, config TestConfig) error {
+func RunTests(ctx context.Context, deps types.DepsFunc, config TestConfig) error {
 	deps(EnsureGo)
 
 	args := append([]string{"test", "-v"}, config.Flags...)
@@ -338,7 +338,7 @@ func buildArgsAndEnvs(
 }
 
 // Generate calls `go generate` for specific package.
-func Generate(ctx context.Context, path string, deps build.DepsFunc) error {
+func Generate(ctx context.Context, path string, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	log.Info("Running go generate", zap.String("path", path))
@@ -353,7 +353,7 @@ func Generate(ctx context.Context, path string, deps build.DepsFunc) error {
 }
 
 // Test runs go tests in repository.
-func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+func Test(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 
@@ -409,7 +409,7 @@ func Test(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 }
 
 // Tidy runs go mod tidy in repository.
-func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+func Tidy(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
@@ -426,7 +426,7 @@ func Tidy(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 }
 
 // DownloadDependencies downloads all the go dependencies.
-func DownloadDependencies(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+func DownloadDependencies(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
@@ -474,7 +474,7 @@ func containsGoCode(path string) (bool, error) {
 // ModuleDirs return directories where modules are kept.
 func ModuleDirs(
 	ctx context.Context,
-	deps build.DepsFunc,
+	deps types.DepsFunc,
 	repoPath string,
 	modules ...string,
 ) (map[string]string, error) {

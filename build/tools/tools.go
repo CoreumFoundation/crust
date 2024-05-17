@@ -22,10 +22,10 @@ import (
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 // Tool names.
@@ -1022,7 +1022,7 @@ type Source struct {
 type Sources map[TargetPlatform]Source
 
 // InstallAll installs all the toolsMap.
-func InstallAll(ctx context.Context, deps build.DepsFunc) error {
+func InstallAll(ctx context.Context, deps types.DepsFunc) error {
 	if err := Ensure(ctx, Go, TargetPlatformLocal); err != nil {
 		return err
 	}
@@ -1038,42 +1038,42 @@ func InstallAll(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // EnsureBuf ensures that buf is available.
-func EnsureBuf(ctx context.Context, deps build.DepsFunc) error {
+func EnsureBuf(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, Buf, TargetPlatformLocal)
 }
 
 // EnsureProtoc ensures that protoc is available.
-func EnsureProtoc(ctx context.Context, deps build.DepsFunc) error {
+func EnsureProtoc(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, Protoc, TargetPlatformLocal)
 }
 
 // EnsureProtocGenDoc ensures that protoc-gen-doc is available.
-func EnsureProtocGenDoc(ctx context.Context, deps build.DepsFunc) error {
+func EnsureProtocGenDoc(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, ProtocGenDoc, TargetPlatformLocal)
 }
 
 // EnsureProtocGenGRPCGateway ensures that protoc-gen-grpc-gateway is available.
-func EnsureProtocGenGRPCGateway(ctx context.Context, deps build.DepsFunc) error {
+func EnsureProtocGenGRPCGateway(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, ProtocGenGRPCGateway, TargetPlatformLocal)
 }
 
 // EnsureProtocGenGoCosmos ensures that protoc-gen-gocosmos is available.
-func EnsureProtocGenGoCosmos(ctx context.Context, deps build.DepsFunc) error {
+func EnsureProtocGenGoCosmos(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, ProtocGenGoCosmos, TargetPlatformLocal)
 }
 
 // EnsureProtocGenOpenAPIV2 ensures that protoc-gen-openapiv2 is available.
-func EnsureProtocGenOpenAPIV2(ctx context.Context, deps build.DepsFunc) error {
+func EnsureProtocGenOpenAPIV2(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, ProtocGenOpenAPIV2, TargetPlatformLocal)
 }
 
 // EnsureProtocGenBufLint ensures that protoc-gen-buf-lint is available.
-func EnsureProtocGenBufLint(ctx context.Context, deps build.DepsFunc) error {
+func EnsureProtocGenBufLint(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, ProtocGenBufLint, TargetPlatformLocal)
 }
 
 // EnsureProtocGenBufBreaking ensures that protoc-gen-buf-breaking is available.
-func EnsureProtocGenBufBreaking(ctx context.Context, deps build.DepsFunc) error {
+func EnsureProtocGenBufBreaking(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, ProtocGenBufBreaking, TargetPlatformLocal)
 }
 
