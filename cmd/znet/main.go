@@ -45,9 +45,7 @@ func rootCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		SilenceErrors: true,
 		Short:         "Creates preconfigured session for environment",
 		RunE: cmdF.Cmd(func() error {
-			spec := infra.NewSpec(configF)
-			config := znet.NewConfig(configF, spec)
-			return znet.Activate(ctx, configF, config)
+			return znet.Activate(ctx, configF)
 		}),
 	}
 	logger.AddFlags(logger.ToolDefaultConfig, rootCmd.PersistentFlags())
@@ -75,13 +73,7 @@ func startCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdF
 		Use:   "start",
 		Short: "Starts environment",
 		RunE: cmdF.Cmd(func() error {
-			if err := apps.ValidateProfiles(configF.Profiles); err != nil {
-				return err
-			}
-
-			spec := infra.NewSpec(configF)
-			config := znet.NewConfig(configF, spec)
-			return znet.Start(ctx, config, spec)
+			return znet.Start(ctx, configF)
 		}),
 	}
 	addRootDirFlag(startCmd, configF)
@@ -97,9 +89,7 @@ func stopCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		Use:   "stop",
 		Short: "Stops environment",
 		RunE: cmdF.Cmd(func() error {
-			spec := infra.NewSpec(configF)
-			config := znet.NewConfig(configF, spec)
-			return znet.Stop(ctx, config, spec)
+			return znet.Stop(ctx, configF)
 		}),
 	}
 }
@@ -109,9 +99,7 @@ func removeCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cmd
 		Use:   "remove",
 		Short: "Removes environment",
 		RunE: cmdF.Cmd(func() error {
-			spec := infra.NewSpec(configF)
-			config := znet.NewConfig(configF, spec)
-			return znet.Remove(ctx, config, spec)
+			return znet.Remove(ctx, configF)
 		}),
 	}
 }
@@ -121,13 +109,7 @@ func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.CmdFa
 		Use:   "test",
 		Short: "Runs integration tests for all repos",
 		RunE: cmdF.Cmd(func() error {
-			for _, tg := range configF.TestGroups {
-				configF.Profiles = append(configF.Profiles, testing.TestGroups[tg].RequiredProfiles...)
-			}
-
-			spec := infra.NewSpec(configF)
-			config := znet.NewConfig(configF, spec)
-			return znet.Test(ctx, config, spec)
+			return znet.Test(ctx, configF)
 		}),
 	}
 	addTestGroupFlag(testCmd, configF)
@@ -154,9 +136,7 @@ func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *znet.Cm
 		Use:   "console",
 		Short: "Starts tmux console on top of running environment",
 		RunE: cmdF.Cmd(func() error {
-			spec := infra.NewSpec(configF)
-			config := znet.NewConfig(configF, spec)
-			return znet.Console(ctx, config, spec)
+			return znet.Console(ctx, configF)
 		}),
 	}
 }
@@ -166,10 +146,7 @@ func coverageConvertCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF 
 		Use:   "coverage-convert",
 		Short: "Converts codecoverage report from binary to text format and stores in folder specified by flag",
 		RunE: cmdF.Cmd(func() error {
-			spec := infra.NewSpec(configF)
-			config := znet.NewConfig(configF, spec)
-
-			return znet.CoverageConvert(ctx, config, spec)
+			return znet.CoverageConvert(ctx, configF)
 		}),
 	}
 
