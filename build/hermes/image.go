@@ -4,11 +4,11 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/config"
 	"github.com/CoreumFoundation/crust/build/docker"
 	dockerbasic "github.com/CoreumFoundation/crust/build/docker/basic"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 )
 
 // BuildDockerImage builds docker image of the ibc relayer.
-func BuildDockerImage(ctx context.Context, deps build.DepsFunc) error {
+func BuildDockerImage(ctx context.Context, deps types.DepsFunc) error {
 	if err := tools.Ensure(ctx, tools.Hermes, tools.TargetPlatformLinuxLocalArchInDocker); err != nil {
 		return err
 	}

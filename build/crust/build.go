@@ -5,19 +5,19 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/hermes"
 	"github.com/CoreumFoundation/crust/build/osmosis"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 const repoPath = "."
 
 // BuildBuilder builds building tool in the current repository.
-func BuildBuilder(ctx context.Context, deps build.DepsFunc) error {
+func BuildBuilder(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "build/cmd",
@@ -26,7 +26,7 @@ func BuildBuilder(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // BuildZNet builds znet.
-func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
+func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 	// FIXME (wojciech): Move building znet dependencies to znet
 	deps(
 		gaia.BuildDockerImage,
@@ -43,21 +43,21 @@ func BuildZNet(ctx context.Context, deps build.DepsFunc) error {
 }
 
 // Tidy runs `go mod tidy` for crust repo.
-func Tidy(ctx context.Context, deps build.DepsFunc) error {
+func Tidy(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Tidy(ctx, repoPath, deps)
 }
 
 // Lint lints crust repo.
-func Lint(ctx context.Context, deps build.DepsFunc) error {
+func Lint(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Lint(ctx, repoPath, deps)
 }
 
 // Test run unit tests in crust repo.
-func Test(ctx context.Context, deps build.DepsFunc) error {
+func Test(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Test(ctx, repoPath, deps)
 }
 
 // DownloadDependencies downloads go dependencies.
-func DownloadDependencies(ctx context.Context, deps build.DepsFunc) error {
+func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
 	return golang.DownloadDependencies(ctx, repoPath, deps)
 }

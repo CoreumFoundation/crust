@@ -6,13 +6,13 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/docker"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 // Remove removes all the resources used by crust.
-func Remove(ctx context.Context, deps build.DepsFunc) error {
+func Remove(ctx context.Context, deps types.DepsFunc) error {
 	if err := docker.Remove(ctx); err != nil {
 		return err
 	}

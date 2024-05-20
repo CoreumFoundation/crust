@@ -14,11 +14,11 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 var (
@@ -31,7 +31,7 @@ var (
 )
 
 // Lint runs linters and check that git status is clean.
-func Lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+func Lint(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 	if err := lint(ctx, repoPath, deps); err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func Lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
 	return nil
 }
 
-func lint(ctx context.Context, repoPath string, deps build.DepsFunc) error {
+func lint(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 	deps(EnsureGo, EnsureGolangCI)
 	log := logger.Get(ctx)
 	config := lintConfigPath()
@@ -160,6 +160,6 @@ func lintConfigPath() string {
 	return filepath.Join(tools.VersionedRootPath(tools.TargetPlatformLocal), "golangci.yaml")
 }
 
-func storeLintConfig(_ context.Context, _ build.DepsFunc) error {
+func storeLintConfig(_ context.Context, _ types.DepsFunc) error {
 	return errors.WithStack(os.WriteFile(lintConfigPath(), lintConfig, 0o600))
 }
