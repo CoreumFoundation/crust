@@ -28,7 +28,8 @@ const (
 
 var (
 	//go:embed run.tmpl
-	tmpl              string
+	tmpl string
+	// RunScriptTemplate is osmosis run.sh template.
 	RunScriptTemplate = *template.Must(template.New("").Parse(tmpl))
 )
 

@@ -3,7 +3,6 @@ package cosmoschain
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"fmt"
 	"net"
 	"os"

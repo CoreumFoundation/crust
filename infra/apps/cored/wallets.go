@@ -95,7 +95,8 @@ type Wallet struct {
 // NewFundedWallet creates wallet and funds all predefined accounts.
 func NewFundedWallet(genesisConfig GenesisInitConfig) (*Wallet, GenesisInitConfig) {
 	// distribute the remaining after stakers amount among Alice, Bob, Faucet, etc
-	namedMnemonicsBalance := (desiredTotalSupply - stakerBalance*int64(len(stakerMnemonics))) / int64(len(namedMnemonicsList))
+	namedMnemonicsBalance :=
+		(desiredTotalSupply - stakerBalance*int64(len(stakerMnemonics))) / int64(len(namedMnemonicsList))
 
 	w := &Wallet{
 		// We have integration tests adding new validators with min self delegation,
