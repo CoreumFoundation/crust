@@ -39,7 +39,6 @@ func KeyFromMnemonic(mnemonic string) (crypto.Key, error) {
 		HDPath,
 		hd.Secp256k1,
 	)
-
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

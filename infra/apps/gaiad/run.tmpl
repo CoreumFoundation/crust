@@ -9,6 +9,8 @@ RELAYER_MNEMONIC="{{ .RelayerMnemonic }}"
 FUNDING_MNEMONIC="{{ .FundingMnemonic }}"
 
 NODE_CONFIG_PATH="$HOME/{{ .HomeName }}/config/config.toml"
+NODE_APP_CONFIG_PATH="$HOME/{{ .HomeName }}/config/app.toml"
+GENESIS_PATH="$HOME/{{ .HomeName }}/config/genesis.json"
 
 if [ ! -f "$NODE_CONFIG_PATH" ]; then
 
@@ -18,6 +20,9 @@ if [ ! -f "$NODE_CONFIG_PATH" ]; then
 if [ "{{ .TimeoutCommit }}" != "0s" ]; then
     sed -i '/^timeout_commit/s/.*/timeout_commit="{{ .TimeoutCommit }}"/g' $NODE_CONFIG_PATH
 fi
+
+# set required min gas price
+sed -i "s/minimum-gas-prices = \"\"/minimum-gas-prices = \"0.000000000000000001uatom\"/g" $NODE_APP_CONFIG_PATH
 
 # add chain validator
 {{ .ExecName }} keys add validator $KEYRING_FLAGS
@@ -30,16 +35,19 @@ echo "relayer address: $({{ .ExecName }} keys show relayer -a $KEYRING_FLAGS)"
 echo "$FUNDING_MNEMONIC" | {{ .ExecName }} keys add funding --recover $KEYRING_FLAGS
 echo "funding address: $({{ .ExecName }} keys show funding -a $KEYRING_FLAGS)"
 
+# use uatom as default denom
+sed -i "s/\"stake\"/\"uatom\"/g" $GENESIS_PATH
+
 # fund the validator, relayer and funding accounts
-{{ .ExecName }} add-genesis-account $({{ .ExecName }} keys show validator -a $KEYRING_FLAGS) 300000000000stake
-{{ .ExecName }} add-genesis-account $({{ .ExecName }} keys show relayer -a $KEYRING_FLAGS) 200000000000stake
-{{ .ExecName }} add-genesis-account $({{ .ExecName }} keys show funding -a $KEYRING_FLAGS) 100000000000stake
+{{ .ExecName }} genesis add-genesis-account $({{ .ExecName }} keys show validator -a $KEYRING_FLAGS) 300000000000uatom
+{{ .ExecName }} genesis add-genesis-account $({{ .ExecName }} keys show relayer -a $KEYRING_FLAGS) 200000000000uatom
+{{ .ExecName }} genesis add-genesis-account $({{ .ExecName }} keys show funding -a $KEYRING_FLAGS) 100000000000uatom
 
 # create validator gentx
-{{ .ExecName }} gentx validator 100000000stake $CHAIN_ID_FLAGS $KEYRING_FLAGS
+{{ .ExecName }} genesis gentx validator 100000000uatom $CHAIN_ID_FLAGS $KEYRING_FLAGS
 
 # Add the gentx to the genesis file.
-{{ .ExecName }} collect-gentxs
+{{ .ExecName }} genesis collect-gentxs
 
 fi
 

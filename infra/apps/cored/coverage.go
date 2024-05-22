@@ -16,7 +16,7 @@ import (
 const covdataDirName = "covdatafiles"
 
 // CoverageConvert converts and stores cored coverage data in text format.
-func CoverageConvert(ctx context.Context, coredHomeDir string, dstFilePath string) error {
+func CoverageConvert(ctx context.Context, coredHomeDir, dstFilePath string) error {
 	srcCovdataDir := filepath.Join(coredHomeDir, covdataDirName)
 
 	cmd := exec.Go("tool", "covdata", "textfmt", fmt.Sprintf("-i=%s", srcCovdataDir), fmt.Sprintf("-o=%s", dstFilePath))

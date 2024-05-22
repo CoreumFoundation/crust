@@ -174,41 +174,41 @@ var tools = []Tool{
 	// Before upgrading verify in go.mod that they use the same version of IBC
 	BinaryTool{
 		Name:    Gaia,
-		Version: "v13.0.2",
+		Version: "v16.0.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v13.0.2/gaiad-v13.0.2-linux-amd64",
-				Hash: "sha256:729a55b29857fedfe1271f26e1fdf2cb12d2c6515c2ad0d9bbe432a81ae43df8",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-linux-amd64",
+				Hash: "sha256:5440dcc28d101e7ad7421048e3339891b7ee7a8f576e6639f05f2fdbee5feda2",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v13.0.2-linux-amd64",
+					"bin/gaiad": "gaiad-v16.0.0-linux-amd64",
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v13.0.2/gaiad-v13.0.2-linux-arm64",
-				Hash: "sha256:9bfbe0d5212fa3cdabe34b75b42e1420f50fe8aff64ec9247dcbc5942969e333",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-linux-arm64",
+				Hash: "sha256:2d190c6ca37a45940af4c6f2a0d901b7fdc210a5896b77d728160c2753ee13bd",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v13.0.2-linux-arm64",
+					"bin/gaiad": "gaiad-v16.0.0-linux-arm64",
 				},
 			},
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v13.0.2/gaiad-v13.0.2-linux-amd64",
-				Hash: "sha256:729a55b29857fedfe1271f26e1fdf2cb12d2c6515c2ad0d9bbe432a81ae43df8",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-linux-amd64",
+				Hash: "sha256:5440dcc28d101e7ad7421048e3339891b7ee7a8f576e6639f05f2fdbee5feda2",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v13.0.2-linux-amd64",
+					"bin/gaiad": "gaiad-v16.0.0-linux-amd64",
 				},
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v13.0.2/gaiad-v13.0.2-darwin-amd64",
-				Hash: "sha256:910b515369b0cfa8eecc54f2f930fd5de2634b7106825b62f4c4c563fe2a6a07",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-darwin-amd64",
+				Hash: "sha256:e2c8fe39907c788007d878ca55b61ac9d52f354a795e580ff29dfd5c48de90b5",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v13.0.2-darwin-amd64",
+					"bin/gaiad": "gaiad-v16.0.0-darwin-amd64",
 				},
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v13.0.2/gaiad-v13.0.2-darwin-arm64",
-				Hash: "sha256:5a148b56bec7d9ef23d21778725eedb9bc70eaa6a61155b22947216812a17369",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-darwin-arm64",
+				Hash: "sha256:90805a7e0c595b1c0c8417716e797e7a06676aa8b6110d5ed4e0021469255f2e",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v13.0.2-darwin-arm64",
+					"bin/gaiad": "gaiad-v16.0.0-darwin-arm64",
 				},
 			},
 		},
@@ -217,20 +217,20 @@ var tools = []Tool{
 	// https://github.com/osmosis-labs/osmosis/releases
 	BinaryTool{
 		Name:    Osmosis,
-		Version: "20.2.1",
+		Version: "25.0.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v20.2.1/osmosisd-20.2.1-linux-amd64",
-				Hash: "sha256:4e60a870861ca17819fbcb49fff981b5731ec1121d7cbab43987c5f04ff099fa",
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v25.0.0/osmosisd-25.0.0-linux-amd64",
+				Hash: "sha256:842e23399e7e074a500f79b70edcd8131679b577aed7fe0dfd5803104f6245b7",
 				Binaries: map[string]string{
-					"bin/osmosisd": "osmosisd-20.2.1-linux-amd64",
+					"bin/osmosisd": "osmosisd-25.0.0-linux-amd64",
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v20.2.1/osmosisd-20.2.1-linux-arm64",
-				Hash: "sha256:4e7fe2cc369a9eef28a8083414c2d7e0a8cb5eb5b75e913ded06ee457dff62bb",
+				URL:  "https://github.com/osmosis-labs/osmosis/releases/download/v25.0.0/osmosisd-25.0.0-linux-arm64",
+				Hash: "sha256:fa8bbddc5f2d0af80c29f6a5499f7adb27b221f20338fecdde2df803807a6508",
 				Binaries: map[string]string{
-					"bin/osmosisd": "osmosisd-20.2.1-linux-arm64",
+					"bin/osmosisd": "osmosisd-25.0.0-linux-arm64",
 				},
 			},
 		},
@@ -239,15 +239,15 @@ var tools = []Tool{
 	// https://github.com/informalsystems/hermes/releases
 	BinaryTool{
 		Name:    Hermes,
-		Version: "v1.7.1",
+		Version: "v1.8.2",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.7.1/hermes-v1.7.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:10eff785eeb59f730eaa452ebc89236a6ae6aa30be47fcac95cb89682a77decc",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.8.2/hermes-v1.8.2-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:04e2bed95e59111bd1e411b9917f23486e2748652b2bc3df93f446d0a7004af1",
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.7.1/hermes-v1.7.1-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:ecbac11a1ea48ae587ddd4a7abc6a464d706fc1e2efd2f5e1441c72c7570e46a",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.8.2/hermes-v1.8.2-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:2ae06789eca2bec1f8e123af78bf415c159238b6943c71d637c121d4a69f6f0f",
 			},
 		},
 		Binaries: map[string]string{
