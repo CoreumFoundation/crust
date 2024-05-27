@@ -27,7 +27,7 @@ func BuildBuilder(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildZNet builds znet.
 func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
-	// FIXME (wojciech): Move building znet dependencies to znet
+	// FIXME (wojciech): Remove these deps once all the repos use znet programmatically
 	deps(
 		gaia.BuildDockerImage,
 		osmosis.BuildDockerImage,
