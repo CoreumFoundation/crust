@@ -1,6 +1,9 @@
 package osmosis
 
 import (
+	_ "embed"
+	"text/template"
+
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 )
@@ -20,7 +23,14 @@ const (
 	DefaultHomeName = ".osmosisd"
 
 	// DefaultGasPriceStr defines default gas price to be used inside IBC relayer.
-	DefaultGasPriceStr = "0.1stake"
+	DefaultGasPriceStr = "0.1uosmo"
+)
+
+var (
+	//go:embed run.tmpl
+	tmpl string
+	// RunScriptTemplate is osmosis run.sh template.
+	RunScriptTemplate = *template.Must(template.New("").Parse(tmpl))
 )
 
 // DefaultPorts are the default ports listens on.

@@ -3,7 +3,6 @@ package cosmoschain
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"fmt"
 	"net"
 	"os"
@@ -32,12 +31,6 @@ import (
 
 const dockerEntrypoint = "run.sh"
 
-var (
-	//go:embed run.tmpl
-	tmpl              string
-	runScriptTemplate = template.Must(template.New("").Parse(tmpl))
-)
-
 // Ports defines ports used by application.
 type Ports struct {
 	RPC     int `json:"rpc"`
@@ -49,17 +42,18 @@ type Ports struct {
 
 // AppConfig defines configuration of the application.
 type AppConfig struct {
-	Name            string
-	HomeDir         string
-	HomeName        string
-	ChainID         string
-	AppInfo         *infra.AppInfo
-	Ports           Ports
-	RelayerMnemonic string
-	FundingMnemonic string
-	TimeoutCommit   time.Duration
-	WrapperDir      string
-	GasPriceStr     string
+	Name              string
+	HomeDir           string
+	HomeName          string
+	ChainID           string
+	AppInfo           *infra.AppInfo
+	Ports             Ports
+	RelayerMnemonic   string
+	FundingMnemonic   string
+	TimeoutCommit     time.Duration
+	WrapperDir        string
+	GasPriceStr       string
+	RunScriptTemplate template.Template
 }
 
 // AppTypeConfig defines configuration of the application type.
@@ -188,7 +182,7 @@ func (ba BaseApp) prepare(_ context.Context) error {
 	}
 
 	buf := &bytes.Buffer{}
-	if err := runScriptTemplate.Execute(buf, args); err != nil {
+	if err := ba.appConfig.RunScriptTemplate.Execute(buf, args); err != nil {
 		return errors.WithStack(err)
 	}
 
