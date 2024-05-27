@@ -3,20 +3,20 @@ package build
 import (
 	"context"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/crust/build/crust"
 	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/hermes"
 	"github.com/CoreumFoundation/crust/build/osmosis"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 // Commands is a definition of commands available in build system.
-var Commands = map[string]build.Command{
-	"build":    {Fn: crust.BuildZNet, Description: "Builds znet binary"},
-	"build/me": {Fn: crust.BuildBuilder, Description: "Builds the builder"},
-	"download": {Fn: crust.DownloadDependencies, Description: "Downloads go dependencies"},
-	"images": {Fn: func(ctx context.Context, deps build.DepsFunc) error {
+var Commands = map[string]types.Command{
+	"build/me":   {Fn: crust.BuildBuilder, Description: "Builds the builder"},
+	"build/znet": {Fn: crust.BuildZNet, Description: "Builds znet binary"},
+	"download":   {Fn: crust.DownloadDependencies, Description: "Downloads go dependencies"},
+	"images": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
 			gaia.BuildDockerImage,
 			hermes.BuildDockerImage,

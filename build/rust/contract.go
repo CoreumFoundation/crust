@@ -16,16 +16,16 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/mod/sumdb/dirhash"
 
-	"github.com/CoreumFoundation/coreum-tools/pkg/build"
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/crust/build/tools"
+	"github.com/CoreumFoundation/crust/build/types"
 )
 
 // BuildSmartContract builds smart contract.
 func BuildSmartContract(
 	ctx context.Context,
-	deps build.DepsFunc,
+	deps types.DepsFunc,
 	path string,
 ) error {
 	deps(EnsureRust, EnsureWASMOpt)
@@ -74,8 +74,8 @@ func BuildSmartContract(
 }
 
 // CompileSmartContract returns function compiling smart contract.
-func CompileSmartContract(codeDirPath string) build.CommandFunc {
-	return func(ctx context.Context, deps build.DepsFunc) error {
+func CompileSmartContract(codeDirPath string) types.CommandFunc {
+	return func(ctx context.Context, deps types.DepsFunc) error {
 		log := logger.Get(ctx)
 		log.Info("Compiling WASM smart contract", zap.String("path", codeDirPath))
 

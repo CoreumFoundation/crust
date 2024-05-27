@@ -31,7 +31,10 @@ import (
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
 
 // Activate starts preconfigured shell environment.
-func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Config) error {
+func Activate(ctx context.Context, configF *infra.ConfigFactory) error {
+	spec := infra.NewSpec(configF)
+	config := NewConfig(configF, spec)
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return errors.WithStack(err)
@@ -108,7 +111,14 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory, config infra.Co
 }
 
 // Start starts environment.
-func Start(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+func Start(ctx context.Context, configF *infra.ConfigFactory) error {
+	if err := apps.ValidateProfiles(configF.Profiles); err != nil {
+		return err
+	}
+
+	spec := infra.NewSpec(configF)
+	config := NewConfig(configF, spec)
+
 	if err := spec.Verify(); err != nil {
 		return err
 	}
@@ -124,7 +134,10 @@ func Start(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 }
 
 // Stop stops environment.
-func Stop(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
+func Stop(ctx context.Context, configF *infra.ConfigFactory) (retErr error) {
+	spec := infra.NewSpec(configF)
+	config := NewConfig(configF, spec)
+
 	defer func() {
 		for _, app := range spec.Apps {
 			app.SetInfo(infra.DeploymentInfo{Status: infra.AppStatusStopped})
@@ -139,7 +152,10 @@ func Stop(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr er
 }
 
 // Remove removes environment.
-func Remove(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr error) {
+func Remove(ctx context.Context, configF *infra.ConfigFactory) (retErr error) {
+	spec := infra.NewSpec(configF)
+	config := NewConfig(configF, spec)
+
 	target := targets.NewDocker(config, spec)
 	if err := target.Remove(ctx); err != nil {
 		return err
@@ -162,7 +178,14 @@ func Remove(ctx context.Context, config infra.Config, spec *infra.Spec) (retErr 
 }
 
 // Test runs integration tests.
-func Test(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+func Test(ctx context.Context, configF *infra.ConfigFactory) error {
+	for _, tg := range configF.TestGroups {
+		configF.Profiles = append(configF.Profiles, testing.TestGroups[tg].RequiredProfiles...)
+	}
+
+	spec := infra.NewSpec(configF)
+	config := NewConfig(configF, spec)
+
 	if err := spec.Verify(); err != nil {
 		return err
 	}
@@ -189,7 +212,10 @@ func Spec(spec *infra.Spec) error {
 }
 
 // Console starts tmux session on top of running environment.
-func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+func Console(ctx context.Context, configF *infra.ConfigFactory) error {
+	spec := infra.NewSpec(configF)
+	config := NewConfig(configF, spec)
+
 	if err := tmux.Kill(ctx, config.EnvName); err != nil {
 		return err
 	}
@@ -223,7 +249,10 @@ func Console(ctx context.Context, config infra.Config, spec *infra.Spec) error {
 }
 
 // CoverageConvert converts & stores coverage from the first cored app we find.
-func CoverageConvert(ctx context.Context, config infra.Config, spec *infra.Spec) error {
+func CoverageConvert(ctx context.Context, configF *infra.ConfigFactory) error {
+	spec := infra.NewSpec(configF)
+	config := NewConfig(configF, spec)
+
 	for appName, app := range spec.Apps {
 		if app.Type() != cored.AppType {
 			continue
