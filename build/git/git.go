@@ -135,3 +135,11 @@ func Clone(ctx context.Context, dstDir, srcDir, localBranch, remoteBranch string
 
 	return libexec.Exec(ctx, cmd1, cmd2)
 }
+
+// RollbackChanges rolls back uncommitted changes made to the specified files.
+func RollbackChanges(ctx context.Context, repoPath string, files ...string) error {
+	cmd := exec.Command("git", append([]string{"checkout", "--"}, files...)...)
+	cmd.Dir = repoPath
+
+	return libexec.Exec(ctx, cmd)
+}
