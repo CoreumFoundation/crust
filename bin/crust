@@ -27,7 +27,7 @@ case "$1" in
 
    "znet")
       if [ ! -f "$REPO/bin/.cache/znet" ]; then
-        "$CRUST_BIN" build
+        "$CRUST_BIN" build/znet
       fi
 
       shift 1
