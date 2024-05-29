@@ -15,7 +15,7 @@ if [ ! -f "$CRUST_BIN" ]; then
   rm -f ./bin/.cache/crust*
 
   pushd build > /dev/null
-  go build -trimpath -o "$CRUST_BIN" ./cmd
+  go build -trimpath -o "$CRUST_BIN" ./cmd/builder
   popd > /dev/null
 
   "$CRUST_BIN" build/me
