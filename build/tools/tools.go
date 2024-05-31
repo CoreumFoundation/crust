@@ -1528,9 +1528,9 @@ func Ensure(ctx context.Context, toolName Name, platform TargetPlatform) error {
 	return tool.Ensure(ctx, platform)
 }
 
-// Version returns crust/build module version used to import this module in go.mod of the repository.
+// Version returns crust module version used to import this module in go.mod of the repository.
 func Version() string {
-	const buildModule = "github.com/CoreumFoundation/crust/build"
+	const buildModule = "github.com/CoreumFoundation/crust"
 
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -1547,7 +1547,7 @@ func Version() string {
 
 		// This happens in two cases:
 		// - building is done in crust repository
-		// - any other repository has `go.mod` modified to replace crust/build with the local source code
+		// - any other repository has `go.mod` modified to replace crust with the local source code
 		if m.Version == "(devel)" {
 			return "devel"
 		}

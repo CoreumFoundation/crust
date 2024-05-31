@@ -1,5 +1,7 @@
 module github.com/CoreumFoundation/crust
 
+// 1.21 is used here because still not all distros deliver 1.22.
+// Build tool installs newer go, but the tool itself must be built using a preexisting version.
 go 1.21
 
 replace (
@@ -14,6 +16,7 @@ replace (
 
 require (
 	cosmossdk.io/math v1.3.0
+	github.com/BurntSushi/toml v1.2.1
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
 	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f
 	github.com/CosmWasm/wasmd v0.44.0
@@ -27,7 +30,9 @@ require (
 	github.com/rubblelabs/ripple v0.0.0-20240109131116-f99dee0aa0f3
 	github.com/samber/lo v1.38.1
 	github.com/spf13/cobra v1.8.0
+	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.23.0
+	golang.org/x/mod v0.12.0
 	google.golang.org/grpc v1.62.1
 )
 
@@ -172,7 +177,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.18.2 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
