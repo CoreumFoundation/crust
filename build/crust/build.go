@@ -44,7 +44,7 @@ func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 		return errors.WithStack(err)
 	}
 	for _, item := range items {
-		if !item.Type().IsDir() && strings.HasPrefix("znet", item.Name()) {
+		if !item.Type().IsDir() && strings.HasPrefix(item.Name(), "znet") {
 			if err := os.Remove(filepath.Join(outDir, item.Name())); err != nil {
 				return errors.WithStack(err)
 			}
