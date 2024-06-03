@@ -2,8 +2,12 @@ package crust
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/gaia"
@@ -34,10 +38,23 @@ func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 		hermes.BuildDockerImage,
 	)
 
+	outDir := "bin/.cache"
+	items, err := os.ReadDir(outDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	for _, item := range items {
+		if !item.Type().IsDir() && strings.HasPrefix("znet", item.Name()) {
+			if err := os.Remove(filepath.Join(outDir, item.Name())); err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "build/cmd/znet",
-		BinOutputPath:  "bin/.cache/znet",
+		BinOutputPath:  filepath.Join(outDir, fmt.Sprintf("znet-%s", tools.Version())),
 		CGOEnabled:     true,
 	})
 }
