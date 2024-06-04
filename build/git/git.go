@@ -16,8 +16,10 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
+const repoPath = "."
+
 // HeadHash returns hash of the latest commit in the repository.
-func HeadHash(ctx context.Context, repoPath string) (string, error) {
+func HeadHash(ctx context.Context) (string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = repoPath
@@ -30,13 +32,13 @@ func HeadHash(ctx context.Context, repoPath string) (string, error) {
 
 // DirtyHeadHash returns hash of the latest commit in the repository, adding "-dirty" suffix
 // if there are uncommitted changes.
-func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
-	hash, err := HeadHash(ctx, repoPath)
+func DirtyHeadHash(ctx context.Context) (string, error) {
+	hash, err := HeadHash(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	clean, _, err := StatusClean(ctx, repoPath)
+	clean, _, err := StatusClean(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +50,7 @@ func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
 }
 
 // HeadTags returns the list of tags applied to the latest commit.
-func HeadTags(ctx context.Context, repoPath string) ([]string, error) {
+func HeadTags(ctx context.Context) ([]string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "tag", "--points-at", "HEAD")
 	cmd.Dir = repoPath
@@ -60,7 +62,7 @@ func HeadTags(ctx context.Context, repoPath string) ([]string, error) {
 }
 
 // StatusClean checks that there are no uncommitted files in the repo.
-func StatusClean(ctx context.Context, repoPath string) (bool, string, error) {
+func StatusClean(ctx context.Context) (bool, string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "status", "-s")
 	cmd.Dir = repoPath
@@ -97,8 +99,8 @@ func EnsureRepo(ctx context.Context, repoURL string) error {
 }
 
 // VersionFromTag returns version taken from tag present in the commit.
-func VersionFromTag(ctx context.Context, repoPath string) (string, error) {
-	tags, err := HeadTags(ctx, repoPath)
+func VersionFromTag(ctx context.Context) (string, error) {
+	tags, err := HeadTags(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -137,7 +139,7 @@ func Clone(ctx context.Context, dstDir, srcDir, localBranch, remoteBranch string
 }
 
 // RollbackChanges rolls back uncommitted changes made to the specified files.
-func RollbackChanges(ctx context.Context, repoPath string, files ...string) error {
+func RollbackChanges(ctx context.Context, files ...string) error {
 	cmd := exec.Command("git", append([]string{"checkout", "--"}, files...)...)
 	cmd.Dir = repoPath
 

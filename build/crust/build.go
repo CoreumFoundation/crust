@@ -59,22 +59,7 @@ func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 	})
 }
 
-// Tidy runs `go mod tidy` for crust repo.
-func Tidy(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Tidy(ctx, repoPath, deps)
-}
-
-// Lint lints crust repo.
-func Lint(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Lint(ctx, repoPath, deps)
-}
-
-// Test run unit tests in crust repo.
-func Test(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Test(ctx, repoPath, deps)
-}
-
 // DownloadDependencies downloads go dependencies.
 func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
-	return golang.DownloadDependencies(ctx, repoPath, deps)
+	return golang.DownloadDependencies(ctx, deps, repoPath)
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/CoreumFoundation/crust/build/crust"
 	"github.com/CoreumFoundation/crust/build/gaia"
+	"github.com/CoreumFoundation/crust/build/golang"
 	"github.com/CoreumFoundation/crust/build/hermes"
 	"github.com/CoreumFoundation/crust/build/osmosis"
 	"github.com/CoreumFoundation/crust/build/tools"
@@ -27,9 +28,9 @@ var Commands = map[string]types.Command{
 	"images/gaiad":   {Fn: gaia.BuildDockerImage, Description: "Builds gaia docker image"},
 	"images/hermes":  {Fn: hermes.BuildDockerImage, Description: "Builds hermes docker image"},
 	"images/osmosis": {Fn: osmosis.BuildDockerImage, Description: "Builds osmosis docker image"},
-	"lint":           {Fn: crust.Lint, Description: "Lints code"},
+	"lint":           {Fn: golang.Lint, Description: "Lints code"},
 	"setup":          {Fn: tools.InstallAll, Description: "Installs all the required tools"},
-	"test":           {Fn: crust.Test, Description: "Runs unit tests"},
-	"tidy":           {Fn: crust.Tidy, Description: "Runs go mod tidy"},
+	"test":           {Fn: golang.Test, Description: "Runs unit tests"},
+	"tidy":           {Fn: golang.Tidy, Description: "Runs go mod tidy"},
 	"remove":         {Fn: crust.Remove, Description: "Removes all artifacts created by crust"},
 }
