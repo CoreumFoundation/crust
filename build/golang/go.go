@@ -550,16 +550,16 @@ func GoPath() string {
 func RootModulePath(ctx context.Context, deps types.DepsFunc, repoPath string) (string, error) {
 	_, file, _, _ := runtime.Caller(1)
 	parts := strings.Split(file, "/")
-	for i := len(parts) - 1; i >= 0; i-- {
-		if parts[i] == "build" {
-			parts = parts[:i+1]
-			break
-		}
-	}
 	for i, part := range parts {
 		index := strings.Index(part, "@")
 		if index != -1 {
 			parts[i] = part[:index]
+		}
+	}
+	for i := len(parts) - 1; i >= 0; i-- {
+		if parts[i] == "build" {
+			parts = parts[:i+1]
+			break
 		}
 	}
 
