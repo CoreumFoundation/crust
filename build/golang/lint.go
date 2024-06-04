@@ -32,18 +32,18 @@ var (
 )
 
 // Lint runs linters and check that git status is clean.
-func Lint(ctx context.Context, repoPath string, deps types.DepsFunc) error {
-	if err := lint(ctx, repoPath, deps); err != nil {
+func Lint(ctx context.Context, deps types.DepsFunc) error {
+	if err := lint(ctx, deps); err != nil {
 		return err
 	}
-	if err := lintNewLines(repoPath); err != nil {
+	if err := lintNewLines(); err != nil {
 		return err
 	}
-	if err := Tidy(ctx, repoPath, deps); err != nil {
+	if err := Tidy(ctx, deps); err != nil {
 		return err
 	}
 
-	isClean, dirtyContent, err := git.StatusClean(ctx, repoPath)
+	isClean, dirtyContent, err := git.StatusClean(ctx)
 	if err != nil {
 		return err
 	}
@@ -51,12 +51,12 @@ func Lint(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 		// fmt.Println is used intentionally here, because logger escapes special characters producing unreadable output
 		fmt.Println("git status:")
 		fmt.Println(dirtyContent)
-		return errors.Errorf("git status of repository '%s' is not empty", filepath.Base(repoPath))
+		return errors.New("git status is not empty")
 	}
 	return nil
 }
 
-func lint(ctx context.Context, repoPath string, deps types.DepsFunc) error {
+func lint(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo, EnsureGolangCI)
 	log := logger.Get(ctx)
 	config := lintConfigPath()
@@ -81,7 +81,7 @@ func lint(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 	})
 }
 
-func lintNewLines(repoPath string) error {
+func lintNewLines() error {
 	skipDirsRegexps, err := parseRegexps(lintNewLinesSkipDirsRegexps)
 	if err != nil {
 		return err
