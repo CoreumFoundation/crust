@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -36,7 +37,10 @@ type BinaryBuildConfig struct {
 	// TargetPlatform is the platform to build the binary for
 	TargetPlatform tools.TargetPlatform
 
-	// PackagePath is the path to package to build
+	// ModulePath is the path to the main module in the repository
+	ModulePath string
+
+	// PackagePath is the path to package to build relative to the ModulePath
 	PackagePath string
 
 	// BinOutputPath is the path for compiled binary file
@@ -116,7 +120,7 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	envs = append(envs, env()...)
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
-	cmd.Dir = config.PackagePath
+	cmd.Dir = filepath.Join(config.ModulePath, config.PackagePath)
 	cmd.Env = envs
 
 	logger.Get(ctx).Info(
@@ -143,7 +147,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 
 	srcDir := must.String(filepath.Abs(".."))
-	dockerRepoDir := filepath.Join("/src", filepath.Base(must.String(filepath.Abs("."))))
+	dockerRepoDir := filepath.Join("/src", filepath.Base(config.ModulePath)+"-tmp")
 
 	goPath := GoPath()
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
@@ -165,6 +169,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"run", "--rm",
 		"--label", docker.LabelKey + "=" + docker.LabelValue,
 		"-v", srcDir + ":/src",
+		"-v", config.ModulePath + ":" + dockerRepoDir,
 		"-v", goPath + ":/go",
 		"-v", cacheDir + ":/crust-cache",
 		"--env", "GOPATH=/go",
@@ -539,4 +544,51 @@ func GoPath() string {
 	}
 
 	return goPath
+}
+
+// RootModulePath returns path to the main module in the repository.
+func RootModulePath(ctx context.Context, deps types.DepsFunc, repoPath string) (string, error) {
+	_, file, _, _ := runtime.Caller(1)
+	parts := strings.Split(file, "/")
+	for i := len(parts) - 1; i >= 0; i-- {
+		if parts[i] == "build" {
+			parts = parts[:i+1]
+			break
+		}
+	}
+	for i, part := range parts {
+		index := strings.Index(part, "@")
+		if index != -1 {
+			parts[i] = part[:index]
+		}
+	}
+
+	pkgPath, err := findPackagePath(ctx, deps, repoPath, strings.Join(parts, "/"))
+	if err != nil {
+		return "", err
+	}
+	return filepath.Dir(pkgPath), nil
+}
+
+func findPackagePath(
+	ctx context.Context,
+	deps types.DepsFunc,
+	repoPath string,
+	pkg string,
+) (string, error) {
+	deps(EnsureGo)
+
+	out := &bytes.Buffer{}
+	cmd := exec.Command(
+		tools.Path("bin/go", tools.TargetPlatformLocal),
+		"list", "-f", "{{ .Dir }}", pkg)
+	cmd.Stdout = out
+	cmd.Dir = repoPath
+	cmd.Env = env()
+
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return "", err
+	}
+
+	return out.String(), nil
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/gaia"
@@ -24,6 +25,7 @@ const repoPath = "."
 func BuildBuilder(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
+		ModulePath:     lo.Must1(filepath.Abs(".")),
 		PackagePath:    "build/cmd/builder",
 		BinOutputPath:  must.String(filepath.EvalSymlinks(must.String(os.Executable()))),
 	})
@@ -53,6 +55,7 @@ func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
+		ModulePath:     lo.Must1(filepath.Abs(".")),
 		PackagePath:    "build/cmd/znet",
 		BinOutputPath:  filepath.Join(outDir, fmt.Sprintf("znet-%s", tools.Version())),
 		CGOEnabled:     true,
