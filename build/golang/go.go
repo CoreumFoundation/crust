@@ -572,6 +572,7 @@ func findModulePath(ctx context.Context, pkgRef any) (string, error) {
 	cmd := exec.Command(
 		tools.Path("bin/go", tools.TargetPlatformLocal),
 		"list", "-f", "{{ .Module.Dir }}", reflect.TypeOf(pkgRef).PkgPath())
+	cmd.Dir = filepath.Join(repoPath, "build")
 	cmd.Stdout = out
 	cmd.Env = env()
 
