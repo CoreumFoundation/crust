@@ -583,7 +583,7 @@ func findModulePath(ctx context.Context, pkgRef any) (string, error) {
 	modulePath := strings.TrimSuffix(out.String(), "\n")
 
 	// FIXME (wojciech): Temporary hack
-	if err := os.Chmod(modulePath, 0o644); err != nil {
+	if err := os.Chmod(modulePath, 0o755); err != nil {
 		return "", errors.WithStack(err)
 	}
 	for _, file := range []string{
