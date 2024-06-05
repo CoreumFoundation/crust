@@ -555,6 +555,14 @@ func GoPath() string {
 }
 
 func findModulePath(ctx context.Context, pkgRef any) (string, error) {
+	if pkgRef == nil {
+		path, err := filepath.Abs(".")
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		return path, nil
+	}
+
 	out := &bytes.Buffer{}
 	cmd := exec.Command(
 		tools.Path("bin/go", tools.TargetPlatformLocal),
