@@ -356,16 +356,16 @@ func buildArgsAndEnvs(
 }
 
 // Generate calls `go generate` for specific package.
-func Generate(ctx context.Context, path string, deps types.DepsFunc) error {
+func Generate(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
-	log.Info("Running go generate", zap.String("path", path))
+	log.Info("Running go generate")
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "generate", "./...")
-	cmd.Dir = path
+	cmd.Dir = repoPath
 	cmd.Env = env()
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return errors.Wrapf(err, "generation failed in package '%s'", path)
+		return errors.Wrapf(err, "generation failed")
 	}
 	return nil
 }
@@ -444,7 +444,7 @@ func Tidy(ctx context.Context, deps types.DepsFunc) error {
 }
 
 // DownloadDependencies downloads all the go dependencies.
-func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
+func DownloadDependencies(ctx context.Context, deps types.DepsFunc, repoPath string) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
