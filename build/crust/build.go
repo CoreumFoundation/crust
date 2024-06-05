@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/gaia"
@@ -19,13 +18,13 @@ import (
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
-const repoPath = "."
+type buildRef struct{}
 
 // BuildBuilder builds building tool in the current repository.
 func BuildBuilder(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
-		ModulePath:     lo.Must1(filepath.Abs(".")),
+		ModuleRef:      buildRef{},
 		PackagePath:    "build/cmd/builder",
 		BinOutputPath:  must.String(filepath.EvalSymlinks(must.String(os.Executable()))),
 	})
@@ -55,29 +54,9 @@ func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
-		ModulePath:     lo.Must1(filepath.Abs(".")),
+		ModuleRef:      buildRef{},
 		PackagePath:    "build/cmd/znet",
 		BinOutputPath:  filepath.Join(outDir, fmt.Sprintf("znet-%s", tools.Version())),
 		CGOEnabled:     true,
 	})
-}
-
-// Tidy runs `go mod tidy` for crust repo.
-func Tidy(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Tidy(ctx, repoPath, deps)
-}
-
-// Lint lints crust repo.
-func Lint(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Lint(ctx, repoPath, deps)
-}
-
-// Test run unit tests in crust repo.
-func Test(ctx context.Context, deps types.DepsFunc) error {
-	return golang.Test(ctx, repoPath, deps)
-}
-
-// DownloadDependencies downloads go dependencies.
-func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
-	return golang.DownloadDependencies(ctx, repoPath, deps)
 }

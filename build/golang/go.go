@@ -14,8 +14,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
-	"runtime"
 	"strings"
 	"text/template"
 
@@ -30,15 +30,18 @@ import (
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
-const goAlpineVersion = "3.18"
+const (
+	repoPath        = "."
+	goAlpineVersion = "3.18"
+)
 
 // BinaryBuildConfig is the configuration for `go build`.
 type BinaryBuildConfig struct {
 	// TargetPlatform is the platform to build the binary for
 	TargetPlatform tools.TargetPlatform
 
-	// ModulePath is the path to the main module in the repository
-	ModulePath string
+	// ModuleRef is the reference used to get module path
+	ModuleRef any
 
 	// PackagePath is the path to package to build relative to the ModulePath
 	PackagePath string
@@ -119,8 +122,13 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, env()...)
 
+	modulePath, err := findModulePath(ctx, config.ModuleRef)
+	if err != nil {
+		return err
+	}
+
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
-	cmd.Dir = filepath.Join(config.ModulePath, config.PackagePath)
+	cmd.Dir = filepath.Join(modulePath, config.PackagePath)
 	cmd.Env = envs
 
 	logger.Get(ctx).Info(
@@ -141,13 +149,18 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		return errors.Wrap(err, "docker command is not available in PATH")
 	}
 
+	modulePath, err := findModulePath(ctx, config.ModuleRef)
+	if err != nil {
+		return err
+	}
+
 	image, err := ensureBuildDockerImage(ctx)
 	if err != nil {
 		return err
 	}
 
 	srcDir := must.String(filepath.Abs(".."))
-	dockerRepoDir := filepath.Join("/src", filepath.Base(config.ModulePath)+"-tmp")
+	dockerRepoDir := filepath.Join("/src", filepath.Base(modulePath)+"-tmp")
 
 	goPath := GoPath()
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
@@ -169,7 +182,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"run", "--rm",
 		"--label", docker.LabelKey + "=" + docker.LabelValue,
 		"-v", srcDir + ":/src",
-		"-v", config.ModulePath + ":" + dockerRepoDir,
+		"-v", modulePath + ":" + dockerRepoDir,
 		"-v", goPath + ":/go",
 		"-v", cacheDir + ":/crust-cache",
 		"--env", "GOPATH=/go",
@@ -358,12 +371,12 @@ func Generate(ctx context.Context, path string, deps types.DepsFunc) error {
 }
 
 // Test runs go tests in repository.
-func Test(ctx context.Context, repoPath string, deps types.DepsFunc) error {
+func Test(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 
 	rootDir := filepath.Dir(must.String(filepath.Abs(must.String(filepath.EvalSymlinks(must.String(os.Getwd()))))))
-	repoPath = must.String(filepath.Abs(must.String(filepath.EvalSymlinks(repoPath))))
+	repoPath := must.String(filepath.Abs(must.String(filepath.EvalSymlinks(repoPath))))
 	coverageReportsDir := filepath.Join(repoPath, "coverage")
 	if err := os.MkdirAll(coverageReportsDir, 0o700); err != nil {
 		return errors.WithStack(err)
@@ -414,7 +427,7 @@ func Test(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 }
 
 // Tidy runs go mod tidy in repository.
-func Tidy(ctx context.Context, repoPath string, deps types.DepsFunc) error {
+func Tidy(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
@@ -431,7 +444,7 @@ func Tidy(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 }
 
 // DownloadDependencies downloads all the go dependencies.
-func DownloadDependencies(ctx context.Context, repoPath string, deps types.DepsFunc) error {
+func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
@@ -477,12 +490,7 @@ func containsGoCode(path string) (bool, error) {
 }
 
 // ModuleDirs return directories where modules are kept.
-func ModuleDirs(
-	ctx context.Context,
-	deps types.DepsFunc,
-	repoPath string,
-	modules ...string,
-) (map[string]string, error) {
+func ModuleDirs(ctx context.Context, deps types.DepsFunc, modules ...string) (map[string]string, error) {
 	deps(EnsureGo)
 
 	out := &bytes.Buffer{}
@@ -546,49 +554,17 @@ func GoPath() string {
 	return goPath
 }
 
-// RootModulePath returns path to the main module in the repository.
-func RootModulePath(ctx context.Context, deps types.DepsFunc, repoPath string) (string, error) {
-	_, file, _, _ := runtime.Caller(1)
-	parts := strings.Split(file, "/")
-	for i, part := range parts {
-		index := strings.Index(part, "@")
-		if index != -1 {
-			parts[i] = part[:index]
-		}
-	}
-	for i := len(parts) - 1; i >= 0; i-- {
-		if parts[i] == "build" {
-			parts = parts[:i+1]
-			break
-		}
-	}
-
-	pkgPath, err := findPackagePath(ctx, deps, repoPath, strings.Join(parts, "/"))
-	if err != nil {
-		return "", err
-	}
-	return filepath.Dir(pkgPath), nil
-}
-
-func findPackagePath(
-	ctx context.Context,
-	deps types.DepsFunc,
-	repoPath string,
-	pkg string,
-) (string, error) {
-	deps(EnsureGo)
-
+func findModulePath(ctx context.Context, pkgRef any) (string, error) {
 	out := &bytes.Buffer{}
 	cmd := exec.Command(
 		tools.Path("bin/go", tools.TargetPlatformLocal),
-		"list", "-f", "{{ .Dir }}", pkg)
+		"list", "-f", "{{ .Module.Dir }}", reflect.TypeOf(pkgRef).PkgPath())
 	cmd.Stdout = out
-	cmd.Dir = repoPath
 	cmd.Env = env()
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return "", err
 	}
 
-	return out.String(), nil
+	return strings.TrimSuffix(out.String(), "\n"), nil
 }

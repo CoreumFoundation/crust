@@ -43,9 +43,6 @@ const (
 
 // BuildImageConfig contains the configuration required to build docker image.
 type BuildImageConfig struct {
-	// RepoPath is the path to the repo where binary comes from
-	RepoPath string
-
 	// ContextDir
 	ContextDir string
 
@@ -95,12 +92,12 @@ func BuildImage(ctx context.Context, config BuildImageConfig) error {
 		return errors.WithStack(err)
 	}
 
-	commitHash, err := git.DirtyHeadHash(ctx, config.RepoPath)
+	commitHash, err := git.DirtyHeadHash(ctx)
 	if err != nil {
 		return err
 	}
 
-	versionsFromGit, err := git.HeadTags(ctx, config.RepoPath)
+	versionsFromGit, err := git.HeadTags(ctx)
 	if err != nil {
 		return err
 	}
