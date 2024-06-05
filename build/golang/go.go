@@ -583,20 +583,14 @@ func findModulePath(ctx context.Context, pkgRef any) (string, error) {
 	modulePath := strings.TrimSuffix(out.String(), "\n")
 
 	// FIXME (wojciech): Temporary hack
+	if err := os.Chmod(modulePath, 0o644); err != nil {
+		return "", errors.WithStack(err)
+	}
 	for _, file := range []string{
 		"go.work",
 		"go.work.sum",
 	} {
-		path := filepath.Join(modulePath, file)
-		err := os.Chmod(path, 0o644)
-		switch {
-		case err == nil:
-		case os.IsNotExist(err):
-			continue
-		default:
-			return "", errors.WithStack(err)
-		}
-		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		if err := os.Remove(filepath.Join(modulePath, file)); err != nil && !os.IsNotExist(err) {
 			return "", errors.WithStack(err)
 		}
 	}
