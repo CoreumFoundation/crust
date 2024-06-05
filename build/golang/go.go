@@ -174,7 +174,10 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
-	outPath := filepath.Join(repoPath, filepath.Dir(config.BinOutputPath))
+	outPath, err := filepath.Abs(filepath.Join(repoPath, filepath.Dir(config.BinOutputPath)))
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	if err := os.MkdirAll(outPath, 0o755); err != nil {
 		return errors.WithStack(err)
 	}
