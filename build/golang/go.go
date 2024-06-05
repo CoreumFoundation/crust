@@ -556,7 +556,7 @@ func GoPath() string {
 
 func findModulePath(ctx context.Context, pkgRef any) (string, error) {
 	if pkgRef == nil {
-		path, err := filepath.Abs(".")
+		path, err := filepath.Abs(repoPath)
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
