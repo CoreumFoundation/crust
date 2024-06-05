@@ -579,5 +579,17 @@ func findModulePath(ctx context.Context, pkgRef any) (string, error) {
 		return "", err
 	}
 
-	return strings.TrimSuffix(out.String(), "\n"), nil
+	modulePath := strings.TrimSuffix(out.String(), "\n")
+
+	// FIXME (wojciech): Temporary hack
+	for _, file := range []string{
+		"go.work",
+		"go.work.sum",
+	} {
+		if err := os.Remove(filepath.Join(modulePath, file)); err != nil && !os.IsNotExist(err) {
+			return "", errors.WithStack(err)
+		}
+	}
+
+	return modulePath, nil
 }
