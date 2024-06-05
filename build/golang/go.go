@@ -174,6 +174,11 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
+	outPath := filepath.Join(repoPath, filepath.Dir(config.BinOutputPath))
+	if err := os.MkdirAll(outPath, 0o755); err != nil {
+		return errors.WithStack(err)
+	}
+
 	args, envs, err := buildArgsAndEnvs(ctx, config, filepath.Join("/crust-cache", tools.Version(), "lib"))
 	if err != nil {
 		return err
@@ -183,6 +188,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--label", docker.LabelKey + "=" + docker.LabelValue,
 		"-v", srcDir + ":/src",
 		"-v", modulePath + ":" + dockerRepoDir,
+		"-v", outPath + ":/out",
 		"-v", goPath + ":/go",
 		"-v", cacheDir + ":/crust-cache",
 		"--env", "GOPATH=/go",
@@ -208,7 +214,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
-	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
+	runArgs = append(runArgs, "-o", filepath.Join("/out", filepath.Base(config.BinOutputPath)), ".")
 
 	cmd := exec.Command("docker", runArgs...)
 	logger.Get(ctx).Info(
