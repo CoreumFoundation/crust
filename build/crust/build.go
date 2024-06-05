@@ -18,6 +18,8 @@ import (
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
+const repoPath = "."
+
 type buildRef struct{}
 
 // BuildBuilder builds building tool in the current repository.
@@ -59,4 +61,9 @@ func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 		BinOutputPath:  filepath.Join(outDir, fmt.Sprintf("znet-%s", tools.Version())),
 		CGOEnabled:     true,
 	})
+}
+
+// DownloadDependencies downloads go dependencies.
+func DownloadDependencies(ctx context.Context, deps types.DepsFunc) error {
+	return golang.DownloadDependencies(ctx, deps, repoPath)
 }

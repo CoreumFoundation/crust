@@ -16,7 +16,7 @@ import (
 var Commands = map[string]types.Command{
 	"build/me":   {Fn: crust.BuildBuilder, Description: "Builds the builder"},
 	"build/znet": {Fn: crust.BuildZNet, Description: "Builds znet binary"},
-	"download":   {Fn: golang.DownloadDependencies, Description: "Downloads go dependencies"},
+	"download":   {Fn: crust.DownloadDependencies, Description: "Downloads go dependencies"},
 	"images": {Fn: func(ctx context.Context, deps types.DepsFunc) error {
 		deps(
 			gaia.BuildDockerImage,
