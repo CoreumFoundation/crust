@@ -490,7 +490,7 @@ func containsGoCode(path string) (bool, error) {
 }
 
 // ModuleDirs return directories where modules are kept.
-func ModuleDirs(ctx context.Context, deps types.DepsFunc, modules ...string) (map[string]string, error) {
+func ModuleDirs(ctx context.Context, deps types.DepsFunc, repoPath string, modules ...string) (map[string]string, error) {
 	deps(EnsureGo)
 
 	out := &bytes.Buffer{}
