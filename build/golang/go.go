@@ -598,7 +598,6 @@ func findModulePath(ctx context.Context) (string, error) {
 func findMainFile() string {
 	for i := 1; ; i++ {
 		_, file, _, ok := runtime.Caller(i)
-		fmt.Println(file)
 		if !ok || strings.HasPrefix(file, "runtime/") {
 			return ""
 		}
