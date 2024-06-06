@@ -112,8 +112,6 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory) error {
 
 // Start starts environment.
 func Start(ctx context.Context, configF *infra.ConfigFactory) error {
-	fmt.Printf(configF.RootDir)
-
 	if err := apps.ValidateProfiles(configF.Profiles); err != nil {
 		return err
 	}
