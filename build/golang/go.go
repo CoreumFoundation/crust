@@ -567,8 +567,10 @@ func GoPath() string {
 }
 
 func findModulePath(ctx context.Context) (string, error) {
-	//nolint:dogsled // yes, there are 3 blank identifiers but what can I do about it?
-	_, file, _, _ := runtime.Caller(3) // 3 points to the right file calling Build function.
+	file, err := findMainFile()
+	if err != nil {
+		return "", err
+	}
 	commitID := findCommitID(file)
 	if commitID == "" {
 		path, err := filepath.Abs(repoPath)
@@ -587,6 +589,23 @@ func findModulePath(ctx context.Context) (string, error) {
 	}
 
 	return repoDir, nil
+}
+
+func findMainFile() (string, error) {
+	previousFile := ""
+	for i := 1; ; i++ {
+		_, file, _, ok := runtime.Caller(i)
+		if !ok {
+			return "", errors.New("no more calls in the callstack")
+		}
+		if strings.HasPrefix(file, "runtime/") {
+			if previousFile == "" {
+				return "", errors.New("entrypoint not found")
+			}
+			return previousFile, nil
+		}
+		previousFile = file
+	}
 }
 
 func findCommitID(path string) string {
