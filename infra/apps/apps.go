@@ -110,7 +110,7 @@ func (f *Factory) CoredNetwork(
 		node := cored.New(cored.Config{
 			Name:              name,
 			HomeDir:           filepath.Join(f.config.AppDir, name, string(genesisConfig.ChainID)),
-			BinDir:            filepath.Join(f.config.RootDir, "coreum", "bin"),
+			BinDir:            filepath.Join(f.config.RootDir, "bin"),
 			WrapperDir:        f.config.WrapperDir,
 			NetworkConfig:     &networkConfig,
 			GenesisInitConfig: &genesisConfig,
@@ -198,7 +198,7 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 	bdjunoApp := bdjuno.New(bdjuno.Config{
 		Name:           nameBDJuno,
 		HomeDir:        filepath.Join(f.config.AppDir, nameBDJuno),
-		RepoDir:        filepath.Join(f.config.RootDir, "bdjuno"),
+		RepoDir:        filepath.Clean(filepath.Join(f.config.RootDir, "../bdjuno")),
 		AppInfo:        f.spec.DescribeApp(bdjuno.AppType, nameBDJuno),
 		Port:           blockexplorer.DefaultPorts.BDJuno,
 		TelemetryPort:  blockexplorer.DefaultPorts.BDJunoTelemetry,
@@ -368,8 +368,8 @@ func (f *Factory) BridgeXRPLRelayers(
 		relayer := bridgexrpl.New(bridgexrpl.Config{
 			Name:    name,
 			HomeDir: filepath.Join(f.config.AppDir, name),
-			ContractPath: filepath.Join(f.config.RootDir, "coreumbridge-xrpl", "contract", "artifacts",
-				"coreumbridge_xrpl.wasm"),
+			ContractPath: filepath.Clean(filepath.Join(f.config.RootDir, "../coreumbridge-xrpl", "contract", "artifacts",
+				"coreumbridge_xrpl.wasm")),
 			Mnemonics: bridgexrpl.RelayerMnemonics[i],
 			Quorum:    uint32(relayerCount),
 			AppInfo:   f.spec.DescribeApp(bridgexrpl.AppType, name),
