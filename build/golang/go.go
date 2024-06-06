@@ -567,9 +567,13 @@ func GoPath() string {
 }
 
 func findModulePath(ctx context.Context) (string, error) {
-	file, err := findMainFile()
-	if err != nil {
-		return "", err
+	file := findMainFile()
+	if file == "" {
+		path, err := filepath.Abs(repoPath)
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		return path, nil
 	}
 	commitID := findCommitID(file)
 	if commitID == "" {
@@ -591,20 +595,16 @@ func findModulePath(ctx context.Context) (string, error) {
 	return repoDir, nil
 }
 
-func findMainFile() (string, error) {
-	previousFile := ""
+func findMainFile() string {
 	for i := 1; ; i++ {
 		_, file, _, ok := runtime.Caller(i)
-		if !ok {
-			return "", errors.New("no more calls in the callstack")
+		fmt.Println(file)
+		if !ok || strings.HasPrefix(file, "runtime/") {
+			return ""
 		}
-		if strings.HasPrefix(file, "runtime/") {
-			if previousFile == "" {
-				return "", errors.New("entrypoint not found")
-			}
-			return previousFile, nil
+		if strings.Index(file, "@") == -1 {
+			return file
 		}
-		previousFile = file
 	}
 }
 
