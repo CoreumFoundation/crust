@@ -38,6 +38,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -51,6 +52,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
@@ -127,6 +129,7 @@
             "mode": "thresholds"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -210,7 +213,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "(sum(increase(bdjuno_proposal_sum{}[$__range])) by (validator)) / (sum(increase(bdjuno_proposal_count{}[$__range])) by (validator))",
+          "expr": "(sum(increase(cometbft_consensus_expected_proposers_sum{}[$__range])) by (validator_address)) / (sum(increase(cometbft_consensus_expected_proposers_count{}[$__range])) by (validator_address))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -223,9 +226,8 @@
       "type": "barchart"
     }
   ],
-  "refresh": "",
+  "refresh": "auto",
   "schemaVersion": 38,
-  "style": "dark",
   "tags": [],
   "templating": {
     "list": []
