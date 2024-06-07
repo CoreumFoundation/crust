@@ -365,6 +365,7 @@ func (c Cored) localBinaryPath() string {
 func (c Cored) dockerBinaryPath() string {
 	coredStandardBinName := "cored"
 	coredBinName := coredStandardBinName
+	//nolint:goconst
 	coredStandardPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
 	coredPath := coredStandardPath
 	if c.config.DockerImage == DockerImageExtended {
