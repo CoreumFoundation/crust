@@ -1560,7 +1560,6 @@ func Version() string {
 
 // CrustModule returns the name of crust module.
 func CrustModule() string {
-
 	//nolint:dogsled // yes, there are 3 blanks and what?
 	_, file, _, _ := runtime.Caller(0)
 	crustModule := strings.Join(strings.Split(file, "/")[:3], "/")
