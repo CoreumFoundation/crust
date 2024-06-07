@@ -47,15 +47,24 @@ import (
 	"github.com/CoreumFoundation/crust/infra/targets"
 )
 
-// AppType is the type of cored application.
-const AppType infra.AppType = "cored"
+const (
+	// AppType is the type of cored application.
+	AppType infra.AppType = "cored"
+
+	// DockerImageStandard uses standard docker image of cored.
+	DockerImageStandard = "cored:znet"
+
+	// DockerImageExtended uses extended docker image of cored with cometBFT replaced.
+	DockerImageExtended = "cored-ext:znet"
+)
 
 // Config stores cored app config.
 type Config struct {
-	Name       string
-	HomeDir    string
-	BinDir     string
-	WrapperDir string
+	Name        string
+	HomeDir     string
+	BinDir      string
+	WrapperDir  string
+	DockerImage string
 	// Deprecated: remove after we drop support for cored v3.
 	NetworkConfig     *config.NetworkConfig
 	GenesisInitConfig *GenesisInitConfig
@@ -232,7 +241,7 @@ func (c Cored) HealthCheck(ctx context.Context) error {
 func (c Cored) Deployment() infra.Deployment {
 	deployment := infra.Deployment{
 		RunAsUser: true,
-		Image:     "cored:znet",
+		Image:     c.config.DockerImage,
 		Name:      c.Name(),
 		Info:      c.config.AppInfo,
 		EnvVarsFunc: func() []infra.EnvVar {

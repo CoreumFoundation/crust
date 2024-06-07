@@ -21,8 +21,6 @@ if [ ! -f "$CRUST_BIN" ]; then
   "$CRUST_BIN" build/me
 fi
 
-popd > /dev/null
-
 case "$1" in
 
    "znet")
