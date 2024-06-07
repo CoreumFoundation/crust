@@ -363,14 +363,20 @@ func (c Cored) localBinaryPath() string {
 }
 
 func (c Cored) dockerBinaryPath() string {
-	// the path is defined by the build
-	dockerLinuxBinaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
-	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
-	binaryPath := filepath.Join(dockerLinuxBinaryPath, "cored")
-	if c.Config().BinaryVersion != "" {
-		binaryPath += "-" + c.Config().BinaryVersion
+	coredStandardBinName := "cored"
+	coredBinName := coredStandardBinName
+	coredStandardPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
+	coredPath := coredStandardPath
+	if c.config.DockerImage == DockerImageExtended {
+		coredBinName = "cored-ext"
+		coredPath = filepath.Join(c.config.BinDir, ".cache", "cored-ext", "docker.linux."+runtime.GOARCH, "bin")
 	}
-	return binaryPath
+
+	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
+	if c.Config().BinaryVersion != "" {
+		return filepath.Join(coredStandardPath, coredStandardBinName+"-"+c.Config().BinaryVersion)
+	}
+	return filepath.Join(coredPath, coredBinName)
 }
 
 func (c Cored) prepare(ctx context.Context) error {
