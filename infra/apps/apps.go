@@ -49,7 +49,7 @@ func (f *Factory) CoredNetwork(
 	genesisConfig cored.GenesisInitConfig,
 	namePrefix string,
 	firstPorts cored.Ports,
-	validatorCount, sentryCount, seedCount, fullCount int,
+	validatorCount, sentryCount, seedCount, fullCount, extendedCount int,
 	binaryVersion string,
 ) (cored.Cored, []cored.Cored, error) {
 	config := sdk.GetConfig()
@@ -83,7 +83,7 @@ func (f *Factory) CoredNetwork(
 		)
 	}
 
-	nodes := make([]cored.Cored, 0, validatorCount+seedCount+sentryCount+fullCount)
+	nodes := make([]cored.Cored, 0, validatorCount+seedCount+sentryCount+fullCount+extendedCount)
 	valNodes := make([]cored.Cored, 0, validatorCount)
 	seedNodes := make([]cored.Cored, 0, seedCount)
 	var lastNode cored.Cored
@@ -94,8 +94,10 @@ func (f *Factory) CoredNetwork(
 		isSeed := !isValidator && i < validatorCount+seedCount
 		isSentry := !isValidator && !isSeed && i < validatorCount+seedCount+sentryCount
 		isFull := !isValidator && !isSeed && !isSentry
+		isFullExtended := isFull && i >= validatorCount+seedCount+sentryCount+fullCount
 
 		name = namePrefix + fmt.Sprintf("-%02d", i)
+		dockerImage := cored.DockerImageStandard
 		switch {
 		case isValidator:
 			name += "-val"
@@ -103,6 +105,9 @@ func (f *Factory) CoredNetwork(
 			name += "-sentry"
 		case isSeed:
 			name += "-seed"
+		case isFullExtended:
+			name += "-full-ext"
+			dockerImage = cored.DockerImageExtended
 		default:
 			name += "-full"
 		}
@@ -112,6 +117,7 @@ func (f *Factory) CoredNetwork(
 			HomeDir:           filepath.Join(f.config.AppDir, name, string(genesisConfig.ChainID)),
 			BinDir:            filepath.Join(f.config.RootDir, "bin"),
 			WrapperDir:        f.config.WrapperDir,
+			DockerImage:       dockerImage,
 			NetworkConfig:     &networkConfig,
 			GenesisInitConfig: &genesisConfig,
 			AppInfo:           f.spec.DescribeApp(cored.AppType, name),
@@ -164,7 +170,6 @@ func (f *Factory) CoredNetwork(
 		if isSeed {
 			seedNodes = append(seedNodes, node)
 		}
-
 		lastNode = node
 		nodes = append(nodes, node)
 	}
