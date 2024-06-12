@@ -362,19 +362,21 @@ func buildArgsAndEnvs(
 	return args, envs, nil
 }
 
-// Generate calls `go generate` for specific package.
+// Generate calls `go generate`.
 func Generate(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
-	log.Info("Running go generate")
+	return onModule(repoPath, func(path string) error {
+		log.Info("Running go generate", zap.String("path", path))
 
-	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "generate", "./...")
-	cmd.Dir = repoPath
-	cmd.Env = env()
-	if err := libexec.Exec(ctx, cmd); err != nil {
-		return errors.Wrapf(err, "generation failed")
-	}
-	return nil
+		cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "generate", "./...")
+		cmd.Dir = path
+		cmd.Env = env()
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return errors.Wrapf(err, "generation failed in module '%s'", path)
+		}
+		return nil
+	})
 }
 
 // Test runs go tests in repository.
