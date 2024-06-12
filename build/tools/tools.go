@@ -39,6 +39,7 @@ const (
 	Osmosis               Name = "osmosis"
 	Hermes                Name = "hermes"
 	CoredV303             Name = "cored-v3.0.3"
+	Mockgen                    = "mockgen"
 	Buf                   Name = "buf"
 	Protoc                Name = "protoc"
 	ProtocGenDoc          Name = "protoc-gen-doc"
@@ -388,6 +389,13 @@ var tools = []Tool{
 		Name:    ProtocGenBufBreaking,
 		Version: "v1.26.1",
 		Package: "github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking",
+	},
+
+	// https://github.com/uber-go/mock/releases
+	GoPackageTool{
+		Name:    Mockgen,
+		Version: "v0.4.0",
+		Package: "go.uber.org/mock/mockgen",
 	},
 
 	// https://rust-lang.github.io/rustup/installation/other.html
@@ -1075,6 +1083,11 @@ func EnsureProtocGenBufLint(ctx context.Context, deps types.DepsFunc) error {
 // EnsureProtocGenBufBreaking ensures that protoc-gen-buf-breaking is available.
 func EnsureProtocGenBufBreaking(ctx context.Context, deps types.DepsFunc) error {
 	return Ensure(ctx, ProtocGenBufBreaking, TargetPlatformLocal)
+}
+
+// EnsureMockgen ensures that mockgen is available.
+func EnsureMockgen(ctx context.Context, deps types.DepsFunc) error {
+	return Ensure(ctx, Mockgen, TargetPlatformLocal)
 }
 
 func linkTool(tool Tool, platform TargetPlatform, binaries ...string) error {
