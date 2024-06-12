@@ -1543,7 +1543,7 @@ func Ensure(ctx context.Context, toolName Name, platform TargetPlatform) error {
 
 // Version returns crust module version used to import this module in go.mod of the repository.
 func Version() string {
-	const buildModule = "github.com/CoreumFoundation/crust"
+	crustModule := CrustModule()
 
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -1551,7 +1551,7 @@ func Version() string {
 	}
 
 	for _, m := range append([]*debug.Module{&bi.Main}, bi.Deps...) {
-		if m.Path != buildModule {
+		if m.Path != crustModule {
 			continue
 		}
 		if m.Replace != nil {
@@ -1569,4 +1569,16 @@ func Version() string {
 	}
 
 	panic("impossible condition: crust module not found")
+}
+
+// CrustModule returns the name of crust module.
+func CrustModule() string {
+	//nolint:dogsled // yes, there are 3 blanks and what?
+	_, file, _, _ := runtime.Caller(0)
+	crustModule := strings.Join(strings.Split(file, "/")[:3], "/")
+	index := strings.Index(crustModule, "@")
+	if index > 0 {
+		crustModule = crustModule[:index]
+	}
+	return crustModule
 }

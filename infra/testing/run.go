@@ -150,7 +150,7 @@ func Run(
 			)
 		}
 
-		binPath := filepath.Join(config.RootDir, TestGroups[tg].Binary)
+		binPath := filepath.Clean(filepath.Join(config.RootDir, "..", TestGroups[tg].Binary))
 
 		log := log.With(zap.String("binary", binPath), zap.Strings("args", fullArgs))
 		log.Info("Running tests")

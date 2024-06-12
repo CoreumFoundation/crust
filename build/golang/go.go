@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -25,18 +26,22 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/docker"
+	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
-const goAlpineVersion = "3.18"
+const (
+	repoPath        = "."
+	goAlpineVersion = "3.18"
+)
 
 // BinaryBuildConfig is the configuration for `go build`.
 type BinaryBuildConfig struct {
 	// TargetPlatform is the platform to build the binary for
 	TargetPlatform tools.TargetPlatform
 
-	// PackagePath is the path to package to build
+	// PackagePath is the path to package to build relative to the ModulePath
 	PackagePath string
 
 	// BinOutputPath is the path for compiled binary file
@@ -115,8 +120,13 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	args = append(args, "-o", must.String(filepath.Abs(config.BinOutputPath)), ".")
 	envs = append(envs, env()...)
 
+	modulePath, err := findModulePath(ctx)
+	if err != nil {
+		return err
+	}
+
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
-	cmd.Dir = config.PackagePath
+	cmd.Dir = filepath.Join(modulePath, config.PackagePath)
 	cmd.Env = envs
 
 	logger.Get(ctx).Info(
@@ -137,13 +147,18 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		return errors.Wrap(err, "docker command is not available in PATH")
 	}
 
+	modulePath, err := findModulePath(ctx)
+	if err != nil {
+		return err
+	}
+
 	image, err := ensureBuildDockerImage(ctx)
 	if err != nil {
 		return err
 	}
 
 	srcDir := must.String(filepath.Abs(".."))
-	dockerRepoDir := filepath.Join("/src", filepath.Base(must.String(filepath.Abs("."))))
+	dockerRepoDir := filepath.Join("/src", filepath.Base(modulePath)+"-tmp")
 
 	goPath := GoPath()
 	if err := os.MkdirAll(goPath, 0o700); err != nil {
@@ -157,6 +172,14 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	nameSuffix := make([]byte, 4)
 	must.Any(rand.Read(nameSuffix))
 
+	outPath, err := filepath.Abs(filepath.Join(repoPath, filepath.Dir(config.BinOutputPath)))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if err := os.MkdirAll(outPath, 0o755); err != nil {
+		return errors.WithStack(err)
+	}
+
 	args, envs, err := buildArgsAndEnvs(ctx, config, filepath.Join("/crust-cache", tools.Version(), "lib"))
 	if err != nil {
 		return err
@@ -165,6 +188,8 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"run", "--rm",
 		"--label", docker.LabelKey + "=" + docker.LabelValue,
 		"-v", srcDir + ":/src",
+		"-v", modulePath + ":" + dockerRepoDir,
+		"-v", outPath + ":/out",
 		"-v", goPath + ":/go",
 		"-v", cacheDir + ":/crust-cache",
 		"--env", "GOPATH=/go",
@@ -190,7 +215,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
-	runArgs = append(runArgs, "-o", filepath.Join(dockerRepoDir, config.BinOutputPath), ".")
+	runArgs = append(runArgs, "-o", filepath.Join("/out", filepath.Base(config.BinOutputPath)), ".")
 
 	cmd := exec.Command("docker", runArgs...)
 	logger.Get(ctx).Info(
@@ -338,27 +363,27 @@ func buildArgsAndEnvs(
 }
 
 // Generate calls `go generate` for specific package.
-func Generate(ctx context.Context, path string, deps types.DepsFunc) error {
+func Generate(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
-	log.Info("Running go generate", zap.String("path", path))
+	log.Info("Running go generate")
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), "generate", "./...")
-	cmd.Dir = path
+	cmd.Dir = repoPath
 	cmd.Env = env()
 	if err := libexec.Exec(ctx, cmd); err != nil {
-		return errors.Wrapf(err, "generation failed in package '%s'", path)
+		return errors.Wrapf(err, "generation failed")
 	}
 	return nil
 }
 
 // Test runs go tests in repository.
-func Test(ctx context.Context, repoPath string, deps types.DepsFunc) error {
+func Test(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 
 	rootDir := filepath.Dir(must.String(filepath.Abs(must.String(filepath.EvalSymlinks(must.String(os.Getwd()))))))
-	repoPath = must.String(filepath.Abs(must.String(filepath.EvalSymlinks(repoPath))))
+	repoPath := must.String(filepath.Abs(must.String(filepath.EvalSymlinks(repoPath))))
 	coverageReportsDir := filepath.Join(repoPath, "coverage")
 	if err := os.MkdirAll(coverageReportsDir, 0o700); err != nil {
 		return errors.WithStack(err)
@@ -409,7 +434,7 @@ func Test(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 }
 
 // Tidy runs go mod tidy in repository.
-func Tidy(ctx context.Context, repoPath string, deps types.DepsFunc) error {
+func Tidy(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
@@ -426,7 +451,7 @@ func Tidy(ctx context.Context, repoPath string, deps types.DepsFunc) error {
 }
 
 // DownloadDependencies downloads all the go dependencies.
-func DownloadDependencies(ctx context.Context, repoPath string, deps types.DepsFunc) error {
+func DownloadDependencies(ctx context.Context, deps types.DepsFunc, repoPath string) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
 	return onModule(repoPath, func(path string) error {
@@ -539,4 +564,69 @@ func GoPath() string {
 	}
 
 	return goPath
+}
+
+func findModulePath(ctx context.Context) (string, error) {
+	file := findMainFile()
+	if file == "" {
+		path, err := filepath.Abs(repoPath)
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		return path, nil
+	}
+	commitID := findCommitID(file)
+	if commitID == "" {
+		path, err := filepath.Abs(repoPath)
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		return path, nil
+	}
+
+	repoURL := findRepositoryURL(file)
+	repoName := filepath.Base(repoURL)
+	repoDir := filepath.Join(tools.CacheDir(), "repos", repoName)
+
+	if err := git.CloneRemoteCommit(ctx, repoURL, commitID, repoDir); err != nil {
+		return "", err
+	}
+
+	return repoDir, nil
+}
+
+func findMainFile() string {
+	crustModule := tools.CrustModule()
+	for i := 1; ; i++ {
+		_, file, _, ok := runtime.Caller(i)
+		if !ok || strings.HasPrefix(file, "runtime/") {
+			return ""
+		}
+		if !strings.HasPrefix(file, crustModule) {
+			return file
+		}
+	}
+}
+
+func findCommitID(path string) string {
+	parts := strings.Split(path, "/")
+	for i := len(parts) - 1; i >= 0; i-- {
+		index := strings.Index(parts[i], "@")
+		if index >= 0 {
+			tagParts := strings.Split(parts[i][index+1:], "-")
+			return tagParts[len(tagParts)-1]
+		}
+	}
+	return ""
+}
+
+func findRepositoryURL(path string) string {
+	parts := strings.Split(path, "/")
+	parts = parts[:3]
+	index := strings.Index(parts[2], "@")
+	if index >= 0 {
+		parts[2] = parts[2][:index]
+	}
+
+	return "https://" + strings.Join(parts, "/")
 }
