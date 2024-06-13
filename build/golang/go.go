@@ -29,8 +29,7 @@ import (
 )
 
 const (
-	repoPath        = "."
-	goAlpineVersion = "3.18"
+	repoPath = "."
 )
 
 // BinaryBuildConfig is the configuration for `go build`.
