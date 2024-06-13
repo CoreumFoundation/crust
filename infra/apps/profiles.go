@@ -36,6 +36,7 @@ const (
 	Profile3Cored     = "3cored"
 	Profile5Cored     = "5cored"
 	ProfileDevNet     = "devnet"
+	ProfileCoredExt   = "cored-ext"
 	ProfileIBC        = "ibc"
 	ProfileFaucet     = "faucet"
 	ProfileExplorer   = "explorer"
@@ -49,6 +50,7 @@ var profiles = []string{
 	Profile3Cored,
 	Profile5Cored,
 	ProfileDevNet,
+	ProfileCoredExt,
 	ProfileIBC,
 	ProfileFaucet,
 	ProfileExplorer,
@@ -122,8 +124,12 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		return profile, true
 	})
 
-	if pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileXRPLBridge] || pMap[ProfileExplorer] ||
-		pMap[ProfileMonitoring] {
+	if pMap[ProfileMonitoring] {
+		pMap[ProfileCoredExt] = true
+	}
+
+	if pMap[ProfileCoredExt] || pMap[ProfileIBC] || pMap[ProfileFaucet] || pMap[ProfileXRPLBridge] ||
+		pMap[ProfileExplorer] || pMap[ProfileMonitoring] {
 		pMap[Profile1Cored] = true
 	}
 
@@ -133,7 +139,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 
 	MergeProfiles(pMap)
 
-	validatorCount, sentryCount, seedCount, fullCount := decideNumOfCoredNodes(pMap)
+	validatorCount, sentryCount, seedCount, fullCount, extendedCount := decideNumOfCoredNodes(pMap)
 
 	var coredApp cored.Cored
 	var appSet infra.AppSet
@@ -162,7 +168,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 		},
 		AppPrefixCored,
 		cored.DefaultPorts,
-		validatorCount, sentryCount, seedCount, fullCount,
+		validatorCount, sentryCount, seedCount, fullCount, extendedCount,
 		coredVersion,
 	)
 	if err != nil {
@@ -237,16 +243,21 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	return appSet, coredApp, nil
 }
 
-func decideNumOfCoredNodes(pMap map[string]bool) (validatorCount, sentryCount, seedCount, fullCount int) {
+func decideNumOfCoredNodes(pMap map[string]bool) (validatorCount, sentryCount, seedCount, fullCount,
+	extendedCount int) {
+	if pMap[ProfileCoredExt] {
+		extendedCount = 1
+	}
+
 	switch {
 	case pMap[Profile1Cored]:
-		return 1, 0, 0, 0
+		return 1, 0, 0, 0, extendedCount
 	case pMap[Profile3Cored]:
-		return 3, 0, 0, 0
+		return 3, 0, 0, 0, extendedCount
 	case pMap[Profile5Cored]:
-		return 5, 0, 0, 0
+		return 5, 0, 0, 0, extendedCount
 	case pMap[ProfileDevNet]:
-		return 3, 1, 1, 2
+		return 3, 1, 1, 2, extendedCount
 	default:
 		panic("no cored profile specified.")
 	}

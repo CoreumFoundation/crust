@@ -16,8 +16,10 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 )
 
+const repoPath = "."
+
 // HeadHash returns hash of the latest commit in the repository.
-func HeadHash(ctx context.Context, repoPath string) (string, error) {
+func HeadHash(ctx context.Context) (string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	cmd.Dir = repoPath
@@ -30,13 +32,13 @@ func HeadHash(ctx context.Context, repoPath string) (string, error) {
 
 // DirtyHeadHash returns hash of the latest commit in the repository, adding "-dirty" suffix
 // if there are uncommitted changes.
-func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
-	hash, err := HeadHash(ctx, repoPath)
+func DirtyHeadHash(ctx context.Context) (string, error) {
+	hash, err := HeadHash(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	clean, _, err := StatusClean(ctx, repoPath)
+	clean, _, err := StatusClean(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +50,7 @@ func DirtyHeadHash(ctx context.Context, repoPath string) (string, error) {
 }
 
 // HeadTags returns the list of tags applied to the latest commit.
-func HeadTags(ctx context.Context, repoPath string) ([]string, error) {
+func HeadTags(ctx context.Context) ([]string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "tag", "--points-at", "HEAD")
 	cmd.Dir = repoPath
@@ -60,7 +62,7 @@ func HeadTags(ctx context.Context, repoPath string) ([]string, error) {
 }
 
 // StatusClean checks that there are no uncommitted files in the repo.
-func StatusClean(ctx context.Context, repoPath string) (bool, string, error) {
+func StatusClean(ctx context.Context) (bool, string, error) {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "status", "-s")
 	cmd.Dir = repoPath
@@ -97,8 +99,8 @@ func EnsureRepo(ctx context.Context, repoURL string) error {
 }
 
 // VersionFromTag returns version taken from tag present in the commit.
-func VersionFromTag(ctx context.Context, repoPath string) (string, error) {
-	tags, err := HeadTags(ctx, repoPath)
+func VersionFromTag(ctx context.Context) (string, error) {
+	tags, err := HeadTags(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -111,8 +113,8 @@ func VersionFromTag(ctx context.Context, repoPath string) (string, error) {
 	return "", nil
 }
 
-// Clone clones specific branch from repo to another directory.
-func Clone(ctx context.Context, dstDir, srcDir, localBranch, remoteBranch string) error {
+// CloneLocalBranch clones specific branch from local repo to another directory.
+func CloneLocalBranch(ctx context.Context, dstDir, srcDir, localBranch, remoteBranch string) error {
 	srcAbs, err := filepath.Abs(srcDir)
 	if err != nil {
 		return errors.WithStack(err)
@@ -136,8 +138,70 @@ func Clone(ctx context.Context, dstDir, srcDir, localBranch, remoteBranch string
 	return libexec.Exec(ctx, cmd1, cmd2)
 }
 
+// CloneRemoteCommit clones remote commit.
+func CloneRemoteCommit(ctx context.Context, repoURL, commitID, dstDir string) error {
+	if err := os.MkdirAll(dstDir, 0o700); err != nil {
+		return err
+	}
+
+	branch := "crust-build/" + commitID
+
+	// Prepare common commands
+	cmdBranchFromCommitID := exec.Command("git", "branch", branch, commitID)
+	cmdBranchFromCommitID.Dir = dstDir
+
+	cmdSwitchBranch := exec.Command("git", "switch", branch)
+	cmdSwitchBranch.Dir = dstDir
+
+	// Find the name of current branch.
+	buf := &bytes.Buffer{}
+	cmd := exec.Command("git", "branch", "--show-current")
+	cmd.Dir = dstDir
+	cmd.Stdout = buf
+
+	err := libexec.Exec(ctx, cmd)
+	switch {
+	// If command returns error it means there is no git repo.
+	// Clone repo and create branch from commit ID.
+	case err != nil:
+		cmdClone := exec.Command("git", "clone", repoURL, ".")
+		cmdClone.Dir = dstDir
+
+		return libexec.Exec(ctx, cmdClone, cmdBranchFromCommitID, cmdSwitchBranch)
+	// Current branch is equal to the expected one. Do nothing.
+	case strings.TrimSuffix(buf.String(), "\n") == branch:
+		return nil
+	}
+
+	// Find out if expected branch is already present in the local branches.
+	buf = &bytes.Buffer{}
+	cmd = exec.Command("git", "branch", "--format", "%(refname:short)")
+	cmd.Dir = dstDir
+	cmd.Stdout = buf
+
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return err
+	}
+
+	for _, b := range strings.Split(strings.TrimSuffix(buf.String(), "\n"), "\n") {
+		// Branch is already there.
+		// Switch and return.
+		if b == branch {
+			return libexec.Exec(ctx, cmdSwitchBranch)
+		}
+	}
+
+	// Branch is not available.
+	// Fetch fresh content from repo and create branch from commit ID.
+
+	cmdFetch := exec.Command("git", "fetch", "-p")
+	cmdFetch.Dir = dstDir
+
+	return libexec.Exec(ctx, cmdFetch, cmdBranchFromCommitID, cmdSwitchBranch)
+}
+
 // RollbackChanges rolls back uncommitted changes made to the specified files.
-func RollbackChanges(ctx context.Context, repoPath string, files ...string) error {
+func RollbackChanges(ctx context.Context, files ...string) error {
 	cmd := exec.Command("git", append([]string{"checkout", "--"}, files...)...)
 	cmd.Dir = repoPath
 

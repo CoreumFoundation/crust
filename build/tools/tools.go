@@ -30,26 +30,27 @@ import (
 
 // Tool names.
 const (
-	Go                   Name = "go"
-	GolangCI             Name = "golangci"
-	Cosmovisor           Name = "cosmovisor"
-	MuslCC               Name = "muslcc"
-	LibWASM              Name = "libwasmvm"
-	Gaia                 Name = "gaia"
-	Osmosis              Name = "osmosis"
-	Hermes               Name = "hermes"
-	CoredV303            Name = "cored-v3.0.3"
-	Buf                  Name = "buf"
-	Protoc               Name = "protoc"
-	ProtocGenDoc         Name = "protoc-gen-doc"
-	ProtocGenGRPCGateway Name = "protoc-gen-grpc-gateway"
-	ProtocGenOpenAPIV2   Name = "protoc-gen-openapiv2"
-	ProtocGenGoCosmos    Name = "protoc-gen-gocosmos"
-	ProtocGenBufLint     Name = "protoc-gen-buf-lint"
-	ProtocGenBufBreaking Name = "protoc-gen-buf-breaking"
-	RustUpInit           Name = "rustup-init"
-	Rust                 Name = "rust"
-	WASMOpt              Name = "wasm-opt"
+	Go                    Name = "go"
+	GolangCI              Name = "golangci"
+	Cosmovisor            Name = "cosmovisor"
+	Aarch64LinuxMuslCross Name = "aarch64-linux-musl-cross"
+	LibWASMMuslC          Name = "libwasmvm_muslc"
+	Gaia                  Name = "gaia"
+	Osmosis               Name = "osmosis"
+	Hermes                Name = "hermes"
+	CoredV303             Name = "cored-v3.0.3"
+	Mockgen                    = "mockgen"
+	Buf                   Name = "buf"
+	Protoc                Name = "protoc"
+	ProtocGenDoc          Name = "protoc-gen-doc"
+	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
+	ProtocGenOpenAPIV2    Name = "protoc-gen-openapiv2"
+	ProtocGenGoCosmos     Name = "protoc-gen-gocosmos"
+	ProtocGenBufLint      Name = "protoc-gen-buf-lint"
+	ProtocGenBufBreaking  Name = "protoc-gen-buf-breaking"
+	RustUpInit            Name = "rustup-init"
+	Rust                  Name = "rust"
+	WASMOpt               Name = "wasm-opt"
 )
 
 func init() {
@@ -409,6 +410,13 @@ var tools = []Tool{
 		Name:    ProtocGenBufBreaking,
 		Version: "v1.26.1",
 		Package: "github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking",
+	},
+
+	// https://github.com/uber-go/mock/releases
+	GoPackageTool{
+		Name:    Mockgen,
+		Version: "v0.4.0",
+		Package: "go.uber.org/mock/mockgen",
 	},
 
 	// https://rust-lang.github.io/rustup/installation/other.html
@@ -1098,6 +1106,11 @@ func EnsureProtocGenBufBreaking(ctx context.Context, deps types.DepsFunc) error 
 	return Ensure(ctx, ProtocGenBufBreaking, TargetPlatformLocal)
 }
 
+// EnsureMockgen ensures that mockgen is available.
+func EnsureMockgen(ctx context.Context, deps types.DepsFunc) error {
+	return Ensure(ctx, Mockgen, TargetPlatformLocal)
+}
+
 func linkTool(tool Tool, platform TargetPlatform, binaries ...string) error {
 	for _, dst := range binaries {
 		relink, err := shouldRelink(tool, platform, dst)
@@ -1551,7 +1564,7 @@ func Ensure(ctx context.Context, toolName Name, platform TargetPlatform) error {
 
 // Version returns crust module version used to import this module in go.mod of the repository.
 func Version() string {
-	const buildModule = "github.com/CoreumFoundation/crust"
+	crustModule := CrustModule()
 
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
@@ -1559,7 +1572,7 @@ func Version() string {
 	}
 
 	for _, m := range append([]*debug.Module{&bi.Main}, bi.Deps...) {
-		if m.Path != buildModule {
+		if m.Path != crustModule {
 			continue
 		}
 		if m.Replace != nil {
@@ -1577,4 +1590,16 @@ func Version() string {
 	}
 
 	panic("impossible condition: crust module not found")
+}
+
+// CrustModule returns the name of crust module.
+func CrustModule() string {
+	//nolint:dogsled // yes, there are 3 blanks and what?
+	_, file, _, _ := runtime.Caller(0)
+	crustModule := strings.Join(strings.Split(file, "/")[:3], "/")
+	index := strings.Index(crustModule, "@")
+	if index > 0 {
+		crustModule = crustModule[:index]
+	}
+	return crustModule
 }
