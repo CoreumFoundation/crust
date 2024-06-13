@@ -33,6 +33,7 @@ const (
 	Go                   Name = "go"
 	GolangCI             Name = "golangci"
 	Cosmovisor           Name = "cosmovisor"
+	MuslCC               Name = "muslcc"
 	LibWASM              Name = "libwasmvm"
 	Gaia                 Name = "gaia"
 	Osmosis              Name = "osmosis"
@@ -127,6 +128,29 @@ var tools = []Tool{
 		},
 		Binaries: map[string]string{
 			"bin/cosmovisor": "cosmovisor",
+		},
+	},
+
+	// http://musl.cc/#binaries
+	BinaryTool{
+		Name: MuslCC,
+		// update GCP bin source when update the version
+		Version: "11.2.1",
+		Sources: Sources{
+			TargetPlatformLinuxAMD64InDocker: {
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/muslcc/11.2.1/x86_64-linux-musl-cross.tgz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:c5d410d9f82a4f24c549fe5d24f988f85b2679b452413a9f7e5f7b956f2fe7ea",
+				Binaries: map[string]string{
+					"bin/x86_64-linux-musl-gcc": "x86_64-linux-musl-cross/bin/x86_64-linux-musl-gcc",
+				},
+			},
+			TargetPlatformLinuxARM64InDocker: {
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/muslcc/11.2.1/aarch64-linux-musl-cross.tgz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:c909817856d6ceda86aa510894fa3527eac7989f0ef6e87b5721c58737a06c38",
+				Binaries: map[string]string{
+					"bin/aarch64-linux-musl-gcc": "aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc",
+				},
+			},
 		},
 	},
 

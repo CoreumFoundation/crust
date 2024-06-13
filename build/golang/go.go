@@ -150,9 +150,8 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		return err
 	}
 
-	// use goreleaser-cross with amd64 to have all required installed libs for the CC building
-	// for both amd64 and arm64
-	image := fmt.Sprintf("ghcr.io/goreleaser/goreleaser-cross:v%s-amd64", goTool.GetVersion())
+	// use goreleaser-cross with pre-installed cross-compilers
+	image := fmt.Sprintf("ghcr.io/goreleaser/goreleaser-cross:v%s", goTool.GetVersion())
 
 	srcDir := must.String(filepath.Abs(".."))
 	dockerRepoDir := filepath.Join("/src", filepath.Base(must.String(filepath.Abs("."))))
