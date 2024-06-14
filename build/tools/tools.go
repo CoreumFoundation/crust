@@ -30,27 +30,27 @@ import (
 
 // Tool names.
 const (
-	Go                    Name = "go"
-	GolangCI              Name = "golangci"
-	Cosmovisor            Name = "cosmovisor"
-	Aarch64LinuxMuslCross Name = "aarch64-linux-musl-cross"
-	LibWASMMuslC          Name = "libwasmvm_muslc"
-	Gaia                  Name = "gaia"
-	Osmosis               Name = "osmosis"
-	Hermes                Name = "hermes"
-	CoredV303             Name = "cored-v3.0.3"
-	Mockgen                    = "mockgen"
-	Buf                   Name = "buf"
-	Protoc                Name = "protoc"
-	ProtocGenDoc          Name = "protoc-gen-doc"
-	ProtocGenGRPCGateway  Name = "protoc-gen-grpc-gateway"
-	ProtocGenOpenAPIV2    Name = "protoc-gen-openapiv2"
-	ProtocGenGoCosmos     Name = "protoc-gen-gocosmos"
-	ProtocGenBufLint      Name = "protoc-gen-buf-lint"
-	ProtocGenBufBreaking  Name = "protoc-gen-buf-breaking"
-	RustUpInit            Name = "rustup-init"
-	Rust                  Name = "rust"
-	WASMOpt               Name = "wasm-opt"
+	Go                   Name = "go"
+	GolangCI             Name = "golangci"
+	Cosmovisor           Name = "cosmovisor"
+	MuslCC               Name = "muslcc"
+	LibWASM              Name = "libwasmvm"
+	Gaia                 Name = "gaia"
+	Osmosis              Name = "osmosis"
+	Hermes               Name = "hermes"
+	CoredV303            Name = "cored-v3.0.3"
+	Mockgen                   = "mockgen"
+	Buf                  Name = "buf"
+	Protoc               Name = "protoc"
+	ProtocGenDoc         Name = "protoc-gen-doc"
+	ProtocGenGRPCGateway Name = "protoc-gen-grpc-gateway"
+	ProtocGenOpenAPIV2   Name = "protoc-gen-openapiv2"
+	ProtocGenGoCosmos    Name = "protoc-gen-gocosmos"
+	ProtocGenBufLint     Name = "protoc-gen-buf-lint"
+	ProtocGenBufBreaking Name = "protoc-gen-buf-breaking"
+	RustUpInit           Name = "rustup-init"
+	Rust                 Name = "rust"
+	WASMOpt              Name = "wasm-opt"
 )
 
 func init() {
@@ -134,38 +134,59 @@ var tools = []Tool{
 
 	// http://musl.cc/#binaries
 	BinaryTool{
-		Name: Aarch64LinuxMuslCross,
+		Name: MuslCC,
 		// update GCP bin source when update the version
 		Version: "11.2.1",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://storage.googleapis.com/cored-build-process-binaries/aarch64-linux-musl-cross/11.2.1/aarch64-linux-musl-cross.tgz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:c909817856d6ceda86aa510894fa3527eac7989f0ef6e87b5721c58737a06c38",
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/muslcc/11.2.1/x86_64-linux-musl-cross.tgz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:c5d410d9f82a4f24c549fe5d24f988f85b2679b452413a9f7e5f7b956f2fe7ea",
+				Binaries: map[string]string{
+					"bin/x86_64-linux-musl-gcc": "x86_64-linux-musl-cross/bin/x86_64-linux-musl-gcc",
+				},
 			},
-		},
-		Binaries: map[string]string{
-			"bin/aarch64-linux-musl-gcc": "aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc",
+			TargetPlatformLinuxARM64InDocker: {
+				URL:  "https://storage.googleapis.com/cored-build-process-binaries/muslcc/11.2.1/aarch64-linux-musl-cross.tgz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:c909817856d6ceda86aa510894fa3527eac7989f0ef6e87b5721c58737a06c38",
+				Binaries: map[string]string{
+					"bin/aarch64-linux-musl-gcc": "aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc",
+				},
+			},
 		},
 	},
 
 	// https://github.com/CosmWasm/wasmvm/releases
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	BinaryTool{
-		Name:    LibWASMMuslC,
-		Version: "v1.5.1",
+		Name:    LibWASM,
+		Version: "v1.5.2",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.1/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:c0f4614d0835be78ac8f3d647a70ccd7ed9f48632bc1374db04e4df2245cb467",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:e660a38efb2930b34ee6f6b0bb12730adccb040b6ab701b8f82f34453a426ae7",
 				Binaries: map[string]string{
-					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.x86_64.a",
+					"lib/libwasmvm_muslc.x86_64.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.1/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:b89c242ffe2c867267621a6469f07ab70fc204091809d9c6f482c3fdf9293830",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:e78b224c15964817a3b75a40e59882b4d0e06fd055b39514d61646689cef8c6e",
 				Binaries: map[string]string{
-					"lib/libwasmvm_muslc.a": "libwasmvm_muslc.aarch64.a",
+					"lib/libwasmvm_muslc.aarch64.a": "libwasmvm_muslc.aarch64.a",
+				},
+			},
+			TargetPlatformDarwinAMD64InDocker: {
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvmstatic_darwin.a",
+				Hash: "sha256:78dd3f7c1512eca76ac9665021601ca87ee4956f1b9de9a86283d89a84bf37d4",
+				Binaries: map[string]string{
+					"lib/libwasmvmstatic_darwin.a": "libwasmvmstatic_darwin.a",
+				},
+			},
+			TargetPlatformDarwinARM64InDocker: {
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvmstatic_darwin.a",
+				Hash: "sha256:78dd3f7c1512eca76ac9665021601ca87ee4956f1b9de9a86283d89a84bf37d4",
+				Binaries: map[string]string{
+					"lib/libwasmvmstatic_darwin.a": "libwasmvmstatic_darwin.a",
 				},
 			},
 		},
