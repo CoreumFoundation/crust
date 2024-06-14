@@ -10,10 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/crust/build/gaia"
 	"github.com/CoreumFoundation/crust/build/golang"
-	"github.com/CoreumFoundation/crust/build/hermes"
-	"github.com/CoreumFoundation/crust/build/osmosis"
 	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
@@ -31,13 +28,6 @@ func BuildBuilder(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildZNet builds znet.
 func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
-	// FIXME (wojciech): Remove these deps once all the repos use znet programmatically
-	deps(
-		gaia.BuildDockerImage,
-		osmosis.BuildDockerImage,
-		hermes.BuildDockerImage,
-	)
-
 	outDir := "bin/.cache"
 	items, err := os.ReadDir(outDir)
 	if err != nil {
