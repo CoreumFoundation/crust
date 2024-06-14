@@ -20,6 +20,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -75,11 +76,12 @@ func env() []string {
 	envVars := make([]string, 0, len(osEnv))
 	for _, envVar := range osEnv {
 		e := strings.ToUpper(envVar)
-		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") {
+		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") &&
+			!strings.Contains(e, "PATH=") {
 			envVars = append(envVars, envVar)
 		}
 	}
-	return envVars
+	return append(envVars, "PATH="+lo.Must1(filepath.Abs(filepath.Join(repoPath, "bin")))+":"+os.Getenv("PATH"))
 }
 
 // EnsureGo ensures that go is available.
@@ -366,6 +368,7 @@ func buildArgsAndEnvs(
 func Generate(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
 	log := logger.Get(ctx)
+
 	return onModule(repoPath, func(path string) error {
 		log.Info("Running go generate", zap.String("path", path))
 
