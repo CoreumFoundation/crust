@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
-	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -17,7 +15,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"text/template"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -32,29 +29,37 @@ import (
 )
 
 const (
-	repoPath        = "."
-	goAlpineVersion = "3.18"
+	repoPath = "."
 )
 
 // BinaryBuildConfig is the configuration for `go build`.
 type BinaryBuildConfig struct {
-	// TargetPlatform is the platform to build the binary for
+	// TargetPlatform is the platform to build the binary for.
 	TargetPlatform tools.TargetPlatform
 
-	// PackagePath is the path to package to build relative to the ModulePath
+	// PackagePath is the path to package to build relative to the ModulePath.
 	PackagePath string
 
-	// BinOutputPath is the path for compiled binary file
+	// BinOutputPath is the path for compiled binary file.
 	BinOutputPath string
 
-	// CGOEnabled builds cgo binary
+	// CGOEnabled builds cgo binary.
 	CGOEnabled bool
 
-	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler, -ldflags=... etc.
+	// Tags is go build tags.
+	Tags []string
+
+	// Flags is a slice of additional ldflags to pass to `go build`. E.g -w, -s ... etc.
+	LDFlags []string
+
+	// Flags is a slice of additional flags to pass to `go build`. E.g -cover, -compiler ... etc.
 	Flags []string
 
 	// Envs is a slice of additional environment variables to pass to `go build`.
 	Envs []string
+
+	// DockerVolumes list of the volumes to use for the docker build.
+	DockerVolumes []string
 }
 
 // TestConfig is the configuration for `go test -c`.
@@ -104,6 +109,10 @@ func Build(ctx context.Context, deps types.DepsFunc, config BinaryBuildConfig) e
 }
 
 func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
+	if len(config.DockerVolumes) != 0 {
+		return errors.New("the usage of the `DockerVolumes` config is prohibited for the local build")
+	}
+
 	if config.TargetPlatform != tools.TargetPlatformLocal {
 		return errors.Errorf("building requested for platform %s while only %s is supported",
 			config.TargetPlatform, tools.TargetPlatformLocal)
@@ -113,7 +122,7 @@ func buildLocally(ctx context.Context, config BinaryBuildConfig) error {
 	if err := os.MkdirAll(libDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-	args, envs, err := buildArgsAndEnvs(ctx, config, libDir)
+	args, envs, err := buildArgsAndEnvs(config, libDir)
 	if err != nil {
 		return err
 	}
@@ -152,10 +161,13 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		return err
 	}
 
-	image, err := ensureBuildDockerImage(ctx)
+	goTool, err := tools.Get(tools.Go)
 	if err != nil {
 		return err
 	}
+
+	// use goreleaser-cross with pre-installed cross-compilers
+	image := fmt.Sprintf("ghcr.io/goreleaser/goreleaser-cross:v%s", goTool.GetVersion())
 
 	srcDir := must.String(filepath.Abs(".."))
 	dockerRepoDir := filepath.Join("/src", filepath.Base(modulePath)+"-tmp")
@@ -180,7 +192,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		return errors.WithStack(err)
 	}
 
-	args, envs, err := buildArgsAndEnvs(ctx, config, filepath.Join("/crust-cache", tools.Version(), "lib"))
+	args, envs, err := buildArgsAndEnvs(config, filepath.Join("/crust-cache", tools.Version(), "lib"))
 	if err != nil {
 		return err
 	}
@@ -197,22 +209,17 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 		"--workdir", workDir,
 		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		"--name", "crust-build-" + filepath.Base(config.PackagePath) + "-" + hex.EncodeToString(nameSuffix),
+		"--entrypoint", "go", // override default goreleaser
 	}
-	if config.CGOEnabled &&
-		tools.TargetPlatformLocal == tools.TargetPlatformLinuxAMD64 &&
-		config.TargetPlatform == tools.TargetPlatformLinuxARM64InDocker {
-		crossCompilerPath := filepath.Dir(
-			filepath.Dir(tools.Path("bin/aarch64-linux-musl-gcc", tools.TargetPlatformLinuxAMD64InDocker)),
-		)
-		libWasmVMPath := tools.Path("lib/libwasmvm_muslc.a", tools.TargetPlatformLinuxARM64InDocker)
-		runArgs = append(runArgs,
-			"-v", crossCompilerPath+":/aarch64-linux-musl-cross",
-			"-v", libWasmVMPath+":/aarch64-linux-musl-cross/aarch64-linux-musl/lib/libwasmvm_muslc.a",
-		)
-	}
+
 	for _, env := range envs {
 		runArgs = append(runArgs, "--env", env)
 	}
+
+	for _, v := range config.DockerVolumes {
+		runArgs = append(runArgs, "-v", v)
+	}
+
 	runArgs = append(runArgs, image)
 	runArgs = append(runArgs, args...)
 	runArgs = append(runArgs, "-o", filepath.Join("/out", filepath.Base(config.BinOutputPath)), ".")
@@ -250,94 +257,37 @@ func RunTests(ctx context.Context, deps types.DepsFunc, config TestConfig) error
 	return nil
 }
 
-//go:embed Dockerfile.tmpl
-var dockerfileTemplate string
-
-var dockerfileTemplateParsed = template.Must(template.New("Dockerfile").Parse(dockerfileTemplate))
-
-func ensureBuildDockerImage(ctx context.Context) (string, error) {
-	goTool, err := tools.Get(tools.Go)
-	if err != nil {
-		return "", err
-	}
-	dockerfileBuf := &bytes.Buffer{}
-	err = dockerfileTemplateParsed.Execute(dockerfileBuf, struct {
-		GOVersion     string
-		AlpineVersion string
-	}{
-		GOVersion:     goTool.GetVersion(),
-		AlpineVersion: goAlpineVersion,
-	})
-	if err != nil {
-		return "", errors.Wrap(err, "executing Dockerfile template failed")
-	}
-	dockerfileChecksum := sha256.Sum256(dockerfileBuf.Bytes())
-	image := "crust-go-build:" + hex.EncodeToString(dockerfileChecksum[:4])
-
-	imageBuf := &bytes.Buffer{}
-	imageCmd := exec.Command("docker", "images", "-q", image)
-	imageCmd.Stdout = imageBuf
-	if err := libexec.Exec(ctx, imageCmd); err != nil {
-		return "", errors.Wrapf(err, "failed to list image '%s'", image)
-	}
-	if imageBuf.Len() > 0 {
-		return image, nil
-	}
-
-	buildCmd := exec.Command(
-		"docker",
-		"build",
-		"--label", docker.LabelKey+"="+docker.LabelValue,
-		"--tag", image,
-		"--tag", "crust-go-build:latest",
-		"-",
-	)
-	buildCmd.Stdin = dockerfileBuf
-
-	if err := libexec.Exec(ctx, buildCmd); err != nil {
-		return "", errors.Wrapf(err, "failed to build image '%s'", image)
-	}
-	return image, nil
-}
-
 func buildArgsAndEnvs(
-	ctx context.Context,
 	config BinaryBuildConfig,
 	libDir string,
 ) (args, envs []string, err error) {
-	var crossCompileARM64 bool
-
-	switch config.TargetPlatform {
-	case tools.TargetPlatformLocal,
-		tools.TargetPlatformLinuxLocalArchInDocker,
-		tools.TargetPlatformDarwinAMD64InDocker,
-		tools.TargetPlatformDarwinARM64InDocker:
-	case tools.TargetPlatformLinuxARM64InDocker:
-		if config.CGOEnabled {
-			if tools.TargetPlatformLocal != tools.TargetPlatformLinuxAMD64 {
-				return nil, nil, errors.Errorf(
-					"crosscompiling for %s is possible only on platform %s",
-					config.TargetPlatform,
-					tools.TargetPlatformLinuxAMD64,
-				)
-			}
-			crossCompileARM64 = true
-		}
-	default:
-		return nil, nil,
-			errors.Errorf(
-				"building is not possible for platform %s on platform %s",
-				config.TargetPlatform,
-				tools.TargetPlatformLocal,
-			)
-	}
-
 	ldFlags := []string{"-w", "-s"}
+	for _, flag := range config.Flags {
+		if strings.Contains(flag, "-ldflags") {
+			return nil, nil, errors.Errorf(
+				"it's prohibited to use `-ldflags` in the Flags config, use LDFlags instead",
+			)
+		}
+		if strings.Contains(flag, "-tags") {
+			return nil, nil, errors.Errorf(
+				"it's prohibited to use `-tags` in the Flags config, use Tags instead",
+			)
+		}
+	}
+	ldFlags = append(ldFlags, config.LDFlags...)
+
 	args = []string{
 		"build",
 		"-trimpath",
-		"-ldflags=" + strings.Join(ldFlags, " "),
+		"-buildvcs=false",
 	}
+	if len(ldFlags) != 0 {
+		args = append(args, "-ldflags="+strings.Join(ldFlags, " "))
+	}
+	if len(config.Tags) != 0 {
+		args = append(args, "-tags="+strings.Join(config.Tags, ","))
+	}
+
 	args = append(args, config.Flags...)
 
 	cgoEnabled := "0"
@@ -349,13 +299,6 @@ func buildArgsAndEnvs(
 		"CGO_ENABLED=" + cgoEnabled,
 		"GOOS=" + config.TargetPlatform.OS,
 		"GOARCH=" + config.TargetPlatform.Arch,
-	}
-	if crossCompileARM64 {
-		if err := tools.Ensure(ctx, tools.Aarch64LinuxMuslCross, tools.TargetPlatformLinuxAMD64InDocker); err != nil {
-			return nil, nil, err
-		}
-
-		envs = append(envs, "CC=/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc")
 	}
 	envs = append(envs, config.Envs...)
 
