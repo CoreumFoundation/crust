@@ -18,8 +18,6 @@ import (
 	"github.com/CoreumFoundation/crust/build/types"
 )
 
-const repoPath = "."
-
 // BuildBuilder builds building tool in the current repository.
 func BuildBuilder(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
