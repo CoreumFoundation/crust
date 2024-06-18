@@ -82,10 +82,11 @@ func env() []string {
 	for _, envVar := range osEnv {
 		e := strings.ToUpper(envVar)
 		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") &&
-			!strings.Contains(e, "PATH=") {
+			!strings.Contains(e, "PATH=") && !strings.Contains(e, "GOVCS=") {
 			envVars = append(envVars, envVar)
 		}
 	}
+	envVars = append(envVars, "GOVCS=public:git|hg|bzr") // we add bzr here because some modules use it
 	return append(envVars, "PATH="+lo.Must1(filepath.Abs(filepath.Join(repoPath, "bin")))+":"+os.Getenv("PATH"))
 }
 
