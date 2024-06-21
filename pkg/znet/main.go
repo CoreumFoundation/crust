@@ -4,12 +4,10 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
@@ -17,7 +15,6 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/run"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps"
-	"github.com/CoreumFoundation/crust/infra/testing"
 )
 
 // Main is the main function of znet.
@@ -30,7 +27,6 @@ func Main() {
 		rootCmd.AddCommand(startCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(stopCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(removeCmd(ctx, configF, cmdF))
-		rootCmd.AddCommand(testCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(specCmd(configF, cmdF))
 		rootCmd.AddCommand(consoleCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(coverageConvertCmd(ctx, configF, cmdF))
@@ -64,7 +60,6 @@ func rootCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *CmdFactory
 	addRootDirFlag(rootCmd, configF)
 	addProfileFlag(rootCmd, configF)
 	addCoredVersionFlag(rootCmd, configF)
-	addFilterFlag(rootCmd, configF)
 	return rootCmd
 }
 
@@ -104,22 +99,6 @@ func removeCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *CmdFacto
 	}
 }
 
-func testCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *CmdFactory) *cobra.Command {
-	testCmd := &cobra.Command{
-		Use:   "test",
-		Short: "Runs integration tests for all repos",
-		RunE: cmdF.Cmd(func() error {
-			return Test(ctx, configF)
-		}),
-	}
-	addTestGroupFlag(testCmd, configF)
-	addRootDirFlag(testCmd, configF)
-	addFilterFlag(testCmd, configF)
-	addCoredVersionFlag(testCmd, configF)
-	addTimeoutCommitFlag(testCmd, configF)
-	return testCmd
-}
-
 func specCmd(configF *infra.ConfigFactory, cmdF *CmdFactory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "spec",
@@ -152,17 +131,6 @@ func coverageConvertCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF 
 
 	addCoverageOutputFlag(cmd, configF)
 	return cmd
-}
-
-func addTestGroupFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	testGroups := lo.Keys(testing.TestGroups)
-	sort.Strings(testGroups)
-	cmd.Flags().StringSliceVar(
-		&configF.TestGroups,
-		"test-groups",
-		testGroups,
-		"Test groups in supported repositories to run integration test for,empty means all repositories all test groups ,e.g. --test-groups=faucet,coreum-modules or --test-groups=faucet --test-groups=coreum-modules", //nolint:lll // we don't care about this description
-	)
 }
 
 func addRootDirFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
@@ -198,15 +166,6 @@ func addCoredVersionFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
 		"cored-version",
 		defaultString("CRUST_ZNET_CORED_VERSION", ""),
 		"The version of the binary to be used for deployment",
-	)
-}
-
-func addFilterFlag(cmd *cobra.Command, configF *infra.ConfigFactory) {
-	cmd.Flags().StringVar(
-		&configF.TestFilter,
-		"filter",
-		defaultString("CRUST_ZNET_FILTER", ""),
-		"Regular expression used to filter tests to run",
 	)
 }
 
