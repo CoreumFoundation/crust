@@ -49,14 +49,10 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 		RootDir:            configF.RootDir,
 		AppDir:             homeDir + "/app",
 		WrapperDir:         homeDir + "/bin",
-		TestFilter:         configF.TestFilter,
 		VerboseLogging:     configF.VerboseLogging,
 		LogFormat:          configF.LogFormat,
 		CoverageOutputFile: configF.CoverageOutputFile,
 	}
-
-	// we use append to make a copy of the original list, so it is not passed by reference
-	config.TestGroups = append([]string{}, configF.TestGroups...)
 
 	createDirs(config)
 
