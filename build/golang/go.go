@@ -5,9 +5,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -15,6 +17,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -31,6 +34,12 @@ import (
 
 const (
 	repoPath = "."
+)
+
+const (
+	funcPrefix         = "func "
+	fuzzFuncPrefix     = funcPrefix + "Fuzz"
+	fuzzTestFileSuffix = "fuzz_test.go"
 )
 
 // BinaryBuildConfig is the configuration for `go build`.
@@ -382,6 +391,60 @@ func Test(ctx context.Context, deps types.DepsFunc) error {
 	})
 }
 
+// TestFuzz runs go fuzz tests in repository.
+func TestFuzz(ctx context.Context, deps types.DepsFunc, fuzzTime time.Duration) error {
+	deps(EnsureGo)
+	log := logger.Get(ctx)
+
+	repoPath := must.String(filepath.Abs(must.String(filepath.EvalSymlinks(repoPath))))
+	return onModule(repoPath, func(path string) error {
+		fuzzTests, err := findFuzzTests(path)
+		if err != nil {
+			return err
+		}
+		if len(fuzzTests) == 0 {
+			log.Info("No fuzz tests found", zap.String("path", path))
+			return nil
+		}
+
+		goFuzzCachePath := filepath.Join(tools.CacheDir(), "go-fuzz")
+
+		for filePath, testNames := range fuzzTests {
+			fileHash, err := getFileHash(filePath)
+			if err != nil {
+				return err
+			}
+
+			fuzzCacheDir := filepath.Join(goFuzzCachePath, fileHash)
+			if err := os.MkdirAll(fuzzCacheDir, 0o700); err != nil {
+				return errors.WithStack(err)
+			}
+
+			for _, testName := range testNames {
+				args := []string{
+					"test",
+					"-v",
+					"-fuzz", testName,
+					"-fuzztime", fuzzTime.String(),
+					"-test.fuzzcachedir", fuzzCacheDir,
+				}
+				log.Info("Running fuzz test", zap.Strings("args", args))
+				cmd := exec.Command(
+					tools.Path("bin/go", tools.TargetPlatformLocal),
+					args...,
+				)
+				cmd.Dir = filepath.Dir(filePath)
+				cmd.Env = env()
+				if err := libexec.Exec(ctx, cmd); err != nil {
+					return errors.Wrapf(err, "fuzz tests failed in module '%s'", path)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
 // Tidy runs go mod tidy in repository.
 func Tidy(ctx context.Context, deps types.DepsFunc) error {
 	deps(EnsureGo)
@@ -578,4 +641,65 @@ func findRepositoryURL(path string) string {
 	}
 
 	return "https://" + strings.Join(parts, "/")
+}
+
+func findFuzzTests(path string) (map[string][]string, error) {
+	fuzzTestPaths := make(map[string][]string, 0)
+	if err := filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() || !strings.HasSuffix(d.Name(), fuzzTestFileSuffix) {
+			return nil
+		}
+
+		testNames := make([]string, 0)
+		file, err := os.Open(path)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, fuzzFuncPrefix) {
+				lines := strings.Split(strings.TrimLeft(line, funcPrefix), "(")
+				if len(lines) != 2 {
+					return errors.Errorf("invalid fuzz test %s", line)
+				}
+				testNames = append(testNames, lines[0])
+			}
+		}
+
+		if len(testNames) == 0 {
+			return errors.Errorf("invlaid %s fuzz test file, no fuzz tests found", path)
+		}
+
+		fuzzTestPaths[path] = testNames
+
+		return nil
+	}); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return fuzzTestPaths, nil
+}
+
+func getFileHash(filePath string) (string, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	defer f.Close()
+
+	fileHash := sha256.New()
+	if _, err := io.Copy(fileHash, f); err != nil {
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+	}
+
+	return hex.EncodeToString(fileHash.Sum(nil)), nil
 }
