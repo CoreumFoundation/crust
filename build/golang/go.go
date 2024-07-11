@@ -665,7 +665,7 @@ func findFuzzTests(path string) (map[string][]string, error) {
 		for scanner.Scan() {
 			line := scanner.Text()
 			if strings.HasPrefix(line, fuzzFuncPrefix) {
-				lines := strings.Split(strings.TrimLeft(line, funcPrefix), "(")
+				lines := strings.Split(strings.Replace(line, funcPrefix, "", 1), "(")
 				if len(lines) != 2 {
 					return errors.Errorf("invalid fuzz test %s", line)
 				}
