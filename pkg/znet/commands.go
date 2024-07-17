@@ -22,7 +22,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
-	"github.com/CoreumFoundation/crust/infra/testing"
 )
 
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
@@ -64,7 +63,6 @@ func Activate(ctx context.Context, configF *infra.ConfigFactory) error {
 		"CRUST_ZNET_CORED_VERSION="+configF.CoredVersion,
 		"CRUST_ZNET_HOME="+configF.HomeDir,
 		"CRUST_ZNET_ROOT_DIR="+configF.RootDir,
-		"CRUST_ZNET_FILTER="+configF.TestFilter,
 	)
 	if promptVar != "" {
 		shellCmd.Env = append(shellCmd.Env, promptVar)
@@ -172,34 +170,6 @@ func Remove(ctx context.Context, configF *infra.ConfigFactory) (retErr error) {
 		}
 	}
 	return errors.WithStack(err)
-}
-
-// Test runs integration tests.
-func Test(ctx context.Context, configF *infra.ConfigFactory) error {
-	for _, tg := range configF.TestGroups {
-		configF.Profiles = append(configF.Profiles, testing.TestGroups[tg].RequiredProfiles...)
-	}
-
-	spec := infra.NewSpec(configF)
-	config := NewConfig(configF, spec)
-
-	if err := spec.Verify(); err != nil {
-		return err
-	}
-	for _, app := range spec.Apps {
-		if app.Info().Status == infra.AppStatusStopped {
-			return errors.New("tests can't be executed on top of stopped environment, start it first")
-		}
-	}
-
-	target := targets.NewDocker(config, spec)
-	appF := apps.NewFactory(config, spec)
-	appSet, coredApp, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
-	if err != nil {
-		return err
-	}
-
-	return testing.Run(ctx, target, appSet, coredApp, config)
 }
 
 // Spec prints specification of running environment.

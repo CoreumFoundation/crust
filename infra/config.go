@@ -28,12 +28,6 @@ type Config struct {
 	// WrapperDir is the path where wrappers are stored
 	WrapperDir string
 
-	// TestFilter is a regular expressions used to filter tests to run
-	TestFilter string
-
-	// TestGroups limits running integration tests on selected repository test group, empty means no filter
-	TestGroups []string
-
 	// VerboseLogging turns on verbose logging
 	VerboseLogging bool
 
