@@ -7,7 +7,6 @@ import (
 	osexec "os/exec"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -16,7 +15,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
-	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
@@ -24,7 +22,6 @@ import (
 	"github.com/CoreumFoundation/crust/infra/apps"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/targets"
-	"github.com/CoreumFoundation/crust/pkg/znet/tmux"
 )
 
 var exe = must.String(filepath.EvalSymlinks(must.String(os.Executable())))
@@ -179,43 +176,6 @@ func Remove(ctx context.Context, configF *infra.ConfigFactory) (retErr error) {
 func Spec(spec *infra.Spec) error {
 	fmt.Println(spec)
 	return nil
-}
-
-// Console starts tmux session on top of running environment.
-func Console(ctx context.Context, configF *infra.ConfigFactory) error {
-	spec := infra.NewSpec(configF)
-	config := NewConfig(configF, spec)
-
-	if err := tmux.Kill(ctx, config.EnvName); err != nil {
-		return err
-	}
-
-	containers := map[string]string{}
-	for appName, app := range spec.Apps {
-		if app.Info().Status == infra.AppStatusRunning {
-			containers[appName] = app.Info().Container
-		}
-	}
-	if len(containers) == 0 {
-		logger.Get(ctx).Info("There are no running applications to show in tmux console")
-		return nil
-	}
-
-	appNames := make([]string, 0, len(containers))
-	for appName := range containers {
-		appNames = append(appNames, appName)
-	}
-	sort.Strings(appNames)
-
-	for _, appName := range appNames {
-		if err := tmux.ShowContainerLogs(ctx, config.EnvName, appName, containers[appName]); err != nil {
-			return err
-		}
-	}
-	if err := tmux.Attach(ctx, config.EnvName); err != nil {
-		return err
-	}
-	return tmux.Kill(ctx, config.EnvName)
 }
 
 // CoverageConvert converts & stores coverage from the first cored app we find.

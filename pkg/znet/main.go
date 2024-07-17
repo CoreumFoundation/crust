@@ -28,7 +28,6 @@ func Main() {
 		rootCmd.AddCommand(stopCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(removeCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(specCmd(configF, cmdF))
-		rootCmd.AddCommand(consoleCmd(ctx, configF, cmdF))
 		rootCmd.AddCommand(coverageConvertCmd(ctx, configF, cmdF))
 
 		return rootCmd.Execute()
@@ -106,16 +105,6 @@ func specCmd(configF *infra.ConfigFactory, cmdF *CmdFactory) *cobra.Command {
 		RunE: cmdF.Cmd(func() error {
 			spec := infra.NewSpec(configF)
 			return Spec(spec)
-		}),
-	}
-}
-
-func consoleCmd(ctx context.Context, configF *infra.ConfigFactory, cmdF *CmdFactory) *cobra.Command {
-	return &cobra.Command{
-		Use:   "console",
-		Short: "Starts tmux console on top of running environment",
-		RunE: cmdF.Cmd(func() error {
-			return Console(ctx, configF)
 		}),
 	}
 }
