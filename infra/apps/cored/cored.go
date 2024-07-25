@@ -293,7 +293,6 @@ func (c Cored) Deployment() infra.Deployment {
 				"--rpc.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.RPC),
 				"--p2p.laddr", infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.P2P),
 				"--grpc.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPC),
-				"--grpc-web.address", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.GRPCWeb),
 				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
 				"--inv-check-period", "1",
 				"--chain-id", string(c.config.GenesisInitConfig.ChainID),
@@ -408,7 +407,6 @@ func (c Cored) prepare(ctx context.Context) error {
 	appCfg.API.Address = infra.JoinNetAddrIP("tcp", net.IPv4zero, c.config.Ports.API)
 	appCfg.GRPC.Enable = true
 	appCfg.GRPCWeb.Enable = true
-	appCfg.GRPCWeb.EnableUnsafeCORS = true
 	appCfg.Telemetry.Enabled = true
 	appCfg.Telemetry.PrometheusRetentionTime = 600
 	srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
@@ -557,14 +555,14 @@ func prepareTxStakingCreateValidator(
 	const passphrase = "tmp"
 
 	commission := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+		Rate:          sdkmath.LegacyMustNewDecFromStr("0.1"),
+		MaxRate:       sdkmath.LegacyMustNewDecFromStr("0.2"),
+		MaxChangeRate: sdkmath.LegacyMustNewDecFromStr("0.01"),
 	}
 
 	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
 	msg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(stakerAddress),
+		sdk.ValAddress(stakerAddress).String(),
 		&validatorPublicKey,
 		stakedBalance,
 		stakingtypes.Description{Moniker: stakerAddress.String()},
@@ -573,10 +571,6 @@ func prepareTxStakingCreateValidator(
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
-	}
-
-	if err := msg.ValidateBasic(); err != nil {
-		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
 	}
 
 	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
@@ -596,7 +590,7 @@ func prepareTxStakingCreateValidator(
 		return nil, err
 	}
 
-	if err := tx.Sign(txf, stakerAddress.String(), txBuilder, true); err != nil {
+	if err := tx.Sign(context.Background(), txf, stakerAddress.String(), txBuilder, true); err != nil {
 		return nil, err
 	}
 

@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
@@ -60,7 +60,7 @@ func NetworkConfig(genesisTemplate string, blockTimeIota time.Duration) (config.
 			},
 			CustomParamsConfig: config.CustomParamsConfig{
 				Staking: config.CustomParamsStakingConfig{
-					MinSelfDelegation: sdk.NewInt(10_000_000), // 10 core
+					MinSelfDelegation: sdkmath.NewInt(10_000_000), // 10 core
 				},
 			},
 		},
