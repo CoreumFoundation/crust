@@ -39,6 +39,7 @@ const (
 	Osmosis              Name = "osmosis"
 	Hermes               Name = "hermes"
 	CoredV303            Name = "cored-v3.0.3"
+	CoredV401            Name = "cored-v4.0.1"
 	Mockgen                   = "mockgen"
 	Buf                  Name = "buf"
 	Protoc               Name = "protoc"
@@ -261,15 +262,15 @@ var tools = []Tool{
 	// https://github.com/informalsystems/hermes/releases
 	BinaryTool{
 		Name:    Hermes,
-		Version: "v1.8.2",
+		Version: "v1.10.1",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.8.2/hermes-v1.8.2-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:04e2bed95e59111bd1e411b9917f23486e2748652b2bc3df93f446d0a7004af1",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.1/hermes-v1.10.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:94f80b8f79f330c7fd98213b7567392889d478c3643e85bcacfc8b8d73798f54",
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.8.2/hermes-v1.8.2-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:2ae06789eca2bec1f8e123af78bf415c159238b6943c71d637c121d4a69f6f0f",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.1/hermes-v1.10.1-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:7c9f8c68c283e8ffe767a14d49ace0247793e76233b0aee4f50271728935465d",
 			},
 		},
 		Binaries: map[string]string{
@@ -278,6 +279,26 @@ var tools = []Tool{
 	},
 
 	// https://github.com/CoreumFoundation/coreum/releases
+	BinaryTool{
+		Name:    CoredV401,
+		Version: "v4.0.1",
+		Sources: Sources{
+			TargetPlatformLinuxAMD64InDocker: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-amd64",
+				Hash: "sha256:fdbb6a0c393f1cad0d03c6357b6af2e840508ef3be7ab186f2caeee10d13ae73",
+				Binaries: map[string]string{
+					"bin/cored-v4.0.1": "cored-linux-amd64",
+				},
+			},
+			TargetPlatformLinuxARM64InDocker: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-arm64",
+				Hash: "sha256:ade147bf5a63259dae1b69762e3295600b5acd9f748b3cfba4d885dfaff15f1e",
+				Binaries: map[string]string{
+					"bin/cored-v4.0.1": "cored-linux-arm64",
+				},
+			},
+		},
+	},
 	BinaryTool{
 		Name:    CoredV303,
 		Version: "v3.0.3",

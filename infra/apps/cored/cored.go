@@ -409,6 +409,7 @@ func (c Cored) prepare(ctx context.Context) error {
 	appCfg.GRPCWeb.Enable = true
 	appCfg.Telemetry.Enabled = true
 	appCfg.Telemetry.PrometheusRetentionTime = 600
+	appCfg.Mempool.MaxTxs = 5000
 	srvconfig.WriteConfigFile(filepath.Join(c.config.HomeDir, "config", "app.toml"), appCfg)
 
 	if err := importMnemonicsToKeyring(c.config.HomeDir, c.importedMnemonics); err != nil {
@@ -433,7 +434,8 @@ func (c Cored) prepare(ctx context.Context) error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		"v4": "cored",
+		"v5": "cored",
+		"v4": "cored-v4.0.1",
 		"v3": "cored-v3.0.3",
 	}
 	for upgrade, binary := range upgrades {
@@ -512,9 +514,20 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 		"--chain-id", string(c.config.GenesisInitConfig.ChainID),
 	}
 
+	binaryPath := c.localBinaryPath()
+	if c.config.BinaryVersion != "" {
+		binaryPath = filepath.Join(
+			c.config.BinDir,
+			".cache",
+			"cored",
+			"docker.linux."+runtime.GOARCH, "bin",
+			"cored"+"-"+c.Config().BinaryVersion,
+		)
+	}
+
 	return libexec.Exec(
 		ctx,
-		exec.Command(c.localBinaryPath(), fullArgs...),
+		exec.Command(binaryPath, fullArgs...),
 	)
 }
 
