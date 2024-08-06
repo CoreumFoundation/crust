@@ -5,7 +5,7 @@ module github.com/CoreumFoundation/crust
 go 1.22.4
 
 replace (
-	github.com/CoreumFoundation/coreum/v4 => ../coreum
+	// github.com/CoreumFoundation/coreum/v4 => ../coreum
 	// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
 	github.com/spf13/viper => github.com/spf13/viper v1.16.0
 )
@@ -14,7 +14,7 @@ require (
 	cosmossdk.io/math v1.3.0
 	github.com/BurntSushi/toml v1.2.1
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20230627094203-821c6a4eebab
-	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240213123712-d7d6a45ddb8f
+	github.com/CoreumFoundation/coreum/v4 v4.0.0-20240806080257-6848ed703bfa
 	github.com/CosmWasm/wasmd v0.52.0
 	github.com/cometbft/cometbft v0.38.9
 	github.com/cosmos/cosmos-sdk v0.50.8
