@@ -4,11 +4,8 @@ module github.com/CoreumFoundation/crust
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
 go 1.22.4
 
-replace (
-	// github.com/CoreumFoundation/coreum/v4 => ../coreum
-	// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
-	github.com/spf13/viper => github.com/spf13/viper v1.16.0
-)
+// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
+replace github.com/spf13/viper => github.com/spf13/viper v1.16.0
 
 require (
 	cosmossdk.io/math v1.3.0
