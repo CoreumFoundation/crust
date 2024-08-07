@@ -4,8 +4,13 @@ module github.com/CoreumFoundation/crust
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
 go 1.22.4
 
-// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
-replace github.com/spf13/viper => github.com/spf13/viper v1.16.0
+replace (
+	// TODO(https://github.com/cosmos/rosetta/issues/76): Rosetta requires cosmossdk.io/core v0.12.0 erroneously but
+	// should use v0.11.0. The Cosmos build fails with types/context.go:65:29: undefined: comet.BlockInfo otherwise.
+	cosmossdk.io/core => cosmossdk.io/core v0.11.0
+	// FIXME: remove when there is a fix for https://github.com/spf13/viper/issues/1706
+	github.com/spf13/viper => github.com/spf13/viper v1.16.0
+)
 
 require (
 	cosmossdk.io/math v1.3.0

@@ -202,7 +202,7 @@ func GRPCClient(url string, mm module.BasicManager) (*grpc.ClientConn, error) {
 		return nil, errors.New("failed to cast codec to codec.GRPCCodecProvider)")
 	}
 
-	grpClient, err := grpc.Dial(
+	grpClient, err := grpc.NewClient(
 		url,
 		grpc.WithDefaultCallOptions(grpc.ForceCodec(pc.GRPCCodec())),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
