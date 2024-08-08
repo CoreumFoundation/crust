@@ -21,6 +21,7 @@ import (
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -584,6 +585,13 @@ func prepareTxStakingCreateValidator(
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
+	}
+
+	validatorAddressCodec := address.Bech32Codec{
+		Bech32Prefix: sdk.GetConfig().GetBech32ValidatorAddrPrefix(),
+	}
+	if err := msg.Validate(validatorAddressCodec); err != nil {
+		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
 	}
 
 	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
