@@ -348,7 +348,7 @@ func (b Bridge) deployAndInitSmartContract(ctx context.Context, rpcClient *xrplh
 		return err
 	}
 
-	trustSetLimitAmount, ok := sdk.NewIntFromString("100000000000000000000000000000000000")
+	trustSetLimitAmount, ok := sdkmath.NewIntFromString("100000000000000000000000000000000000")
 	if !ok {
 		return errors.New("converting string to sdk.Int failed")
 	}
@@ -619,8 +619,8 @@ func (b Bridge) fundCoreumAccounts(ctx context.Context) error {
 			{
 				Address: faucetAddr.String(),
 				Coins: sdk.NewCoins(sdk.NewCoin(coredConfig.GenesisInitConfig.Denom,
-					sdk.NewInt(coreumAdminBalance).Add(
-						sdk.NewInt(coreumRelayerBalance).MulRaw(int64(len(RelayerMnemonics))),
+					sdkmath.NewInt(coreumAdminBalance).Add(
+						sdkmath.NewInt(coreumRelayerBalance).MulRaw(int64(len(RelayerMnemonics))),
 					),
 				)),
 			},

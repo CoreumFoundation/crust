@@ -39,6 +39,7 @@ const (
 	Osmosis              Name = "osmosis"
 	Hermes               Name = "hermes"
 	CoredV303            Name = "cored-v3.0.3"
+	CoredV401            Name = "cored-v4.0.1"
 	Mockgen                   = "mockgen"
 	Buf                  Name = "buf"
 	Protoc               Name = "protoc"
@@ -61,20 +62,20 @@ var tools = []Tool{
 	// https://go.dev/dl/
 	BinaryTool{
 		Name:    Go,
-		Version: "1.21.4",
+		Version: "1.22.4",
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://go.dev/dl/go1.21.4.linux-amd64.tar.gz",
-				Hash: "sha256:73cac0215254d0c7d1241fa40837851f3b9a8a742d0b54714cbdfb3feaf8f0af",
+				URL:  "https://go.dev/dl/go1.22.4.linux-amd64.tar.gz",
+				Hash: "sha256:ba79d4526102575196273416239cca418a651e049c2b099f3159db85e7bade7d",
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://go.dev/dl/go1.21.4.darwin-amd64.tar.gz",
-				Hash: "sha256:cd3bdcc802b759b70e8418bc7afbc4a65ca73a3fe576060af9fc8a2a5e71c3b8",
+				URL:  "https://go.dev/dl/go1.22.4.darwin-amd64.tar.gz",
+				Hash: "sha256:7788f40f3a46f201df1dc46ca640403eb535d5513fc33449164a90dbd229b761",
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://go.dev/dl/go1.21.4.darwin-arm64.tar.gz",
-				Hash: "sha256:8b7caf2ac60bdff457dba7d4ff2a01def889592b834453431ae3caecf884f6a5",
+				URL:  "https://go.dev/dl/go1.22.4.darwin-arm64.tar.gz",
+				Hash: "sha256:4036c88faf57a6b096916f1827edcdbf5290a47cc5f59956e88cdd9b1b71088c",
 			},
 		},
 		Binaries: map[string]string{
@@ -159,32 +160,32 @@ var tools = []Tool{
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	BinaryTool{
 		Name:    LibWASM,
-		Version: "v1.5.2",
+		Version: "v2.1.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:e660a38efb2930b34ee6f6b0bb12730adccb040b6ab701b8f82f34453a426ae7",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v2.1.0/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:df4bd912c35be48781a40edea88fd5f409c643fb27e0dc043184ef51dc50a1cc",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.x86_64.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:e78b224c15964817a3b75a40e59882b4d0e06fd055b39514d61646689cef8c6e",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v2.1.0/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:06945cae8fced839a2be0980887a1c5d04d15fd29837ac644a648d555c49ab4d",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.aarch64.a": "libwasmvm_muslc.aarch64.a",
 				},
 			},
 			TargetPlatformDarwinAMD64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvmstatic_darwin.a",
-				Hash: "sha256:78dd3f7c1512eca76ac9665021601ca87ee4956f1b9de9a86283d89a84bf37d4",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v2.1.0/libwasmvmstatic_darwin.a",
+				Hash: "sha256:0099644d0106455a74a81a892bc9011b84305adf0f2a62acdd5f0a3bb7fdf7fa",
 				Binaries: map[string]string{
 					"lib/libwasmvmstatic_darwin.a": "libwasmvmstatic_darwin.a",
 				},
 			},
 			TargetPlatformDarwinARM64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvmstatic_darwin.a",
-				Hash: "sha256:78dd3f7c1512eca76ac9665021601ca87ee4956f1b9de9a86283d89a84bf37d4",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v2.1.0/libwasmvmstatic_darwin.a",
+				Hash: "sha256:0099644d0106455a74a81a892bc9011b84305adf0f2a62acdd5f0a3bb7fdf7fa",
 				Binaries: map[string]string{
 					"lib/libwasmvmstatic_darwin.a": "libwasmvmstatic_darwin.a",
 				},
@@ -261,15 +262,15 @@ var tools = []Tool{
 	// https://github.com/informalsystems/hermes/releases
 	BinaryTool{
 		Name:    Hermes,
-		Version: "v1.8.2",
+		Version: "v1.10.1",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.8.2/hermes-v1.8.2-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:04e2bed95e59111bd1e411b9917f23486e2748652b2bc3df93f446d0a7004af1",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.1/hermes-v1.10.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:94f80b8f79f330c7fd98213b7567392889d478c3643e85bcacfc8b8d73798f54",
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.8.2/hermes-v1.8.2-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:2ae06789eca2bec1f8e123af78bf415c159238b6943c71d637c121d4a69f6f0f",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.1/hermes-v1.10.1-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:7c9f8c68c283e8ffe767a14d49ace0247793e76233b0aee4f50271728935465d",
 			},
 		},
 		Binaries: map[string]string{
@@ -278,6 +279,26 @@ var tools = []Tool{
 	},
 
 	// https://github.com/CoreumFoundation/coreum/releases
+	BinaryTool{
+		Name:    CoredV401,
+		Version: "v4.0.1",
+		Sources: Sources{
+			TargetPlatformLinuxAMD64InDocker: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-amd64",
+				Hash: "sha256:fdbb6a0c393f1cad0d03c6357b6af2e840508ef3be7ab186f2caeee10d13ae73",
+				Binaries: map[string]string{
+					"bin/cored-v4.0.1": "cored-linux-amd64",
+				},
+			},
+			TargetPlatformLinuxARM64InDocker: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-arm64",
+				Hash: "sha256:ade147bf5a63259dae1b69762e3295600b5acd9f748b3cfba4d885dfaff15f1e",
+				Binaries: map[string]string{
+					"bin/cored-v4.0.1": "cored-linux-arm64",
+				},
+			},
+		},
+	},
 	BinaryTool{
 		Name:    CoredV303,
 		Version: "v3.0.3",
@@ -391,10 +412,10 @@ var tools = []Tool{
 		Package: "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2",
 	},
 
-	// https://github.com/regen-network/cosmos-proto/releases
+	// https://github.com/cosmos/gogoproto/releases
 	GoPackageTool{
 		Name:    ProtocGenGoCosmos,
-		Version: "v1.4.10",
+		Version: "v1.5.0",
 		Package: "github.com/cosmos/gogoproto/protoc-gen-gocosmos",
 	},
 

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -118,8 +118,8 @@ func CheckCosmosNodeHealth(ctx context.Context, clientCtx client.Context, appInf
 	}
 
 	// Test GRPC endpoint
-	tmClient := tmservice.NewServiceClient(clientCtx)
-	_, err = tmClient.GetNodeInfo(ctx, &tmservice.GetNodeInfoRequest{})
+	tmClient := cmtservice.NewServiceClient(clientCtx)
+	_, err = tmClient.GetNodeInfo(ctx, &cmtservice.GetNodeInfoRequest{})
 	if err != nil {
 		return retry.Retryable(errors.Wrap(err, "grpc endpoint is not ready yet"))
 	}
