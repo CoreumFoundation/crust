@@ -71,7 +71,7 @@ var tools = []Tool{
 			},
 			TargetPlatformDarwinAMD64: {
 				URL:  "https://go.dev/dl/go1.22.4.darwin-amd64.tar.gz",
-				Hash: "sha256:7788f40f3a46f201df1dc46ca640403eb535d5513fc33449164a90dbd229b761",
+				Hash: "sha256:c95967f50aa4ace34af0c236cbdb49a9a3e80ee2ad09d85775cb4462a5c19ed3",
 			},
 			TargetPlatformDarwinARM64: {
 				URL:  "https://go.dev/dl/go1.22.4.darwin-arm64.tar.gz",
