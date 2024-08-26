@@ -435,8 +435,9 @@ func (c Cored) prepare(ctx context.Context) error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		"v4": "cored",
-		"v3": "cored-v3.0.3",
+		"v4patch1": "cored",
+		"v4":       "cored-v4.0.1",
+		"v3":       "cored-v3.0.3",
 	}
 	for upgrade, binary := range upgrades {
 		err := copyFile(filepath.Join(dockerLinuxBinaryPath, binary),

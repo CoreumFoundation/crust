@@ -39,6 +39,7 @@ const (
 	Osmosis              Name = "osmosis"
 	Hermes               Name = "hermes"
 	CoredV303            Name = "cored-v3.0.3"
+	CoredV401            Name = "cored-v4.0.1"
 	Mockgen                   = "mockgen"
 	Buf                  Name = "buf"
 	Protoc               Name = "protoc"
@@ -159,32 +160,32 @@ var tools = []Tool{
 	// Check compatibility with wasmd beore upgrading: https://github.com/CosmWasm/wasmd
 	BinaryTool{
 		Name:    LibWASM,
-		Version: "v1.5.2",
+		Version: "v1.5.4",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvm_muslc.x86_64.a",
-				Hash: "sha256:e660a38efb2930b34ee6f6b0bb12730adccb040b6ab701b8f82f34453a426ae7",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvm_muslc.x86_64.a",
+				Hash: "sha256:9cf99a63637f80619d4baa6129ce54d64d2ff980ca00f08d84b3c74ca1238bcc",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.x86_64.a": "libwasmvm_muslc.x86_64.a",
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvm_muslc.aarch64.a",
-				Hash: "sha256:e78b224c15964817a3b75a40e59882b4d0e06fd055b39514d61646689cef8c6e",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvm_muslc.aarch64.a",
+				Hash: "sha256:1260584dde7db6251c2757b557ddd51884311ebc261c1be6c15afeacfc81ca77",
 				Binaries: map[string]string{
 					"lib/libwasmvm_muslc.aarch64.a": "libwasmvm_muslc.aarch64.a",
 				},
 			},
 			TargetPlatformDarwinAMD64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvmstatic_darwin.a",
-				Hash: "sha256:78dd3f7c1512eca76ac9665021601ca87ee4956f1b9de9a86283d89a84bf37d4",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvmstatic_darwin.a",
+				Hash: "sha256:c2b0107d60881df339b34cf5e7fa31b34b97e9b127d787e7c1831523fc017ccf",
 				Binaries: map[string]string{
 					"lib/libwasmvmstatic_darwin.a": "libwasmvmstatic_darwin.a",
 				},
 			},
 			TargetPlatformDarwinARM64InDocker: {
-				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.2/libwasmvmstatic_darwin.a",
-				Hash: "sha256:78dd3f7c1512eca76ac9665021601ca87ee4956f1b9de9a86283d89a84bf37d4",
+				URL:  "https://github.com/CosmWasm/wasmvm/releases/download/v1.5.4/libwasmvmstatic_darwin.a",
+				Hash: "sha256:c2b0107d60881df339b34cf5e7fa31b34b97e9b127d787e7c1831523fc017ccf",
 				Binaries: map[string]string{
 					"lib/libwasmvmstatic_darwin.a": "libwasmvmstatic_darwin.a",
 				},
@@ -294,6 +295,28 @@ var tools = []Tool{
 				Hash: "sha256:cfbbad6803c0327407e4dd222a108505e6ff9e294d7c86e34b6b895b96b61bbd",
 				Binaries: map[string]string{
 					"bin/cored-v3.0.3": "cored-linux-arm64",
+				},
+			},
+		},
+	},
+
+	// https://github.com/CoreumFoundation/coreum/releases
+	BinaryTool{
+		Name:    CoredV401,
+		Version: "v4.0.1",
+		Sources: Sources{
+			TargetPlatformLinuxAMD64InDocker: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-amd64",
+				Hash: "sha256:fdbb6a0c393f1cad0d03c6357b6af2e840508ef3be7ab186f2caeee10d13ae73",
+				Binaries: map[string]string{
+					"bin/cored-v4.0.1": "cored-linux-amd64",
+				},
+			},
+			TargetPlatformLinuxARM64InDocker: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-arm64",
+				Hash: "sha256:ade147bf5a63259dae1b69762e3295600b5acd9f748b3cfba4d885dfaff15f1e",
+				Binaries: map[string]string{
+					"bin/cored-v4.0.1": "cored-linux-arm64",
 				},
 			},
 		},
