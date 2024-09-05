@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v4/app"
 	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 )
@@ -15,7 +14,7 @@ import (
 func AccountFromMnemonic(mnemonic string) (sdk.AccAddress, error) {
 	const keyName = "key"
 
-	encodingConfig := coreumconfig.NewEncodingConfig(app.ModuleBasics)
+	encodingConfig := coreumconfig.NewEncodingConfig()
 	kr := keyring.NewInMemory(encodingConfig.Codec)
 
 	keyInfo, err := kr.NewAccount(
