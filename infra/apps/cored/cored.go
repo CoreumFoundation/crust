@@ -39,7 +39,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
@@ -58,6 +57,12 @@ const (
 	// DockerImageExtended uses extended docker image of cored with cometBFT replaced.
 	DockerImageExtended = "cored-ext:znet"
 )
+
+var basicModuleList = []module.AppModuleBasic{
+	auth.AppModuleBasic{},
+	bank.AppModuleBasic{},
+	staking.AppModuleBasic{},
+}
 
 // Config stores cored app config.
 type Config struct {
@@ -137,7 +142,7 @@ func New(cfg Config) Cored {
 
 		minimumSelfDelegation := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), 20_000_000_000) // 20k core
 
-		clientCtx := client.NewContext(client.DefaultContextConfig(), newBasicManager()).
+		clientCtx := client.NewContext(client.DefaultContextConfig(), basicModuleList...).
 			WithChainID(string(cfg.NetworkConfig.ChainID()))
 
 		// leave 10% for slashing and commission
@@ -213,11 +218,10 @@ func (c Cored) ClientContext() client.Context {
 		NewClientFromNode(infra.JoinNetAddr("http", c.Info().HostFromHost, c.Config().Ports.RPC))
 	must.OK(err)
 
-	mm := newBasicManager()
-	grpcClient, err := cosmoschain.GRPCClient(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC), mm)
+	grpcClient, err := cosmoschain.GRPCClient(infra.JoinNetAddr("", c.Info().HostFromHost, c.Config().Ports.GRPC))
 	must.OK(err)
 
-	return client.NewContext(client.DefaultContextConfig(), mm).
+	return client.NewContext(client.DefaultContextConfig(), basicModuleList...).
 		WithChainID(string(c.config.GenesisInitConfig.ChainID)).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient)
@@ -471,14 +475,6 @@ exec "` +
 	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
 }
 
-func newBasicManager() module.BasicManager {
-	return module.NewBasicManager(
-		auth.AppModuleBasic{},
-		bank.AppModuleBasic{},
-		staking.AppModuleBasic{},
-	)
-}
-
 // SaveGenesis saves json encoded representation of the genesis config into file.
 func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 	configDir := filepath.Join(homeDir, "config")
@@ -594,7 +590,7 @@ func prepareTxStakingCreateValidator(
 		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
 	}
 
-	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec)
+	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig().Codec)
 
 	armor := crypto.EncryptArmorPrivKey(&stakerPrivateKey, passphrase, string(hd.Secp256k1Type))
 	if err := inMemKeyring.ImportPrivKey(stakerAddress.String(), armor, passphrase); err != nil {

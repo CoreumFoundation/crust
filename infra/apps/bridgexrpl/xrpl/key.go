@@ -9,7 +9,6 @@ import (
 	rippledata "github.com/rubblelabs/ripple/data"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v4/app"
 	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
 )
 
@@ -29,7 +28,7 @@ func KeyFromSeed(seedPhrase string) (crypto.Key, error) {
 func KeyFromMnemonic(mnemonic string) (crypto.Key, error) {
 	const keyName = "key"
 
-	encodingConfig := coreumconfig.NewEncodingConfig(app.ModuleBasics)
+	encodingConfig := coreumconfig.NewEncodingConfig()
 	kr := keyring.NewInMemory(encodingConfig.Codec)
 
 	_, err := kr.NewAccount(

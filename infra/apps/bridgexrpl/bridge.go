@@ -27,7 +27,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/client"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
@@ -649,7 +648,7 @@ func (b Bridge) fundCoreumAccounts(ctx context.Context) error {
 
 func addKeyToTestKeyring(keyringDir, keyName, suffix, hdPath, mnemonic string) error {
 	keyringDir += "-" + suffix
-	encodingConfig := config.NewEncodingConfig(app.ModuleBasics)
+	encodingConfig := config.NewEncodingConfig()
 	clientCtx := cosmosclient.Context{}.
 		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).

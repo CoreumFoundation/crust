@@ -8,13 +8,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/CoreumFoundation/coreum/v4/app"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
 )
 
 // importMnemonicsToKeyring adds keys to local keystore.
 func importMnemonicsToKeyring(homeDir string, mnemonics map[string]string) error {
-	kr, err := keyring.New("cored", "test", homeDir, nil, config.NewEncodingConfig(app.ModuleBasics).Codec)
+	kr, err := keyring.New("cored", "test", homeDir, nil, config.NewEncodingConfig().Codec)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -36,7 +35,7 @@ type UnsafeKeyring interface {
 
 // PrivateKeyFromMnemonic generates private key from mnemonic.
 func PrivateKeyFromMnemonic(mnemonic string) (cosmossecp256k1.PrivKey, error) {
-	kr, ok := keyring.NewInMemory(config.NewEncodingConfig(app.ModuleBasics).Codec).(UnsafeKeyring)
+	kr, ok := keyring.NewInMemory(config.NewEncodingConfig().Codec).(UnsafeKeyring)
 	if !ok {
 		panic("can't cast to UnsafeKeyring")
 	}

@@ -115,11 +115,10 @@ func (ba BaseApp) ClientContext() client.Context {
 	)
 	must.OK(err)
 
-	mm := newBasicManager()
-	grpcClient, err := GRPCClient(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC), mm)
+	grpcClient, err := GRPCClient(infra.JoinNetAddr("", ba.Info().HostFromHost, ba.appConfig.Ports.GRPC))
 	must.OK(err)
 
-	return client.NewContext(client.DefaultContextConfig(), mm).
+	return client.NewContext(client.DefaultContextConfig(), moduleBasicList...).
 		WithChainID(ba.appConfig.ChainID).
 		WithRPCClient(rpcClient).
 		WithGRPCClient(grpcClient)
@@ -195,8 +194,8 @@ func (ba BaseApp) prepare(_ context.Context) error {
 }
 
 // GRPCClient prepares GRPC client.
-func GRPCClient(url string, mm module.BasicManager) (*grpc.ClientConn, error) {
-	encodingConfig := config.NewEncodingConfig(mm)
+func GRPCClient(url string) (*grpc.ClientConn, error) {
+	encodingConfig := config.NewEncodingConfig(moduleBasicList...)
 	pc, ok := encodingConfig.Codec.(codec.GRPCCodecProvider)
 	if !ok {
 		return nil, errors.New("failed to cast codec to codec.GRPCCodecProvider)")
@@ -214,12 +213,10 @@ func GRPCClient(url string, mm module.BasicManager) (*grpc.ClientConn, error) {
 	return grpClient, nil
 }
 
-func newBasicManager() module.BasicManager {
-	return module.NewBasicManager(
-		auth.AppModuleBasic{},
-		bank.AppModuleBasic{},
-		staking.AppModuleBasic{},
-	)
+var moduleBasicList = []module.AppModuleBasic{
+	auth.AppModuleBasic{},
+	bank.AppModuleBasic{},
+	staking.AppModuleBasic{},
 }
 
 func (ba BaseApp) saveClientWrapper(hostname string) error {
