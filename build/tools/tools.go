@@ -197,41 +197,41 @@ var tools = []Tool{
 	// Before upgrading verify in go.mod that they use the same version of IBC
 	BinaryTool{
 		Name:    Gaia,
-		Version: "v16.0.0",
+		Version: "v19.2.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-linux-amd64",
-				Hash: "sha256:5440dcc28d101e7ad7421048e3339891b7ee7a8f576e6639f05f2fdbee5feda2",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-linux-amd64",
+				Hash: "sha256:11d0386fc201bc61436bc6b869b0d90b5d5689af64415af9f1b4ba5134c83a6a",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v16.0.0-linux-amd64",
+					"bin/gaiad": "gaiad-v19.2.0-linux-amd64",
 				},
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-linux-arm64",
-				Hash: "sha256:2d190c6ca37a45940af4c6f2a0d901b7fdc210a5896b77d728160c2753ee13bd",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-linux-arm64",
+				Hash: "sha256:4cbe5268ffcbba532e0c1c27e8dbdf61c17c4039a312145e70dc7306e1572c2f",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v16.0.0-linux-arm64",
+					"bin/gaiad": "gaiad-v19.2.0-linux-arm64",
 				},
 			},
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-linux-amd64",
-				Hash: "sha256:5440dcc28d101e7ad7421048e3339891b7ee7a8f576e6639f05f2fdbee5feda2",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-linux-amd64",
+				Hash: "sha256:11d0386fc201bc61436bc6b869b0d90b5d5689af64415af9f1b4ba5134c83a6a",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v16.0.0-linux-amd64",
+					"bin/gaiad": "gaiad-v19.2.0-linux-amd64",
 				},
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-darwin-amd64",
-				Hash: "sha256:e2c8fe39907c788007d878ca55b61ac9d52f354a795e580ff29dfd5c48de90b5",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-darwin-amd64",
+				Hash: "sha256:2f22df14dc6c92d62388b2a15e86fcc30e5c49347568b15a30e4d3f02eb0ab36",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v16.0.0-darwin-amd64",
+					"bin/gaiad": "gaiad-v19.2.0-darwin-amd64",
 				},
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/cosmos/gaia/releases/download/v16.0.0/gaiad-v16.0.0-darwin-arm64",
-				Hash: "sha256:90805a7e0c595b1c0c8417716e797e7a06676aa8b6110d5ed4e0021469255f2e",
+				URL:  "https://github.com/cosmos/gaia/releases/download/v19.2.0/gaiad-v19.2.0-darwin-arm64",
+				Hash: "sha256:57b01ad515baefc9a594dc667070c1533669410ec68bcb621e9b1d46c8d21324",
 				Binaries: map[string]string{
-					"bin/gaiad": "gaiad-v16.0.0-darwin-arm64",
+					"bin/gaiad": "gaiad-v19.2.0-darwin-arm64",
 				},
 			},
 		},

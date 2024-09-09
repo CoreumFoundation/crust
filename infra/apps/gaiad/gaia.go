@@ -23,7 +23,7 @@ const (
 	DefaultHomeName = ".gaia"
 
 	// DefaultGasPriceStr defines default gas price to be used inside IBC relayer.
-	DefaultGasPriceStr = "0.1uatom"
+	DefaultGasPriceStr = "1.0uatom"
 )
 
 var (
