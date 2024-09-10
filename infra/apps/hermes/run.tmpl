@@ -20,7 +20,7 @@ if [ ! -d "$RELAYER_KEYS_PATH" ]; then
   hermes keys add --chain {{ .CoreumChanID }} --hd-path "m/44'/{{ .CoreumRelayerCoinType }}'/0'/0/0" --mnemonic-file "$HOME/coreum-mnemonic"
   hermes keys add --chain {{ .PeerChanID }} --mnemonic-file "$HOME/peer-mnemonic"
   log_with_time "Connecting the chains."
-  hermes create channel --a-chain {{ .CoreumChanID }} --b-chain {{ .PeerChanID }} --a-port transfer --b-port transfer --new-client-connection --yes
+  hermes create channel --a-chain {{ .CoreumChanID }} --b-chain {{ .PeerChanID }} --a-port transfer --b-port transfer --order ordered --new-client-connection --yes
 
 fi
 
