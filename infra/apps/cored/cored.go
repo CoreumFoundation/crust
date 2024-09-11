@@ -108,8 +108,9 @@ type GenesisInitConfig struct {
 //
 //nolint:tagliatelle
 type GovConfig struct {
-	MinDeposit   sdk.Coins     `json:"min_deposit"`
-	VotingPeriod time.Duration `json:"voting_period"`
+	MinDeposit            sdk.Coins     `json:"min_deposit"`
+	VotingPeriod          time.Duration `json:"voting_period"`
+	ExpeditedVotingPeriod time.Duration `json:"expedited_voting_period"`
 }
 
 // CustomParamsConfig contains the custom params used to generate genesis.

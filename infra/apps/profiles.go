@@ -152,8 +152,9 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 			AddressPrefix: constant.AddressPrefixDev,
 			GenesisTime:   time.Now(),
 			GovConfig: cored.GovConfig{
-				MinDeposit:   sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 1000)),
-				VotingPeriod: 20 * time.Second,
+				MinDeposit:            sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 1000)),
+				VotingPeriod:          20 * time.Second,
+				ExpeditedVotingPeriod: 20 * time.Second,
 			},
 			CustomParamsConfig: cored.CustomParamsConfig{
 				MinSelfDelegation: sdkmath.NewInt(10_000_000),
