@@ -53,11 +53,13 @@ func NetworkConfig(genesisTemplate string, blockTimeIota time.Duration) (config.
 			BlockTimeIota:   blockTimeIota,
 			Denom:           constant.DenomDev,
 			GovConfig: config.GovConfig{
+				// These values are hardcoded in TestExpeditedGovProposalWithDepositAndWeightedVotes test of coreum.
+				// Remember to update that test if these values are changed
 				ProposalConfig: config.GovProposalConfig{
 					MinDepositAmount:          "1000",
 					ExpeditedMinDepositAmount: "2000",
 					VotingPeriod:              (time.Second * 20).String(),
-					ExpeditedVotingPeriod:     (time.Second * 20).String(),
+					ExpeditedVotingPeriod:     (time.Second * 15).String(),
 				},
 			},
 			CustomParamsConfig: config.CustomParamsConfig{
