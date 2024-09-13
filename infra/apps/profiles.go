@@ -151,11 +151,13 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 			DisplayDenom:  constant.DenomDevDisplay,
 			AddressPrefix: constant.AddressPrefixDev,
 			GenesisTime:   time.Now(),
+			// These values are hardcoded in TestExpeditedGovProposalWithDepositAndWeightedVotes test of coreum.
+			// Remember to update that test if these values are changed
 			GovConfig: cored.GovConfig{
 				MinDeposit:            sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 1000)),
 				ExpeditedMinDeposit:   sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 2000)),
 				VotingPeriod:          20 * time.Second,
-				ExpeditedVotingPeriod: 20 * time.Second,
+				ExpeditedVotingPeriod: 15 * time.Second,
 			},
 			CustomParamsConfig: cored.CustomParamsConfig{
 				MinSelfDelegation: sdkmath.NewInt(10_000_000),
