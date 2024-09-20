@@ -120,7 +120,7 @@ func Start(ctx context.Context, configF *infra.ConfigFactory) error {
 
 	target := targets.NewDocker(config, spec)
 	appF := apps.NewFactory(config, spec)
-	//nolint:contextcheck
+
 	appSet, _, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
 	if err != nil {
 		return err
