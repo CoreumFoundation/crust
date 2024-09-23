@@ -21,12 +21,6 @@ import (
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec/address"
-	"github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	cosmosed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -34,7 +28,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -66,13 +59,11 @@ var basicModuleList = []module.AppModuleBasic{
 
 // Config stores cored app config.
 type Config struct {
-	Name        string
-	HomeDir     string
-	BinDir      string
-	WrapperDir  string
-	DockerImage string
-	// Deprecated: remove after we drop support for cored v3.
-	NetworkConfig     *config.NetworkConfig
+	Name              string
+	HomeDir           string
+	BinDir            string
+	WrapperDir        string
+	DockerImage       string
 	GenesisInitConfig *GenesisInitConfig
 	AppInfo           *infra.AppInfo
 	Ports             Ports
@@ -137,30 +128,6 @@ func New(cfg Config) Cored {
 
 	valPrivateKey := cbfted25519.GenPrivKey()
 	if cfg.IsValidator {
-		valPublicKey := valPrivateKey.PubKey()
-
-		stakerPrivKey, err := PrivateKeyFromMnemonic(cfg.StakerMnemonic)
-		must.OK(err)
-
-		minimumSelfDelegation := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), 20_000_000_000) // 20k core
-
-		clientCtx := client.NewContext(client.DefaultContextConfig(), basicModuleList...).
-			WithChainID(string(cfg.NetworkConfig.ChainID()))
-
-		// leave 10% for slashing and commission
-		stake := sdk.NewInt64Coin(cfg.NetworkConfig.Denom(), int64(float64(cfg.StakerBalance)*0.9))
-
-		createValidatorTx, err := prepareTxStakingCreateValidator(
-			cfg.NetworkConfig.ChainID(),
-			clientCtx.TxConfig(),
-			cosmosed25519.PubKey{Key: valPublicKey.Bytes()},
-			stakerPrivKey,
-			stake,
-			minimumSelfDelegation.Amount,
-		)
-		must.OK(err)
-		networkProvider := cfg.NetworkConfig.Provider.(config.DynamicConfigProvider)
-		cfg.NetworkConfig.Provider = networkProvider.WithGenesisTx(createValidatorTx)
 		cfg.GenesisInitConfig.Validators = append(cfg.GenesisInitConfig.Validators, GenesisValidator{
 			DelegatorMnemonic: cfg.StakerMnemonic,
 			PubKey:            valPrivateKey.PubKey(),
@@ -225,7 +192,7 @@ func (c Cored) ClientContext() client.Context {
 
 	return client.NewContext(client.DefaultContextConfig(), basicModuleList...).
 		WithChainID(string(c.config.GenesisInitConfig.ChainID)).
-		WithRPCClient(rpcClient).
+		WithClient(rpcClient).
 		WithGRPCClient(grpcClient)
 }
 
@@ -487,14 +454,6 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 
 	genesisFile := filepath.Join(configDir, "genesis.json")
 
-	if c.Config().BinaryVersion == "v3.0.3" {
-		genesisBytes, err := c.Config().NetworkConfig.EncodeGenesis()
-		if err != nil {
-			return err
-		}
-		return errors.WithStack(os.WriteFile(genesisFile, genesisBytes, 0o600))
-	}
-
 	inputConfig, err := cmtjson.MarshalIndent(c.config.GenesisInitConfig, "", "  ")
 	if err != nil {
 		return err
@@ -552,71 +511,4 @@ func copyFile(src, dst string, perm os.FileMode) error {
 	}
 
 	return nil
-}
-
-// prepareTxStakingCreateValidator generates transaction of type MsgCreateValidator.
-func prepareTxStakingCreateValidator(
-	chainID constant.ChainID,
-	txConfig cosmosclient.TxConfig,
-	validatorPublicKey cosmosed25519.PubKey,
-	stakerPrivateKey cosmossecp256k1.PrivKey,
-	stakedBalance sdk.Coin,
-	selfDelegation sdkmath.Int,
-) ([]byte, error) {
-	// the passphrase here is the trick to import the private key into the keyring
-	const passphrase = "tmp"
-
-	commission := stakingtypes.CommissionRates{
-		Rate:          sdkmath.LegacyMustNewDecFromStr("0.1"),
-		MaxRate:       sdkmath.LegacyMustNewDecFromStr("0.2"),
-		MaxChangeRate: sdkmath.LegacyMustNewDecFromStr("0.01"),
-	}
-
-	stakerAddress := sdk.AccAddress(stakerPrivateKey.PubKey().Address())
-	msg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(stakerAddress).String(),
-		&validatorPublicKey,
-		stakedBalance,
-		stakingtypes.Description{Moniker: stakerAddress.String()},
-		commission,
-		selfDelegation,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "not able to make CreateValidatorMessage")
-	}
-
-	validatorAddressCodec := address.Bech32Codec{
-		Bech32Prefix: sdk.GetConfig().GetBech32ValidatorAddrPrefix(),
-	}
-	if err := msg.Validate(validatorAddressCodec); err != nil {
-		return nil, errors.Wrap(err, "not able to validate CreateValidatorMessage")
-	}
-
-	inMemKeyring := keyring.NewInMemory(config.NewEncodingConfig().Codec)
-
-	armor := crypto.EncryptArmorPrivKey(&stakerPrivateKey, passphrase, string(hd.Secp256k1Type))
-	if err := inMemKeyring.ImportPrivKey(stakerAddress.String(), armor, passphrase); err != nil {
-		return nil, errors.Wrap(err, "not able to import private key into new in memory keyring")
-	}
-
-	txf := tx.Factory{}.
-		WithChainID(string(chainID)).
-		WithKeybase(inMemKeyring).
-		WithTxConfig(txConfig)
-
-	txBuilder, err := txf.BuildUnsignedTx(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := tx.Sign(context.Background(), txf, stakerAddress.String(), txBuilder, true); err != nil {
-		return nil, err
-	}
-
-	txBytes, err := txConfig.TxJSONEncoder()(txBuilder.GetTx())
-	if err != nil {
-		return nil, err
-	}
-
-	return txBytes, nil
 }

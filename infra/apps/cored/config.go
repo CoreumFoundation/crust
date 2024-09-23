@@ -4,11 +4,8 @@ import (
 	"path/filepath"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v4/pkg/config"
-	"github.com/CoreumFoundation/coreum/v4/pkg/config/constant"
 )
 
 // DefaultGasPriceStr defines default gas price to be used inside IBC relayer.
@@ -37,38 +34,4 @@ func saveTendermintConfig(nodeConfig config.NodeConfig, timeoutCommit time.Durat
 	}
 
 	must.OK(config.WriteTendermintConfigToFile(filepath.Join(homeDir, config.DefaultNodeConfigPath), cfg))
-}
-
-// NetworkConfig returns the network config used by crust.
-func NetworkConfig(genesisTemplate string, blockTimeIota time.Duration) (config.NetworkConfig, error) {
-	if blockTimeIota <= 0 {
-		blockTimeIota = time.Second
-	}
-	networkConfig := config.NetworkConfig{
-		Provider: config.DynamicConfigProvider{
-			AddressPrefix:   constant.AddressPrefixDev,
-			GenesisTemplate: genesisTemplate,
-			ChainID:         constant.ChainIDDev,
-			GenesisTime:     time.Now(),
-			BlockTimeIota:   blockTimeIota,
-			Denom:           constant.DenomDev,
-			GovConfig: config.GovConfig{
-				// These values are hardcoded in TestExpeditedGovProposalWithDepositAndWeightedVotes test of coreum.
-				// Remember to update that test if these values are changed
-				ProposalConfig: config.GovProposalConfig{
-					MinDepositAmount:          "1000",
-					ExpeditedMinDepositAmount: "2000",
-					VotingPeriod:              (time.Second * 20).String(),
-					ExpeditedVotingPeriod:     (time.Second * 15).String(),
-				},
-			},
-			CustomParamsConfig: config.CustomParamsConfig{
-				Staking: config.CustomParamsStakingConfig{
-					MinSelfDelegation: sdkmath.NewInt(10_000_000), // 10 core
-				},
-			},
-		},
-	}
-
-	return networkConfig, nil
 }
