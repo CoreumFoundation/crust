@@ -9,7 +9,7 @@ import (
 	rippledata "github.com/rubblelabs/ripple/data"
 	"github.com/samber/lo"
 
-	coreumconfig "github.com/CoreumFoundation/coreum/v4/pkg/config"
+	coreumconfig "github.com/CoreumFoundation/coreum/v5/pkg/config"
 )
 
 // HDPath is the hd path of XRPL key.
