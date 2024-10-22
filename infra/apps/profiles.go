@@ -1,15 +1,9 @@
 package apps
 
 import (
-	"time"
-
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
@@ -43,6 +37,7 @@ const (
 	ProfileMonitoring = "monitoring"
 	ProfileXRPL       = "xrpl"
 	ProfileXRPLBridge = "bridge-xrpl"
+	ProfileDEX        = "dex"
 )
 
 var profiles = []string{
@@ -57,6 +52,7 @@ var profiles = []string{
 	ProfileMonitoring,
 	ProfileXRPL,
 	ProfileXRPLBridge,
+	ProfileDEX,
 }
 
 var defaultProfiles = []string{Profile1Cored}
@@ -144,36 +140,16 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	var coredApp cored.Cored
 	var appSet infra.AppSet
 
+	genDEX := false
+	if pMap[ProfileDEX] {
+		genDEX = true
+	}
+
 	coredApp, coredNodes, err := appF.CoredNetwork(
-		cored.GenesisInitConfig{
-			ChainID:       constant.ChainIDDev,
-			Denom:         constant.DenomDev,
-			DisplayDenom:  constant.DenomDevDisplay,
-			AddressPrefix: constant.AddressPrefixDev,
-			GenesisTime:   time.Now(),
-			// These values are hardcoded in TestExpeditedGovProposalWithDepositAndWeightedVotes test of coreum.
-			// Remember to update that test if these values are changed
-			GovConfig: cored.GovConfig{
-				MinDeposit:            sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 1000)),
-				ExpeditedMinDeposit:   sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 2000)),
-				VotingPeriod:          20 * time.Second,
-				ExpeditedVotingPeriod: 15 * time.Second,
-			},
-			CustomParamsConfig: cored.CustomParamsConfig{
-				MinSelfDelegation: sdkmath.NewInt(10_000_000),
-			},
-			BankBalances: []banktypes.Balance{
-				// Faucet's account
-				{
-					Address: "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd",
-					Coins:   sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))),
-				},
-			},
-		},
 		AppPrefixCored,
 		cored.DefaultPorts,
 		validatorCount, sentryCount, seedCount, fullCount, extendedCount,
-		coredVersion,
+		coredVersion, genDEX,
 	)
 	if err != nil {
 		return nil, cored.Cored{}, err
@@ -248,7 +224,8 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 }
 
 func decideNumOfCoredNodes(pMap map[string]bool) (validatorCount, sentryCount, seedCount, fullCount,
-	extendedCount int) {
+	extendedCount int,
+) {
 	if pMap[ProfileCoredExt] {
 		extendedCount = 1
 	}

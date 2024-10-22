@@ -1,11 +1,15 @@
 package apps
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
@@ -45,20 +49,55 @@ type Factory struct {
 //
 //nolint:funlen // breaking down this function will make it less readable.
 func (f *Factory) CoredNetwork(
-	genesisConfig cored.GenesisInitConfig,
 	namePrefix string,
 	firstPorts cored.Ports,
 	validatorCount, sentryCount, seedCount, fullCount, extendedCount int,
 	binaryVersion string,
+	genDEX bool,
 ) (cored.Cored, []cored.Cored, error) {
 	config := sdk.GetConfig()
-	addressPrefix := genesisConfig.AddressPrefix
+	addressPrefix := constant.AddressPrefixDev
 
 	// Set address & public key prefixes
 	config.SetBech32PrefixForAccount(addressPrefix, addressPrefix+"pub")
 	config.SetBech32PrefixForValidator(addressPrefix+"valoper", addressPrefix+"valoperpub")
 	config.SetBech32PrefixForConsensusNode(addressPrefix+"valcons", addressPrefix+"valconspub")
 	config.SetCoinType(constant.CoinType)
+
+	genesisConfig := cored.GenesisInitConfig{
+		ChainID:       constant.ChainIDDev,
+		Denom:         constant.DenomDev,
+		DisplayDenom:  constant.DenomDevDisplay,
+		AddressPrefix: addressPrefix,
+		GenesisTime:   time.Now(),
+		// These values are hardcoded in TestExpeditedGovProposalWithDepositAndWeightedVotes test of coreum.
+		// Remember to update that test if these values are changed
+		GovConfig: cored.GovConfig{
+			MinDeposit:            sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 1000)),
+			ExpeditedMinDeposit:   sdk.NewCoins(sdk.NewInt64Coin(constant.DenomDev, 2000)),
+			VotingPeriod:          20 * time.Second,
+			ExpeditedVotingPeriod: 15 * time.Second,
+		},
+		CustomParamsConfig: cored.CustomParamsConfig{
+			MinSelfDelegation: sdkmath.NewInt(10_000_000),
+		},
+		BankBalances: []banktypes.Balance{
+			// Faucet's account
+			{
+				Address: cored.FaucetAddress,
+				Coins:   sdk.NewCoins(sdk.NewCoin(constant.DenomDev, sdkmath.NewInt(100_000_000_000_000))),
+			},
+		},
+		GenTxs: make([]json.RawMessage, 0),
+	}
+	// optionally enable DEX generation
+	if genDEX {
+		var err error
+		genesisConfig, err = cored.AddDEXGenesisConfig(genesisConfig)
+		if err != nil {
+			return cored.Cored{}, nil, err
+		}
+	}
 
 	wallet, genesisConfig := cored.NewFundedWallet(genesisConfig)
 

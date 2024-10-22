@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -21,6 +22,8 @@ import (
 	cmtjson "github.com/cometbft/cometbft/libs/json"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -29,12 +32,18 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
 	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	coreumconfig "github.com/CoreumFoundation/coreum/v5/pkg/config"
 	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	assetft "github.com/CoreumFoundation/coreum/v5/x/asset/ft"
+	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
+	"github.com/CoreumFoundation/coreum/v5/x/dex"
+	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -80,6 +89,13 @@ type Config struct {
 	TimeoutCommit     time.Duration
 }
 
+// GenesisDEXConfig is the dex config of the GenesisInitConfig.
+//
+//nolint:tagliatelle
+type GenesisDEXConfig struct {
+	MaxOrdersPerDenom uint64 `json:"max_orders_per_denom"`
+}
+
 // GenesisInitConfig is used to pass parameters for genesis creation to cored binary.
 //
 //nolint:tagliatelle
@@ -93,6 +109,8 @@ type GenesisInitConfig struct {
 	CustomParamsConfig CustomParamsConfig  `json:"custom_params_config"`
 	BankBalances       []banktypes.Balance `json:"bank_balances"`
 	Validators         []GenesisValidator  `json:"validators"`
+	DEXConfig          GenesisDEXConfig    `json:"dex_config"`
+	GenTxs             []json.RawMessage   `json:"gen_txs"`
 }
 
 // GovConfig contains the gov config part of genesis.
@@ -489,6 +507,50 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 	)
 }
 
+// AddDEXGenesisConfig adds DEX related genesis config.
+func AddDEXGenesisConfig(genesisConfig GenesisInitConfig) (GenesisInitConfig, error) {
+	// issue an asset FT to place an order
+	issuer := FundingAddress
+	issuerMnemonic := FundingMnemonic
+	ordersCount := 10_000
+	issuerMsgs := make([]sdk.Msg, 0)
+
+	genesisConfig.DEXConfig.MaxOrdersPerDenom = uint64(ordersCount) // allow to place all orders
+
+	orderSeqQuantity := sdkmath.NewIntFromUint64(100)
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer,
+		Symbol:        "DEXSU",
+		Subunit:       "dexsu",
+		Precision:     8,
+		InitialAmount: orderSeqQuantity.MulRaw(int64(ordersCount)),
+	}
+	issuerMsgs = append(issuerMsgs, issueMsg)
+
+	denom := issueMsg.Subunit + "-" + issueMsg.Issuer
+	for i := 0; i < ordersCount; i++ {
+		issuerMsgs = append(issuerMsgs, &dextypes.MsgPlaceOrder{
+			Sender:      issuer,
+			Type:        dextypes.ORDER_TYPE_LIMIT,
+			ID:          fmt.Sprintf("id-%d", i),
+			BaseDenom:   denom,
+			QuoteDenom:  genesisConfig.Denom,
+			Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+			Quantity:    orderSeqQuantity,
+			Side:        dextypes.SIDE_SELL,
+			TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+		})
+	}
+
+	txData, err := signTxsWithMnemonic(string(genesisConfig.ChainID), issuerMnemonic, issuerMsgs...)
+	if err != nil {
+		return GenesisInitConfig{}, err
+	}
+	genesisConfig.GenTxs = append(genesisConfig.GenTxs, txData)
+
+	return genesisConfig, nil
+}
+
 func copyFile(src, dst string, perm os.FileMode) error {
 	fr, err := os.Open(src)
 	if err != nil {
@@ -511,4 +573,39 @@ func copyFile(src, dst string, perm os.FileMode) error {
 	}
 
 	return nil
+}
+
+func signTxsWithMnemonic(
+	chainID string,
+	mnemonic string,
+	msgs ...sdk.Msg,
+) ([]byte, error) {
+	const signerKeyName = "signer"
+	encodingConfig := coreumconfig.NewEncodingConfig(
+		assetft.AppModuleBasic{},
+		dex.AppModuleBasic{},
+	)
+	inMemKeyring := keyring.NewInMemory(encodingConfig.Codec)
+	_, err := inMemKeyring.NewAccount(
+		signerKeyName,
+		mnemonic,
+		"",
+		hd.CreateHDPath(constant.CoinType, 0, 0).String(),
+		hd.Secp256k1,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to import account with mnemonic")
+	}
+	txf := tx.Factory{}.
+		WithChainID(chainID).
+		WithKeybase(inMemKeyring).
+		WithTxConfig(encodingConfig.TxConfig)
+	txBuilder, err := txf.BuildUnsignedTx(msgs...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build MsgCreateValidator transaction")
+	}
+	if err := tx.Sign(context.Background(), txf, signerKeyName, txBuilder, true); err != nil {
+		return nil, errors.Wrap(err, "failed to sign MsgCreateValidator transaction")
+	}
+	return encodingConfig.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
 }

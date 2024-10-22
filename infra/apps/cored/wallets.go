@@ -26,8 +26,12 @@ const (
 
 //nolint:lll // we don't care about mnemonic strings
 const (
+	// FaucetAddress is faucet's address.
+	FaucetAddress = "devcore1ckuncyw0hftdq5qfjs6ee2v6z73sq0urd390cd"
 	// FaucetMnemonic is mnemonic used by faucet to broadcast requested transfers.
 	FaucetMnemonic = "pitch basic bundle cause toe sound warm love town crucial divorce shell olympic convince scene middle garment glimpse narrow during fix fruit suffer honey"
+	// FundingAddress is funding account's address.
+	FundingAddress = "devcore1fnrehr95flfgnzjcatv7a8hpernwufpd5zjm2v"
 	// FundingMnemonic is mnemonic of used by integration testing framework to fund accounts required by integration tests.
 	FundingMnemonic = "sad hobby filter tray ordinary gap half web cat hard call mystery describe member round trend friend beyond such clap frozen segment fan mistake"
 	// RelayerMnemonicGaia is mnemonic used by the gaia relayer.
