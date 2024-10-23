@@ -121,7 +121,7 @@ func Start(ctx context.Context, configF *infra.ConfigFactory) error {
 	target := targets.NewDocker(config, spec)
 	appF := apps.NewFactory(config, spec)
 
-	appSet, _, err := apps.BuildAppSet(appF, config.Profiles, config.CoredVersion)
+	appSet, _, err := apps.BuildAppSet(ctx, appF, config.Profiles, config.CoredVersion)
 	if err != nil {
 		return err
 	}

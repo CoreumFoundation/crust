@@ -1,6 +1,7 @@
 package apps
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -49,6 +50,7 @@ type Factory struct {
 //
 //nolint:funlen // breaking down this function will make it less readable.
 func (f *Factory) CoredNetwork(
+	ctx context.Context,
 	namePrefix string,
 	firstPorts cored.Ports,
 	validatorCount, sentryCount, seedCount, fullCount, extendedCount int,
@@ -93,7 +95,7 @@ func (f *Factory) CoredNetwork(
 	// optionally enable DEX generation
 	if genDEX {
 		var err error
-		genesisConfig, err = cored.AddDEXGenesisConfig(genesisConfig)
+		genesisConfig, err = cored.AddDEXGenesisConfig(ctx, genesisConfig)
 		if err != nil {
 			return cored.Cored{}, nil, err
 		}

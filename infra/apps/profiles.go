@@ -1,6 +1,8 @@
 package apps
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
@@ -115,7 +117,9 @@ func MergeProfiles(pMap map[string]bool) map[string]bool {
 // BuildAppSet builds the application set to deploy based on provided profiles.
 //
 //nolint:funlen
-func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.AppSet, cored.Cored, error) {
+func BuildAppSet(ctx context.Context, appF *Factory, profiles []string, coredVersion string) (
+	infra.AppSet, cored.Cored, error,
+) {
 	pMap := lo.SliceToMap(profiles, func(profile string) (string, bool) {
 		return profile, true
 	})
@@ -146,6 +150,7 @@ func BuildAppSet(appF *Factory, profiles []string, coredVersion string) (infra.A
 	}
 
 	coredApp, coredNodes, err := appF.CoredNetwork(
+		ctx,
 		AppPrefixCored,
 		cored.DefaultPorts,
 		validatorCount, sentryCount, seedCount, fullCount, extendedCount,

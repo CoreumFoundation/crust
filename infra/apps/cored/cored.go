@@ -37,9 +37,8 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
 	coreumconfig "github.com/CoreumFoundation/coreum/v5/pkg/config"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	coreumconstant "github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 	assetft "github.com/CoreumFoundation/coreum/v5/x/asset/ft"
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex"
@@ -100,17 +99,17 @@ type GenesisDEXConfig struct {
 //
 //nolint:tagliatelle
 type GenesisInitConfig struct {
-	ChainID            constant.ChainID    `json:"chain_id"`
-	Denom              string              `json:"denom"`
-	DisplayDenom       string              `json:"display_denom"`
-	AddressPrefix      string              `json:"address_prefix"`
-	GenesisTime        time.Time           `json:"genesis_time"`
-	GovConfig          GovConfig           `json:"gov_config"`
-	CustomParamsConfig CustomParamsConfig  `json:"custom_params_config"`
-	BankBalances       []banktypes.Balance `json:"bank_balances"`
-	Validators         []GenesisValidator  `json:"validators"`
-	DEXConfig          GenesisDEXConfig    `json:"dex_config"`
-	GenTxs             []json.RawMessage   `json:"gen_txs"`
+	ChainID            coreumconstant.ChainID `json:"chain_id"`
+	Denom              string                 `json:"denom"`
+	DisplayDenom       string                 `json:"display_denom"`
+	AddressPrefix      string                 `json:"address_prefix"`
+	GenesisTime        time.Time              `json:"genesis_time"`
+	GovConfig          GovConfig              `json:"gov_config"`
+	CustomParamsConfig CustomParamsConfig     `json:"custom_params_config"`
+	BankBalances       []banktypes.Balance    `json:"bank_balances"`
+	Validators         []GenesisValidator     `json:"validators"`
+	DEXConfig          GenesisDEXConfig       `json:"dex_config"`
+	GenTxs             []json.RawMessage      `json:"gen_txs"`
 }
 
 // GovConfig contains the gov config part of genesis.
@@ -375,7 +374,7 @@ func (c Cored) prepare(ctx context.Context) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	saveTendermintConfig(config.NodeConfig{
+	saveTendermintConfig(coreumconfig.NodeConfig{
 		Name:           c.config.Name,
 		PrometheusPort: c.config.Ports.Prometheus,
 		NodeKey:        c.nodePrivateKey,
@@ -508,7 +507,7 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 }
 
 // AddDEXGenesisConfig adds DEX related genesis config.
-func AddDEXGenesisConfig(genesisConfig GenesisInitConfig) (GenesisInitConfig, error) {
+func AddDEXGenesisConfig(ctx context.Context, genesisConfig GenesisInitConfig) (GenesisInitConfig, error) {
 	// issue an asset FT to place an order
 	issuer := FundingAddress
 	issuerMnemonic := FundingMnemonic
@@ -542,7 +541,7 @@ func AddDEXGenesisConfig(genesisConfig GenesisInitConfig) (GenesisInitConfig, er
 		})
 	}
 
-	txData, err := signTxsWithMnemonic(string(genesisConfig.ChainID), issuerMnemonic, issuerMsgs...)
+	txData, err := signTxsWithMnemonic(ctx, string(genesisConfig.ChainID), issuerMnemonic, issuerMsgs...)
 	if err != nil {
 		return GenesisInitConfig{}, err
 	}
@@ -576,6 +575,7 @@ func copyFile(src, dst string, perm os.FileMode) error {
 }
 
 func signTxsWithMnemonic(
+	ctx context.Context,
 	chainID string,
 	mnemonic string,
 	msgs ...sdk.Msg,
@@ -590,7 +590,7 @@ func signTxsWithMnemonic(
 		signerKeyName,
 		mnemonic,
 		"",
-		hd.CreateHDPath(constant.CoinType, 0, 0).String(),
+		hd.CreateHDPath(coreumconstant.CoinType, 0, 0).String(),
 		hd.Secp256k1,
 	)
 	if err != nil {
@@ -604,7 +604,7 @@ func signTxsWithMnemonic(
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build MsgCreateValidator transaction")
 	}
-	if err := tx.Sign(context.Background(), txf, signerKeyName, txBuilder, true); err != nil {
+	if err := tx.Sign(ctx, txf, signerKeyName, txBuilder, true); err != nil {
 		return nil, errors.Wrap(err, "failed to sign MsgCreateValidator transaction")
 	}
 	return encodingConfig.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
