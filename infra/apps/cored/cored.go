@@ -511,7 +511,7 @@ func AddDEXGenesisConfig(ctx context.Context, genesisConfig GenesisInitConfig) (
 	// issue an asset FT to place an order
 	issuer := FundingAddress
 	issuerMnemonic := FundingMnemonic
-	ordersCount := 10_000
+	ordersCount := 2_000
 	issuerMsgs := make([]sdk.Msg, 0)
 
 	genesisConfig.DEXConfig.MaxOrdersPerDenom = uint64(ordersCount) // allow to place all orders
