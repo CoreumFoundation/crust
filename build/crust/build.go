@@ -2,7 +2,6 @@ package crust
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,7 +41,7 @@ func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "build/cmd/znet",
-		BinOutputPath:  filepath.Join(outDir, fmt.Sprintf("znet-%s", tools.Version())),
+		BinOutputPath:  filepath.Join(outDir, "znet-"+tools.Version()),
 		CGOEnabled:     true,
 	})
 }

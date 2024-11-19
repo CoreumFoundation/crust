@@ -287,7 +287,7 @@ func (c Cored) Deployment() infra.Deployment {
 				"--rpc.pprof_laddr", infra.JoinNetAddrIP("", net.IPv4zero, c.config.Ports.PProf),
 				"--inv-check-period", "1",
 				"--chain-id", string(c.config.GenesisInitConfig.ChainID),
-				"--minimum-gas-prices", fmt.Sprintf("0.000000000000000001%s", c.config.GenesisInitConfig.Denom),
+				"--minimum-gas-prices", "0.000000000000000001" + c.config.GenesisInitConfig.Denom,
 				"--wasm.memory_cache_size", "100",
 				"--wasm.query_gas_limit", "3000000",
 			}
@@ -355,7 +355,6 @@ func (c Cored) localBinaryPath() string {
 func (c Cored) dockerBinaryPath() string {
 	coredStandardBinName := "cored"
 	coredBinName := coredStandardBinName
-	//nolint:goconst
 	coredStandardPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
 	coredPath := coredStandardPath
 	if c.config.DockerImage == DockerImageExtended {
@@ -527,7 +526,7 @@ func AddDEXGenesisConfig(ctx context.Context, genesisConfig GenesisInitConfig) (
 	issuerMsgs = append(issuerMsgs, issueMsg)
 
 	denom := issueMsg.Subunit + "-" + issueMsg.Issuer
-	for i := 0; i < ordersCount; i++ {
+	for i := range ordersCount {
 		issuerMsgs = append(issuerMsgs, &dextypes.MsgPlaceOrder{
 			Sender:      issuer,
 			Type:        dextypes.ORDER_TYPE_LIMIT,

@@ -87,28 +87,28 @@ var tools = []Tool{
 	// https://github.com/golangci/golangci-lint/releases/
 	BinaryTool{
 		Name:    GolangCI,
-		Version: "1.55.2",
+		Version: "1.62.0",
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-linux-amd64.tar.gz",
-				Hash: "sha256:ca21c961a33be3bc15e4292dc40c98c8dcc5463a7b6768a3afc123761630c09c",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.62.0/golangci-lint-1.62.0-linux-amd64.tar.gz",
+				Hash: "sha256:53695531eeb824b6883c703335cef6f07882f8ba6fedc00ed43853ea07fa1fbd",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.55.2-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.62.0-linux-amd64/golangci-lint",
 				},
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:632e96e6d5294fbbe7b2c410a49c8fa01c60712a0af85a567de85bcc1623ea21",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.62.0/golangci-lint-1.62.0-darwin-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:0ed6f1a216ddb62e293858196799608d63894bd2ec178114484363ca45cde84b",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.55.2-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.62.0-darwin-amd64/golangci-lint",
 				},
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:234463f059249f82045824afdcdd5db5682d0593052f58f6a3039a0a1c3899f6",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.62.0/golangci-lint-1.62.0-darwin-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:dde51958f0f24d442062b5709b6912d91e235115dfe5887e80b3e5602c9cc09b",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.55.2-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.62.0-darwin-arm64/golangci-lint",
 				},
 			},
 		},
@@ -873,8 +873,8 @@ func (ri RustInstaller) install(ctx context.Context, platform TargetPlatform) (r
 	rustup := filepath.Join(cargoHome, "bin", "rustup")
 	env := append(
 		os.Environ(),
-		fmt.Sprintf("RUSTUP_HOME=%s", rustupHome),
-		fmt.Sprintf("CARGO_HOME=%s", cargoHome),
+		"RUSTUP_HOME=%s"+rustupHome,
+		"CARGO_HOME=%s"+cargoHome,
 	)
 
 	cmdRustupInstaller := exec.Command(rustupInstaller,
@@ -1017,7 +1017,7 @@ func (ct CargoTool) Ensure(ctx context.Context, platform TargetPlatform) error {
 		cmd := exec.Command(Path("bin/cargo", TargetPlatformLocal), "install",
 			"--version", ct.Version, "--force", "--locked",
 			"--root", toolDir, ct.Tool)
-		cmd.Env = append(os.Environ(), fmt.Sprintf("RUSTC=%s", Path("bin/rustc", TargetPlatformLocal)))
+		cmd.Env = append(os.Environ(), "RUSTC="+Path("bin/rustc", TargetPlatformLocal))
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return err
 		}

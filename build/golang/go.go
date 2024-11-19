@@ -179,7 +179,7 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	}
 
 	// use goreleaser-cross with pre-installed cross-compilers
-	image := fmt.Sprintf("ghcr.io/goreleaser/goreleaser-cross:v%s", goTool.GetVersion())
+	image := "ghcr.io/goreleaser/goreleaser-cross:v" + goTool.GetVersion()
 
 	srcDir := must.String(filepath.Abs(".."))
 	dockerRepoDir := filepath.Join("/src", filepath.Base(modulePath)+"-tmp")
@@ -696,9 +696,7 @@ func getFileHash(filePath string) (string, error) {
 
 	fileHash := sha256.New()
 	if _, err := io.Copy(fileHash, f); err != nil {
-		if err != nil {
-			return "", errors.WithStack(err)
-		}
+		return "", errors.WithStack(err)
 	}
 
 	return hex.EncodeToString(fileHash.Sum(nil)), nil

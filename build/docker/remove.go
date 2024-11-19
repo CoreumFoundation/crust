@@ -105,7 +105,6 @@ func forContainer(ctx context.Context, fn func(ctx context.Context, containerID 
 
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		for _, cInfo := range info {
-			cInfo := cInfo
 			spawn("container."+cInfo.ID, parallel.Continue, func(ctx context.Context) error {
 				return fn(ctx, cInfo.ID, cInfo.State.Running)
 			})
@@ -129,7 +128,6 @@ func forImage(ctx context.Context, fn func(ctx context.Context, imageID string) 
 
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		for _, imageID := range strings.Split(listStr, "\n") {
-			imageID := imageID
 			spawn("image."+imageID, parallel.Continue, func(ctx context.Context) error {
 				return fn(ctx, imageID)
 			})

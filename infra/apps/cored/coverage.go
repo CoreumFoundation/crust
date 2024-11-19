@@ -2,7 +2,6 @@ package cored
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"go.uber.org/zap"
@@ -19,7 +18,7 @@ const covdataDirName = "covdatafiles"
 func CoverageConvert(ctx context.Context, coredHomeDir, dstFilePath string) error {
 	srcCovdataDir := filepath.Join(coredHomeDir, covdataDirName)
 
-	cmd := exec.Go("tool", "covdata", "textfmt", fmt.Sprintf("-i=%s", srcCovdataDir), fmt.Sprintf("-o=%s", dstFilePath))
+	cmd := exec.Go("tool", "covdata", "textfmt", "-i="+srcCovdataDir, "-o="+dstFilePath)
 
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return err

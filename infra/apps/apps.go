@@ -116,7 +116,7 @@ func (f *Factory) CoredNetwork(
 	seedNodes := make([]cored.Cored, 0, seedCount)
 	var lastNode cored.Cored
 	var name string
-	for i := 0; i < cap(nodes); i++ {
+	for i := range cap(nodes) {
 		portDelta := i * 100
 		isValidator := i < validatorCount
 		isSeed := !isValidator && i < validatorCount+seedCount
@@ -395,7 +395,7 @@ func (f *Factory) BridgeXRPLRelayers(
 	var leader *bridgexrpl.Bridge
 	relayers := make(infra.AppSet, 0, relayerCount)
 	ports := bridgexrpl.DefaultPorts
-	for i := 0; i < relayerCount; i++ {
+	for i := range relayerCount {
 		name := fmt.Sprintf("%s-%02d", BuildPrefixedAppName(prefix, string(bridgexrpl.AppType)), i)
 		relayer := bridgexrpl.New(bridgexrpl.Config{
 			Name:    name,
