@@ -58,7 +58,7 @@ func BuildSmartContract(
 
 	cmdCargo.Env = append(os.Environ(),
 		"RUSTFLAGS=-C link-arg=-s",
-		fmt.Sprintf("RUSTC=%s", tools.Path("bin/rustc", tools.TargetPlatformLocal)),
+		"RUSTC="+tools.Path("bin/rustc", tools.TargetPlatformLocal),
 	)
 	cmdCargo.Dir = path
 

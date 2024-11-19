@@ -46,6 +46,7 @@ linters:
     - gocognit
     - ireturn
     - maintidx
+    - mnd
     - nlreturn
     - nonamedreturns
     - nosnakecase

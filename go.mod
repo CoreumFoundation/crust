@@ -1,7 +1,7 @@
 module github.com/CoreumFoundation/crust
 
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
-go 1.22.4
+go 1.23.3
 
 replace (
 	// TODO(https://github.com/cosmos/rosetta/issues/76): Rosetta requires cosmossdk.io/core v0.12.0 erroneously but

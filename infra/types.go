@@ -46,16 +46,16 @@ type AppSet []App
 // Deploy deploys app in environment to the target.
 func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Spec) error {
 	log := logger.Get(ctx)
-	log.Info(fmt.Sprintf("Staring AppSet deployment, apps: %s", strings.Join(lo.Map(m, func(app App, _ int) string {
+	log.Info("Staring AppSet deployment, apps: " + strings.Join(lo.Map(m, func(app App, _ int) string {
 		return app.Name()
-	}), ",")))
+	}), ","))
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		deploymentSlots := make(chan struct{}, runtime.NumCPU())
-		for i := 0; i < cap(deploymentSlots); i++ {
+		for range cap(deploymentSlots) {
 			deploymentSlots <- struct{}{}
 		}
 		imagePullSlots := make(chan struct{}, 3)
-		for i := 0; i < cap(imagePullSlots); i++ {
+		for range cap(imagePullSlots) {
 			imagePullSlots <- struct{}{}
 		}
 
@@ -89,7 +89,6 @@ func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Sp
 			}
 
 			appInfo := spec.Apps[name]
-			toDeploy := toDeploy
 			spawn("deploy."+name, parallel.Continue, func(ctx context.Context) error {
 				deployment := toDeploy.Deployment
 

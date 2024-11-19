@@ -320,7 +320,6 @@ func forContainer(ctx context.Context, envName string, fn func(ctx context.Conte
 
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		for _, cInfo := range info {
-			cInfo := cInfo
 			spawn("container."+cInfo.ID, parallel.Continue, func(ctx context.Context) error {
 				return fn(ctx, container{
 					ID:      cInfo.ID,

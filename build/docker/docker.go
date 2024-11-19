@@ -139,7 +139,7 @@ func getDockerBuildParams(ctx context.Context, input dockerBuildParamsInput) []s
 	}
 
 	for _, platform := range input.platforms {
-		params = append(params, "--platform", fmt.Sprintf("linux/%s", platform.Arch))
+		params = append(params, "--platform", "linux/"+platform.Arch)
 	}
 
 	versions := append([]string{}, input.otherVersions...)

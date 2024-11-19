@@ -31,7 +31,7 @@ type HealthCheckCapable interface {
 func WaitUntilHealthy(ctx context.Context, apps ...HealthCheckCapable) error {
 	log := logger.Get(ctx)
 	for _, app := range apps {
-		app := app
+		//nolint:fatcontext // we are ok with this context
 		ctx = logger.With(ctx, zap.String("app", app.Name()))
 		log.Info(fmt.Sprintf("Waiting for %s start.", app.Name()))
 		if err := retry.Do(ctx, time.Second, func() error {
