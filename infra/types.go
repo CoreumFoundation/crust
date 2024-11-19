@@ -51,7 +51,7 @@ func (m AppSet) Deploy(ctx context.Context, t AppTarget, config Config, spec *Sp
 	}), ","))
 	err := parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		deploymentSlots := make(chan struct{}, runtime.NumCPU())
-		for range deploymentSlots {
+		for range cap(deploymentSlots) {
 			deploymentSlots <- struct{}{}
 		}
 		imagePullSlots := make(chan struct{}, 3)
