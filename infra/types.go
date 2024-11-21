@@ -457,7 +457,7 @@ func (s *Spec) Verify() error {
 	if s.Env != s.configF.EnvName {
 		return errors.Errorf("env mismatch, spec: %s, config: %s", s.Env, s.configF.EnvName)
 	}
-	if !profilesCompare(s.Profiles, s.configF.Profiles) {
+	if !lo.Every(s.Profiles, s.configF.Profiles) {
 		return errors.Errorf(
 			"profile mismatch, spec: %s, config: %s",
 			strings.Join(s.Profiles, ","),
