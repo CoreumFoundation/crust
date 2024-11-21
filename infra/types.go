@@ -575,20 +575,3 @@ func (ai *AppInfo) UnmarshalJSON(data []byte) error {
 
 	return json.Unmarshal(data, &ai.data)
 }
-
-func profilesCompare(p1, p2 []string) bool {
-	if len(p1) != len(p2) {
-		return false
-	}
-
-	profiles := map[string]bool{}
-	for _, p := range p1 {
-		profiles[p] = true
-	}
-	for _, p := range p2 {
-		if !profiles[p] {
-			return false
-		}
-	}
-	return true
-}
