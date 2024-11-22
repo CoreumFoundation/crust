@@ -457,7 +457,7 @@ func (s *Spec) Verify() error {
 	if s.Env != s.configF.EnvName {
 		return errors.Errorf("env mismatch, spec: %s, config: %s", s.Env, s.configF.EnvName)
 	}
-	if !profilesCompare(s.Profiles, s.configF.Profiles) {
+	if !lo.Every(s.Profiles, s.configF.Profiles) {
 		return errors.Errorf(
 			"profile mismatch, spec: %s, config: %s",
 			strings.Join(s.Profiles, ","),
@@ -574,21 +574,4 @@ func (ai *AppInfo) UnmarshalJSON(data []byte) error {
 	defer ai.mu.Unlock()
 
 	return json.Unmarshal(data, &ai.data)
-}
-
-func profilesCompare(p1, p2 []string) bool {
-	if len(p1) != len(p2) {
-		return false
-	}
-
-	profiles := map[string]bool{}
-	for _, p := range p1 {
-		profiles[p] = true
-	}
-	for _, p := range p2 {
-		if !profiles[p] {
-			return false
-		}
-	}
-	return true
 }
