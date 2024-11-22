@@ -71,11 +71,11 @@ var tools = []Tool{
 			},
 			TargetPlatformDarwinAMD64: {
 				URL:  "https://go.dev/dl/go1.23.3.darwin-amd64.tar.gz",
-				Hash: "sha256:b79c77bbdf61e6e486aa6bea9286f3f7969c28e2ff7686ce10c334f746bfb724",
+				Hash: "sha256:c7e024d5c0bc81845070f23598caf02f05b8ae88fd4ad2cd3e236ddbea833ad2",
 			},
 			TargetPlatformDarwinARM64: {
 				URL:  "https://go.dev/dl/go1.23.3.darwin-arm64.tar.gz",
-				Hash: "sha256:3e764df0db8f3c7470b9ff641954a380510a4822613c06bd5a195fd083f4731d",
+				Hash: "sha256:31e119fe9bde6e105407a32558d5b5fa6ca11e2bd17f8b7b2f8a06aba16a0632",
 			},
 		},
 		Binaries: map[string]string{
