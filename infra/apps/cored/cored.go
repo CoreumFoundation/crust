@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -43,6 +42,7 @@ import (
 	assetfttypes "github.com/CoreumFoundation/coreum/v5/x/asset/ft/types"
 	"github.com/CoreumFoundation/coreum/v5/x/dex"
 	dextypes "github.com/CoreumFoundation/coreum/v5/x/dex/types"
+	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/infra"
 	"github.com/CoreumFoundation/crust/infra/cosmoschain"
 	"github.com/CoreumFoundation/crust/infra/targets"
@@ -348,18 +348,18 @@ func (c Cored) Deployment() infra.Deployment {
 	return deployment
 }
 
-func (c Cored) localBinaryPath() string {
-	return filepath.Join(c.config.BinDir, "cored")
-}
-
 func (c Cored) dockerBinaryPath() string {
 	coredStandardBinName := "cored"
 	coredBinName := coredStandardBinName
-	coredStandardPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
+	coredStandardPath := filepath.Join(
+		c.config.BinDir, ".cache", "cored", tools.TargetPlatformLinuxLocalArchInDocker.String(), "bin",
+	)
 	coredPath := coredStandardPath
 	if c.config.DockerImage == DockerImageExtended {
 		coredBinName = "cored-ext"
-		coredPath = filepath.Join(c.config.BinDir, ".cache", "cored-ext", "docker.linux."+runtime.GOARCH, "bin")
+		coredPath = filepath.Join(
+			c.config.BinDir, ".cache", "cored-ext", tools.TargetPlatformLinuxLocalArchInDocker.String(), "bin",
+		)
 	}
 
 	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
@@ -414,7 +414,6 @@ func (c Cored) prepare(ctx context.Context) error {
 		return errors.WithStack(err)
 	}
 	// the path is defined by the build
-	dockerLinuxBinaryPath := filepath.Join(c.config.BinDir, ".cache", "cored", "docker.linux."+runtime.GOARCH, "bin")
 	if err := copyFile(
 		c.dockerBinaryPath(),
 		filepath.Join(c.config.HomeDir, "cosmovisor", "genesis", "bin", "cored"),
@@ -425,9 +424,11 @@ func (c Cored) prepare(ctx context.Context) error {
 	// upgrade to binary mapping
 	upgrades := map[string]string{
 		"v5": "cored",
-		"v4": "cored-v4.0.1",
-		"v3": "cored-v3.0.3",
+		"v4": string(tools.CoredV401),
 	}
+	dockerLinuxBinaryPath := filepath.Join(
+		c.config.BinDir, ".cache", "cored", tools.TargetPlatformLinuxLocalArchInDocker.String(), "bin",
+	)
 	for upgrade, binary := range upgrades {
 		err := copyFile(filepath.Join(dockerLinuxBinaryPath, binary),
 			filepath.Join(c.config.HomeDir, "cosmovisor", "upgrades", upgrade, "bin", "cored"), 0o755)
@@ -440,7 +441,7 @@ func (c Cored) prepare(ctx context.Context) error {
 }
 
 func (c Cored) saveClientWrapper(wrapperDir, hostname string) error {
-	client := `#!/bin/bash
+	clientWrapper := `#!/bin/bash
 OPTS=""
 if [ "$1" == "tx" ] || [ "$1" == "q" ] || [ "$1" == "query" ]; then
 	OPTS="$OPTS --node ""` + infra.JoinNetAddr("tcp", hostname, c.config.Ports.RPC) + `"""
@@ -457,7 +458,7 @@ exec "` +
 		filepath.Dir(c.config.HomeDir) +
 		`" "$@" $OPTS
 `
-	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(client), 0o700))
+	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(clientWrapper), 0o700))
 }
 
 // SaveGenesis saves json encoded representation of the genesis config into file.
@@ -488,15 +489,18 @@ func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
 		"--chain-id", string(c.config.GenesisInitConfig.ChainID),
 	}
 
-	binaryPath := c.localBinaryPath()
+	// get particular binary path from or run using the default(compiled) binary
+	var binaryPath string
 	if c.config.BinaryVersion != "" {
 		binaryPath = filepath.Join(
 			c.config.BinDir,
 			".cache",
 			"cored",
-			"docker.linux."+runtime.GOARCH, "bin",
+			tools.TargetPlatformLocal.String(), "bin",
 			"cored"+"-"+c.Config().BinaryVersion,
 		)
+	} else {
+		binaryPath = filepath.Join(c.config.BinDir, "cored")
 	}
 
 	return libexec.Exec(
