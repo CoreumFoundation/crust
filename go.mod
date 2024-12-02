@@ -14,7 +14,7 @@ replace (
 require (
 	cosmossdk.io/math v1.3.0
 	github.com/BurntSushi/toml v1.2.1
-	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202112821-5efdcab63f3d
+	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v5 v5.0.0-20241018065930-1e5974bafa46
 	github.com/CosmWasm/wasmd v0.53.0
 	github.com/cometbft/cometbft v0.38.11
