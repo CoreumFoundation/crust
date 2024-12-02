@@ -38,7 +38,6 @@ const (
 	Gaia                 Name = "gaia"
 	Osmosis              Name = "osmosis"
 	Hermes               Name = "hermes"
-	CoredV303            Name = "cored-v3.0.3"
 	CoredV401            Name = "cored-v4.0.1"
 	Mockgen                   = "mockgen"
 	Buf                  Name = "buf"
@@ -297,24 +296,32 @@ var tools = []Tool{
 					"bin/cored-v4.0.1": "cored-linux-arm64",
 				},
 			},
-		},
-	},
-	BinaryTool{
-		Name:    CoredV303,
-		Version: "v3.0.3",
-		Sources: Sources{
-			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.3/cored-linux-amd64",
-				Hash: "sha256:1719a32e6f8e8813d00cd86e1d8d02e893324d4f59fa7a1b8cedc5836140ecef",
+			TargetPlatformLinuxAMD64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-amd64",
+				Hash: "sha256:fdbb6a0c393f1cad0d03c6357b6af2e840508ef3be7ab186f2caeee10d13ae73",
 				Binaries: map[string]string{
-					"bin/cored-v3.0.3": "cored-linux-amd64",
+					"bin/cored-v4.0.1": "cored-linux-amd64",
 				},
 			},
-			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v3.0.3/cored-linux-arm64",
-				Hash: "sha256:cfbbad6803c0327407e4dd222a108505e6ff9e294d7c86e34b6b895b96b61bbd",
+			TargetPlatformLinuxARM64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-linux-arm64",
+				Hash: "sha256:ade147bf5a63259dae1b69762e3295600b5acd9f748b3cfba4d885dfaff15f1e",
 				Binaries: map[string]string{
-					"bin/cored-v3.0.3": "cored-linux-arm64",
+					"bin/cored-v4.0.1": "cored-linux-arm64",
+				},
+			},
+			TargetPlatformDarwinAMD64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-darwin-amd64",
+				Hash: "sha256:939ded112db693a3d929eaaec0814b8d318f0eed686491c1a9ddd07a09d82f44",
+				Binaries: map[string]string{
+					"bin/cored-v4.0.1": "cored-darwin-amd64",
+				},
+			},
+			TargetPlatformDarwinARM64: {
+				URL:  "https://github.com/CoreumFoundation/coreum/releases/download/v4.0.1/cored-darwin-arm64",
+				Hash: "sha256:3e90d12dafdb5d03c68d4e99d3da0f1d8d1b9bafb9cc42648efb24656de6e7bd",
+				Binaries: map[string]string{
+					"bin/cored-v4.0.1": "cored-darwin-arm64",
 				},
 			},
 		},
@@ -522,6 +529,7 @@ func (p TargetPlatform) String() string {
 var (
 	TargetPlatformLocal                  = TargetPlatform{BuildInDocker: false, OS: runtime.GOOS, Arch: runtime.GOARCH}
 	TargetPlatformLinuxAMD64             = TargetPlatform{BuildInDocker: false, OS: OSLinux, Arch: ArchAMD64}
+	TargetPlatformLinuxARM64             = TargetPlatform{BuildInDocker: false, OS: OSLinux, Arch: ArchARM64}
 	TargetPlatformDarwinAMD64            = TargetPlatform{BuildInDocker: false, OS: OSDarwin, Arch: ArchAMD64}
 	TargetPlatformDarwinARM64            = TargetPlatform{BuildInDocker: false, OS: OSDarwin, Arch: ArchARM64}
 	TargetPlatformLinuxAMD64InDocker     = TargetPlatform{BuildInDocker: true, OS: OSLinux, Arch: ArchAMD64}
