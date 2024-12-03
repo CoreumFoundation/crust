@@ -881,8 +881,8 @@ func (ri RustInstaller) install(ctx context.Context, platform TargetPlatform) (r
 	rustup := filepath.Join(cargoHome, "bin", "rustup")
 	env := append(
 		os.Environ(),
-		"RUSTUP_HOME=%s"+rustupHome,
-		"CARGO_HOME=%s"+cargoHome,
+		"RUSTUP_HOME="+rustupHome,
+		"CARGO_HOME="+cargoHome,
 	)
 
 	cmdRustupInstaller := exec.Command(rustupInstaller,
