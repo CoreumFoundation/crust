@@ -261,15 +261,15 @@ var tools = []Tool{
 	// https://github.com/informalsystems/hermes/releases
 	BinaryTool{
 		Name:    Hermes,
-		Version: "v1.10.1",
+		Version: "v1.10.4",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.1/hermes-v1.10.1-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:94f80b8f79f330c7fd98213b7567392889d478c3643e85bcacfc8b8d73798f54",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.4/hermes-v1.10.4-x86_64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:84e1bbee9b786b09702128039606ef3ee6bfe552c03c818cb290b6d893eeed9d",
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.1/hermes-v1.10.1-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:7c9f8c68c283e8ffe767a14d49ace0247793e76233b0aee4f50271728935465d",
+				URL:  "https://github.com/informalsystems/hermes/releases/download/v1.10.4/hermes-v1.10.4-aarch64-unknown-linux-gnu.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:b6403036be9c21d4636973749f8f5f116e52430bf3e88ef1c5e08be290c6f2a0",
 			},
 		},
 		Binaries: map[string]string{
