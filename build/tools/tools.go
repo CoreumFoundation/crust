@@ -116,15 +116,15 @@ var tools = []Tool{
 	// https://github.com/cosmos/cosmos-sdk/releases
 	BinaryTool{
 		Name:    Cosmovisor,
-		Version: "1.7.0",
+		Version: "1.6.0",
 		Sources: Sources{
 			TargetPlatformLinuxAMD64InDocker: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.7.0/cosmovisor-v1.7.0-linux-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:07f2824d924bd96029009047bffbbb0645769b90a9423a7872d3240880de88ba",
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.6.0/cosmovisor-v1.6.0-linux-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:844ac6de7aeccb9a05e46fbb5a6c107e5ba896a488ec19e59febb959d6f6a43e",
 			},
 			TargetPlatformLinuxARM64InDocker: {
-				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.7.0/cosmovisor-v1.7.0-linux-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:e270f57317806dd09146f3fd970cbdf0250f3bfbacd37e80cdda9be8c1509432",
+				URL:  "https://github.com/cosmos/cosmos-sdk/releases/download/cosmovisor%2Fv1.6.0/cosmovisor-v1.6.0-linux-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:b425ef02ea22f10753b293270ced49d1f158c5f6a8707a51eb20788570a65d63",
 			},
 		},
 		Binaries: map[string]string{
