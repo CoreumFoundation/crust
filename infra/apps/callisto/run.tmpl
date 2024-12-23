@@ -3,7 +3,7 @@
 set -e
 
 # handling the container restart
-if bdjuno start --home="{{ .HomePath }}"; then
+if callisto start --home="{{ .HomePath }}"; then
   exit 0
 else
   echo "Applying database migration."
@@ -11,5 +11,5 @@ else
     psql {{ .PostgresURL }} -a -f "${file}"
   done
 
-  bdjuno start --home="{{ .HomePath }}"
+  callisto start --home="{{ .HomePath }}"
 fi

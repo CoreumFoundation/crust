@@ -67,17 +67,17 @@ groups:
       annotations:
         description: 'Unknown deterministic gas message'
 
-    - alert: DegradedBDJunoSyncing
+    - alert: DegradedCallistoSyncing
       expr: (max(max_over_time(tendermint_consensus_height{chain_id="{{ .ChainID }}"}[30s]) or vector(0)) - max(max_over_time(juno_last_indexed_height{chain_id="{{ .ChainID }}"}[30s]) or vector(0))) > 50
       for: 30s
       labels:
         severity: major
         service: cosmos-monitoring
       annotations:
-        description: 'BDJuno {{ `{{ $labels.chain_id }}` }}  syncing is degrading by more that 50 blocks'
+        description: 'Callisto {{ `{{ $labels.chain_id }}` }}  syncing is degrading by more that 50 blocks'
 
     - alert: SlowBlockTime
-      expr: bdjuno_block_time{period="hour"} > 2.0
+      expr: callisto_block_time{period="hour"} > 2.0
       for: 10s
       labels:
         severity: major
@@ -86,7 +86,7 @@ groups:
         description: 'Slow block time.'
 
     - alert: MissedProposals
-      expr: (sum(increase(bdjuno_proposal_sum{}[15m])) by (validator)) / (sum(increase(bdjuno_proposal_count{}[15m])) by (validator)) < 0.9
+      expr: (sum(increase(callisto_proposal_sum{}[15m])) by (validator)) / (sum(increase(callisto_proposal_count{}[15m])) by (validator)) < 0.9
       for: 5m
       labels:
         severity: major

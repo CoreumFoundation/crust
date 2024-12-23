@@ -15,10 +15,10 @@ import (
 
 	"github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
 	"github.com/CoreumFoundation/crust/infra/apps/bigdipper"
 	"github.com/CoreumFoundation/crust/infra/apps/blockexplorer"
 	"github.com/CoreumFoundation/crust/infra/apps/bridgexrpl"
+	"github.com/CoreumFoundation/crust/infra/apps/callisto"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
@@ -219,7 +219,7 @@ func (f *Factory) Faucet(name string, coredApp cored.Cored) faucet.Faucet {
 func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplorer.Explorer {
 	namePostgres := BuildPrefixedAppName(prefix, string(postgres.AppType))
 	nameHasura := BuildPrefixedAppName(prefix, string(hasura.AppType))
-	nameBDJuno := BuildPrefixedAppName(prefix, string(bdjuno.AppType))
+	nameCallisto := BuildPrefixedAppName(prefix, string(callisto.AppType))
 	nameBigDipper := BuildPrefixedAppName(prefix, string(bigdipper.AppType))
 
 	postgresApp := postgres.New(postgres.Config{
@@ -227,14 +227,14 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 		AppInfo: f.spec.DescribeApp(postgres.AppType, namePostgres),
 		Port:    blockexplorer.DefaultPorts.Postgres,
 	})
-	bdjunoApp := bdjuno.New(bdjuno.Config{
-		Name:           nameBDJuno,
-		HomeDir:        filepath.Join(f.config.AppDir, nameBDJuno),
-		RepoDir:        filepath.Clean(filepath.Join(f.config.RootDir, "../bdjuno")),
-		AppInfo:        f.spec.DescribeApp(bdjuno.AppType, nameBDJuno),
-		Port:           blockexplorer.DefaultPorts.BDJuno,
-		TelemetryPort:  blockexplorer.DefaultPorts.BDJunoTelemetry,
-		ConfigTemplate: blockexplorer.BDJunoConfigTemplate,
+	callistoApp := callisto.New(callisto.Config{
+		Name:           nameCallisto,
+		HomeDir:        filepath.Join(f.config.AppDir, nameCallisto),
+		RepoDir:        filepath.Clean(filepath.Join(f.config.RootDir, "../callisto")),
+		AppInfo:        f.spec.DescribeApp(callisto.AppType, nameCallisto),
+		Port:           blockexplorer.DefaultPorts.Callisto,
+		TelemetryPort:  blockexplorer.DefaultPorts.CallistoTelemetry,
+		ConfigTemplate: blockexplorer.CallistoConfigTemplate,
 		Cored:          coredApp,
 		Postgres:       postgresApp,
 	})
@@ -243,7 +243,7 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 		AppInfo:  f.spec.DescribeApp(hasura.AppType, nameHasura),
 		Port:     blockexplorer.DefaultPorts.Hasura,
 		Postgres: postgresApp,
-		BDJuno:   bdjunoApp,
+		Callisto: callistoApp,
 	})
 	bigDipperApp := bigdipper.New(bigdipper.Config{
 		Name:    nameBigDipper,
@@ -255,7 +255,7 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 
 	return blockexplorer.Explorer{
 		Postgres:  postgresApp,
-		BDJuno:    bdjunoApp,
+		Callisto:  callistoApp,
 		Hasura:    hasuraApp,
 		BigDipper: bigDipperApp,
 	}
@@ -331,7 +331,7 @@ func (f *Factory) Monitoring(
 	prefix string,
 	coredNodes []cored.Cored,
 	faucet faucet.Faucet,
-	bdJuno bdjuno.BDJuno,
+	callisto callisto.Callisto,
 	hermesApps []hermes.Hermes,
 ) infra.AppSet {
 	namePrometheus := BuildPrefixedAppName(prefix, string(prometheus.AppType))
@@ -344,7 +344,7 @@ func (f *Factory) Monitoring(
 		AppInfo:    f.spec.DescribeApp(prometheus.AppType, namePrometheus),
 		CoredNodes: coredNodes,
 		Faucet:     faucet,
-		BDJuno:     bdJuno,
+		Callisto:   callisto,
 		HermesApps: hermesApps,
 	})
 

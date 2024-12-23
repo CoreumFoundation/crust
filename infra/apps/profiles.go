@@ -7,7 +7,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
+	"github.com/CoreumFoundation/crust/infra/apps/callisto"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/gaiad"
@@ -177,11 +177,11 @@ func BuildAppSet(ctx context.Context, appF *Factory, profiles []string, coredVer
 	}
 
 	if pMap[ProfileMonitoring] {
-		var bdJunoApp bdjuno.BDJuno
-		if bdJunoAppSetApp, ok := appSet.FindAppByName(
-			BuildPrefixedAppName(AppPrefixExplorer, string(bdjuno.AppType)),
-		).(bdjuno.BDJuno); ok {
-			bdJunoApp = bdJunoAppSetApp
+		var callistoApp callisto.Callisto
+		if callistoAppSetApp, ok := appSet.FindAppByName(
+			BuildPrefixedAppName(AppPrefixExplorer, string(callisto.AppType)),
+		).(callisto.Callisto); ok {
+			callistoApp = callistoAppSetApp
 		}
 
 		var hermesApps []hermes.Hermes
@@ -201,7 +201,7 @@ func BuildAppSet(ctx context.Context, appF *Factory, profiles []string, coredVer
 			AppPrefixMonitoring,
 			coredNodes,
 			faucetApp,
-			bdJunoApp,
+			callistoApp,
 			hermesApps,
 		)...)
 	}

@@ -26,13 +26,13 @@ scrape_configs:
           instance: "faucet"
 {{ end }}
 
-{{ if .BDJuno.Host }}
-  - job_name: 'bdjuno'
+{{ if .Callisto.Host }}
+  - job_name: 'callisto'
     static_configs:
-      - targets: [ "{{.BDJuno.Host}}:{{.BDJuno.Port}}" ]
+      - targets: [ "{{.Callisto.Host}}:{{.Callisto.Port}}" ]
         labels:
           environment: znet
-          instance: "bdjuno"
+          instance: "callisto"
 {{ end }}
 
 {{ if (ne (len .HermesApps) 0) }}

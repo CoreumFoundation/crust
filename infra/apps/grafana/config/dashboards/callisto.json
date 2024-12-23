@@ -109,7 +109,7 @@
             "uid": "P168AE35C7276FF55"
           },
           "editorMode": "code",
-          "expr": "bdjuno_block_time",
+          "expr": "callisto_block_time",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -436,7 +436,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "BDJuno",
+  "title": "Callisto",
   "uid": "3EG623EVk",
   "version": 1,
   "weekStart": ""
