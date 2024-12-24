@@ -98,18 +98,13 @@ func (j Callisto) Config() Config {
 // Deployment returns deployment of callisto.
 func (j Callisto) Deployment() infra.Deployment {
 	return infra.Deployment{
-		RunAsUser: true,
-		Image:     "callisto:znet",
-		Name:      j.Name(),
-		Info:      j.config.AppInfo,
+		Image: "coreumfoundation/callisto:0c415b80",
+		Name:  j.Name(),
+		Info:  j.config.AppInfo,
 		Volumes: []infra.Volume{
 			{
 				Source:      j.config.HomeDir,
 				Destination: targets.AppHomeDir,
-			},
-			{
-				Source:      filepath.Join(j.config.RepoDir, "database", "schema"),
-				Destination: filepath.Join(targets.AppHomeDir, "schema"),
 			},
 		},
 		Ports: map[string]int{
@@ -125,6 +120,10 @@ func (j Callisto) Deployment() infra.Deployment {
 		},
 		PrepareFunc: j.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
+		DockerArgs: []string{
+			// exec from root to call psql
+			"--user", "root",
+		},
 	}
 }
 
@@ -161,6 +160,7 @@ func (j Callisto) prepareConfig() []byte {
 			Host            string
 			PortRPC         int
 			PortGRPC        int
+			PortAPI         int
 			AddressPrefix   string
 			GenesisFilePath string
 		}
@@ -176,12 +176,14 @@ func (j Callisto) prepareConfig() []byte {
 			Host            string
 			PortRPC         int
 			PortGRPC        int
+			PortAPI         int
 			AddressPrefix   string
 			GenesisFilePath string
 		}{
 			Host:            j.config.Cored.Info().HostFromContainer,
 			PortRPC:         j.config.Cored.Config().Ports.RPC,
 			PortGRPC:        j.config.Cored.Config().Ports.GRPC,
+			PortAPI:         j.config.Cored.Config().Ports.API,
 			AddressPrefix:   sdk.GetConfig().GetBech32AccountAddrPrefix(),
 			GenesisFilePath: targets.AppHomeDir + "/config/genesis.json",
 		},

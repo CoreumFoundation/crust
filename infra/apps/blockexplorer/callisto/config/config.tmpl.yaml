@@ -2,24 +2,25 @@ chain:
   bech32_prefix: {{ .Cored.AddressPrefix }}
   modules:
     - telemetry
-    - modules
-    - messages
+    - addresses
+    - assetft
+    - assetnft
     - auth
     - bank
     - consensus
+    - customparams
+    - daily refetch
+    - dex
+    - distribution
+    - feegrant
+    - feemodel
     - gov
+    - message_type
     - mint
+    - pricefeed
     - slashing
     - staking
-    - distribution
-    - actions
-    - feemodel
-    - customparams
-    - assetft
-    - assetnft
-    - pricefeed
-    - addresses
-
+    - upgrade
 node:
   type: remote
   config:
@@ -30,17 +31,16 @@ node:
     grpc:
       address: {{ .Cored.Host }}:{{ .Cored.PortGRPC }}
       insecure: true
-
+    api:
+      address: {{ .Cored.Host }}:{{ .Cored.PortAPI }}
 parsing:
   workers: 1
+  start_height: 1
+  average_block_time: 1.5s
   listen_new_blocks: true
   parse_old_blocks: true
   parse_genesis: true
-  start_height: 1
-  fast_sync: false
   genesis_file_path: {{ .Cored.GenesisFilePath }}
-  average_block_time: 1.5s
-
 database:
   url: postgresql://{{ .Postgres.User }}@{{ .Postgres.Host }}:{{ .Postgres.Port }}/{{ .Postgres.DB }}?sslmode=disable&search_path=public
   name: {{ .Postgres.DB }}
@@ -52,15 +52,20 @@ database:
   max_idle_connections: 1
   partition_size: 100000
   partition_batch: 1000
+  ssl_mode_enable: "false"
+  ssl_root_cert: ""
+  ssl_cert: ""
+  ssl_key: ""
 
 telemetry:
   port: 5001
 
 logging:
-  level: debug
+  level: info
   format: text
 
 actions:
+  host: 0.0.0.0
   port: {{ .Port }}
 
 pricefeed:
