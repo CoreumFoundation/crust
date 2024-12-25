@@ -435,7 +435,8 @@ func (c Cored) prepare(ctx context.Context) error {
 
 	// upgrade to binary mapping
 	upgrades := map[string]string{
-		"v4patch1": "cored",
+		"v4patch2": "cored",
+		"v4patch1": "cored-v4.1.0",
 		"v4":       "cored-v4.0.1",
 		"v3":       "cored-v3.0.3",
 	}
