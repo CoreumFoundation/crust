@@ -32,7 +32,7 @@ node:
       address: {{ .Cored.Host }}:{{ .Cored.PortGRPC }}
       insecure: true
     api:
-      address: {{ .Cored.Host }}:{{ .Cored.PortAPI }}
+      address: http://{{ .Cored.Host }}:{{ .Cored.PortAPI }}
 parsing:
   workers: 1
   start_height: 1
