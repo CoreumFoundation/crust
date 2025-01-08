@@ -29,13 +29,13 @@ If you are going to use faucet and explorer, also clone these repos:
 
 ```
 git clone https://github.com/CoreumFoundation/faucet
-git clone https://github.com/CoreumFoundation/bdjuno
+git clone https://github.com/CoreumFoundation/callisto
 ```
 
 2. Not required but recommended: Add bin directory of all projects to your `PATH` environment variable:
 
 ```
-export PATH="$COREUM_PATH/crust/bin:$COREUM_PATH/coreum/bin:$COREUM_PATH/faucet/bin:$COREUM_PATH/bdjuno/bin:$PATH"
+export PATH="$COREUM_PATH/crust/bin:$COREUM_PATH/coreum/bin:$COREUM_PATH/faucet/bin:$COREUM_PATH/callisto/bin:$PATH"
 ```
 
 3. Compile all the required binaries and docker images:
@@ -49,7 +49,7 @@ If you are going to use faucet and explorer, also build their images:
 
 ```
 $COREUM_PATH/faucet/bin/faucet-builder build images
-$COREUM_PATH/bdjuno/bin/bdjuno-builder build images
+$COREUM_PATH/callisto/bin/callisto-builder build images
 ```
 
 After the command `crust build images` completes you may find executable `$COREUM_PATH/crust/bin/cored`, being
@@ -57,7 +57,6 @@ both blockchain node and client.
 
 _Note: You need to run respective builder `build images` after you modify that project.
 For example if you do a modification in coreum project, you need to run `coreum-builder build images`._
-
 
 ## Executing `znet`
 

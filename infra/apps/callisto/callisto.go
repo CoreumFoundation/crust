@@ -1,4 +1,4 @@
-package bdjuno
+package callisto
 
 import (
 	"bytes"
@@ -33,19 +33,19 @@ var (
 )
 
 const (
-	// AppType is the type of bdjuno application.
-	AppType infra.AppType = "bdjuno"
+	// AppType is the type of callisto application.
+	AppType infra.AppType = "callisto"
 
-	// DefaultPort is the default port bdjuno listens on for client connections.
+	// DefaultPort is the default port callisto listens on for client connections.
 	DefaultPort = 3030
 
-	// DefaultTelemetryPort is default port use for the bdjuno telemetry.
+	// DefaultTelemetryPort is default port use for the callisto telemetry.
 	DefaultTelemetryPort = 5001
 
 	dockerEntrypoint = "run.sh"
 )
 
-// Config storesbdjuno app configuration.
+// Config storescallisto app configuration.
 type Config struct {
 	Name           string
 	HomeDir        string
@@ -58,58 +58,53 @@ type Config struct {
 	Postgres       postgres.Postgres
 }
 
-// New creates new bdjuno app.
-func New(config Config) BDJuno {
-	return BDJuno{
+// New creates new callisto app.
+func New(config Config) Callisto {
+	return Callisto{
 		config: config,
 	}
 }
 
-// BDJuno represents bdjuno.
-type BDJuno struct {
+// Callisto represents callisto.
+type Callisto struct {
 	config Config
 }
 
 // Type returns type of application.
-func (j BDJuno) Type() infra.AppType {
+func (j Callisto) Type() infra.AppType {
 	return AppType
 }
 
 // Name returns name of app.
-func (j BDJuno) Name() string {
+func (j Callisto) Name() string {
 	return j.config.Name
 }
 
 // Port returns port used by hasura to accept client connections.
-func (j BDJuno) Port() int {
+func (j Callisto) Port() int {
 	return j.config.Port
 }
 
 // Info returns deployment info.
-func (j BDJuno) Info() infra.DeploymentInfo {
+func (j Callisto) Info() infra.DeploymentInfo {
 	return j.config.AppInfo.Info()
 }
 
 // Config returns config.
-func (j BDJuno) Config() Config {
+func (j Callisto) Config() Config {
 	return j.config
 }
 
-// Deployment returns deployment of bdjuno.
-func (j BDJuno) Deployment() infra.Deployment {
+// Deployment returns deployment of callisto.
+func (j Callisto) Deployment() infra.Deployment {
 	return infra.Deployment{
-		RunAsUser: true,
-		Image:     "bdjuno:znet",
-		Name:      j.Name(),
-		Info:      j.config.AppInfo,
+		Image: "coreumfoundation/callisto:0c415b80",
+		Name:  j.Name(),
+		Info:  j.config.AppInfo,
 		Volumes: []infra.Volume{
 			{
 				Source:      j.config.HomeDir,
 				Destination: targets.AppHomeDir,
-			},
-			{
-				Source:      filepath.Join(j.config.RepoDir, "database", "schema"),
-				Destination: filepath.Join(targets.AppHomeDir, "schema"),
 			},
 		},
 		Ports: map[string]int{
@@ -125,13 +120,17 @@ func (j BDJuno) Deployment() infra.Deployment {
 		},
 		PrepareFunc: j.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
+		DockerArgs: []string{
+			// exec from root to call psql
+			"--user", "root",
+		},
 	}
 }
 
-// HealthCheck checks if bdjuno is operating.
-func (j BDJuno) HealthCheck(ctx context.Context) error {
+// HealthCheck checks if callisto is operating.
+func (j Callisto) HealthCheck(ctx context.Context) error {
 	if j.config.AppInfo.Info().Status != infra.AppStatusRunning {
-		return retry.Retryable(errors.Errorf("bdjuno hasn't started yet"))
+		return retry.Retryable(errors.Errorf("callisto hasn't started yet"))
 	}
 
 	statusURL := url.URL{
@@ -153,7 +152,7 @@ func (j BDJuno) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-func (j BDJuno) prepareConfig() []byte {
+func (j Callisto) prepareConfig() []byte {
 	configBuf := &bytes.Buffer{}
 	must.OK(template.Must(template.New("config").Parse(j.config.ConfigTemplate)).Execute(configBuf, struct {
 		Port  int
@@ -161,6 +160,7 @@ func (j BDJuno) prepareConfig() []byte {
 			Host            string
 			PortRPC         int
 			PortGRPC        int
+			PortAPI         int
 			AddressPrefix   string
 			GenesisFilePath string
 		}
@@ -176,12 +176,14 @@ func (j BDJuno) prepareConfig() []byte {
 			Host            string
 			PortRPC         int
 			PortGRPC        int
+			PortAPI         int
 			AddressPrefix   string
 			GenesisFilePath string
 		}{
 			Host:            j.config.Cored.Info().HostFromContainer,
 			PortRPC:         j.config.Cored.Config().Ports.RPC,
 			PortGRPC:        j.config.Cored.Config().Ports.GRPC,
+			PortAPI:         j.config.Cored.Config().Ports.API,
 			AddressPrefix:   sdk.GetConfig().GetBech32AccountAddrPrefix(),
 			GenesisFilePath: targets.AppHomeDir + "/config/genesis.json",
 		},
@@ -200,7 +202,7 @@ func (j BDJuno) prepareConfig() []byte {
 	return configBuf.Bytes()
 }
 
-func (j BDJuno) prepare(ctx context.Context) error {
+func (j Callisto) prepare(ctx context.Context) error {
 	if err := j.config.Cored.SaveGenesis(ctx, j.config.HomeDir); err != nil {
 		return err
 	}
@@ -212,7 +214,7 @@ func (j BDJuno) prepare(ctx context.Context) error {
 	return j.saveRunScriptFile()
 }
 
-func (j BDJuno) saveRunScriptFile() error {
+func (j Callisto) saveRunScriptFile() error {
 	scriptArgs := struct {
 		HomePath    string
 		PostgresURL string

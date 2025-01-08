@@ -17,7 +17,7 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
+	"github.com/CoreumFoundation/crust/infra/apps/callisto"
 	"github.com/CoreumFoundation/crust/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/infra/apps/faucet"
 	"github.com/CoreumFoundation/crust/infra/apps/hermes"
@@ -52,7 +52,7 @@ type Config struct {
 	AppInfo    *infra.AppInfo
 	CoredNodes []cored.Cored
 	Faucet     faucet.Faucet
-	BDJuno     bdjuno.BDJuno
+	Callisto   callisto.Callisto
 	HermesApps []hermes.Hermes
 }
 
@@ -139,9 +139,9 @@ func (p Prometheus) Deployment() infra.Deployment {
 				for _, node := range p.config.CoredNodes {
 					containers = append(containers, node)
 				}
-				// determine whether the bdjuno is provided
-				if p.config.BDJuno.Name() != "" {
-					containers = append(containers, p.config.BDJuno)
+				// determine whether the callisto is provided
+				if p.config.Callisto.Name() != "" {
+					containers = append(containers, p.config.Callisto)
 				}
 				// append hermes apps
 				for _, h := range p.config.HermesApps {
@@ -190,7 +190,7 @@ func (p Prometheus) saveConfigFile(_ context.Context) error {
 	configArgs := struct {
 		Nodes      []nodesConfigArgs
 		Faucet     hostPortConfig
-		BDJuno     hostPortConfig
+		Callisto   hostPortConfig
 		HermesApps []hostPortConfig
 	}{
 		Nodes: nodesConfig,
@@ -204,11 +204,11 @@ func (p Prometheus) saveConfigFile(_ context.Context) error {
 		}
 	}
 
-	// determine whether the bdjuno is provided
-	if p.config.BDJuno.Name() != "" {
-		configArgs.BDJuno = hostPortConfig{
-			Host: p.config.BDJuno.Info().HostFromContainer,
-			Port: p.config.BDJuno.Config().TelemetryPort,
+	// determine whether the callisto is provided
+	if p.config.Callisto.Name() != "" {
+		configArgs.Callisto = hostPortConfig{
+			Host: p.config.Callisto.Info().HostFromContainer,
+			Port: p.config.Callisto.Config().TelemetryPort,
 		}
 	}
 

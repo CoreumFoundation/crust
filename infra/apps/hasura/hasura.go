@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/CoreumFoundation/crust/infra"
-	"github.com/CoreumFoundation/crust/infra/apps/bdjuno"
+	"github.com/CoreumFoundation/crust/infra/apps/callisto"
 	"github.com/CoreumFoundation/crust/infra/apps/postgres"
 )
 
@@ -24,7 +24,7 @@ type Config struct {
 	AppInfo  *infra.AppInfo
 	Port     int
 	Postgres postgres.Postgres
-	BDJuno   bdjuno.BDJuno
+	Callisto callisto.Callisto
 }
 
 // New creates new hasura app.
@@ -81,7 +81,7 @@ func (h Hasura) Deployment() infra.Deployment {
 				},
 				{
 					Name:  "ACTION_BASE_URL",
-					Value: infra.JoinNetAddr("http", h.config.BDJuno.Info().HostFromContainer, h.config.BDJuno.Port()),
+					Value: infra.JoinNetAddr("http", h.config.Callisto.Info().HostFromContainer, h.config.Callisto.Port()),
 				},
 				{
 					Name:  "HASURA_GRAPHQL_ENABLE_CONSOLE",
@@ -106,8 +106,8 @@ func (h Hasura) Deployment() infra.Deployment {
 			Timeout: 40 * time.Second,
 			Dependencies: []infra.HealthCheckCapable{
 				h.config.Postgres,
-				// BDJuno loads SQL schema required by Hasura. If Hasura starts before completing this, it gets crazy.
-				h.config.BDJuno,
+				// Callisto loads SQL schema required by Hasura. If Hasura starts before completing this, it gets crazy.
+				h.config.Callisto,
 			},
 		},
 	}
