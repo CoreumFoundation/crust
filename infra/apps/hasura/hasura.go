@@ -62,7 +62,7 @@ func (h Hasura) Info() infra.DeploymentInfo {
 // Deployment returns deployment of hasura.
 func (h Hasura) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image: "hasura:znet",
+		Image: "coreumfoundation/hasura:latest",
 		EnvVarsFunc: func() []infra.EnvVar {
 			return []infra.EnvVar{
 				{

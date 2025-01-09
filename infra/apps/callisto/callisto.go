@@ -98,7 +98,7 @@ func (j Callisto) Config() Config {
 // Deployment returns deployment of callisto.
 func (j Callisto) Deployment() infra.Deployment {
 	return infra.Deployment{
-		Image: "coreumfoundation/callisto:0c415b80",
+		Image: "coreumfoundation/callisto:latest",
 		Name:  j.Name(),
 		Info:  j.config.AppInfo,
 		Volumes: []infra.Volume{
