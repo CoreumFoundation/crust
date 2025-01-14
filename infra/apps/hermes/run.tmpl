@@ -16,12 +16,14 @@ if [ ! -d "$RELAYER_KEYS_PATH" ]; then
 
   log_with_time "Importing the relayer mnemonics."
   echo "{{ .CoreumRelayerMnemonic }}" > "$HOME/coreum-mnemonic"
-  echo "{{ .PeerRelayerMnemonic }}" > "$HOME/peer-mnemonic"
-  hermes keys add --chain {{ .CoreumChanID }} --hd-path "m/44'/{{ .CoreumRelayerCoinType }}'/0'/0/0" --mnemonic-file "$HOME/coreum-mnemonic"
-  hermes keys add --chain {{ .PeerChanID }} --mnemonic-file "$HOME/peer-mnemonic"
+  hermes keys add --key-name {{ .CoreumChanID }} --chain {{ .CoreumChanID }} --hd-path "m/44'/{{ .CoreumRelayerCoinType }}'/0'/0/0" --mnemonic-file "$HOME/coreum-mnemonic"
+  
+  {{ range .Peers }}
+  echo "{{ .RelayerMnemonic }}" > "$HOME/{{ .ChanID }}-mnemonic"
+  hermes keys add --key-name {{ .ChanID }} --chain {{ .ChanID }} --mnemonic-file "$HOME/{{ .ChanID }}-mnemonic"
   log_with_time "Connecting the chains."
-  hermes create channel --a-chain {{ .CoreumChanID }} --b-chain {{ .PeerChanID }} --a-port transfer --b-port transfer --new-client-connection --yes
-
+  hermes create channel --a-chain {{ $.CoreumChanID }} --b-chain {{ .ChanID }} --a-port transfer --b-port transfer --new-client-connection --yes
+  {{ end }}
 fi
 
 log_with_time "Starting the relayer."

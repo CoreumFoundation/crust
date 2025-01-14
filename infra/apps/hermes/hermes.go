@@ -54,7 +54,7 @@ type Config struct {
 	TelemetryPort         int
 	Cored                 cored.Cored
 	CoreumRelayerMnemonic string
-	PeeredChain           cosmoschain.BaseApp
+	PeeredChains          []cosmoschain.BaseApp
 }
 
 // New creates new hermes app.
@@ -124,8 +124,10 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 	}
 
 	chainIDs := map[string]struct{}{
-		h.config.PeeredChain.AppConfig().ChainID:                  {},
 		string(h.config.Cored.Config().GenesisInitConfig.ChainID): {},
+	}
+	for _, chain := range h.config.PeeredChains {
+		chainIDs[chain.AppConfig().ChainID] = struct{}{}
 	}
 
 	for _, metricItem := range metricFamily.GetMetric() {
@@ -147,6 +149,13 @@ func (h Hermes) HealthCheck(ctx context.Context) error {
 
 // Deployment returns deployment of hermes.
 func (h Hermes) Deployment() infra.Deployment {
+	dependencies := []infra.HealthCheckCapable{
+		h.config.Cored,
+	}
+	for _, chain := range h.config.PeeredChains {
+		dependencies = append(dependencies, chain)
+	}
+
 	return infra.Deployment{
 		RunAsUser: true,
 		Image:     "hermes:znet",
@@ -162,11 +171,8 @@ func (h Hermes) Deployment() infra.Deployment {
 			"debug": h.config.TelemetryPort,
 		},
 		Requires: infra.Prerequisites{
-			Timeout: 40 * time.Second,
-			Dependencies: []infra.HealthCheckCapable{
-				h.config.Cored,
-				h.config.PeeredChain,
-			},
+			Timeout:      40 * time.Second,
+			Dependencies: dependencies,
 		},
 		PrepareFunc: h.prepare,
 		Entrypoint:  filepath.Join(targets.AppHomeDir, dockerEntrypoint),
@@ -188,48 +194,51 @@ func (h Hermes) prepare(_ context.Context) error {
 }
 
 func (h Hermes) saveConfigFile() error {
+	type chainConfig struct {
+		ChanID        string
+		RPCURL        string
+		GRPCURL       string
+		WebsocketURL  string
+		AccountPrefix string
+		GasPrice      sdk.DecCoin
+	}
+
 	configArgs := struct {
 		TelemetryPort int
-
-		CoreumChanID        string
-		CoreumRPCURL        string
-		CoreumGRPCURL       string
-		CoreumWebsocketURL  string
-		CoreumAccountPrefix string
-		CoreumGasPrice      sdk.DecCoin
-
-		PeerChanID        string
-		PeerRPCURL        string
-		PeerGRPCURL       string
-		PeerWebsocketURL  string
-		PeerAccountPrefix string
-		PeerGasPrice      sdk.DecCoin
+		Chains        []chainConfig
 	}{
 		TelemetryPort: h.config.TelemetryPort,
+		Chains: []chainConfig{
+			{
+				ChanID: string(h.config.Cored.Config().GenesisInitConfig.ChainID),
+				RPCURL: infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
+				GRPCURL: infra.JoinNetAddr(
+					"http",
+					h.config.Cored.Info().HostFromContainer,
+					h.config.Cored.Config().Ports.GRPC,
+				),
+				AccountPrefix: h.config.Cored.Config().GenesisInitConfig.AddressPrefix,
+				GasPrice:      lo.Must1(sdk.ParseDecCoin(h.config.Cored.Config().GasPriceStr)),
+			},
+		},
+	}
 
-		CoreumChanID: string(h.config.Cored.Config().GenesisInitConfig.ChainID),
-		CoreumRPCURL: infra.JoinNetAddr("http", h.config.Cored.Info().HostFromContainer, h.config.Cored.Config().Ports.RPC),
-		CoreumGRPCURL: infra.JoinNetAddr(
-			"http",
-			h.config.Cored.Info().HostFromContainer,
-			h.config.Cored.Config().Ports.GRPC,
-		),
-		CoreumAccountPrefix: h.config.Cored.Config().GenesisInitConfig.AddressPrefix,
-		CoreumGasPrice:      lo.Must1(sdk.ParseDecCoin(h.config.Cored.Config().GasPriceStr)),
-
-		PeerChanID: h.config.PeeredChain.AppConfig().ChainID,
-		PeerRPCURL: infra.JoinNetAddr(
-			"http",
-			h.config.PeeredChain.Info().HostFromContainer,
-			h.config.PeeredChain.AppConfig().Ports.RPC,
-		),
-		PeerGRPCURL: infra.JoinNetAddr(
-			"http",
-			h.config.PeeredChain.Info().HostFromContainer,
-			h.config.PeeredChain.AppConfig().Ports.GRPC,
-		),
-		PeerAccountPrefix: h.config.PeeredChain.AppTypeConfig().AccountPrefix,
-		PeerGasPrice:      lo.Must1(sdk.ParseDecCoin(h.config.PeeredChain.AppConfig().GasPriceStr)),
+	for _, chain := range h.config.PeeredChains {
+		configArgs.Chains = append(configArgs.Chains, chainConfig{
+			ChanID: chain.AppConfig().ChainID,
+			RPCURL: infra.JoinNetAddr(
+				"http",
+				chain.Info().HostFromContainer,
+				chain.AppConfig().Ports.RPC,
+			),
+			GRPCURL: infra.JoinNetAddr(
+				"http",
+				chain.Info().HostFromContainer,
+				chain.AppConfig().Ports.GRPC,
+			),
+			AccountPrefix: chain.AppTypeConfig().AccountPrefix,
+			GasPrice:      lo.Must1(sdk.ParseDecCoin(chain.AppConfig().GasPriceStr)),
+		})
 	}
 
 	buf := &bytes.Buffer{}
@@ -252,6 +261,19 @@ func (h Hermes) saveConfigFile() error {
 }
 
 func (h Hermes) saveRunScriptFile() error {
+	type peersConfig struct {
+		ChanID          string
+		RelayerMnemonic string
+	}
+
+	peers := make([]peersConfig, 0)
+	for _, chain := range h.config.PeeredChains {
+		peers = append(peers, peersConfig{
+			ChanID:          chain.AppConfig().ChainID,
+			RelayerMnemonic: chain.AppConfig().RelayerMnemonic,
+		})
+	}
+
 	scriptArgs := struct {
 		HomePath string
 
@@ -260,8 +282,7 @@ func (h Hermes) saveRunScriptFile() error {
 		CoreumRPCURL          string
 		CoreumRelayerCoinType uint32
 
-		PeerChanID          string
-		PeerRelayerMnemonic string
+		Peers []peersConfig
 	}{
 		HomePath: targets.AppHomeDir,
 
@@ -274,8 +295,7 @@ func (h Hermes) saveRunScriptFile() error {
 		),
 		CoreumRelayerCoinType: coreumconstant.CoinType,
 
-		PeerChanID:          h.config.PeeredChain.AppConfig().ChainID,
-		PeerRelayerMnemonic: h.config.PeeredChain.AppConfig().RelayerMnemonic,
+		Peers: peers,
 	}
 
 	buf := &bytes.Buffer{}
