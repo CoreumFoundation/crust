@@ -265,8 +265,7 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 	nameGaia := BuildPrefixedAppName(prefix, string(gaiad.AppType))
 	nameOsmosis := BuildPrefixedAppName(prefix, string(osmosis.AppType))
-	nameRelayerHermesGaia := BuildPrefixedAppName(prefix, string(hermes.AppType), string(gaiad.AppType))
-	nameRelayerHermesOsmosis := BuildPrefixedAppName(prefix, string(hermes.AppType), string(osmosis.AppType))
+	nameRelayerHermes := BuildPrefixedAppName(prefix, string(hermes.AppType))
 
 	gaiaApp := gaiad.New(cosmoschain.AppConfig{
 		Name:              nameGaia,
@@ -298,31 +297,20 @@ func (f *Factory) IBC(prefix string, coredApp cored.Cored) infra.AppSet {
 		RunScriptTemplate: osmosis.RunScriptTemplate,
 	})
 
-	relayerHermesGaiaApp := hermes.New(hermes.Config{
-		Name:                  nameRelayerHermesGaia,
-		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerHermesGaia),
-		AppInfo:               f.spec.DescribeApp(hermes.AppType, nameRelayerHermesGaia),
+	hermesApp := hermes.New(hermes.Config{
+		Name:                  nameRelayerHermes,
+		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerHermes),
+		AppInfo:               f.spec.DescribeApp(hermes.AppType, nameRelayerHermes),
 		TelemetryPort:         hermes.DefaultTelemetryPort,
 		Cored:                 coredApp,
-		CoreumRelayerMnemonic: cored.RelayerMnemonicGaia,
-		PeeredChain:           gaiaApp,
-	})
-
-	relayerHermesOsmosisApp := hermes.New(hermes.Config{
-		Name:                  nameRelayerHermesOsmosis,
-		HomeDir:               filepath.Join(f.config.AppDir, nameRelayerHermesOsmosis),
-		AppInfo:               f.spec.DescribeApp(hermes.AppType, nameRelayerHermesOsmosis),
-		TelemetryPort:         hermes.DefaultTelemetryPort + 100, // avoid conflicts with another Hermes.
-		Cored:                 coredApp,
-		CoreumRelayerMnemonic: cored.RelayerMnemonicOsmosis,
-		PeeredChain:           osmosisApp,
+		CoreumRelayerMnemonic: cored.RelayerMnemonic,
+		PeeredChains:          []cosmoschain.BaseApp{gaiaApp, osmosisApp},
 	})
 
 	return infra.AppSet{
 		gaiaApp,
 		osmosisApp,
-		relayerHermesGaiaApp,
-		relayerHermesOsmosisApp,
+		hermesApp,
 	}
 }
 

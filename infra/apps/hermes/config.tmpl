@@ -104,38 +104,22 @@ host = '0.0.0.0'
 # by the telemetry service. Default: 3001
 port = {{ .TelemetryPort }}
 
+{{ range .Chains }}
 [[chains]]
-id = '{{ .CoreumChanID }}'
-rpc_addr = '{{ .CoreumRPCURL }}'
+id = '{{ .ChanID }}'
+rpc_addr = '{{ .RPCURL }}'
 rpc_timeout = '30s'
-grpc_addr = '{{ .CoreumGRPCURL }}'
+grpc_addr = '{{ .GRPCURL }}'
 # Only pull mode works with WASM channels: https://hermes.informal.systems/documentation/configuration/configure-hermes.html?highlight=wasm#configuring-support-for-wasm-relaying
 event_source = { mode = 'pull', interval = '1s' }
-account_prefix = '{{ .CoreumAccountPrefix }}'
-key_name = 'coreum-key'
+account_prefix = '{{ .AccountPrefix }}'
+key_name = '{{ .ChanID }}'
 store_prefix = 'ibc'
 default_gas = 100000
 max_gas = 4000000
-gas_price = { price = {{ .CoreumGasPrice.Amount }}, denom = '{{ .CoreumGasPrice.Denom }}' }
+gas_price = { price = {{ .GasPrice.Amount }}, denom = '{{ .GasPrice.Denom }}' }
 gas_multiplier = 1.5
 clock_drift = '60s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
-
-[[chains]]
-id = '{{ .PeerChanID }}'
-rpc_addr = '{{ .PeerRPCURL }}'
-rpc_timeout = '30s'
-grpc_addr = '{{ .PeerGRPCURL }}'
-# Only pull mode works with WASM channels: https://hermes.informal.systems/documentation/configuration/configure-hermes.html?highlight=wasm#configuring-support-for-wasm-relaying
-event_source = { mode = 'pull', interval = '1s' }
-account_prefix = '{{ .PeerAccountPrefix }}'
-key_name = 'peer-key'
-store_prefix = 'ibc'
-default_gas = 100000
-max_gas = 4000000
-gas_price = { price = {{ .PeerGasPrice.Amount }}, denom = '{{ .PeerGasPrice.Denom }}' }
-gas_multiplier = 1.5
-clock_drift = '60s'
-trust_threshold = { numerator = '1', denominator = '3' }
-address_type = { derivation = 'cosmos' }
+{{ end }}
