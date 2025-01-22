@@ -34,6 +34,7 @@ const (
 	GolangCI   Name = "golangci"
 	RustUpInit Name = "rustup-init"
 	Rust       Name = "rust"
+	WASMOpt    Name = "wasm-opt"
 )
 
 func init() {
@@ -123,6 +124,13 @@ var tools = []Tool{
 	// https://releases.rs
 	RustInstaller{
 		Version: "1.81.0",
+	},
+
+	// https://crates.io/crates/wasm-opt
+	CargoTool{
+		Name:    WASMOpt,
+		Version: "0.116.0",
+		Tool:    "wasm-opt",
 	},
 }
 
