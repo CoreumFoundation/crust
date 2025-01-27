@@ -86,6 +86,7 @@ type Config struct {
 	ImportedMnemonics map[string]string
 	BinaryVersion     string
 	TimeoutCommit     time.Duration
+	Upgrades          map[string]string
 }
 
 // GenesisDEXConfig is the dex config of the GenesisInitConfig.
@@ -422,10 +423,7 @@ func (c Cored) prepare(ctx context.Context) error {
 	}
 
 	// upgrade to binary mapping
-	upgrades := map[string]string{
-		"v5": "cored",
-		"v4": "cored-v4.0.1", // TODO: Should be string(tools.CoredV401), but should be passed to crust by coreum
-	}
+	upgrades := c.Config().Upgrades
 	dockerLinuxBinaryPath := filepath.Join(
 		c.config.BinDir, ".cache", "cored", tools.TargetPlatformLinuxLocalArchInDocker.String(), "bin",
 	)

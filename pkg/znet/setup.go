@@ -52,6 +52,7 @@ func NewConfig(configF *infra.ConfigFactory, spec *infra.Spec) infra.Config {
 		VerboseLogging:     configF.VerboseLogging,
 		LogFormat:          configF.LogFormat,
 		CoverageOutputFile: configF.CoverageOutputFile,
+		CoredUpgrades:      make(map[string]string),
 	}
 
 	createDirs(config)
