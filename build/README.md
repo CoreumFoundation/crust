@@ -2,7 +2,7 @@
 
 ## Motivation
 
-We need a tool to automate common tasks:
+We need a library to automate common tasks:
 - building binaries
 - building docker images
 - linting
@@ -54,7 +54,7 @@ Run
 $ crust setup
 ```
 
-to install all the tools we use.
+to install all the essential tools we use.
 
 Whenever tool downloads or builds binaries it puts them inside [bin](../bin) directory so they are
 easily callable from console.
@@ -67,11 +67,10 @@ easily callable from console.
 
 Here is the list of operations supported at the moment:
 
-- `setup` - install all the tools required to develop our software
+- `setup` - install all the essential tools required to develop our software
 - `lint` - runs code linter
 - `tidy` - executes `go mod tidy`
 - `test` - runs unit tests
-- `build` - builds all the binaries, including `cored`
 
 If you want to inspect source code of operations, go to [build/index.go](index.go). 
 

@@ -1,6 +1,6 @@
 # crust
 
-`crust` helps you build and run all the applications needed for development and testing.
+`crust` library helps you build and run all the applications needed for development and testing.
 
 ## Prerequisites
 
@@ -41,7 +41,6 @@ export PATH="$COREUM_PATH/crust/bin:$COREUM_PATH/coreum/bin:$COREUM_PATH/faucet/
 3. Compile all the required binaries and docker images:
 
 ```
-$COREUM_PATH/crust/bin/crust build images
 $COREUM_PATH/coreum/bin/coreum-builder build images
 ```
 
@@ -52,7 +51,7 @@ $COREUM_PATH/faucet/bin/faucet-builder build images
 $COREUM_PATH/callisto/bin/callisto-builder build images
 ```
 
-After the command `crust build images` completes you may find executable `$COREUM_PATH/crust/bin/cored`, being
+After the command `coreum-builder build images` completes you may find executable `$COREUM_PATH/crust/bin/cored`, being
 both blockchain node and client.
 
 _Note: You need to run respective builder `build images` after you modify that project.

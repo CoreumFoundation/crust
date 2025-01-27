@@ -424,7 +424,7 @@ func (c Cored) prepare(ctx context.Context) error {
 	// upgrade to binary mapping
 	upgrades := map[string]string{
 		"v5": "cored",
-		"v4": string(tools.CoredV401),
+		"v4": "cored-v4.0.1", // TODO: Should be string(tools.CoredV401), but should be passed to crust by coreum
 	}
 	dockerLinuxBinaryPath := filepath.Join(
 		c.config.BinDir, ".cache", "cored", tools.TargetPlatformLinuxLocalArchInDocker.String(), "bin",
