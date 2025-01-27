@@ -370,7 +370,9 @@ func (app Deployment) postprocess(ctx context.Context, info DeploymentInfo) erro
 
 // NewConfigFactory creates new ConfigFactory.
 func NewConfigFactory() *ConfigFactory {
-	return &ConfigFactory{}
+	return &ConfigFactory{
+		CoredUpgrades: make(map[string]string),
+	}
 }
 
 // ConfigFactory collects config from CLI and produces real config.
@@ -401,6 +403,9 @@ type ConfigFactory struct {
 
 	// CoverageOutputFile is the output path for coverage data in text format
 	CoverageOutputFile string
+
+	// CoredUpgrades is the map of cored upgrades to binary names
+	CoredUpgrades map[string]string
 }
 
 // NewSpec returns new spec.

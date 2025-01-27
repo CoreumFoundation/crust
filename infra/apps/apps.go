@@ -190,6 +190,7 @@ func (f *Factory) CoredNetwork(
 			GasPriceStr:     cored.DefaultGasPriceStr,
 			BinaryVersion:   binaryVersion,
 			TimeoutCommit:   f.spec.TimeoutCommit,
+			Upgrades:        f.config.CoredUpgrades,
 		})
 		if isValidator {
 			valNodes = append(valNodes, node)

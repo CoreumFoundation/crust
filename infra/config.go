@@ -36,4 +36,7 @@ type Config struct {
 
 	// CoverageOutputFile is the output path for coverage data in text format
 	CoverageOutputFile string
+
+	// CoredUpgrades is the map of cored upgrades to binary names
+	CoredUpgrades map[string]string
 }
