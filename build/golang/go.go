@@ -80,6 +80,9 @@ func env() []string {
 	envVars := make([]string, 0, len(osEnv))
 	for _, envVar := range osEnv {
 		e := strings.ToUpper(envVar)
+		if strings.Contains(e, "PATH=") {
+			envVar = envVar + string(os.PathListSeparator) + tools.Path("bin", tools.TargetPlatformLocal)
+		}
 		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") {
 			envVars = append(envVars, envVar)
 		}
