@@ -83,9 +83,13 @@ func env() []string {
 		if strings.Contains(e, "PATH=") {
 			envVar = envVar + string(os.PathListSeparator) + tools.Path("bin", tools.TargetPlatformLocal)
 		}
-		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") {
+		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") && !strings.Contains(e, "GOTOOLCHAIN=") {
 			envVars = append(envVars, envVar)
 		}
+	}
+	goTool, err := tools.Get(tools.Go)
+	if err == nil {
+		envVars = append(envVars, "GOTOOLCHAIN=go"+goTool.GetVersion())
 	}
 	return envVars
 }
