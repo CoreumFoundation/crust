@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
@@ -71,6 +72,18 @@ type TestConfig struct {
 	Flags []string
 }
 
+// prependToPathEnv receives PATH from the environment variables list and
+// prepends the new path to it if it does not already exist.
+func prependToPathEnv(envVar, path string) string {
+	envPath := envVar[len("PATH="):]
+	pathList := strings.Split(strings.ToLower(envPath), string(os.PathListSeparator))
+	toolsBinPath := tools.Path("bin", tools.TargetPlatformLocal)
+	if !lo.Contains(pathList, strings.ToLower(toolsBinPath)) {
+		envVar = "PATH=" + path + string(os.PathListSeparator) + envPath
+	}
+	return envVar
+}
+
 // env gets environment variables set in the system excluding Go env vars that
 // causes conflict with the build tools used by crust. For example having
 // the GOROOT and GOPATH that point to another version of Go, build binaries
@@ -80,10 +93,10 @@ func env() []string {
 	envVars := make([]string, 0, len(osEnv))
 	for _, envVar := range osEnv {
 		e := strings.ToUpper(envVar)
-		if strings.Contains(e, "PATH=") {
-			envVar = envVar + string(os.PathListSeparator) + tools.Path("bin", tools.TargetPlatformLocal)
+		if strings.HasPrefix(e, "PATH=") {
+			envVar = prependToPathEnv(envVar, tools.Path("bin", tools.TargetPlatformLocal))
 		}
-		if !strings.Contains(e, "GOROOT=") && !strings.Contains(e, "GOPATH=") && !strings.Contains(e, "GOTOOLCHAIN=") {
+		if !strings.HasPrefix(e, "GOROOT=") && !strings.HasPrefix(e, "GOPATH=") && !strings.HasPrefix(e, "GOTOOLCHAIN=") {
 			envVars = append(envVars, envVar)
 		}
 	}
