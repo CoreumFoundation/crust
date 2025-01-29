@@ -94,7 +94,11 @@ func env() []string {
 	for _, envVar := range osEnv {
 		e := strings.ToUpper(envVar)
 		if strings.HasPrefix(e, "PATH=") {
-			envVar = prependToPathEnv(envVar, tools.Path("bin", tools.TargetPlatformLocal))
+			binPath, err := filepath.Abs("bin")
+			if err != nil {
+				panic("bin folder does not exist")
+			}
+			envVar = prependToPathEnv(envVar, binPath)
 		}
 		if !strings.HasPrefix(e, "GOROOT=") && !strings.HasPrefix(e, "GOPATH=") && !strings.HasPrefix(e, "GOTOOLCHAIN=") {
 			envVars = append(envVars, envVar)
