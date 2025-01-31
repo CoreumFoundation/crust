@@ -1114,6 +1114,63 @@ func Get(name Name) (Tool, error) {
 	return t, nil
 }
 
+// CopyToolBinaries moves the toolsMap artifacts from the local cache to the target local location.
+// In case the binPath doesn't exist the method will create it.
+func CopyToolBinaries(toolName Name, platform TargetPlatform, path string, binaryNames ...string) error {
+	tool, err := Get(toolName)
+	if err != nil {
+		return err
+	}
+
+	if !tool.IsCompatible(platform) {
+		return errors.Errorf("tool %s is not defined for platform %s", toolName, platform)
+	}
+
+	if len(binaryNames) == 0 {
+		return nil
+	}
+
+	storedBinaryNames := map[string]struct{}{}
+	// combine binaries
+	for _, b := range tool.GetBinaries(platform) {
+		storedBinaryNames[b] = struct{}{}
+	}
+
+	// initial validation to check that we have all binaries
+	for _, binaryName := range binaryNames {
+		if _, ok := storedBinaryNames[binaryName]; !ok {
+			return errors.Errorf("the binary %q doesn't exist for the requested tool %q", binaryName, toolName)
+		}
+	}
+
+	for _, binaryName := range binaryNames {
+		dstPath := filepath.Join(path, binaryName)
+
+		// create dir from path
+		err := os.MkdirAll(filepath.Dir(dstPath), os.ModePerm)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		// copy the file we need
+		fr, err := os.Open(Path(binaryName, platform))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer fr.Close()
+		fw, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		defer fw.Close()
+		if _, err = io.Copy(fw, fr); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
 // PlatformRootPath returns path to the directory containing all platform-secific files.
 func PlatformRootPath(platform TargetPlatform) string {
 	return filepath.Join(CacheDir(), "tools", platform.String())
