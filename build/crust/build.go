@@ -25,23 +25,11 @@ func BuildBuilder(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildZNet builds znet.
 func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
-	outDir := "bin/.cache"
-	items, err := os.ReadDir(outDir)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	for _, item := range items {
-		if !item.Type().IsDir() && strings.HasPrefix(item.Name(), "znet") {
-			if err := os.Remove(filepath.Join(outDir, item.Name())); err != nil {
-				return errors.WithStack(err)
-			}
-		}
-	}
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "build/cmd/znet",
-		BinOutputPath:  filepath.Join(outDir, "znet-"+tools.Version()),
+		BinOutputPath:  "bin/.cache/znet",
 		CGOEnabled:     true,
 	})
 }
