@@ -4,9 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/crust/build/golang"
@@ -28,7 +25,7 @@ func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
 
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
-		PackagePath:    "build/cmd/znet",
+		PackagePath:    "znet/cmd/znet",
 		BinOutputPath:  "bin/.cache/znet",
 		CGOEnabled:     true,
 	})
