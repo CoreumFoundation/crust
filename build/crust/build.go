@@ -22,7 +22,6 @@ func BuildBuilder(ctx context.Context, deps types.DepsFunc) error {
 
 // BuildZNet builds znet.
 func BuildZNet(ctx context.Context, deps types.DepsFunc) error {
-
 	return golang.Build(ctx, deps, golang.BinaryBuildConfig{
 		TargetPlatform: tools.TargetPlatformLocal,
 		PackagePath:    "znet/cmd/znet",
