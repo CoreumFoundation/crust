@@ -11,6 +11,8 @@ replace (
 	github.com/spf13/viper => github.com/spf13/viper v1.16.0
 )
 
+replace github.com/CoreumFoundation/crust => ../
+
 require (
 	cosmossdk.io/math v1.4.0
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
