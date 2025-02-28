@@ -341,7 +341,7 @@ func (c Cored) Deployment() infra.Deployment {
 		}
 
 		deployment.Requires = infra.Prerequisites{
-			Timeout:      20 * time.Second,
+			Timeout:      60 * time.Second,
 			Dependencies: dependencies,
 		}
 	}
