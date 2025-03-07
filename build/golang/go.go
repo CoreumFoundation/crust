@@ -425,6 +425,7 @@ func TestFuzz(ctx context.Context, deps types.DepsFunc, fuzzTime time.Duration) 
 					"test",
 					"-v",
 					"-fuzz", testName,
+					"-run", "^$", // An empty regex that matches nothing, to avoid running unit tests
 					"-fuzztime", fuzzTime.String(),
 					"-test.fuzzcachedir", fuzzCacheDir,
 				}
