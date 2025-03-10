@@ -408,6 +408,15 @@ type ConfigFactory struct {
 	CoredUpgrades map[string]string
 }
 
+type ConfigFactoryOption = func(*ConfigFactory) *ConfigFactory
+
+func ConfigFactoryWithCoredUpgrades(upgrades map[string]string) ConfigFactoryOption {
+	return func(inConfig *ConfigFactory) *ConfigFactory {
+		inConfig.CoredUpgrades = upgrades
+		return inConfig
+	}
+}
+
 // NewSpec returns new spec.
 func NewSpec(configF *ConfigFactory) *Spec {
 	specFile := configF.HomeDir + "/" + configF.EnvName + "/spec.json"

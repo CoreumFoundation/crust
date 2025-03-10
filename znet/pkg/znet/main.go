@@ -18,9 +18,12 @@ import (
 )
 
 // Main is the main function of znet.
-func Main() {
+func Main(opts ...infra.ConfigFactoryOption) {
 	run.Tool("znet", func(ctx context.Context) error {
 		configF := infra.NewConfigFactory()
+		for _, opt := range opts {
+			configF = opt(configF)
+		}
 		cmdF := NewCmdFactory(configF)
 
 		rootCmd := rootCmd(ctx, configF, cmdF)
