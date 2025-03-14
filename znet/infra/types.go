@@ -408,8 +408,10 @@ type ConfigFactory struct {
 	CoredUpgrades map[string]string
 }
 
+// ConfigFactoryOption allows custom options to be provided to ConfigFactory.
 type ConfigFactoryOption = func(*ConfigFactory) *ConfigFactory
 
+// ConfigFactoryWithCoredUpgrades is the option to modify CoredUpgrades.
 func ConfigFactoryWithCoredUpgrades(upgrades map[string]string) ConfigFactoryOption {
 	return func(inConfig *ConfigFactory) *ConfigFactory {
 		inConfig.CoredUpgrades = upgrades
