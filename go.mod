@@ -2,8 +2,6 @@ module github.com/CoreumFoundation/crust
 
 go 1.23.3
 
-replace github.com/CoreumFoundation/crust/znet => ./znet
-
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
