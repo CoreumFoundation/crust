@@ -517,7 +517,7 @@ func AddDEXGenesisConfig(ctx context.Context, genesisConfig GenesisInitConfig) (
 
 	genesisConfig.DEXConfig.MaxOrdersPerDenom = uint64(ordersCount) // allow to place all orders
 
-	orderSeqQuantity := sdkmath.NewIntFromUint64(100)
+	orderSeqQuantity := sdkmath.NewIntFromUint64(100_000)
 	issueMsg := &assetfttypes.MsgIssue{
 		Issuer:        issuer,
 		Symbol:        "DEXSU",
