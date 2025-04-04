@@ -51,14 +51,14 @@ $COREUM_PATH/faucet/bin/faucet-builder build images
 $COREUM_PATH/callisto/bin/callisto-builder build images
 ```
 
-After the command `coreum-builder build images` completes the binaries should be copied to the crust `bin` and `.cache` directory using the following commands.
+After the command `coreum-builder build images` completes the symbolic links should be created to the crust `bin` and `.cache` directory using the following commands.
 
 ```sh
-cp -R $COREUM_PATH/coreum/bin/.cache/cored $COREUM_PATH/crust/bin/.cache/
+ln -s $COREUM_PATH/coreum/bin/.cache/cored $COREUM_PATH/crust/bin/.cache/
 ```
 
 ```sh
-cp $COREUM_PATH/coreum/bin/cored $COREUM_PATH/crust/bin/cored
+ln -s $COREUM_PATH/coreum/bin/cored $COREUM_PATH/crust/bin/cored
 ```
 
 _Note: You need to run respective builder `build images` after you modify that project.
