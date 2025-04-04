@@ -51,8 +51,15 @@ $COREUM_PATH/faucet/bin/faucet-builder build images
 $COREUM_PATH/callisto/bin/callisto-builder build images
 ```
 
-After the command `coreum-builder build images` completes you may find executable `$COREUM_PATH/crust/bin/cored`, being
-both blockchain node and client.
+After the command `coreum-builder build images` completes the symbolic links should be created to the crust `bin` and `.cache` directory using the following commands.
+
+```sh
+ln -s $COREUM_PATH/coreum/bin/.cache/cored $COREUM_PATH/crust/bin/.cache/
+```
+
+```sh
+ln -s $COREUM_PATH/coreum/bin/cored $COREUM_PATH/crust/bin/cored
+```
 
 _Note: You need to run respective builder `build images` after you modify that project.
 For example if you do a modification in coreum project, you need to run `coreum-builder build images`._
