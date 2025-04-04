@@ -54,9 +54,6 @@ const (
 
 	// DockerImageStandard uses standard docker image of cored.
 	DockerImageStandard = "cored:znet"
-
-	// DockerImageExtended uses extended docker image of cored with cometBFT replaced.
-	DockerImageExtended = "cored-ext:znet"
 )
 
 var basicModuleList = []module.AppModuleBasic{
@@ -356,12 +353,6 @@ func (c Cored) dockerBinaryPath() string {
 		c.config.BinDir, ".cache", "cored", tools.TargetPlatformLinuxLocalArchInDocker.String(), "bin",
 	)
 	coredPath := coredStandardPath
-	if c.config.DockerImage == DockerImageExtended {
-		coredBinName = "cored-ext"
-		coredPath = filepath.Join(
-			c.config.BinDir, ".cache", "cored-ext", tools.TargetPlatformLinuxLocalArchInDocker.String(), "bin",
-		)
-	}
 
 	// by default the binary version is latest, but if `BinaryVersion` is provided we take it as initial
 	if c.Config().BinaryVersion != "" {

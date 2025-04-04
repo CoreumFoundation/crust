@@ -53,7 +53,7 @@ func (f *Factory) CoredNetwork(
 	ctx context.Context,
 	namePrefix string,
 	firstPorts cored.Ports,
-	validatorCount, sentryCount, seedCount, fullCount, extendedCount int,
+	validatorCount, sentryCount, seedCount, fullCount int,
 	binaryVersion string,
 	genDEX bool,
 ) (cored.Cored, []cored.Cored, error) {
@@ -111,7 +111,7 @@ func (f *Factory) CoredNetwork(
 		)
 	}
 
-	nodes := make([]cored.Cored, 0, validatorCount+seedCount+sentryCount+fullCount+extendedCount)
+	nodes := make([]cored.Cored, 0, validatorCount+seedCount+sentryCount+fullCount)
 	valNodes := make([]cored.Cored, 0, validatorCount)
 	seedNodes := make([]cored.Cored, 0, seedCount)
 	var lastNode cored.Cored
@@ -122,7 +122,6 @@ func (f *Factory) CoredNetwork(
 		isSeed := !isValidator && i < validatorCount+seedCount
 		isSentry := !isValidator && !isSeed && i < validatorCount+seedCount+sentryCount
 		isFull := !isValidator && !isSeed && !isSentry
-		isFullExtended := isFull && i >= validatorCount+seedCount+sentryCount+fullCount
 
 		name = namePrefix + fmt.Sprintf("-%02d", i)
 		dockerImage := cored.DockerImageStandard
@@ -133,9 +132,6 @@ func (f *Factory) CoredNetwork(
 			name += "-sentry"
 		case isSeed:
 			name += "-seed"
-		case isFullExtended:
-			name += "-full-ext"
-			dockerImage = cored.DockerImageExtended
 		default:
 			name += "-full"
 		}
