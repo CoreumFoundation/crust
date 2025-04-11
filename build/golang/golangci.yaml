@@ -108,3 +108,9 @@ linters-settings:
       - name: unexported-return
       - name: var-declaration
       - name: var-naming
+  
+  misspell:
+      locale: US
+      ignore:
+        - Crust
+        - Coreum
