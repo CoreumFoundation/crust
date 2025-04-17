@@ -56,6 +56,8 @@ linters:
     - wsl
     - depguard
     - musttag
+    # in favor of typos
+    - misspell
     # deprecated:
     - exportloopref
 
@@ -108,9 +110,3 @@ linters-settings:
       - name: unexported-return
       - name: var-declaration
       - name: var-naming
-  
-  misspell:
-      locale: US
-      ignore:
-        - Crust
-        - Coreum

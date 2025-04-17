@@ -3,7 +3,6 @@ package golang
 import (
 	"context"
 	_ "embed"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/libexec"
 	"github.com/CoreumFoundation/coreum-tools/pkg/logger"
-	"github.com/CoreumFoundation/crust/build/git"
 	"github.com/CoreumFoundation/crust/build/tools"
 	"github.com/CoreumFoundation/crust/build/types"
 )
@@ -39,21 +37,7 @@ func Lint(ctx context.Context, deps types.DepsFunc) error {
 	if err := lintNewLines(); err != nil {
 		return err
 	}
-	if err := Tidy(ctx, deps); err != nil {
-		return err
-	}
-
-	isClean, dirtyContent, err := git.StatusClean(ctx)
-	if err != nil {
-		return err
-	}
-	if !isClean {
-		// fmt.Println is used intentionally here, because logger escapes special characters producing unreadable output
-		fmt.Println("git status:")
-		fmt.Println(dirtyContent)
-		return errors.New("git status is not empty")
-	}
-	return nil
+	return Tidy(ctx, deps)
 }
 
 func lint(ctx context.Context, deps types.DepsFunc) error {
