@@ -22,8 +22,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
-	"github.com/CoreumFoundation/coreum/v5/pkg/client"
-	"github.com/CoreumFoundation/coreum/v5/pkg/config"
+	"github.com/CoreumFoundation/coreum/v6/pkg/client"
+	"github.com/CoreumFoundation/coreum/v6/pkg/config"
 	"github.com/CoreumFoundation/crust/znet/infra"
 	"github.com/CoreumFoundation/crust/znet/infra/targets"
 	"github.com/CoreumFoundation/crust/znet/pkg/tools"
