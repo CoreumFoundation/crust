@@ -19,7 +19,7 @@ import (
 
 	"github.com/CoreumFoundation/coreum-tools/pkg/must"
 	"github.com/CoreumFoundation/coreum-tools/pkg/retry"
-	coreumconstant "github.com/CoreumFoundation/coreum/v5/pkg/config/constant"
+	coreumconstant "github.com/CoreumFoundation/coreum/v6/pkg/config/constant"
 	"github.com/CoreumFoundation/crust/znet/infra"
 	"github.com/CoreumFoundation/crust/znet/infra/apps/cored"
 	"github.com/CoreumFoundation/crust/znet/infra/cosmoschain"
