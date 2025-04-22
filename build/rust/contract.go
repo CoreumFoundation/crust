@@ -161,12 +161,48 @@ func CompileSmartContract(codeDirPath string) types.CommandFunc {
 }
 
 func computeContractSrcHash(path string) (string, error) {
-	hash, err := dirhash.HashDir(filepath.Join(path, "src"), "", dirhash.Hash1)
+	hash, err := hashDir(filepath.Join(path, "src"), "", dirhash.Hash1)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
 
 	return hash, nil
+}
+
+func hashDir(dir, prefix string, hash dirhash.Hash) (string, error) {
+	files, err := dirhash.DirFiles(dir, prefix)
+	if err != nil {
+		return "", err
+	}
+	osOpen := func(name string) (io.ReadCloser, error) {
+		return os.Open(filepath.Join(dir, strings.TrimPrefix(name, prefix)))
+	}
+
+	// add cargo toml and lock files
+	appendCargoFiles(dir, files)
+	return hash(files, osOpen)
+}
+
+func appendCargoFiles(dir string, files []string) {
+	cargoFiles := []string{
+		"../Cargo.toml",
+		"../../Cargo.toml",
+		"../../Cargo.lock",
+	}
+
+	for _, file := range cargoFiles {
+		if fileExists(filepath.Join(dir, file)) {
+			files = append(files, file)
+		}
+	}
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 func computeContractArtifactsHash(path string) (string, error) {
