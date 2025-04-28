@@ -7,7 +7,7 @@ require (
 	cosmossdk.io/math v1.5.0
 	github.com/CoreumFoundation/coreum-tools v0.4.1-0.20241202115740-dbc6962a4d0a
 	github.com/CoreumFoundation/coreum/v6 v6.0.0-20250421142245-52bdcb2a0560
-	github.com/CoreumFoundation/crust v0.0.0-20250325094056-4b78e13c978a
+	github.com/CoreumFoundation/crust v0.0.0-20250422105139-051d68f6bb18
 	github.com/CosmWasm/wasmd v0.54.0
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cosmos/cosmos-sdk v0.50.13

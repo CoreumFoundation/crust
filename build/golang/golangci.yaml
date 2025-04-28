@@ -60,6 +60,8 @@ linters:
     - misspell
     # deprecated:
     - exportloopref
+    # TODO: Enable once https://github.com/golangci/golangci-lint/issues/3228 is fixed.
+    - nolintlint
 
 linters-settings:
   nakedret:
