@@ -75,17 +75,17 @@ var tools = []Tool{
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v2.1.6/golangci-lint-2.1.6-linux-amd64.tar.gz",
-				Hash: "sha256:53695531eeb824b6883c703335cef6f07882f8ba6fedc00ed43853ea07fa1fbd",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.64.8/golangci-lint-1.64.8-linux-amd64.tar.gz",
+				Hash: "sha256:b6270687afb143d019f387c791cd2a6f1cb383be9b3124d241ca11bd3ce2e54e",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-2.1.6-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.64.8-linux-amd64/golangci-lint",
 				},
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.62.0/golangci-lint-1.62.0-darwin-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:0ed6f1a216ddb62e293858196799608d63894bd2ec178114484363ca45cde84b",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.64.8/golangci-lint-1.64.8-darwin-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:b52aebb8cb51e00bfd5976099083fbe2c43ef556cef9c87e58a8ae656e740444",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.62.0-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.64.8-darwin-amd64/golangci-lint",
 				},
 			},
 			TargetPlatformDarwinARM64: {
