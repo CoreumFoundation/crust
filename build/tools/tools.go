@@ -71,14 +71,14 @@ var tools = []Tool{
 	// https://github.com/golangci/golangci-lint/releases/
 	BinaryTool{
 		Name:    GolangCI,
-		Version: "1.62.0",
+		Version: "1.64.8",
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.62.0/golangci-lint-1.62.0-linux-amd64.tar.gz",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v2.1.6/golangci-lint-2.1.6-linux-amd64.tar.gz",
 				Hash: "sha256:53695531eeb824b6883c703335cef6f07882f8ba6fedc00ed43853ea07fa1fbd",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.62.0-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-2.1.6-linux-amd64/golangci-lint",
 				},
 			},
 			TargetPlatformDarwinAMD64: {
@@ -89,10 +89,10 @@ var tools = []Tool{
 				},
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.62.0/golangci-lint-1.62.0-darwin-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:dde51958f0f24d442062b5709b6912d91e235115dfe5887e80b3e5602c9cc09b",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.64.8/golangci-lint-1.64.8-darwin-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:70543d21e5b02a94079be8aa11267a5b060865583e337fe768d39b5d3e2faf1f",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.62.0-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-1.64.8-darwin-arm64/golangci-lint",
 				},
 			},
 		},
