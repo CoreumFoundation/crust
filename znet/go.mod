@@ -1,7 +1,7 @@
 module github.com/CoreumFoundation/crust/znet
 
 // Build tool installs newer go, but the tool itself must be built using a preexisting version.
-go 1.23.3
+go 1.24
 
 require (
 	cosmossdk.io/math v1.5.0
