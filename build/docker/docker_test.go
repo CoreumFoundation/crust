@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,7 +34,7 @@ func TestGetTagsForDockerImage(t *testing.T) {
 		},
 	}
 
-	ctx := logger.WithLogger(context.Background(), logger.New(logger.Config{
+	ctx := logger.WithLogger(t.Context(), logger.New(logger.Config{
 		Format:  logger.FormatJSON,
 		Verbose: true,
 	}))
