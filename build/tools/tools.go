@@ -45,17 +45,19 @@ func init() {
 var tools = []Tool{
 	// https://go.dev/dl/
 	BinaryTool{
-		Name:    Go,
-		Version: "1.24.2",
+		Name: Go,
+		// Before upgrading version here make sure that goreleaser for corresponding version exists.
+		// E.g ghcr.io/goreleaser/goreleaser-cross:v1.24.1
+		Version: "1.24.1",
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://go.dev/dl/go1.24.2.linux-amd64.tar.gz",
-				Hash: "sha256:68097bd680839cbc9d464a0edce4f7c333975e27a90246890e9f1078c7e702ad",
+				URL:  "https://go.dev/dl/go1.24.1.linux-amd64.tar.gz",
+				Hash: "sha256:cb2396bae64183cdccf81a9a6df0aea3bce9511fc21469fb89a0c00470088073",
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://go.dev/dl/go1.24.2.darwin-amd64.tar.gz",
-				Hash: "sha256:238d9c065d09ff6af229d2e3b8b5e85e688318d69f4006fb85a96e41c216ea83",
+				URL:  "https://go.dev/dl/go1.24.1.darwin-amd64.tar.gz",
+				Hash: "sha256:addbfce2056744962e2d7436313ab93486660cf7a2e066d171b9d6f2da7c7abe",
 			},
 			TargetPlatformDarwinARM64: {
 				URL:  "https://go.dev/dl/go1.24.2.darwin-arm64.tar.gz",
