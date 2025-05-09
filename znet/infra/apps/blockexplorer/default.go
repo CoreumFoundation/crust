@@ -15,3 +15,5 @@ var DefaultPorts = Ports{
 	CallistoTelemetry: callisto.DefaultTelemetryPort,
 	BigDipper:         bigdipper.DefaultPort,
 }
+
+const DefaultContractAddress = "devcore14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sd4f0ak"
