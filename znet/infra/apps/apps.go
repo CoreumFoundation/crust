@@ -32,18 +32,18 @@ import (
 	"github.com/CoreumFoundation/crust/znet/infra/cosmoschain"
 )
 
+// Factory produces apps from config.
+type Factory struct {
+	config infra.Config
+	spec   *infra.Spec
+}
+
 // NewFactory creates new app factory.
 func NewFactory(config infra.Config, spec *infra.Spec) *Factory {
 	return &Factory{
 		config: config,
 		spec:   spec,
 	}
-}
-
-// Factory produces apps from config.
-type Factory struct {
-	config infra.Config
-	spec   *infra.Spec
 }
 
 // CoredNetwork creates new network of cored nodes.

@@ -368,13 +368,6 @@ func (app Deployment) postprocess(ctx context.Context, info DeploymentInfo) erro
 	return nil
 }
 
-// NewConfigFactory creates new ConfigFactory.
-func NewConfigFactory() *ConfigFactory {
-	return &ConfigFactory{
-		CoredUpgrades: make(map[string]string),
-	}
-}
-
 // ConfigFactory collects config from CLI and produces real config.
 type ConfigFactory struct {
 	// EnvName is the name of created environment
@@ -408,6 +401,13 @@ type ConfigFactory struct {
 	CoredUpgrades map[string]string
 }
 
+// NewConfigFactory creates new ConfigFactory.
+func NewConfigFactory() *ConfigFactory {
+	return &ConfigFactory{
+		CoredUpgrades: make(map[string]string),
+	}
+}
+
 // ConfigFactoryOption allows custom options to be provided to ConfigFactory.
 type ConfigFactoryOption = func(*ConfigFactory) *ConfigFactory
 
@@ -417,6 +417,26 @@ func ConfigFactoryWithCoredUpgrades(upgrades map[string]string) ConfigFactoryOpt
 		inConfig.CoredUpgrades = upgrades
 		return inConfig
 	}
+}
+
+// Spec describes running environment.
+type Spec struct {
+	specFile string
+	configF  *ConfigFactory
+
+	// Profiles is the list of deployed application profiles
+	Profiles []string `json:"profiles"`
+
+	// TimeoutCommit allows to define custom timeout commit for all used chains.
+	TimeoutCommit time.Duration `json:"timeoutCommit"`
+
+	// Env is the name of env
+	Env string `json:"env"`
+
+	mu sync.Mutex
+
+	// Apps is the description of running apps
+	Apps map[string]*AppInfo `json:"apps"`
 }
 
 // NewSpec returns new spec.
@@ -446,26 +466,6 @@ func NewSpec(configF *ConfigFactory) *Spec {
 		Apps:          map[string]*AppInfo{},
 	}
 	return spec
-}
-
-// Spec describes running environment.
-type Spec struct {
-	specFile string
-	configF  *ConfigFactory
-
-	// Profiles is the list of deployed application profiles
-	Profiles []string `json:"profiles"`
-
-	// TimeoutCommit allows to define custom timeout commit for all used chains.
-	TimeoutCommit time.Duration `json:"timeoutCommit"`
-
-	// Env is the name of env
-	Env string `json:"env"`
-
-	mu sync.Mutex
-
-	// Apps is the description of running apps
-	Apps map[string]*AppInfo `json:"apps"`
 }
 
 // Verify verifies that env and profiles in config matches the ones in spec.

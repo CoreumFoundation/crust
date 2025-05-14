@@ -346,6 +346,98 @@ func (c Cored) Deployment() infra.Deployment {
 	return deployment
 }
 
+// SaveGenesis saves json encoded representation of the genesis config into file.
+func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
+	configDir := filepath.Join(homeDir, "config")
+
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
+		return errors.Wrap(err, "unable to make config directory")
+	}
+
+	genesisFile := filepath.Join(configDir, "genesis.json")
+
+	inputConfig, err := cmtjson.MarshalIndent(c.config.GenesisInitConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	inputPath := filepath.Join(configDir, "genesis-creation-input.json")
+
+	if err := os.WriteFile(inputPath, inputConfig, 0644); err != nil {
+		return err
+	}
+
+	fullArgs := []string{
+		"generate-genesis",
+		"--output-path", genesisFile,
+		"--input-path", inputPath,
+		"--chain-id", string(c.config.GenesisInitConfig.ChainID),
+	}
+
+	// get particular binary path from or run using the default(compiled) binary
+	var binaryPath string
+	if c.config.BinaryVersion != "" {
+		binaryPath = filepath.Join(
+			c.config.BinDir,
+			".cache",
+			"cored",
+			tools.TargetPlatformLocal.String(), "bin",
+			"cored"+"-"+c.Config().BinaryVersion,
+		)
+	} else {
+		binaryPath = filepath.Join(c.config.BinDir, "cored")
+	}
+
+	return libexec.Exec(
+		ctx,
+		exec.Command(binaryPath, fullArgs...),
+	)
+}
+
+// AddDEXGenesisConfig adds DEX related genesis config.
+func AddDEXGenesisConfig(ctx context.Context, genesisConfig GenesisInitConfig) (GenesisInitConfig, error) {
+	// issue an asset FT to place an order
+	issuer := FundingAddress
+	issuerMnemonic := FundingMnemonic
+	ordersCount := 2_000
+	issuerMsgs := make([]sdk.Msg, 0)
+
+	genesisConfig.DEXConfig.MaxOrdersPerDenom = uint64(ordersCount) // allow to place all orders
+
+	orderSeqQuantity := sdkmath.NewIntFromUint64(100_000)
+	issueMsg := &assetfttypes.MsgIssue{
+		Issuer:        issuer,
+		Symbol:        "DEXSU",
+		Subunit:       "dexsu",
+		Precision:     8,
+		InitialAmount: orderSeqQuantity.MulRaw(int64(ordersCount)),
+	}
+	issuerMsgs = append(issuerMsgs, issueMsg)
+
+	denom := issueMsg.Subunit + "-" + issueMsg.Issuer
+	for i := range ordersCount {
+		issuerMsgs = append(issuerMsgs, &dextypes.MsgPlaceOrder{
+			Sender:      issuer,
+			Type:        dextypes.ORDER_TYPE_LIMIT,
+			ID:          fmt.Sprintf("id-%d", i),
+			BaseDenom:   denom,
+			QuoteDenom:  genesisConfig.Denom,
+			Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
+			Quantity:    orderSeqQuantity,
+			Side:        dextypes.SIDE_SELL,
+			TimeInForce: dextypes.TIME_IN_FORCE_GTC,
+		})
+	}
+
+	txData, err := signTxsWithMnemonic(ctx, string(genesisConfig.ChainID), issuerMnemonic, issuerMsgs...)
+	if err != nil {
+		return GenesisInitConfig{}, err
+	}
+	genesisConfig.GenTxs = append(genesisConfig.GenTxs, txData)
+
+	return genesisConfig, nil
+}
+
 func (c Cored) dockerBinaryPath() string {
 	coredStandardBinName := "cored"
 	coredBinName := coredStandardBinName
@@ -448,98 +540,6 @@ exec "` +
 		`" "$@" $OPTS
 `
 	return errors.WithStack(os.WriteFile(filepath.Join(wrapperDir, c.Name()), []byte(clientWrapper), 0o700))
-}
-
-// SaveGenesis saves json encoded representation of the genesis config into file.
-func (c Cored) SaveGenesis(ctx context.Context, homeDir string) error {
-	configDir := filepath.Join(homeDir, "config")
-
-	if err := os.MkdirAll(configDir, 0o700); err != nil {
-		return errors.Wrap(err, "unable to make config directory")
-	}
-
-	genesisFile := filepath.Join(configDir, "genesis.json")
-
-	inputConfig, err := cmtjson.MarshalIndent(c.config.GenesisInitConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	inputPath := filepath.Join(configDir, "genesis-creation-input.json")
-
-	if err := os.WriteFile(inputPath, inputConfig, 0644); err != nil {
-		return err
-	}
-
-	fullArgs := []string{
-		"generate-genesis",
-		"--output-path", genesisFile,
-		"--input-path", inputPath,
-		"--chain-id", string(c.config.GenesisInitConfig.ChainID),
-	}
-
-	// get particular binary path from or run using the default(compiled) binary
-	var binaryPath string
-	if c.config.BinaryVersion != "" {
-		binaryPath = filepath.Join(
-			c.config.BinDir,
-			".cache",
-			"cored",
-			tools.TargetPlatformLocal.String(), "bin",
-			"cored"+"-"+c.Config().BinaryVersion,
-		)
-	} else {
-		binaryPath = filepath.Join(c.config.BinDir, "cored")
-	}
-
-	return libexec.Exec(
-		ctx,
-		exec.Command(binaryPath, fullArgs...),
-	)
-}
-
-// AddDEXGenesisConfig adds DEX related genesis config.
-func AddDEXGenesisConfig(ctx context.Context, genesisConfig GenesisInitConfig) (GenesisInitConfig, error) {
-	// issue an asset FT to place an order
-	issuer := FundingAddress
-	issuerMnemonic := FundingMnemonic
-	ordersCount := 2_000
-	issuerMsgs := make([]sdk.Msg, 0)
-
-	genesisConfig.DEXConfig.MaxOrdersPerDenom = uint64(ordersCount) // allow to place all orders
-
-	orderSeqQuantity := sdkmath.NewIntFromUint64(100_000)
-	issueMsg := &assetfttypes.MsgIssue{
-		Issuer:        issuer,
-		Symbol:        "DEXSU",
-		Subunit:       "dexsu",
-		Precision:     8,
-		InitialAmount: orderSeqQuantity.MulRaw(int64(ordersCount)),
-	}
-	issuerMsgs = append(issuerMsgs, issueMsg)
-
-	denom := issueMsg.Subunit + "-" + issueMsg.Issuer
-	for i := range ordersCount {
-		issuerMsgs = append(issuerMsgs, &dextypes.MsgPlaceOrder{
-			Sender:      issuer,
-			Type:        dextypes.ORDER_TYPE_LIMIT,
-			ID:          fmt.Sprintf("id-%d", i),
-			BaseDenom:   denom,
-			QuoteDenom:  genesisConfig.Denom,
-			Price:       lo.ToPtr(dextypes.MustNewPriceFromString("1")),
-			Quantity:    orderSeqQuantity,
-			Side:        dextypes.SIDE_SELL,
-			TimeInForce: dextypes.TIME_IN_FORCE_GTC,
-		})
-	}
-
-	txData, err := signTxsWithMnemonic(ctx, string(genesisConfig.ChainID), issuerMnemonic, issuerMsgs...)
-	if err != nil {
-		return GenesisInitConfig{}, err
-	}
-	genesisConfig.GenTxs = append(genesisConfig.GenTxs, txData)
-
-	return genesisConfig, nil
 }
 
 func copyFile(src, dst string, perm os.FileMode) error {
