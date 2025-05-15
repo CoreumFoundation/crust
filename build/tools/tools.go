@@ -71,28 +71,28 @@ var tools = []Tool{
 	// https://github.com/golangci/golangci-lint/releases/
 	BinaryTool{
 		Name:    GolangCI,
-		Version: "1.64.8",
+		Version: "2.1.6",
 		Local:   true,
 		Sources: Sources{
 			TargetPlatformLinuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.64.8/golangci-lint-1.64.8-linux-amd64.tar.gz",
-				Hash: "sha256:b6270687afb143d019f387c791cd2a6f1cb383be9b3124d241ca11bd3ce2e54e",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v2.1.6/golangci-lint-2.1.6-linux-amd64.tar.gz",
+				Hash: "sha256:e55e0eb515936c0fbd178bce504798a9bd2f0b191e5e357768b18fd5415ee541",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.64.8-linux-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-2.1.6-linux-amd64/golangci-lint",
 				},
 			},
 			TargetPlatformDarwinAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.64.8/golangci-lint-1.64.8-darwin-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:b52aebb8cb51e00bfd5976099083fbe2c43ef556cef9c87e58a8ae656e740444",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v2.1.6/golangci-lint-2.1.6-darwin-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:e091107c4ca7e283902343ba3a09d14fb56b86e071effd461ce9d67193ef580e",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.64.8-darwin-amd64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-2.1.6-darwin-amd64/golangci-lint",
 				},
 			},
 			TargetPlatformDarwinARM64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.64.8/golangci-lint-1.64.8-darwin-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
-				Hash: "sha256:70543d21e5b02a94079be8aa11267a5b060865583e337fe768d39b5d3e2faf1f",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v2.1.6/golangci-lint-2.1.6-darwin-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:90783fa092a0f64a4f7b7d419f3da1f53207e300261773babe962957240e9ea6",
 				Binaries: map[string]string{
-					"bin/golangci-lint": "golangci-lint-1.64.8-darwin-arm64/golangci-lint",
+					"bin/golangci-lint": "golangci-lint-2.1.6-darwin-arm64/golangci-lint",
 				},
 			},
 		},
@@ -900,12 +900,12 @@ func untar(reader io.Reader, path string) error {
 		// header.FileInfo().Mode() returns compatible value.
 		mode := header.FileInfo().Mode()
 
-		switch {
-		case header.Typeflag == tar.TypeDir:
+		switch header.Typeflag {
+		case tar.TypeDir:
 			if err := os.MkdirAll(header.Name, mode); err != nil && !os.IsExist(err) {
 				return errors.WithStack(err)
 			}
-		case header.Typeflag == tar.TypeReg:
+		case tar.TypeReg:
 			if err := ensureDir(header.Name); err != nil {
 				return err
 			}
@@ -919,14 +919,14 @@ func untar(reader io.Reader, path string) error {
 			if err != nil {
 				return errors.WithStack(err)
 			}
-		case header.Typeflag == tar.TypeSymlink:
+		case tar.TypeSymlink:
 			if err := ensureDir(header.Name); err != nil {
 				return err
 			}
 			if err := os.Symlink(header.Linkname, header.Name); err != nil {
 				return errors.WithStack(err)
 			}
-		case header.Typeflag == tar.TypeLink:
+		case tar.TypeLink:
 			header.Linkname = path + "/" + header.Linkname
 			if err := ensureDir(header.Name); err != nil {
 				return err

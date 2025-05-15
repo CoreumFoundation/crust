@@ -11,16 +11,16 @@ import (
 	"github.com/CoreumFoundation/crust/znet/infra"
 )
 
+// CmdFactory is a wrapper around cobra RunE.
+type CmdFactory struct {
+	configF *infra.ConfigFactory
+}
+
 // NewCmdFactory returns new CmdFactory.
 func NewCmdFactory(configF *infra.ConfigFactory) *CmdFactory {
 	return &CmdFactory{
 		configF: configF,
 	}
-}
-
-// CmdFactory is a wrapper around cobra RunE.
-type CmdFactory struct {
-	configF *infra.ConfigFactory
 }
 
 // Cmd returns function compatible with RunE.

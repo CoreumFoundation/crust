@@ -20,14 +20,14 @@ import (
 
 const maxStack = 100
 
-// NewExecutor returns new executor.
-func NewExecutor(commands map[string]types.Command) Executor {
-	return Executor{commands: commands}
-}
-
 // Executor executes commands.
 type Executor struct {
 	commands map[string]types.Command
+}
+
+// NewExecutor returns new executor.
+func NewExecutor(commands map[string]types.Command) Executor {
+	return Executor{commands: commands}
 }
 
 // Paths returns configured paths.
