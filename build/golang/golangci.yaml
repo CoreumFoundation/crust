@@ -1,51 +1,33 @@
+version: "2"
 run:
-  timeout: 10m
   build-tags:
     - codeanalysis
-    - simulation # used for unit tests which are used to generate some sample data
-    - integrationtests # used by integration tests
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
-  # disable some excludes that golangci-lint has by default. see https://github.com/golangci/golangci-lint
-  exclude-use-default: false
-  # many golangci linters enforce stupid rules, so we will add more to the list soon
-  exclude-rules:
-    - linters:
-      - errcheck
-      text: "Error return value of `.*\\.Close` is not checked"
-    - linters:
-      - stylecheck
-      text: "at least one file in a package should have a package comment"
-    # Exclude some linters from running on tests.
-    - path: _test\.go
-      linters:
-        - funlen
-        - dupl
-
+    - simulation
+    - integrationtests
 linters:
-  enable-all: true
+  default: all
   disable:
-    # many golangci linters enforce stupid rules, so we will add more to the list soon
     - cyclop
+    - depguard
+    - err113
     - errchkjson
     - exhaustive
     - exhaustruct
     - forbidigo
     - forcetypeassert
     - gochecknoglobals
-    - err113
-    - gofumpt
-    - gomoddirectives
-    - gosec
-    - godox
     - gochecknoinits
     - gocognit
+    - godox
+    - gomoddirectives
+    - gosec
     - ireturn
     - maintidx
+    - misspell
     - mnd
+    - musttag
     - nlreturn
+    - nolintlint
     - nonamedreturns
     - paralleltest
     - prealloc
@@ -54,61 +36,73 @@ linters:
     - varnamelen
     - wrapcheck
     - wsl
-    - depguard
-    - musttag
-    # in favor of typos
-    - misspell
-    # deprecated:
-    - exportloopref
-    # TODO: Enable once https://github.com/golangci/golangci-lint/issues/3228 is fixed.
-    - nolintlint
-
-linters-settings:
-  nakedret:
-    # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
-    max-func-lines: 1
-
-  funlen:
-    # Checks the number of lines in a function.
-    # If lower than 0, disable the check.
-    # Default: 60
-    lines: 100
-    # Checks the number of statements in a function.
-    # If lower than 0, disable the check.
-    # Default: 40
-    statements: 60
-
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/CoreumFoundation)
-
-    custom-order: true
-
-  revive:
-    confidence: 0.1
+  settings:
+    funlen:
+      lines: 100
+      statements: 60
+    nakedret:
+      max-func-lines: 1
+    revive:
+      confidence: 0.1
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+          arguments:
+            - sdkerrors.Wrap
+            - sdkerrors.Wrapf
+        - name: errorf
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+          disabled: true
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: var-declaration
+        - name: var-naming
+  exclusions:
+    generated: lax
     rules:
-      - name: blank-imports
-      - name: context-as-argument
-      - name: context-keys-type
-      - name: dot-imports
-      - name: error-naming
-      - name: error-return
-      - name: error-strings
-        arguments:
-          - "sdkerrors.Wrap"
-          - "sdkerrors.Wrapf"
-      - name: errorf
-      - name: exported
-      - name: if-return
-      - name: increment-decrement
-      - name: indent-error-flow
-      - name: package-comments
-        disabled: true
-      - name: range
-      - name: receiver-naming
-      - name: time-naming
-      - name: unexported-return
-      - name: var-declaration
-      - name: var-naming
+      - linters:
+          - errcheck
+        text: Error return value of `.*\.Close` is not checked
+      - linters:
+          - staticcheck
+        text: at least one file in a package should have a package comment
+      - linters:
+          - dupl
+          - funlen
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/CoreumFoundation)
+      custom-order: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

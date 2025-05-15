@@ -89,7 +89,7 @@ func newXRPLPrivKey(privKey cryptotypes.PrivKey) xrplPrivKey {
 	}
 }
 
-//nolint:revive,stylecheck //interface method
+//nolint:revive,staticcheck //interface method
 func (k xrplPrivKey) Id(sequence *uint32) []byte {
 	return crypto.Sha256RipeMD160(k.Public(sequence))
 }
