@@ -138,7 +138,7 @@ func BuildAppSet(ctx context.Context, appF *Factory, profiles []string, coredVer
 	var coredApp cored.Cored
 	var appSet infra.AppSet
 
-	genDEX := false
+	var genDEX bool
 	if pMap[ProfileDEX] {
 		genDEX = true
 	}
