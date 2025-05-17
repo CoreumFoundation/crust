@@ -225,15 +225,16 @@ func (f *Factory) BlockExplorer(prefix string, coredApp cored.Cored) blockexplor
 		Port:    blockexplorer.DefaultPorts.Postgres,
 	})
 	callistoApp := callisto.New(callisto.Config{
-		Name:           nameCallisto,
-		HomeDir:        filepath.Join(f.config.AppDir, nameCallisto),
-		RepoDir:        filepath.Clean(filepath.Join(f.config.RootDir, "../callisto")),
-		AppInfo:        f.spec.DescribeApp(callisto.AppType, nameCallisto),
-		Port:           blockexplorer.DefaultPorts.Callisto,
-		TelemetryPort:  blockexplorer.DefaultPorts.CallistoTelemetry,
-		ConfigTemplate: blockexplorer.CallistoConfigTemplate,
-		Cored:          coredApp,
-		Postgres:       postgresApp,
+		Name:            nameCallisto,
+		HomeDir:         filepath.Join(f.config.AppDir, nameCallisto),
+		RepoDir:         filepath.Clean(filepath.Join(f.config.RootDir, "../callisto")),
+		AppInfo:         f.spec.DescribeApp(callisto.AppType, nameCallisto),
+		Port:            blockexplorer.DefaultPorts.Callisto,
+		TelemetryPort:   blockexplorer.DefaultPorts.CallistoTelemetry,
+		ConfigTemplate:  blockexplorer.CallistoConfigTemplate,
+		Cored:           coredApp,
+		Postgres:        postgresApp,
+		ContractAddress: blockexplorer.DefaultContractAddress,
 	})
 	hasuraApp := hasura.New(hasura.Config{
 		Name:     nameHasura,
