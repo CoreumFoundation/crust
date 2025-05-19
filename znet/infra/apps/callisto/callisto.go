@@ -47,16 +47,16 @@ const (
 
 // Config storescallisto app configuration.
 type Config struct {
-	Name            string
-	HomeDir         string
-	RepoDir         string
-	AppInfo         *infra.AppInfo
-	Port            int
-	TelemetryPort   int
-	ConfigTemplate  string
-	Cored           cored.Cored
-	Postgres        postgres.Postgres
-	ContractAddress string
+	Name                string
+	HomeDir             string
+	RepoDir             string
+	AppInfo             *infra.AppInfo
+	Port                int
+	TelemetryPort       int
+	ConfigTemplate      string
+	Cored               cored.Cored
+	Postgres            postgres.Postgres
+	XrplContractAddress string
 }
 
 // New creates new callisto app.
@@ -200,7 +200,7 @@ func (j Callisto) prepareConfig() []byte {
 			User: postgres.User,
 			DB:   postgres.DB,
 		},
-		ContractAddress: j.config.ContractAddress,
+		ContractAddress: j.config.XrplContractAddress,
 	}))
 	return configBuf.Bytes()
 }

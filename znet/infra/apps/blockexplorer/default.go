@@ -16,9 +16,9 @@ var DefaultPorts = Ports{
 	BigDipper:         bigdipper.DefaultPort,
 }
 
-// DefaultContractAddress is the address of instantiated contract by the first relayer (leader).
+// DefaultXrplContractAddress is the address of instantiated contract by the first relayer (leader).
 // according to this link:
 // https://github.com/CosmWasm/wasmd/blob/04cb6e5408cc54c27247b0b327dfa99769d5103c/x/wasm/keeper/addresses.go#L18
 // the address of instantiated contract is calculated by CodeID and the sequence number of instance, so the generated address
 // is always as follows (if the logic of relayer and leader does not change).
-const DefaultContractAddress = "devcore14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sd4f0ak"
+const DefaultXrplContractAddress = "devcore14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sd4f0ak"
