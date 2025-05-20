@@ -21,6 +21,7 @@ chain:
     - slashing
     - staking
     - upgrade
+    - bridge 
 node:
   type: remote
   config:
@@ -75,3 +76,5 @@ pricefeed:
         - denom: coreum
           exponent: 6
           price_id: coreum
+bridge:
+  contract_address: {{ .ContractAddress }}
