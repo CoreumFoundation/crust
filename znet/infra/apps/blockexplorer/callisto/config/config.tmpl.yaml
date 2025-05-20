@@ -77,4 +77,4 @@ pricefeed:
           exponent: 6
           price_id: coreum
 bridge:
-  xrpl_contract_address: {{ .XrplContractAddress }}
+  contract_address: {{ .ContractAddress }}
