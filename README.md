@@ -10,8 +10,7 @@ To use `crust` you need:
 - `gcc`
 - `docker` (if you are installing from pacakge manager make sure that `docker-buildx` is installed.
   for docker version >23 it must be installed separately.
-  Or you can alternatively follow the official installation guide to install docker-desktop
-  , from this [link](https://docs.docker.com/engine/install/))
+  Or you can alternatively follow the official installation guide to install docker-desktop, from this [link](https://docs.docker.com/engine/install/))
 
 Install them manually before continuing.
 
@@ -79,7 +78,7 @@ Second one is by entering the znet-environment:
 
 ```
 $ crust znet [flags]
-(<environment-name>) [znet] $ <command> 
+(<environment-name>) [znet] $ <command>
 ```
 
 The second method saves some typing.
@@ -207,7 +206,7 @@ If you start `znet` using default `--profiles=1cored` there is one `cored` appli
 To use the client you may use `cored-00-val` wrapper:
 
 ```
-(znet) [znet] $ start 
+(znet) [znet] $ start
 ```
 
 Generate a wallet to transfer funds to
@@ -237,7 +236,7 @@ Tests run on top of `--profiles=integration-tests`.
 It's also possible to enter the environment first, and run tests from there:
 
 ```
-$ crust znet 
+$ crust znet
 (znet) [znet] $ start --profiles=integration-tests
 (znet) [znet] $ tests
 
