@@ -245,6 +245,18 @@ func buildInDocker(ctx context.Context, config BinaryBuildConfig) error {
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
+
+	// remove the image only in CI, to free up space
+	if os.Getenv("CI") == "true" || os.Getenv("GITHUB_ACTIONS") == "true" {
+		removeRunArgs := []string{
+			"rmi", "--force", image,
+		}
+		removeCmd := exec.Command("docker", removeRunArgs...)
+		if err := libexec.Exec(ctx, removeCmd); err != nil {
+			return errors.Wrapf(err, "removing docker image '%s' failed", image)
+		}
+	}
+
 	return nil
 }
 
