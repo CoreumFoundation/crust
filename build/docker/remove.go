@@ -16,6 +16,12 @@ import (
 	"github.com/CoreumFoundation/coreum-tools/pkg/parallel"
 )
 
+func RemoveImageByName(ctx context.Context, imageName string) error {
+	cmd := exec.Command("docker", "rmi", "-f", imageName)
+	cmd.Stderr = io.Discard
+	return libexec.Exec(ctx, cmd)
+}
+
 // Remove removes all the docker components used by crust.
 func Remove(ctx context.Context) error {
 	if err := removeContainers(ctx); err != nil {
