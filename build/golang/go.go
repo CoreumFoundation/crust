@@ -259,9 +259,7 @@ func RunTests(ctx context.Context, deps types.DepsFunc, config TestConfig) error
 
 	cmd := exec.Command(tools.Path("bin/go", tools.TargetPlatformLocal), args...)
 	cmd.Dir = config.PackagePath
-	cmd.Env = env()
-
-	cmd.Env = append(cmd.Env, config.Envs...)
+	cmd.Env = append(env(), config.Envs...)
 
 	logger.Get(ctx).Info(
 		"Running go tests",
